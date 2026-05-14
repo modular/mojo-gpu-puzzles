@@ -4,7 +4,8 @@
 
 ## 개요
 
-1D TileTensor `a`에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor `output`에 저장하는 커널을 구현하세요.
+1D TileTensor `a`에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor
+`output`에 저장하는 커널을 구현하세요.
 
 **풀링(pooling)** 은 일정 영역의 값들을 하나의 요약 값(예: 합, 최댓값, 평균)으로 압축하는 연산입니다. **슬라이딩 윈도우(sliding window)** 는 입력 위로 고정 크기의 윈도우를 한 칸씩 옮겨 가며 이 압축을 반복 적용해, 윈도우 위치마다 출력값을 하나씩 만들어냅니다. 여기서는 윈도우 폭이 3이고 요약 함수가 합이므로, 각 출력 원소는 현재 원소와 그 앞 두 원소의 합이 됩니다(사용 가능한 원소가 3개보다 적은 경계 지점에서는 특수 케이스로 처리).
 
@@ -18,11 +19,13 @@
 이 퍼즐에서 배울 내용:
 
 - TileTensor로 슬라이딩 윈도우 연산 구현하기
-- [Puzzle 8](../puzzle_08/puzzle_08.md)에서 다룬 TileTensor 주소 공간(address_space)으로 공유 메모리 관리하기
+- [Puzzle 8](../puzzle_08/puzzle_08.md)에서 다룬 TileTensor 주소
+  공간(address_space)으로 공유 메모리 관리하기
 - 효율적인 이웃 접근 패턴
 - 경계 조건 처리
 
-핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를 간소화하는 방법입니다.
+핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를
+간소화하는 방법입니다.
 
 ## 구성
 
@@ -33,7 +36,9 @@
 
 참고:
 
-- **TileTensor 할당**: `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())` 사용
+- **TileTensor 할당**:
+  `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
+  사용
 - **윈도우 접근**: 3개짜리 윈도우에 자연스러운 인덱싱
 - **경계 처리**: 처음 두 위치는 특수 케이스
 - **메모리 패턴**: 스레드당 공유 메모리 로드 1회
@@ -119,7 +124,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 
 <div class="solution-explanation">
 
-TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:
+TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과
+같습니다:
 
 1. **공유 메모리 설정**
    - TileTensor가 주소 공간(address_space)으로 블록 로컬 저장소를 생성:

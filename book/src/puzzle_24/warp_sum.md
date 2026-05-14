@@ -1,8 +1,15 @@
 # warp.sum() Essentials - Warp-Level Dot Product
 
-Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using Mojo's warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use `warp.sum()` to combine results automatically, demonstrating how warp programming transforms GPU synchronization.
+Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using
+Mojo's warp operations to replace complex shared memory patterns with simple
+function calls. Each warp lane will process one element and use `warp.sum()` to
+combine results automatically, demonstrating how warp programming transforms GPU
+synchronization.
 
-**Key insight:** _The [warp.sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/sum) operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction._
+**Key insight:** _The
+[warp.sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/sum)
+operation leverages SIMT execution to replace shared memory + barriers + tree
+reduction with a single hardware-accelerated instruction._
 
 ## Key concepts
 
@@ -17,7 +24,8 @@ In this puzzle, you'll learn:
 The mathematical operation is a dot product (inner product):
 \\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\\]
 
-But the implementation teaches fundamental patterns for all warp-level GPU programming in Mojo.
+But the implementation teaches fundamental patterns for all warp-level GPU
+programming in Mojo.
 
 ## Configuration
 
@@ -29,7 +37,9 @@ But the implementation teaches fundamental patterns for all warp-level GPU progr
 
 ## The traditional complexity (from Puzzle 12)
 
-Recall the complex approach from [solutions/p12/p12.mojo](../../../solutions/p12/p12.mojo) that required shared memory, barriers, and tree reduction:
+Recall the complex approach from
+[solutions/p12/p12.mojo](../../../solutions/p12/p12.mojo) that required shared
+memory, barriers, and tree reduction:
 
 ```mojo
 {{#include ../../../problems/p24/p24.mojo:traditional_approach_from_p12}}
@@ -42,7 +52,8 @@ Recall the complex approach from [solutions/p12/p12.mojo](../../../solutions/p12
 - **Tree reduction**: Complex loop with stride-based indexing
 - **Conditional writes**: Only thread 0 writes the final result
 
-This works, but it's verbose, error-prone, and requires deep understanding of GPU synchronization.
+This works, but it's verbose, error-prone, and requires deep understanding of
+GPU synchronization.
 
 **Test the traditional approach:**
 <div class="code-tabs" data-tab-group="package-manager">
@@ -86,7 +97,8 @@ uv run poe p24 --traditional
 
 ### 1. Simple warp kernel approach
 
-Transform the complex traditional approach into a simple warp kernel using `warp_sum()`:
+Transform the complex traditional approach into a simple warp kernel using
+`warp_sum()`:
 
 ```mojo
 {{#include ../../../problems/p24/p24.mojo:simple_warp_kernel}}
@@ -101,7 +113,8 @@ Transform the complex traditional approach into a simple warp kernel using `warp
 
 ### 1. **Understanding the simple warp kernel structure**
 
-You need to complete the `simple_warp_dot_product` function with **6 lines or fewer**:
+You need to complete the `simple_warp_dot_product` function with
+**6 lines or fewer**:
 
 ```mojo
 def simple_warp_dot_product[...](output, a, b):
@@ -123,9 +136,12 @@ if global_i < size:
     partial_product = (a[global_i] * b[global_i]).reduce_add()
 ```
 
-**Why `.reduce_add()`?** Values in Mojo are SIMD-based, so `a[global_i] * b[global_i]` returns a SIMD vector. Use `.reduce_add()` to sum the vector into a scalar.
+**Why `.reduce_add()`?** Values in Mojo are SIMD-based, so
+`a[global_i] * b[global_i]` returns a SIMD vector. Use `.reduce_add()` to sum
+the vector into a scalar.
 
-**Bounds checking:** Essential because not all threads may have valid data to process.
+**Bounds checking:** Essential because not all threads may have valid data to
+process.
 
 ### 3. **Warp reduction magic**
 
@@ -147,11 +163,15 @@ if lane_id() == 0:
     output[global_i // WARP_SIZE] = total
 ```
 
-**Why only lane 0?** All lanes have the same `total` value after `warp_sum()`, but we only want to write once to avoid race conditions.
+**Why only lane 0?** All lanes have the same `total` value after `warp_sum()`,
+but we only want to write once to avoid race conditions.
 
-**Why not write to `output[0]`?** Flexibility, function can be used in cases where there is more than one warp. i.e. The result from each warp is written to the unique location `global_i // WARP_SIZE`.
+**Why not write to `output[0]`?** Flexibility, function can be used in cases
+where there is more than one warp. i.e. The result from each warp is written to
+the unique location `global_i // WARP_SIZE`.
 
-**`lane_id()`:** Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane within the warp.
+**`lane_id()`:** Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane
+within the warp.
 
 </div>
 </details>
@@ -202,7 +222,8 @@ expected: 10416.0
 
 <div class="solution-explanation">
 
-The simple warp kernel demonstrates the fundamental transformation from complex synchronization to hardware-accelerated primitives:
+The simple warp kernel demonstrates the fundamental transformation from complex
+synchronization to hardware-accelerated primitives:
 
 **What disappeared from the traditional approach:**
 
@@ -214,7 +235,7 @@ The simple warp kernel demonstrates the fundamental transformation from complex 
 
 **SIMT execution model:**
 
-```
+```text
 Warp lanes (SIMT execution):
 Lane 0: partial_product = a[0] * b[0]    = 0.0
 Lane 1: partial_product = a[1] * b[1]    = 4.0
@@ -230,7 +251,8 @@ All lanes receive → total = 10416.0 (broadcast result)
 **Why this works without barriers:**
 
 1. **SIMT execution**: All lanes execute each instruction simultaneously
-2. **Hardware synchronization**: When `warp_sum()` begins, all lanes have computed their `partial_product`
+2. **Hardware synchronization**: When `warp_sum()` begins, all lanes have
+   computed their `partial_product`
 3. **Built-in communication**: GPU hardware handles the reduction operation
 4. **Broadcast result**: All lanes receive the same `total` value
 
@@ -239,7 +261,8 @@ All lanes receive → total = 10416.0 (broadcast result)
 
 ### 2. Functional approach
 
-Now implement the same warp dot product using Mojo's functional programming patterns:
+Now implement the same warp dot product using Mojo's functional programming
+patterns:
 
 ```mojo
 {{#include ../../../problems/p24/p24.mojo:functional_warp_approach}}
@@ -252,7 +275,8 @@ Now implement the same warp dot product using Mojo's functional programming patt
 
 ### 1. **Understanding the functional approach structure**
 
-You need to complete the `compute_dot_product` function with **10 lines or fewer**:
+You need to complete the `compute_dot_product` function with
+**10 lines or fewer**:
 
 ```mojo
 @parameter
@@ -280,9 +304,11 @@ else:
     partial_product = 0.0
 ```
 
-**Loading pattern:** `a.load[1](idx, 0)` loads exactly 1 element at position `idx` (not SIMD vectorized).
+**Loading pattern:** `a.load[1](idx, 0)` loads exactly 1 element at position
+`idx` (not SIMD vectorized).
 
-**Bounds handling:** Set `partial_product = 0.0` for out-of-bounds threads so they don't contribute to the sum.
+**Bounds handling:** Set `partial_product = 0.0` for out-of-bounds threads so
+they don't contribute to the sum.
 
 ### 3. **Warp operations and storing**
 
@@ -293,9 +319,11 @@ if lane_id() == 0:
     output.store[1](Index(idx // WARP_SIZE), total)
 ```
 
-**Storage pattern:** `output.store[1](Index(idx // WARP_SIZE), 0, total)` stores 1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
+**Storage pattern:** `output.store[1](Index(idx // WARP_SIZE), 0, total)` stores
+1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
 
-**Same warp logic:** `warp_sum()` and lane 0 writing work identically in functional approach.
+**Same warp logic:** `warp_sum()` and lane 0 writing work identically in
+functional approach.
 
 ### 4. **Available functions from imports**
 
@@ -358,7 +386,8 @@ expected: 10416.0
 
 <div class="solution-explanation">
 
-The functional warp approach showcases modern Mojo programming patterns with warp operations:
+The functional warp approach showcases modern Mojo programming patterns with
+warp operations:
 
 **Functional approach characteristics:**
 
@@ -415,7 +444,7 @@ pixi run p24 --benchmark
 
 Here's example output from a complete benchmark run:
 
-```
+```text
 SIZE: 32
 WARP_SIZE: 32
 SIMD_WIDTH: 8
@@ -495,20 +524,32 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 
 **Performance insights from this example:**
 
-- **Small scales (1x-4x)**: Warp operations show modest improvements (~10-15% faster)
+- **Small scales (1x-4x)**: Warp operations show modest improvements (~10-15%
+  faster)
 - **Medium scale (32x-256x)**: Functional approach often performs best
-- **Large scales (16K-65K)**: All approaches converge as memory bandwidth dominates
-- **Variability**: Performance depends heavily on specific GPU architecture and memory subsystem
+- **Large scales (16K-65K)**: All approaches converge as memory bandwidth
+  dominates
+- **Variability**: Performance depends heavily on specific GPU architecture and
+  memory subsystem
 
-**Note:** Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, `WARP_SIZE`). The key insight is observing the relative performance trends rather than absolute timings.
+**Note:** Your results will vary significantly depending on your hardware (GPU
+model, memory bandwidth, `WARP_SIZE`). The key insight is observing the relative
+performance trends rather than absolute timings.
 
 ## Next steps
 
 Once you've learned warp sum operations, you're ready for:
 
-- **[When to Use Warp Programming](./warp_extra.md)**: Strategic decision framework for warp vs traditional approaches
-- **Advanced warp operations**: `shuffle_idx()`, `shuffle_down()`, `prefix_sum()` for complex communication patterns
-- **Multi-warp algorithms**: Combining warp operations with block-level synchronization
-- **Part VII: Memory Coalescing**: Optimizing memory access patterns for maximum bandwidth
+- **[When to Use Warp Programming](./warp_extra.md)**: Strategic decision
+  framework for warp vs traditional approaches
+- **Advanced warp operations**: `shuffle_idx()`, `shuffle_down()`,
+  `prefix_sum()` for complex communication patterns
+- **Multi-warp algorithms**: Combining warp operations with block-level
+  synchronization
+- **Part VII: Memory Coalescing**: Optimizing memory access patterns for maximum
+  bandwidth
 
-💡 **Key Takeaway**: Warp operations transform GPU programming by replacing complex synchronization patterns with hardware-accelerated primitives, demonstrating how understanding the execution model enables dramatic simplification without sacrificing performance.
+💡 **Key Takeaway**: Warp operations transform GPU programming by replacing
+complex synchronization patterns with hardware-accelerated primitives,
+demonstrating how understanding the execution model enables dramatic
+simplification without sacrificing performance.

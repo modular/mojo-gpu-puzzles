@@ -8,7 +8,8 @@
 
 벡터 `a`의 각 위치에 10을 더해 `output`에 저장하는 커널을 구현해 보세요.
 
-**참고**: _스레드 수가 데이터 개수보다 많아서, 일부 스레드는 처리할 데이터가 없습니다. 이런 스레드가 범위를 벗어난 메모리에 접근하지 않도록 방지해야 합니다._
+**참고**: _스레드 수가 데이터 개수보다 많아서, 일부 스레드는 처리할 데이터가
+없습니다. 이런 스레드가 범위를 벗어난 메모리에 접근하지 않도록 방지해야 합니다._
 
 {{ youtube YFKutZbRYSM breakpoint-sm }}
 
@@ -131,9 +132,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 - `if i < size`로 범위를 벗어난 접근을 방지합니다
 - 가드 내부: 입력값에 10을 더합니다
 
-> 경계 검사 없이도 테스트가 통과되는 이유가 궁금할 수 있습니다!
-> 테스트 통과가 코드의 안전성이나 미정의 동작(Undefined Behavior) 부재를 보장하지는 않는다는 점을 항상 기억하세요.
-> [Puzzle 10](../puzzle_10/puzzle_10.md)에서 이런 경우를 살펴보고, 안전성 버그를 잡는 도구를 사용해 봅니다.
+> 경계 검사 없이도 테스트가 통과되는 이유가 궁금할 수 있습니다! 테스트 통과가
+> 코드의 안전성이나 미정의 동작(Undefined Behavior) 부재를 보장하지는 않는다는
+> 점을 항상 기억하세요. [Puzzle 10](../puzzle_10/puzzle_10.md)에서 이런 경우를
+> 살펴보고, 안전성 버그를 잡는 도구를 사용해 봅니다.
 
 </div>
 </details>
@@ -160,4 +162,6 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-이런 경계 처리 패턴은 Puzzle 4의 [TileTensor 알아보기](../puzzle_04/introduction_tile_tensor.md)에서 배우면 훨씬 깔끔해집니다. TileTensor는 형태 관리 기능을 기본으로 제공합니다.
+이런 경계 처리 패턴은 Puzzle 4의
+[TileTensor 알아보기](../puzzle_04/introduction_tile_tensor.md)에서 배우면 훨씬
+깔끔해집니다. TileTensor는 형태 관리 기능을 기본으로 제공합니다.

@@ -3,12 +3,14 @@
 ## Quick decision guide
 
 **✅ Use warp operations when:**
+
 - Reduction operations (`sum`, `max`, `min`) with 32+ elements
 - Regular memory access patterns (adjacent lanes → adjacent addresses)
 - Need cross-architecture portability (NVIDIA/RDNA 32 vs CDNA 64 threads)
 - Want simpler, more maintainable code
 
 **❌ Use traditional approaches when:**
+
 - Complex cross-warp synchronization required
 - Irregular/scattered memory access patterns
 - Variable work per thread (causes warp divergence)
@@ -17,14 +19,16 @@
 ## Performance characteristics
 
 ### Problem size scaling
-| Elements | Warp Advantage | Notes |
-|----------|---------------|-------|
-| < 32 | None | Traditional better |
-| 32-1K | 1.2-1.5× | Sweet spot begins |
-| 1K-32K | 1.5-2.5× | **Warp operations excel** |
-| > 32K | Memory-bound | Both approaches limited by bandwidth |
+
+| Elements | Warp Advantage | Notes                                |
+|----------|----------------|--------------------------------------|
+| < 32     | None           | Traditional better                   |
+| 32-1K    | 1.2-1.5×       | Sweet spot begins                    |
+| 1K-32K   | 1.5-2.5×       | **Warp operations excel**            |
+| > 32K    | Memory-bound   | Both approaches limited by bandwidth |
 
 ### Key warp advantages
+
 - **No synchronization overhead**: Eliminates barrier costs
 - **Minimal memory usage**: No shared memory allocation needed
 - **Better scaling**: Performance improves with more warps
@@ -32,17 +36,18 @@
 
 ## Algorithm-specific guidance
 
-| Algorithm | Recommendation | Reason |
-|-----------|---------------|--------|
-| **Dot product** | Warp ops (1K+ elements) | Single reduction, regular access |
-| **Matrix row/col sum** | Warp ops | Natural reduction pattern |
-| **Prefix sum** | Always warp `prefix_sum()` | Hardware-optimized primitive |
-| **Pooling (max/min)** | Warp ops (regular windows) | Efficient window reductions |
-| **Histogram with large number of bins** | Traditional | Irregular writes, atomic updates |
+| Algorithm                               | Recommendation             | Reason                           |
+|-----------------------------------------|----------------------------|----------------------------------|
+| **Dot product**                         | Warp ops (1K+ elements)    | Single reduction, regular access |
+| **Matrix row/col sum**                  | Warp ops                   | Natural reduction pattern        |
+| **Prefix sum**                          | Always warp `prefix_sum()` | Hardware-optimized primitive     |
+| **Pooling (max/min)**                   | Warp ops (regular windows) | Efficient window reductions      |
+| **Histogram with large number of bins** | Traditional                | Irregular writes, atomic updates |
 
 ## Code examples
 
 ### ✅ Perfect for warps
+
 ```mojo
 # Reduction operations
 from gpu.primitives.warp import sum, max
@@ -56,6 +61,7 @@ var running_sum = prefix_sum(my_value)
 ```
 
 ### ❌ Better with traditional approaches
+
 ```mojo
 # Complex multi-stage synchronization
 stage1_compute()
@@ -85,13 +91,16 @@ mojo p22.mojo --benchmark
 ## Summary
 
 **Start with warp operations for:**
+
 - Reductions with regular access patterns
 - Problems ≥ 1 warp in size
 - Cross-platform compatibility needs
 
 **Use traditional approaches for:**
+
 - Complex synchronization requirements
 - Irregular memory patterns
 - Small problems or heavy divergence
 
-**When in doubt:** Implement both and benchmark. The performance difference will guide your decision.
+**When in doubt:** Implement both and benchmark. The performance difference will
+guide your decision.

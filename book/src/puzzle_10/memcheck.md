@@ -2,21 +2,29 @@
 
 ## Overview
 
-Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA's `compute-sanitizer` (available through `pixi`) with the `memcheck` tool, you'll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.
+Learn how to detect memory violations that can silently corrupt GPU programs,
+even when tests appear to pass. Using NVIDIA's `compute-sanitizer` (available
+through `pixi`) with the `memcheck` tool, you'll discover hidden memory bugs
+that could cause unpredictable behavior in your GPU code.
 
-**Key insight**: A GPU program can produce "correct" results while simultaneously performing illegal memory accesses.
+**Key insight**: A GPU program can produce "correct" results while
+simultaneously performing illegal memory accesses.
 
-**Prerequisites**: Understanding of [Puzzle 4 TileTensor](../puzzle_04/introduction_tile_tensor.md) and basic GPU memory concepts.
+**Prerequisites**: Understanding of
+[Puzzle 4 TileTensor](../puzzle_04/introduction_tile_tensor.md) and basic GPU
+memory concepts.
 
 ## The silent memory bug discovery
 
 ### Test passes, but is my code actually correct?
 
-Let's start with a seemingly innocent program that appears to work perfectly (this is [Puzzle 04](../puzzle_04/tile_tensor.md) without guards):
+Let's start with a seemingly innocent program that appears to work perfectly
+(this is [Puzzle 04](../puzzle_04/tile_tensor.md) without guards):
 
 ```mojo
 {{#include ../../../problems/p10/p10.mojo:add_10_2d_no_guard}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a>
 
 When you run this program normally, everything looks fine:
@@ -33,7 +41,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ✅ Memory test PASSED! (memcheck may find bounds violations)
 ```
 
-✅ **Test PASSED!** The output matches expected results perfectly. Case closed, right?
+✅ **Test PASSED!** The output matches expected results perfectly. Case closed,
+right?
 
 **Wrong!** Let's see what `compute-sanitizer` reveals:
 
@@ -41,7 +50,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 ```
 
-**Note**: `MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0` is a command-line environment variable setting that disables a device context's buffer cache. This setting can reveal memory issues, like bounds violations, that are otherwise masked by the normal caching behavior.
+**Note**: `MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0` is a
+command-line environment variable setting that disables a device context's
+buffer cache. This setting can reveal memory issues, like bounds violations,
+that are otherwise masked by the normal caching behavior.
 
 ```txt
 ========= COMPUTE-SANITIZER
@@ -80,33 +92,41 @@ Running memory bug example (bounds checking issue)...
 ```
 
 The program has **7 total errors** despite passing all tests:
-- **4 memory violations** (Invalid __global__ read)
-- **3 runtime errors** (caused by the memory violations)
 
+- **4 memory violations** (Invalid **global** read)
+- **3 runtime errors** (caused by the memory violations)
 
 ## Understanding the hidden bug
 
 ### Root cause analysis
 
 **The Problem:**
+
 - **Tensor size**: 2×2 (valid indices: 0, 1)
 - **Thread grid**: 3×3 (thread indices: 0, 1, 2)
-- **Out-of-bounds threads**: `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` access invalid memory
-- **Missing bounds check**: No validation of `thread_idx` against tensor dimensions
+- **Out-of-bounds threads**: `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` access invalid
+  memory
+- **Missing bounds check**: No validation of `thread_idx` against tensor
+  dimensions
 
 ### Understanding the 7 total errors
 
 **4 Memory Violations:**
-- Each out-of-bounds thread `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` caused an "Invalid __global__ read"
+
+- Each out-of-bounds thread `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` caused an
+  "Invalid **global** read"
 
 **3 CUDA Runtime Errors:**
+
 - `cuStreamSynchronize` failed due to kernel launch failure
 - `cuEventCreate` failed during cleanup
 - `cuMemFreeAsync` failed during memory deallocation
 
-**Key Insight**: Memory violations have cascading effects - one bad memory access causes multiple downstream CUDA API failures.
+**Key Insight**: Memory violations have cascading effects - one bad memory
+access causes multiple downstream CUDA API failures.
 
 **Why tests still passed:**
+
 - Valid threads `(0,0)`, `(0,1)`, `(1,0)`, `(1,1)` wrote correct results
 - Test only checked valid output locations
 - Out-of-bounds accesses didn't immediately crash the program
@@ -115,49 +135,68 @@ The program has **7 total errors** despite passing all tests:
 
 ### What is undefined behavior?
 
-**Undefined Behavior (UB)** occurs when a program performs operations that have no defined meaning according to the language specification. Out-of-bounds memory access is a classic example of undefined behavior.
+**Undefined Behavior (UB)** occurs when a program performs operations that have
+no defined meaning according to the language specification. Out-of-bounds memory
+access is a classic example of undefined behavior.
 
 **Key characteristics of UB:**
-- The program can do **literally anything**: crash, produce wrong results, appear to work, or corrupt memory
-- **No guarantees**: Behavior may change between compilers, hardware, drivers, or even different runs
+
+- The program can do **literally anything**: crash, produce wrong results,
+  appear to work, or corrupt memory
+- **No guarantees**: Behavior may change between compilers, hardware, drivers,
+  or even different runs
 
 ### Why undefined behavior is especially dangerous
 
 **Correctness issues:**
-- **Unpredictable results**: Your program may work during testing but fail in production
-- **Non-deterministic behavior**: Same code can produce different results on different runs
+
+- **Unpredictable results**: Your program may work during testing but fail in
+  production
+- **Non-deterministic behavior**: Same code can produce different results on
+  different runs
 - **Silent corruption**: UB can corrupt data without any visible errors
-- **Compiler optimizations**: Compilers assume no UB occurs and may optimize in unexpected ways
+- **Compiler optimizations**: Compilers assume no UB occurs and may optimize in
+  unexpected ways
 
 **Security vulnerabilities:**
-- **Buffer overflows**: Classic source of security exploits in systems programming
-- **Memory corruption**: Can lead to privilege escalation and code injection attacks
+
+- **Buffer overflows**: Classic source of security exploits in systems
+  programming
+- **Memory corruption**: Can lead to privilege escalation and code injection
+  attacks
 - **Information leakage**: Out-of-bounds reads can expose sensitive data
 - **Control flow hijacking**: UB can be exploited to redirect program execution
 
 ### GPU-specific undefined behavior dangers
 
 **Massive scale impact:**
+
 - **Thread divergence**: One thread's UB can affect entire warps (32 threads)
-- **Memory coalescing**: Out-of-bounds access can corrupt neighboring threads' data
+- **Memory coalescing**: Out-of-bounds access can corrupt neighboring threads'
+  data
 - **Kernel failures**: UB can cause entire GPU kernels to fail catastrophically
 
 **Hardware variations:**
-- **Different GPU architectures**: UB may manifest differently on different GPU models
+
+- **Different GPU architectures**: UB may manifest differently on different GPU
+  models
 - **Driver differences**: Same UB may behave differently across driver versions
-- **Memory layout changes**: GPU memory allocation patterns can change UB manifestation
+- **Memory layout changes**: GPU memory allocation patterns can change UB
+  manifestation
 
 ## Fixing the memory violation
 
 ### The solution
 
-As we saw in [Puzzle 04](../puzzle_04/tile_tensor.md), we need to bound-check as follows:
+As we saw in [Puzzle 04](../puzzle_04/tile_tensor.md), we need to bound-check as
+follows:
 
 ```mojo
 {{#include ../../../solutions/p04/p04_tile_tensor.mojo:add_10_2d_tile_tensor_solution}}
 ```
 
-The fix is simple: **always validate thread indices against data dimensions** before accessing memory.
+The fix is simple: **always validate thread indices against data dimensions**
+before accessing memory.
 
 ### Verification with compute-sanitizer
 
@@ -186,7 +225,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 
 **✅ SUCCESS:** No memory violations detected!
 
-> **Note on the segfault**: The crash lines above ("intermediate process terminated by signal 11") are a known compatibility issue between Mojo's process initialization and compute-sanitizer's injection libraries. They appear *before* the GPU kernel runs and do not affect the sanitizer's analysis. See the note at the end of this page for details.
+> **Note on the segfault**: The crash lines above ("intermediate process
+> terminated by signal 11") are a known compatibility issue between Mojo's
+> process initialization and compute-sanitizer's injection libraries. They
+> appear *before* the GPU kernel runs and do not affect the sanitizer's
+> analysis. See the note at the end of this page for details.
 
 ## Key learning points
 
@@ -199,10 +242,12 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ### GPU memory safety rules
 
 1. **Always validate thread indices** against data dimensions
-2. **Avoid undefined behavior (UB) at all costs** - out-of-bounds access is UB and can break everything
+2. **Avoid undefined behavior (UB) at all costs** - out-of-bounds access is UB
+   and can break everything
 3. **Use compute-sanitizer** during development and testing
 4. **Never assume "it works" without memory checking**
-5. **Test with different grid/block configurations** to catch undefined behavior (UB) that manifests inconsistently
+5. **Test with different grid/block configurations** to catch undefined behavior
+   (UB) that manifests inconsistently
 
 ### Compute-sanitizer best practices
 
@@ -210,4 +255,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 ```
 
-**Note on Mojo + compute-sanitizer compatibility**: You may see a crash at the start of the sanitizer output — lines like `close: Bad file descriptor`, a stack dump, and `intermediate process terminated by signal 11 (Segmentation fault)`. This is a known issue where compute-sanitizer's injection libraries conflict with Mojo's process initialization. Despite the crash, the sanitizer completes its GPU kernel analysis correctly. Always use the `========= ERROR SUMMARY` line at the end as the authoritative result, and look for `========= Invalid` lines for specific memory violations.
+**Note on Mojo + compute-sanitizer compatibility**: You may see a crash at the
+start of the sanitizer output — lines like `close: Bad file descriptor`, a stack
+dump, and `intermediate process terminated by signal 11 (Segmentation fault)`.
+This is a known issue where compute-sanitizer's injection libraries conflict
+with Mojo's process initialization. Despite the crash, the sanitizer completes
+its GPU kernel analysis correctly. Always use the `========= ERROR SUMMARY` line
+at the end as the authoritative result, and look for `========= Invalid` lines
+for specific memory violations.

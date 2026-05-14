@@ -1,7 +1,12 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from pathlib import Path
 
 import numpy as np
-from max.driver import CPU, Accelerator, Device, Buffer
+from max.driver import CPU, Accelerator, Buffer, Device
 from max.dtype import DType
 from max.engine import InferenceSession
 from max.graph import DeviceRef, Graph, TensorType, ops
@@ -112,7 +117,7 @@ def debug_attention_steps(
     print("=" * 80)
 
     seq_len, d = k.shape
-    print(f"\n1. INPUT SHAPES:")
+    print("\n1. INPUT SHAPES:")
     print(f"   Q shape: {q.shape} (query vector)")
     print(f"   K shape: {k.shape} (key matrix)")
     print(f"   V shape: {v.shape} (value matrix)")
@@ -120,13 +125,13 @@ def debug_attention_steps(
 
     # Step 1: Compute attention scores K[i] · Q (equivalent to Q · K[i])
     scores = np.dot(k, q)  # Each row of K dotted with Q: K[i] · Q
-    print(f"\n2. ATTENTION SCORES (K[i] · Q):")
+    print("\n2. ATTENTION SCORES (K[i] · Q):")
     print(f"   Scores shape: {scores.shape}")
     print(f"   Scores[:5]: {scores[:5]}")
     print(f"   Min: {np.min(scores):.6f}, Max: {np.max(scores):.6f}")
 
     # Manual verification of first few scores
-    print(f"   Manual verification:")
+    print("   Manual verification:")
     for i in range(min(3, seq_len)):
         manual_score = np.dot(q, k[i])  # Q · K[i] = K[i] · Q
         print(
@@ -138,7 +143,7 @@ def debug_attention_steps(
     scores_max = np.max(scores)
     scores_exp = np.exp(scores - scores_max)
     attention_weights = scores_exp / np.sum(scores_exp)
-    print(f"\n3. SOFTMAX:")
+    print("\n3. SOFTMAX:")
     print(f"   Max score: {scores_max:.6f}")
     print(f"   Attention weights shape: {attention_weights.shape}")
     print(f"   Attention weights[:5]: {attention_weights[:5]}")
@@ -146,7 +151,7 @@ def debug_attention_steps(
 
     # Step 3: Weighted sum of value vectors
     output = np.dot(attention_weights, v)
-    print(f"\n4. WEIGHTED SUM OF VALUES:")
+    print("\n4. WEIGHTED SUM OF VALUES:")
     print(f"   Output shape: {output.shape}")
     print(f"   Output[:5]: {output[:5]}")
     print(f"   Output norm: {np.linalg.norm(output):.6f}")
@@ -167,9 +172,9 @@ def debug_attention_steps(
 
 def test_individual_operations():
     """Test individual operations to verify correctness."""
-    print(f"\n{'='*80}")
-    print(f"TESTING INDIVIDUAL OPERATIONS")
-    print(f"{'='*80}")
+    print(f"\n{'=' * 80}")
+    print("TESTING INDIVIDUAL OPERATIONS")
+    print(f"{'=' * 80}")
 
     # Test 1: Vector dot product
     print("\nTest 1: Vector Dot Product")
@@ -223,9 +228,9 @@ if __name__ == "__main__":
     test_individual_operations()
 
     # Test CPU implementation
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("TESTING FULL ATTENTION")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     cpu_result = attention(q, k, v, cpu_session, CPU())
     cpu_array = cpu_result.to_numpy()
@@ -260,9 +265,9 @@ if __name__ == "__main__":
         print(f"  Expected: {expected_result[max_diff_idx]:.6f}")
         print(f"  Diff: {diff[max_diff_idx]:.6f}")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("FINAL VERIFICATION")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     try:
         np.testing.assert_allclose(
@@ -282,7 +287,7 @@ if __name__ == "__main__":
         print("✗ GPU implementation FAILED")
         print(str(e))
 
-    print(f"\nOutput vector norms:")
+    print("\nOutput vector norms:")
     print(f"  CPU: {np.linalg.norm(cpu_array):.6f}")
     print(f"  GPU: {np.linalg.norm(gpu_array):.6f}")
     print(f"  Expected: {np.linalg.norm(expected_result):.6f}")

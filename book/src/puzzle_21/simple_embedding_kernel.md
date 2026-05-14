@@ -1,16 +1,23 @@
 # Embedding Kernels: Coalesced vs Non-Coalesced
 
-In this puzzle, you'll implement two different GPU kernels for embedding operations that produce identical results but use different memory access patterns, demonstrating the critical importance of memory coalescing in GPU performance.
+In this puzzle, you'll implement two different GPU kernels for embedding
+operations that produce identical results but use different memory access
+patterns, demonstrating the critical importance of memory coalescing in GPU
+performance.
 
 ## 1D coalesced kernel (optimized approach)
 
-This kernel uses a simple 1D grid where each thread processes exactly one output element. The key insight is that consecutive threads will access consecutive memory locations, leading to optimal memory coalescing.
+This kernel uses a simple 1D grid where each thread processes exactly one output
+element. The key insight is that consecutive threads will access consecutive
+memory locations, leading to optimal memory coalescing.
 
 **Thread organization:**
 
-- **Grid configuration**: `[total_elements // 256]` blocks, `256` threads per block
+- **Grid configuration**: `[total_elements // 256]` blocks, `256` threads per
+  block
 - **Thread mapping**: Each thread handles one `(batch, seq, embed)` position
-- **Memory pattern**: Consecutive threads access consecutive embedding dimensions
+- **Memory pattern**: Consecutive threads access consecutive embedding
+  dimensions
 
 **What you need to implement:**
 
@@ -35,23 +42,30 @@ You need to complete the missing parts in both embedding kernels:
 <div class="solution-tips">
 
 - Start with `global_idx = block_idx.x * block_dim.x + thread_idx.x`
-- Convert to 3D coordinates using division and modulo: `batch_idx = global_idx // (seq_len * embed_dim)`
-- Use `remaining = global_idx % (seq_len * embed_dim)` to simplify further calculations
+- Convert to 3D coordinates using division and modulo:
+  `batch_idx = global_idx // (seq_len * embed_dim)`
+- Use `remaining = global_idx % (seq_len * embed_dim)` to simplify further
+  calculations
 - Always check bounds: `if global_idx >= total_elements: return`
 - Handle invalid token indices by setting output to 0
-- The embedding lookup is: `output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]`
+- The embedding lookup is:
+  `output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]`
 
 </div>
 </details>
 
 ## 2D non-coalesced kernel (comparison approach)
 
-This kernel uses a 2D grid where the X dimension spans `(batch × seq)` positions and the Y dimension spans embedding dimensions. This can lead to non-coalesced memory access patterns.
+This kernel uses a 2D grid where the X dimension spans `(batch × seq)` positions
+and the Y dimension spans embedding dimensions. This can lead to non-coalesced
+memory access patterns.
 
 **Thread organization:**
 
-- **Grid configuration**: `[batch x seq // 16, embed_dim // 16]` blocks, `16 x 16` threads per block
-- **Thread mapping**: `thread_idx.x` maps to batch/sequence, `thread_idx.y` maps to embedding dimension
+- **Grid configuration**: `[batch x seq // 16, embed_dim // 16]` blocks,
+  `16 x 16` threads per block
+- **Thread mapping**: `thread_idx.x` maps to batch/sequence, `thread_idx.y` maps
+  to embedding dimension
 - **Memory pattern**: Threads in a warp may access scattered memory locations
 
 **What you need to implement:**
@@ -76,19 +90,26 @@ You need to complete the missing parts in both embedding kernels:
 
 <div class="solution-tips">
 
-- Use both X and Y thread coordinates: `batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x`
+- Use both X and Y thread coordinates:
+  `batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x`
 - And: `embed_idx = block_idx.y * block_dim.y + thread_idx.y`
-- Convert `batch_seq_idx` to separate batch and sequence indices: `batch_idx = batch_seq_idx // seq_len`
-- Remember to check bounds for both dimensions: `if batch_seq_idx >= total_positions or embed_idx >= embed_dim`
-- The token lookup is the same as 1D, but you're only handling one embedding dimension per thread
-- This kernel processes one embedding dimension per thread instead of entire vectors
+- Convert `batch_seq_idx` to separate batch and sequence indices:
+  `batch_idx = batch_seq_idx // seq_len`
+- Remember to check bounds for both dimensions:
+  `if batch_seq_idx >= total_positions or embed_idx >= embed_dim`
+- The token lookup is the same as 1D, but you're only handling one embedding
+  dimension per thread
+- This kernel processes one embedding dimension per thread instead of entire
+  vectors
 
 </div>
 </details>
 
 ## Custom ops registration
 
-The kernels are wrapped in PyTorch custom operations for easy integration. The registration pattern is the same as MAX custom ops explained in [Understanding MAX Graph custom ops](../puzzle_17/puzzle_17.md#understanding-max-graph-custom-ops):
+The kernels are wrapped in PyTorch custom operations for easy integration. The
+registration pattern is the same as MAX custom ops explained in
+[Understanding MAX Graph custom ops](../puzzle_17/puzzle_17.md#understanding-max-graph-custom-ops):
 
 ### 1D coalesced operation
 
@@ -100,9 +121,12 @@ This operation registers the optimized 1D embedding kernel as `"embedding"`:
 
 **Key aspects of this registration:**
 
-- **Simple grid configuration**: Uses a straightforward 1D grid with `ceildiv(total_elements, THREADS_PER_BLOCK)` blocks
-- **Memory optimization**: Single `enqueue_memset` call to zero the output buffer efficiently
-- **Compile-time parameters**: All tensor dimensions passed as compile-time parameters for optimal performance
+- **Simple grid configuration**: Uses a straightforward 1D grid with
+  `ceildiv(total_elements, THREADS_PER_BLOCK)` blocks
+- **Memory optimization**: Single `enqueue_memset` call to zero the output
+  buffer efficiently
+- **Compile-time parameters**: All tensor dimensions passed as compile-time
+  parameters for optimal performance
 - **Device abstraction**: Handles both GPU execution and CPU fallback seamlessly
 
 ### 2D non-coalesced operation
@@ -115,10 +139,14 @@ This operation registers the comparison 2D embedding kernel as `"embedding_2d"`:
 
 **Key differences from the 1D operation:**
 
-- **Complex grid configuration**: Uses a 2D grid with separate calculations for `blocks_x` and `blocks_y`
-- **Fixed block dimensions**: Hard-coded `BLOCK_X = 16` and `BLOCK_Y = 16` for 2D thread organization
-- **Same memory management**: Identical memory initialization and CPU fallback logic
-- **Different kernel call**: Passes 2D grid dimensions `(blocks_x, blocks_y)` and block dimensions `(BLOCK_X, BLOCK_Y)`
+- **Complex grid configuration**: Uses a 2D grid with separate calculations for
+  `blocks_x` and `blocks_y`
+- **Fixed block dimensions**: Hard-coded `BLOCK_X = 16` and `BLOCK_Y = 16` for
+  2D thread organization
+- **Same memory management**: Identical memory initialization and CPU fallback
+  logic
+- **Different kernel call**: Passes 2D grid dimensions `(blocks_x, blocks_y)`
+  and block dimensions `(BLOCK_X, BLOCK_Y)`
 
 ### Common wrapper functionality
 
@@ -146,7 +174,8 @@ Both custom operations provide essential infrastructure:
 
 ### Integration with PyTorch
 
-These registered operations can be called from Python using the [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/):
+These registered operations can be called from Python using the
+[CustomOpLibrary](https://docs.modular.com/max/api/python/torch/):
 
 ```python
 # Load the custom operations
@@ -163,7 +192,9 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
 )
 ```
 
-The power of this approach is that the same kernel implementations can be used across different Python frameworks while maintaining optimal performance characteristics.
+The power of this approach is that the same kernel implementations can be used
+across different Python frameworks while maintaining optimal performance
+characteristics.
 
 ## Run the code
 
@@ -200,7 +231,7 @@ uv run poe p21
 
 When successful, you should see output similar to:
 
-```
+```text
 Puzzle 21: Mojo Embedding Kernel Comparison
 ======================================================================
 Configuration: B=8, L=512, V=10000, E=512
@@ -230,7 +261,8 @@ Key Learning Points:
 <details class="solution-details">
 <summary></summary>
 
-The solution involves implementing the coordinate transformations and memory operations for both kernels:
+The solution involves implementing the coordinate transformations and memory
+operations for both kernels:
 
 ## 1D Coalesced Kernel
 
@@ -246,7 +278,8 @@ The solution involves implementing the coordinate transformations and memory ope
 
 <div class="solution-explanation">
 
-Both solutions implement the same embedding lookup logic but with different thread organizations:
+Both solutions implement the same embedding lookup logic but with different
+thread organizations:
 
 ### Key differences
 
@@ -255,8 +288,10 @@ Both solutions implement the same embedding lookup logic but with different thre
    - **2D kernel**: 2D grid mapping to (batch×seq, embed_dim) coordinates
 
 2. **Memory access patterns**:
-   - **1D kernel**: Consecutive threads access consecutive embedding dimensions → coalesced
-   - **2D kernel**: Thread access pattern depends on block configuration → potentially non-coalesced
+   - **1D kernel**: Consecutive threads access consecutive embedding dimensions
+     → coalesced
+   - **2D kernel**: Thread access pattern depends on block configuration →
+     potentially non-coalesced
 
 3. **Indexing complexity**:
    - **1D kernel**: Single division/modulo chain to get 3D coordinates
@@ -272,8 +307,10 @@ The 1D kernel typically performs better because:
 
 The 2D kernel may perform worse due to:
 
-- **Scattered memory accesses**: Threads within a warp may access different embedding vectors
-- **Complex grid configuration**: 16×16 blocks may not align optimally with memory layout
+- **Scattered memory accesses**: Threads within a warp may access different
+  embedding vectors
+- **Complex grid configuration**: 16×16 blocks may not align optimally with
+  memory layout
 - **Warp divergence**: Different threads may follow different execution paths
 
 </div>
@@ -282,12 +319,13 @@ The 2D kernel may perform worse due to:
 
 ## Key concepts
 
-| Concept | 1D Coalesced | 2D Non-coalesced |
-|---------|---------------|-------------------|
-| **Thread organization** | 1D flat indexing | 2D grid (batch×seq, embed) |
-| **Memory access** | Consecutive addresses | Potentially scattered |
-| **Grid configuration** | Simple: `[total_elements // 256]` | Complex: `[batch×seq // 16, embed // 16]` |
-| **Performance** | Optimized for memory bandwidth | Suboptimal memory pattern |
-| **Use case** | Production kernels | Educational comparison |
+| Concept                 | 1D Coalesced                      | 2D Non-coalesced                          |
+|-------------------------|-----------------------------------|-------------------------------------------|
+| **Thread organization** | 1D flat indexing                  | 2D grid (batch×seq, embed)                |
+| **Memory access**       | Consecutive addresses             | Potentially scattered                     |
+| **Grid configuration**  | Simple: `[total_elements // 256]` | Complex: `[batch×seq // 16, embed // 16]` |
+| **Performance**         | Optimized for memory bandwidth    | Suboptimal memory pattern                 |
+| **Use case**            | Production kernels                | Educational comparison                    |
 
-The core lesson: **memory coalescing** can lead to 2-3x performance differences for memory-bound operations like embeddings.
+The core lesson: **memory coalescing** can lead to 2-3x performance differences
+for memory-bound operations like embeddings.

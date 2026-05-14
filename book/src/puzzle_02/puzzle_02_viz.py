@@ -1,9 +1,14 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from manim import *
+
 
 class Puzzle02Visualization(Scene):
     def construct(self):
         array_scale = 0.5
-        thread_scale = 0.4
 
         # First input array (a)
         input_array_a = VGroup()
@@ -12,7 +17,7 @@ class Puzzle02Visualization(Scene):
             height=array_scale + 0.6,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         for i in range(4):
@@ -23,7 +28,9 @@ class Puzzle02Visualization(Scene):
         input_array_a.arrange(RIGHT, buff=0)
         input_array_a.move_to(input_bg_a)
         input_group_a = VGroup(input_bg_a, input_array_a)
-        input_label_a = Text("Input Array A (size=4)", font_size=18).next_to(input_group_a, UP, buff=0.2)
+        input_label_a = Text("Input Array A (size=4)", font_size=18).next_to(
+            input_group_a, UP, buff=0.2
+        )
         input_group_a = VGroup(input_label_a, input_group_a)
 
         # Second input array (b)
@@ -33,7 +40,7 @@ class Puzzle02Visualization(Scene):
             height=array_scale + 0.6,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         for i in range(4):
@@ -44,12 +51,18 @@ class Puzzle02Visualization(Scene):
         input_array_b.arrange(RIGHT, buff=0)
         input_array_b.move_to(input_bg_b)
         input_group_b = VGroup(input_bg_b, input_array_b)
-        input_label_b = Text("Input Array B (size=4)", font_size=18).next_to(input_group_b, UP, buff=0.2)
+        input_label_b = Text("Input Array B (size=4)", font_size=18).next_to(
+            input_group_b, UP, buff=0.2
+        )
         input_group_b = VGroup(input_label_b, input_group_b)
 
         # Arrange input arrays side by side with consistent spacing
-        input_arrays = VGroup(input_group_a, input_group_b).arrange(RIGHT, buff=1.5)
-        input_arrays.shift(UP * 2.5)  # Move both arrays up together after arranging
+        input_arrays = VGroup(input_group_a, input_group_b).arrange(
+            RIGHT, buff=1.5
+        )
+        input_arrays.shift(
+            UP * 2.5
+        )  # Move both arrays up together after arranging
 
         # GPU Thread Block in the middle
         block_bg = Rectangle(
@@ -57,9 +70,11 @@ class Puzzle02Visualization(Scene):
             height=2.4,
             stroke_color=GOLD_D,
             fill_color=DARK_GRAY,
-            fill_opacity=0.1
+            fill_opacity=0.1,
         )
-        block_label = Text("GPU Parallel Threads in a Block", font_size=18).next_to(block_bg, UP, buff=0.2)
+        block_label = Text(
+            "GPU Parallel Threads in a Block", font_size=18
+        ).next_to(block_bg, UP, buff=0.2)
 
         threads = VGroup()
         for i in range(4):
@@ -69,7 +84,7 @@ class Puzzle02Visualization(Scene):
                 corner_radius=0.1,
                 stroke_color=WHITE,
                 fill_color=DARK_GRAY,
-                fill_opacity=0.8
+                fill_opacity=0.8,
             )
             thread_text = Text(f"thread_idx.x={i}", font_size=16, color=YELLOW)
             thread_cell.add(thread_text)
@@ -89,7 +104,7 @@ class Puzzle02Visualization(Scene):
             height=array_scale + 1,
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).shift(DOWN * 0.5)
 
         for i in range(4):
@@ -100,7 +115,9 @@ class Puzzle02Visualization(Scene):
         output_array.arrange(RIGHT, buff=0)
         output_array.move_to(output_bg)
         output_group = VGroup(output_bg, output_array)
-        output_label = Text("Output Array (size=4)", font_size=18).next_to(output_group, UP, buff=0.2)
+        output_label = Text("Output Array (size=4)", font_size=18).next_to(
+            output_group, UP, buff=0.2
+        )
         output_group = VGroup(output_label, output_group)
 
         output_group.shift(DOWN * 2.5)  # Move output array down after creation
@@ -112,7 +129,7 @@ class Puzzle02Visualization(Scene):
             Create(input_array_a),
             Create(input_bg_b),
             Create(input_array_b),
-            run_time=1.5
+            run_time=1.5,
         )
 
         self.play(Write(block_label))
@@ -128,32 +145,35 @@ class Puzzle02Visualization(Scene):
             start_a = input_array_a[i].get_bottom()
             end = threads[i].get_top()
             arrow1 = Arrow(
-                start_a, end,
+                start_a,
+                end,
                 buff=0.2,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             # Arrows from second input array to thread
             start_b = input_array_b[i].get_bottom()
             arrow2 = Arrow(
-                start_b, end,
+                start_b,
+                end,
                 buff=0.2,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             # Arrow from thread to output
             start = threads[i].get_bottom()
             end = output_array[i].get_top()
             arrow3 = Arrow(
-                start, end,
+                start,
+                end,
                 buff=0.2,
                 color=GREEN_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             arrows.add(arrow1, arrow2, arrow3)
@@ -161,13 +181,16 @@ class Puzzle02Visualization(Scene):
         self.play(FadeIn(arrows), run_time=0.3)
         self.wait(60)
 
+
 if __name__ == "__main__":
-    with tempconfig({
-        "preview": True,
-        "format": "gif",
-        "media_dir": "./media",
-        "quality": "medium_quality",
-        "output_file": "puzzle_02_viz"
-    }):
+    with tempconfig(
+        {
+            "preview": True,
+            "format": "gif",
+            "media_dir": "./media",
+            "quality": "medium_quality",
+            "output_file": "puzzle_02_viz",
+        }
+    ):
         scene = Puzzle02Visualization()
         scene.render()

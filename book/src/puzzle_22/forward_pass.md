@@ -2,12 +2,16 @@
 
 ## Overview
 
-In this puzzle, we explore the performance benefits of kernel fusion by implementing and comparing two approaches to the [LayerNorm](https://arxiv.org/abs/1607.06450) and Linear operation:
+In this puzzle, we explore the performance benefits of kernel fusion by
+implementing and comparing two approaches to the
+[LayerNorm](https://arxiv.org/abs/1607.06450) and Linear operation:
 
 1. **Unfused approach**: Executes LayerNorm and Linear as separate operations
-2. **Fused kernel**: Combines LayerNorm and Linear operations into a single GPU kernel
+2. **Fused kernel**: Combines LayerNorm and Linear operations into a single GPU
+   kernel
 
-This comparison demonstrates how kernel fusion can significantly improve performance by:
+This comparison demonstrates how kernel fusion can significantly improve
+performance by:
 
 - Reducing memory bandwidth usage
 - Minimizing kernel launch overhead
@@ -27,29 +31,38 @@ In this puzzle, you'll learn:
 The mathematical operations we're fusing are:
 
 1. LayerNorm:
-\\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+\\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 +
+\epsilon}} + \beta \\]
 
 2. Linear:
 \\[\Large \text{Linear}(x) = Wx + b \\]
 
-When fused, we compute:
-\\[\Large \text{Fused}(x) = W(\gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \\]
+When fused, we compute: \\[\Large \text{Fused}(x) = W(\gamma \odot \frac{x -
+\mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \\]
 
 ## Understanding LayerNorm
 
-LayerNorm is a normalization technique that helps stabilize and accelerate the training of deep neural networks. Let's break down its components and parameters:
+LayerNorm is a normalization technique that helps stabilize and accelerate the
+training of deep neural networks. Let's break down its components and
+parameters:
 
 ### What LayerNorm does
 
-1. **Normalization**: LayerNorm normalizes the activations across the features (hidden dimensions) for each sample independently. This means:
-   - For each sequence position, it computes statistics across the hidden dimension
+1. **Normalization**: LayerNorm normalizes the activations across the features
+   (hidden dimensions) for each sample independently. This means:
+   - For each sequence position, it computes statistics across the hidden
+     dimension
    - Each sample in the batch is normalized independently
-   - This is different from [BatchNorm](https://arxiv.org/abs/1502.03167), which normalizes across the batch dimension
+   - This is different from [BatchNorm](https://arxiv.org/abs/1502.03167), which
+     normalizes across the batch dimension
 
 2. **Parameters**:
-   - \\(\gamma\\) (scale): A learnable parameter vector that allows the network to learn the optimal scale for each feature
-   - \\(\beta\\) (shift): A learnable parameter vector that allows the network to learn the optimal shift for each feature
-   - \\(\epsilon\\): A small constant (1e-5) added to the variance to prevent division by zero
+   - \\(\gamma\\) (scale): A learnable parameter vector that allows the network
+     to learn the optimal scale for each feature
+   - \\(\beta\\) (shift): A learnable parameter vector that allows the network
+     to learn the optimal shift for each feature
+   - \\(\epsilon\\): A small constant (1e-5) added to the variance to prevent
+     division by zero
 
 ### What LayerNorm does in practice
 
@@ -58,7 +71,8 @@ LayerNorm performs several crucial functions in deep neural networks:
 1. **Feature standardization**:
    - Transforms each feature to have zero mean and unit variance
    - Makes the network's learning process more stable
-   - Helps prevent the "internal covariate shift" problem where the distribution of layer inputs changes during training
+   - Helps prevent the "internal covariate shift" problem where the distribution
+     of layer inputs changes during training
 
 2. **Gradient flow**:
    - Improves gradient flow through the network
@@ -72,7 +86,8 @@ LayerNorm performs several crucial functions in deep neural networks:
 
 4. **Sequence modeling**:
    - Particularly effective in transformer architectures
-   - Helps maintain consistent signal magnitude across different sequence lengths
+   - Helps maintain consistent signal magnitude across different sequence
+     lengths
    - Enables better handling of variable-length sequences
 
 5. **Training dynamics**:
@@ -92,12 +107,15 @@ LayerNorm performs several crucial functions in deep neural networks:
    - Computes the variance across the hidden dimension
    - Used to scale the normalized values
 
-3. **Normalization and Scaling**:
-   \\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+3. **Normalization and Scaling**: \\[\Large \text{LayerNorm}(x) = \gamma \odot
+   \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
    - First normalizes the input to have zero mean and unit variance
-   - Then applies learnable scale (\\(\gamma\\)) and shift (\\(\beta\\)) parameters
-   - The \\(\odot\\) symbol represents elementwise multiplication (Hadamard product)
-   - For example, if \\(\gamma = [1.2, 0.8, 1.5]\\)  and normalized input is \\([0.5, -0.3, 0.7]\\), then \\(\gamma \odot x = [0.6, -0.24, 1.05]\\)
+   - Then applies learnable scale (\\(\gamma\\)) and shift (\\(\beta\\))
+     parameters
+   - The \\(\odot\\) symbol represents elementwise multiplication (Hadamard
+     product)
+   - For example, if \\(\gamma = [1.2, 0.8, 1.5]\\) and normalized input is
+     \\([0.5, -0.3, 0.7]\\), then \\(\gamma \odot x = [0.6, -0.24, 1.05]\\)
 
 ### Why LayerNorm is important
 
@@ -106,11 +124,13 @@ LayerNorm performs several crucial functions in deep neural networks:
    - Helps maintain consistent signal magnitude throughout the network
 
 2. **Feature Learning**:
-   - The scale (\\(\gamma\\)) and shift (\\(\beta\\)) parameters allow the network to learn which features are important
+   - The scale (\\(\gamma\\)) and shift (\\(\beta\\)) parameters allow the
+     network to learn which features are important
    - Can effectively learn to ignore or emphasize certain features
 
 3. **Independence**:
-   - Unlike BatchNorm, LayerNorm's statistics are computed independently for each sample
+   - Unlike BatchNorm, LayerNorm's statistics are computed independently for
+     each sample
    - Makes it more suitable for variable-length sequences and small batch sizes
 
 ## Configuration
@@ -126,11 +146,14 @@ LayerNorm performs several crucial functions in deep neural networks:
 
 ### 1. Unfused implementation
 
-The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:
+The unfused approach executes operations separately using multiple kernels. Here
+are some of the kernels we wrote in the previous chapters:
 
 #### Matrix multiplication kernel
 
-From [Puzzle 16](../puzzle_16/puzzle_16.md), we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:
+From [Puzzle 16](../puzzle_16/puzzle_16.md), we reuse the tiled matrix
+multiplication kernel for the linear transformation. This kernel includes bounds
+checking to handle variable matrix dimensions safely:
 
 ```mojo
 {{#include ../../../problems/p22/op/layernorm_linear.mojo:matmul_idiomatic_tiled}}
@@ -138,7 +161,8 @@ From [Puzzle 16](../puzzle_16/puzzle_16.md), we reuse the tiled matrix multiplic
 
 #### Transpose kernel
 
-For efficient memory access patterns, we use a transpose kernel with shared memory tiling:
+For efficient memory access patterns, we use a transpose kernel with shared
+memory tiling:
 
 ```mojo
 {{#include ../../../problems/p22/op/layernorm_linear.mojo:transpose_kernel}}
@@ -300,7 +324,8 @@ UNFUSED Algorithm Test Completed!
 
 <div class="solution-explanation">
 
-The unfused implementation follows a straightforward approach where each thread handles one element of the output tensor. Let's break down the key components:
+The unfused implementation follows a straightforward approach where each thread
+handles one element of the output tensor. Let's break down the key components:
 
 1. **Thread and Block Organization**:
 
@@ -354,7 +379,8 @@ The unfused implementation follows a straightforward approach where each thread 
    output[batch_idx, seq_idx, hidden_idx] = normalized
    ```
 
-   - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+   - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x -
+     \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
    - Scale with learnable parameter `γ` (ln_weight)
    - Add learnable bias `β` (ln_bias)
    - Store result in output tensor
@@ -393,7 +419,9 @@ The unfused implementation follows a straightforward approach where each thread 
      - High memory bandwidth usage
      - Multiple kernel launches required
 
-This implementation is correct but not optimal for performance, as shown in the benchmark results where it's slightly slower than the CPU version. The fused implementation will address these performance limitations by:
+This implementation is correct but not optimal for performance, as shown in the
+benchmark results where it's slightly slower than the CPU version. The fused
+implementation will address these performance limitations by:
 
 - Computing statistics once per sequence
 - Reusing normalized values
@@ -405,7 +433,8 @@ This implementation is correct but not optimal for performance, as shown in the 
 
 ### 2. Fused kernel implementation
 
-The fused kernel combines LayerNorm and Linear operations into a single GPU kernel:
+The fused kernel combines LayerNorm and Linear operations into a single GPU
+kernel:
 
 ```mojo
 {{#include ../../../problems/p22/op/layernorm_linear.mojo:minimal_fused_forward_kernel}}
@@ -551,13 +580,17 @@ The fused implementation combines operations efficiently:
 2. **LayerNorm phase**:
    - Compute sum and squared sum for the sequence position
    - Calculate mean: \\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \\]
-   - Calculate variance: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \\]
-   - Compute inverse standard deviation: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \\]
+   - Calculate variance: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i -
+     \mu)^2 \\]
+   - Compute inverse standard deviation: \\[\Large \text{inv\_std} =
+     \frac{1}{\sqrt{\sigma^2 + \epsilon}} \\]
 
 3. **Linear phase**:
    - For each output dimension:
-     - Compute normalized value: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
-     - Multiply with linear weight and accumulate: \\[\Large \text{acc} = \sum_{h=1}^{H} \text{normalized}_h \cdot W_{out,h} \\]
+     - Compute normalized value: \\[\Large \text{normalized} = \gamma \odot
+       \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+     - Multiply with linear weight and accumulate: \\[\Large \text{acc} =
+       \sum_{h=1}^{H} \text{normalized}_h \cdot W_{out,h} \\]
      - Add linear bias: \\[\Large \text{output} = \text{acc} + b_{out} \\]
    - Store result in `output[batch_idx, seq_idx, out_idx]`
 
@@ -568,13 +601,15 @@ The fused implementation combines operations efficiently:
    - No intermediate tensor allocations
    - Efficient memory access patterns
 
-This implementation achieves better performance than the unfused version by reducing memory bandwidth usage and kernel launch overhead.
+This implementation achieves better performance than the unfused version by
+reducing memory bandwidth usage and kernel launch overhead.
 </div>
 </details>
 
 ## Advantages of kernel fusion
 
-In this puzzle, we've explored two approaches to implementing LayerNorm + Linear operations:
+In this puzzle, we've explored two approaches to implementing LayerNorm + Linear
+operations:
 
 1. **Unfused implementation**:
    - Separate kernels for LayerNorm and Linear
@@ -596,7 +631,9 @@ In this puzzle, we've explored two approaches to implementing LayerNorm + Linear
    - No intermediate tensor allocations between operations
    - Reduced global memory reads/writes
    - Reuse of normalized values for linear transformation
-   - Memory bandwidth reduction: \\[\Large \text{reduction} = \frac{\text{unfused\_bandwidth} - \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
+   - Memory bandwidth reduction: \\[\Large \text{reduction} =
+     \frac{\text{unfused\_bandwidth} -
+     \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
 
 2. **Cache efficiency**:
    - Better L1/L2 cache utilization
@@ -632,4 +669,7 @@ In this puzzle, we've explored two approaches to implementing LayerNorm + Linear
    - Better precision in intermediate results
    - Optimized computation order
 
-💡 **Key insight**: Kernel fusion is particularly beneficial for operations that are frequently used together in neural networks, like LayerNorm + Linear in transformer architectures. The performance benefits become more significant with larger input sizes and more complex models.
+💡 **Key insight**: Kernel fusion is particularly beneficial for operations that
+are frequently used together in neural networks, like LayerNorm + Linear in
+transformer architectures. The performance benefits become more significant with
+larger input sizes and more complex models.

@@ -4,11 +4,21 @@
 
 ## 개요
 
-**Puzzle 25: 워프 통신 기본 요소**에서는 고급 GPU **워프 레벨 통신 연산** - 워프 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. [shuffle_down](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)과 [broadcast](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)를 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을 배웁니다.
+**Puzzle 25: 워프 통신 기본 요소**에서는 고급 GPU **워프 레벨 통신 연산** - 워프
+내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본
+요소를 소개합니다.
+[shuffle_down](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)과
+[broadcast](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)를
+사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을
+배웁니다.
 
-**Part VII: GPU 워프 통신**에서는 스레드 그룹 내 워프 레벨 데이터 이동 연산을 다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된 데이터 이동을 활용하는 효율적인 워프 통신 호출로 대체하는 방법을 배웁니다.
+**Part VII: GPU 워프 통신**에서는 스레드 그룹 내 워프 레벨 데이터 이동 연산을
+다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된
+데이터 이동을 활용하는 효율적인 워프 통신 호출로 대체하는 방법을 배웁니다.
 
-**핵심 통찰:** _GPU 워프는 록스텝으로 실행됩니다 - Mojo의 워프 통신 연산은 이 동기화를 활용하여 자동 경계 처리와 명시적 동기화 없이 효율적인 데이터 교환 기본 요소를 제공합니다._
+**핵심 통찰:** _GPU 워프는 록스텝으로 실행됩니다 - Mojo의 워프 통신 연산은 이
+동기화를 활용하여 자동 경계 처리와 명시적 동기화 없이 효율적인 데이터 교환 기본
+요소를 제공합니다._
 
 ## 배울 내용
 
@@ -16,7 +26,7 @@
 
 GPU 워프 내 기본 통신 패턴을 이해합니다:
 
-```
+```text
 GPU 워프 (32 스레드, SIMT 록스텝 실행)
 ├── 레인 0  ──shuffle_down──> 레인 1  ──shuffle_down──> 레인 2
 ├── 레인 1  ──shuffle_down──> 레인 2  ──shuffle_down──> 레인 3
@@ -39,12 +49,22 @@ GPU 워프 (32 스레드, SIMT 록스텝 실행)
 
 `gpu.primitives.warp`의 핵심 통신 기본 요소를 배웁니다:
 
-1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**: 더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)
-2. **[`broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)**: 레인 0의 값을 모든 레인에 공유 (일대다)
-3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**: 특정 레인에서 값을 가져오기 (임의 접근)
-4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**: 더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)
+1. **[`shuffle_down(value,
+   offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**:
+   더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)
+2. **[`broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)**:
+   레인 0의 값을 모든 레인에 공유 (일대다)
+3. **[`shuffle_idx(value,
+   lane)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**:
+   특정 레인에서 값을 가져오기 (임의 접근)
+4. **[`shuffle_up(value,
+   offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**:
+   더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)
 
-> **참고:** 이 퍼즐은 가장 많이 사용되는 통신 패턴인 `shuffle_down()`과 `broadcast()`에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은 [Mojo GPU 워프 문서](https://docs.modular.com/mojo/std/gpu/primitives/warp/)를 참고하세요.
+> **참고:** 이 퍼즐은 가장 많이 사용되는 통신 패턴인 `shuffle_down()`과
+> `broadcast()`에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은
+> [Mojo GPU 워프 문서](https://docs.modular.com/mojo/std/gpu/primitives/warp/)를
+> 참고하세요.
 
 ### **성능 변환 예시**
 
@@ -78,18 +98,19 @@ else:
 
 성능 특성을 이해합니다:
 
-| 통신 패턴 | 기존 방식 | 워프 연산 |
-|----------------------|-------------|-----------------|
-| 이웃 접근 | 공유 메모리 | 레지스터 간 직접 통신 |
-| 스텐실 연산 | 복잡한 인덱싱 | 간단한 셔플 패턴 |
-| 블록 조정 | 배리어 + 공유 메모리 | 단일 브로드캐스트 |
-| 경계 처리 | 수동 검사 | 하드웨어 자동 처리 |
+| 통신 패턴   | 기존 방식            | 워프 연산             |
+|-------------|----------------------|-----------------------|
+| 이웃 접근   | 공유 메모리          | 레지스터 간 직접 통신 |
+| 스텐실 연산 | 복잡한 인덱싱        | 간단한 셔플 패턴      |
+| 블록 조정   | 배리어 + 공유 메모리 | 단일 브로드캐스트     |
+| 경계 처리   | 수동 검사            | 하드웨어 자동 처리    |
 
 ## 선수 지식
 
 워프 통신에 들어가기 전에 다음 내용에 익숙해야 합니다:
 
-- **Part VII 워프 기초**: SIMT 실행과 기본 워프 연산에 대한 이해 ([Puzzle 24: 워프 기초](../puzzle_24/puzzle_24.md) 참고)
+- **Part VII 워프 기초**: SIMT 실행과 기본 워프 연산에 대한 이해
+  ([Puzzle 24: 워프 기초](../puzzle_24/puzzle_24.md) 참고)
 - **GPU 스레드 계층 구조**: 블록, 워프, 레인 번호 매기기
 - **TileTensor 연산**: 로드, 저장, 텐서 조작
 - **경계 조건 처리**: 병렬 알고리즘의 가장자리 케이스 관리
@@ -172,10 +193,17 @@ result = use_shared_value(shared_value, local_data)
 
 ## 시작하기
 
-이웃 기반 셔플 연산으로 기초를 다진 다음, 고급 조정을 위한 집합 브로드캐스트 패턴으로 나아갑니다.
+이웃 기반 셔플 연산으로 기초를 다진 다음, 고급 조정을 위한 집합 브로드캐스트
+패턴으로 나아갑니다.
 
-💡 **성공 팁**: 워프 통신을 같은 워프 내 스레드 간의 **하드웨어 가속 메시지 패싱**으로 생각하세요. 이 멘탈 모델이 GPU의 SIMT 아키텍처를 활용하는 효율적인 통신 패턴으로 안내할 것입니다.
+💡 **성공 팁**: 워프 통신을 같은 워프 내 스레드 간의
+**하드웨어 가속 메시지 패싱**으로 생각하세요. 이 멘탈 모델이 GPU의 SIMT
+아키텍처를 활용하는 효율적인 통신 패턴으로 안내할 것입니다.
 
-**학습 목표**: Puzzle 25를 마치면, 워프 통신이 복잡한 공유 메모리 패턴을 대체할 수 있는 상황을 인식하여 더 간단하고 빠른 이웃 기반 알고리즘과 조정 알고리즘을 작성할 수 있게 됩니다.
+**학습 목표**: Puzzle 25를 마치면, 워프 통신이 복잡한 공유 메모리 패턴을 대체할
+수 있는 상황을 인식하여 더 간단하고 빠른 이웃 기반 알고리즘과 조정 알고리즘을
+작성할 수 있게 됩니다.
 
-**시작하기**: **[warp.shuffle_down()](./warp_shuffle_down.md)** 에서 이웃 통신을 배운 다음, **[warp.broadcast()](./warp_broadcast.md)** 에서 집합 조정 패턴으로 나아가세요.
+**시작하기**: **[warp.shuffle_down()](./warp_shuffle_down.md)** 에서 이웃 통신을
+배운 다음, **[warp.broadcast()](./warp_broadcast.md)** 에서 집합 조정 패턴으로
+나아가세요.

@@ -4,29 +4,55 @@
 
 ## 개요
 
-이 마지막 도전에서는 [워프 레벨 (Puzzle 24-26)](../puzzle_24/puzzle_24.md), [블록 레벨 (Puzzle 27)](../puzzle_27/puzzle_27.md), 클러스터 조정에 이르기까지 **GPU 프로그래밍 계층 구조의 모든 레벨**을 결합하여 GPU 활용률을 극대화하는 정교한 다단계 알고리즘을 구현합니다.
+이 마지막 도전에서는 [워프 레벨 (Puzzle 24-26)](../puzzle_24/puzzle_24.md),
+[블록 레벨 (Puzzle 27)](../puzzle_27/puzzle_27.md), 클러스터 조정에 이르기까지
+**GPU 프로그래밍 계층 구조의 모든 레벨**을 결합하여 GPU 활용률을 극대화하는
+정교한 다단계 알고리즘을 구현합니다.
 
-**도전 과제**: **워프 레벨 최적화** (`elect_one_sync()`), **블록 레벨 집계**, **클러스터 레벨 조정**을 하나의 통합된 패턴으로 사용하는 계층적 클러스터 알고리즘을 구현합니다.
+**도전 과제**: **워프 레벨 최적화** (`elect_one_sync()`), **블록 레벨 집계**,
+**클러스터 레벨 조정**을 하나의 통합된 패턴으로 사용하는 계층적 클러스터
+알고리즘을 구현합니다.
 
-**핵심 학습**: 고급 연산 워크로드에서 사용되는 프로덕션 수준의 조정 패턴과 함께 완전한 GPU 프로그래밍 스택을 배웁니다.
+**핵심 학습**: 고급 연산 워크로드에서 사용되는 프로덕션 수준의 조정 패턴과 함께
+완전한 GPU 프로그래밍 스택을 배웁니다.
 
 ## 문제: 다단계 데이터 처리 파이프라인
 
-실제 GPU 알고리즘은 GPU 계층 구조의 서로 다른 레벨([Puzzle 24의 워프](../puzzle_24/warp_simt.md), [Puzzle 27의 블록](../puzzle_27/block_sum.md), 클러스터)이 조정된 연산 파이프라인에서 각각 전문화된 역할을 수행하는 **계층적 조정**을 필요로 하는 경우가 많으며, 이는 [Puzzle 29의 다단계 처리](../puzzle_29/barrier.md)를 확장합니다.
+실제 GPU 알고리즘은 GPU 계층 구조의 서로 다른
+레벨([Puzzle 24의 워프](../puzzle_24/warp_simt.md),
+[Puzzle 27의 블록](../puzzle_27/block_sum.md), 클러스터)이 조정된 연산
+파이프라인에서 각각 전문화된 역할을 수행하는 **계층적 조정**을 필요로 하는
+경우가 많으며, 이는 [Puzzle 29의 다단계 처리](../puzzle_29/barrier.md)를
+확장합니다.
 
 **과제**: 다음과 같은 다단계 알고리즘을 구현하세요:
 
-1. **[워프 레벨](../puzzle_24/warp_sum.md)**: 효율적인 워프 내부 조정을 위해 [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 사용합니다 ([SIMT 실행](../puzzle_24/warp_simt.md))
-2. **[블록 레벨](../puzzle_27/block_sum.md)**: [공유 메모리 조정](../puzzle_08/puzzle_08.md)을 사용하여 워프 결과를 집계합니다
-3. **클러스터 레벨**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) / [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) [Puzzle 29의 단계적 동기화](../puzzle_29/barrier.md)를 사용하여 블록 간 조정을 수행합니다
+1. **[워프 레벨](../puzzle_24/warp_sum.md)**: 효율적인 워프 내부 조정을 위해
+   [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를
+   사용합니다 ([SIMT 실행](../puzzle_24/warp_simt.md))
+2. **[블록 레벨](../puzzle_27/block_sum.md)**:
+   [공유 메모리 조정](../puzzle_08/puzzle_08.md)을 사용하여 워프 결과를
+   집계합니다
+3. **클러스터 레벨**:
+   [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+   /
+   [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+   [Puzzle 29의 단계적 동기화](../puzzle_29/barrier.md)를 사용하여 블록 간
+   조정을 수행합니다
 
 ### 알고리즘 명세
 
 **다단계 처리 파이프라인:**
 
-1. **1단계 ([워프 레벨](../puzzle_24/puzzle_24.md))**: 각 워프가 하나의 스레드를 선출하여 32개의 연속 요소를 합산합니다
-2. **2단계 ([블록 레벨](../puzzle_27/puzzle_27.md))**: 각 블록 내의 모든 워프 합계를 집계합니다
-3. **3단계 (클러스터 레벨)**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) / [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 블록 간 조정을 수행합니다
+1. **1단계 ([워프 레벨](../puzzle_24/puzzle_24.md))**: 각 워프가 하나의 스레드를
+   선출하여 32개의 연속 요소를 합산합니다
+2. **2단계 ([블록 레벨](../puzzle_27/puzzle_27.md))**: 각 블록 내의 모든 워프
+   합계를 집계합니다
+3. **3단계 (클러스터 레벨)**:
+   [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+   /
+   [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로
+   블록 간 조정을 수행합니다
 
 **입력**: 테스트를 위한 `(i % 50) * 0.02` 패턴의 1024개 float 값
 **출력**: 계층적 처리 효과를 보여주는 4개 블록 결과
@@ -39,7 +65,8 @@
 - **워프 크기**: `WARP_SIZE = 32` 워프당 스레드 수 (NVIDIA 표준)
 - **블록당 워프 수**: `TPB / WARP_SIZE = 8` 워프
 - **데이터 타입**: `DType.float32`
-- **메모리 레이아웃**: 입력 `row_major[SIZE]()`, 출력 `row_major[CLUSTER_SIZE]()`
+- **메모리 레이아웃**: 입력 `row_major[SIZE]()`, 출력
+  `row_major[CLUSTER_SIZE]()`
 
 **처리 분배:**
 
@@ -63,43 +90,63 @@
 
 ### **워프 레벨 최적화 패턴**
 
-- [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 사용하여 워프당 하나의 스레드를 연산용으로 선출합니다 ([워프 프로그래밍 기초](../puzzle_24/warp_sum.md))
-- 선출된 스레드가 32개의 연속 요소를 처리해야 합니다 ([SIMT 실행](../puzzle_24/warp_simt.md) 활용)
-- `(local_i // 32) * 32`로 워프 시작점을 계산하여 워프 경계를 찾습니다 ([워프 개념](../puzzle_24/puzzle_24.md)의 Lane 인덱싱)
-- 워프 결과를 [선출된 스레드 위치의 공유 메모리](../puzzle_08/puzzle_08.md)에 저장합니다
+- [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를
+  사용하여 워프당 하나의 스레드를 연산용으로 선출합니다
+  ([워프 프로그래밍 기초](../puzzle_24/warp_sum.md))
+- 선출된 스레드가 32개의 연속 요소를 처리해야 합니다
+  ([SIMT 실행](../puzzle_24/warp_simt.md) 활용)
+- `(local_i // 32) * 32`로 워프 시작점을 계산하여 워프 경계를 찾습니다
+  ([워프 개념](../puzzle_24/puzzle_24.md)의 Lane 인덱싱)
+- 워프 결과를 [선출된 스레드 위치의 공유 메모리](../puzzle_08/puzzle_08.md)에
+  저장합니다
 
 ### **블록 레벨 집계 전략**
 
-- 워프 처리 후 모든 워프 결과를 집계합니다 ([Puzzle 27의 블록 조정](../puzzle_27/block_sum.md) 확장)
+- 워프 처리 후 모든 워프 결과를 집계합니다
+  ([Puzzle 27의 블록 조정](../puzzle_27/block_sum.md) 확장)
 - 선출된 위치에서 읽습니다: 인덱스 0, 32, 64, 96, 128, 160, 192, 224
-- `for i in range(0, tpb, 32)` 루프로 워프 리더를 순회합니다 ([리덕션 알고리즘](../puzzle_12/puzzle_12.md)의 패턴)
-- 스레드 0만 최종 블록 합계를 계산해야 합니다 ([배리어 조정](../puzzle_29/barrier.md)의 단일 쓰기 패턴)
+- `for i in range(0, tpb, 32)` 루프로 워프 리더를 순회합니다
+  ([리덕션 알고리즘](../puzzle_12/puzzle_12.md)의 패턴)
+- 스레드 0만 최종 블록 합계를 계산해야 합니다
+  ([배리어 조정](../puzzle_29/barrier.md)의 단일 쓰기 패턴)
 
 ### **클러스터 조정 흐름**
 
 1. **처리**: 각 블록이 계층적 워프 최적화로 데이터를 처리합니다
-2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)로 로컬 처리 완료를 알립니다
+2. **신호**:
+   [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)로
+   로컬 처리 완료를 알립니다
 3. **저장**: 스레드 0이 블록 결과를 출력에 기록합니다
-4. **대기**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 모든 블록이 완료될 때까지 대기합니다
+4. **대기**:
+   [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로
+   모든 블록이 완료될 때까지 대기합니다
 
 ### **데이터 스케일링 및 경계 검사**
 
 - `Float32(block_id + 1)`로 입력을 스케일링하여 블록별 고유 패턴을 만듭니다
-- 입력을 읽기 전에 항상 `global_i < size`를 검사합니다 ([Puzzle 3의 가드](../puzzle_03/puzzle_03.md))
-- 블록 내 처리 단계 사이에 `barrier()`를 사용합니다 ([동기화 패턴](../puzzle_29/barrier.md))
-- 루프에서 워프 경계 조건을 주의 깊게 처리합니다 ([워프 프로그래밍](../puzzle_24/warp_simt.md)의 고려사항)
+- 입력을 읽기 전에 항상 `global_i < size`를 검사합니다
+  ([Puzzle 3의 가드](../puzzle_03/puzzle_03.md))
+- 블록 내 처리 단계 사이에 `barrier()`를 사용합니다
+  ([동기화 패턴](../puzzle_29/barrier.md))
+- 루프에서 워프 경계 조건을 주의 깊게 처리합니다
+  ([워프 프로그래밍](../puzzle_24/warp_simt.md)의 고려사항)
 
 </div>
 </details>
 
 ## 고급 클러스터 API
 
-**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/) 모듈:**
+**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/)
+모듈:**
 
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**: 효율적인 연산을 위한 워프 레벨 스레드 선출
-- **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: 단계적 클러스터 조정을 위한 완료 신호
-- **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: 모든 블록이 동기화 지점에 도달할 때까지 대기
-- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)**: 클러스터 내 고유한 블록 식별자 반환
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**:
+  효율적인 연산을 위한 워프 레벨 스레드 선출
+- **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**:
+  단계적 클러스터 조정을 위한 완료 신호
+- **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**:
+  모든 블록이 동기화 지점에 도달할 때까지 대기
+- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)**:
+  클러스터 내 고유한 블록 식별자 반환
 
 ## 계층적 조정 패턴
 
@@ -123,7 +170,8 @@ Block (8 warps) → aggregate warp results → 1 block total
 Cluster (4 blocks) → cluster_arrive/wait → synchronized completion
 ```
 
-**결합 효과:** 1024개 스레드 → 32개 워프 리더 → 4개 블록 결과 → 조정된 클러스터 완료
+**결합 효과:** 1024개 스레드 → 32개 워프 리더 → 4개 블록 결과 → 조정된 클러스터
+완료
 
 ## 코드 실행
 
@@ -179,7 +227,8 @@ Advanced cluster algorithm results:
 
 <div class="solution-explanation">
 
-**고급 클러스터 패턴 풀이는 GPU 활용률을 극대화하기 위해 워프, 블록, 클러스터 조정을 결합하는 정교한 3단계 계층적 최적화를 보여줍니다:**
+**고급 클러스터 패턴 풀이는 GPU 활용률을 극대화하기 위해 워프, 블록, 클러스터
+조정을 결합하는 정교한 3단계 계층적 최적화를 보여줍니다:**
 
 ## **레벨 1: 워프 레벨 최적화 (스레드 선출)**
 
@@ -246,7 +295,9 @@ if local_i == 0:
 
 **메모리 접근 패턴:**
 
-- 스레드 0이 다음 위치에서 읽습니다: `shared_data[0]`, `shared_data[32]`, `shared_data[64]`, `shared_data[96]`, `shared_data[128]`, `shared_data[160]`, `shared_data[192]`, `shared_data[224]`
+- 스레드 0이 다음 위치에서 읽습니다: `shared_data[0]`, `shared_data[32]`,
+  `shared_data[64]`, `shared_data[96]`, `shared_data[128]`, `shared_data[160]`,
+  `shared_data[192]`, `shared_data[224]`
 - 이 위치들에는 선출된 스레드가 계산한 워프 합계가 저장되어 있습니다
 - 결과: 8개 워프 합계 → 1개 블록 합계
 
@@ -262,10 +313,14 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 
 **왜 단계적 동기화를 사용할까?**
 
-- **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)** 를 최종 연산 **이전에** 호출하면 작업 중첩이 가능합니다
+- **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**
+  를 최종 연산 **이전에** 호출하면 작업 중첩이 가능합니다
 - 다른 블록이 아직 처리 중인 동안에도 블록이 자체 결과를 계산할 수 있습니다
-- **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)** 로 결정론적 완료 순서를 보장합니다
-- 독립적인 블록 연산의 경우 [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)보다 더 효율적입니다
+- **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**
+  로 결정론적 완료 순서를 보장합니다
+- 독립적인 블록 연산의 경우
+  [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)보다
+  더 효율적입니다
 
 ## **고급 패턴 특성**
 
@@ -286,13 +341,17 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 **동기화 계층 구조:**
 
 1. **`barrier()`**: 블록 내부 스레드 동기화 (데이터 로딩 및 워프 처리 후)
-2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: 블록 간 신호 (논블로킹, 작업 중첩 가능)
-3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: 블록 간 동기화 (블로킹, 완료 순서 보장)
+2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**:
+   블록 간 신호 (논블로킹, 작업 중첩 가능)
+3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**:
+   블록 간 동기화 (블로킹, 완료 순서 보장)
 
 **왜 "고급"인가:**
 
 - **다단계 최적화**: 워프, 블록, 클러스터 프로그래밍 기법을 결합합니다
-- **하드웨어 효율**: [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 활용하여 워프 활용률을 최적화합니다
+- **하드웨어 효율**:
+  [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를
+  활용하여 워프 활용률을 최적화합니다
 - **단계적 조정**: 고급 클러스터 API를 사용하여 유연한 동기화를 구현합니다
 - **프로덕션 수준**: 실제 GPU 라이브러리에서 사용되는 패턴을 보여줍니다
 
@@ -315,16 +374,18 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 
 ## 완전한 GPU 계층 구조
 
-축하합니다! 이 퍼즐을 완료함으로써 **완전한 GPU 프로그래밍 스택**을 학습했습니다:
+축하합니다! 이 퍼즐을 완료함으로써 **완전한 GPU 프로그래밍 스택**을
+학습했습니다:
 
-✅ **스레드 레벨 프로그래밍**: 개별 실행 단위</br>
-✅ **[워프 레벨 프로그래밍](../puzzle_24/puzzle_24.md)**: 32개 스레드 SIMT 조정</br>
-✅ **[블록 레벨 프로그래밍](../puzzle_27/puzzle_27.md)**: 멀티 워프 조정과 공유 메모리</br>
-✅ **🆕 클러스터 레벨 프로그래밍**: SM90+ API를 활용한 멀티 블록 조정</br>
-✅ 클러스터 동기화 기본 요소로 **여러 스레드 블록을 조정**</br>
-✅ 클러스터 API를 사용하여 **단일 블록 한계를 넘어 알고리즘을 확장**</br>
-✅ 워프 + 블록 + 클러스터 조정을 결합한 **계층적 알고리즘을 구현**</br>
-✅ SM90+ 클러스터 프로그래밍으로 **차세대 GPU 하드웨어를 활용**
+✅ **스레드 레벨 프로그래밍**: 개별 실행 단위</br> ✅
+**[워프 레벨 프로그래밍](../puzzle_24/puzzle_24.md)**: 32개 스레드 SIMT
+조정</br> ✅ **[블록 레벨 프로그래밍](../puzzle_27/puzzle_27.md)**: 멀티 워프
+조정과 공유 메모리</br> ✅ **🆕 클러스터 레벨 프로그래밍**: SM90+ API를 활용한
+멀티 블록 조정</br> ✅ 클러스터 동기화 기본 요소로
+**여러 스레드 블록을 조정**</br> ✅ 클러스터 API를 사용하여
+**단일 블록 한계를 넘어 알고리즘을 확장**</br> ✅ 워프 + 블록 + 클러스터 조정을
+결합한 **계층적 알고리즘을 구현**</br> ✅ SM90+ 클러스터 프로그래밍으로
+**차세대 GPU 하드웨어를 활용**
 
 ## 실전 응용
 
@@ -352,4 +413,8 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 
 이제 최신 하드웨어에서 사용 가능한 **최첨단 GPU 프로그래밍 기법**을 배웠습니다!
 
-**더 많은 도전을 할 준비가 되셨나요?** 다른 고급 GPU 프로그래밍 주제를 탐구하고, [Puzzle 30-32의 성능 최적화 기법](../puzzle_30/puzzle_30.md)을 복습하고, [NVIDIA 도구의 프로파일링 방법론](../puzzle_30/nvidia_profiling_basics.md)을 적용하거나, 이 클러스터 프로그래밍 패턴을 기반으로 자신만의 연산 워크로드를 구축해 보세요!
+**더 많은 도전을 할 준비가 되셨나요?** 다른 고급 GPU 프로그래밍 주제를 탐구하고,
+[Puzzle 30-32의 성능 최적화 기법](../puzzle_30/puzzle_30.md)을 복습하고,
+[NVIDIA 도구의 프로파일링 방법론](../puzzle_30/nvidia_profiling_basics.md)을
+적용하거나, 이 클러스터 프로그래밍 패턴을 기반으로 자신만의 연산 워크로드를
+구축해 보세요!

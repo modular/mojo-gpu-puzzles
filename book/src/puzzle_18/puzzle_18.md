@@ -2,13 +2,22 @@
 
 ## Overview
 
-In this puzzle, we'll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.
+In this puzzle, we'll implement the softmax function as a custom MAX Graph
+operation. Softmax takes a vector of real numbers and normalizes it into a
+probability distribution.
 
 The softmax function works by performing two main steps:
 
-1. Exponentiation: It applies the exponential function to each element of the input vector. This ensures all values are positive and amplifies the differences between them. Larger input values result in significantly larger exponential outputs, while smaller or negative values result in outputs closer to zero.
+1. Exponentiation: It applies the exponential function to each element of the
+   input vector. This ensures all values are positive and amplifies the
+   differences between them. Larger input values result in significantly larger
+   exponential outputs, while smaller or negative values result in outputs
+   closer to zero.
 
-2. Normalization: It then divides each exponentiated value by the sum of all the exponentiated values. This normalization step ensures that the resulting values are a valid probability distribution, meaning they are all between 0 and 1 and their sum is exactly 1.
+2. Normalization: It then divides each exponentiated value by the sum of all the
+   exponentiated values. This normalization step ensures that the resulting
+   values are a valid probability distribution, meaning they are all between 0
+   and 1 and their sum is exactly 1.
 
 Mathematically, the softmax function is defined as:
 
@@ -19,11 +28,14 @@ Where:
 - \\(x_i\\) is the \\(i\\)-th element of the input vector
 - \\(n\\) is the length of the input vector
 
-However, this direct implementation can lead to numerical overflow issues when values are large. To address this, we use a more numerically stable version:
+However, this direct implementation can lead to numerical overflow issues when
+values are large. To address this, we use a more numerically stable version:
 
 $$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$
 
-Our GPU implementation uses parallel reduction for both finding the maximum value and computing the sum of exponentials, making it highly efficient for large vectors.
+Our GPU implementation uses parallel reduction for both finding the maximum
+value and computing the sum of exponentials, making it highly efficient for
+large vectors.
 
 ## Key concepts
 
@@ -36,7 +48,8 @@ Our GPU implementation uses parallel reduction for both finding the maximum valu
 ## Configuration
 
 - Vector size: `SIZE = 128`
-- Threads per block: `BLOCK_DIM_X = 1 << log2_ceil(SIZE)`. Tree-based reduction requires `BLOCK_DIM_X` to be the next power of two `>= SIZE` for correctness.
+- Threads per block: `BLOCK_DIM_X = 1 << log2_ceil(SIZE)`. Tree-based reduction
+  requires `BLOCK_DIM_X` to be the next power of two `>= SIZE` for correctness.
 - Grid dimensions: \\(1 \times 1\\) block
 - Shared memory: Two shared variables for max and sum
 
@@ -48,10 +61,14 @@ Layout configuration:
 
 Key aspects of this puzzle include:
 
-1. **Numerical stability**: Understanding how to handle potential numerical issues
-2. **Parallel reductions**: Using shared memory for efficient max and sum calculations
-3. **Custom op integration**: Completing the Python interface for our Mojo GPU kernel
-4. **Testing and verification**: Ensuring our implementation matches the expected results
+1. **Numerical stability**: Understanding how to handle potential numerical
+   issues
+2. **Parallel reductions**: Using shared memory for efficient max and sum
+   calculations
+3. **Custom op integration**: Completing the Python interface for our Mojo GPU
+   kernel
+4. **Testing and verification**: Ensuring our implementation matches the
+   expected results
 
 Our softmax custom operation will:
 
@@ -62,7 +79,8 @@ Our softmax custom operation will:
 
 ## Code to complete
 
-To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.
+To complete this puzzle, you need to implement both the GPU and CPU kernels in
+the Mojo file and complete the graph definition in the Python code.
 
 ### 1. Implement the GPU kernel in `softmax.mojo`
 
@@ -77,12 +95,15 @@ To complete this puzzle, you need to implement both the GPU and CPU kernels in t
 
 <div class="solution-tips">
 
-1. Use shared memory for both the maximum value and sum to ensure all threads can access these values
+1. Use shared memory for both the maximum value and sum to ensure all threads
+   can access these values
 2. Remember to call `barrier()` at appropriate points to synchronize threads
-3. Implement parallel reduction by having each thread process a portion of the input array
+3. Implement parallel reduction by having each thread process a portion of the
+   input array
 4. Use a tree-based reduction pattern to minimize thread divergence
 5. Handle out-of-bounds access carefully, especially for large inputs
-6. For numerical stability, calculate \\(e^{x_i - max}\\) instead of \\(e^{x_i}\\)
+6. For numerical stability, calculate \\(e^{x_i - max}\\) instead of
+   \\(e^{x_i}\\)
 
 </div>
 </details>
@@ -100,11 +121,13 @@ To complete this puzzle, you need to implement both the GPU and CPU kernels in t
 
 <div class="solution-tips">
 
-1. Create a sequential implementation that follows the same mathematical steps as the GPU version
+1. Create a sequential implementation that follows the same mathematical steps
+   as the GPU version
 2. First find the maximum value across all inputs
 3. Then compute \\(e^{x_i - max}\\) for each element and accumulate the sum
 4. Finally, normalize by dividing each element by the sum
-5. Use scalar operations since we don't have parallel threads in the CPU implementation
+5. Use scalar operations since we don't have parallel threads in the CPU
+   implementation
 
 </div>
 </details>
@@ -156,7 +179,8 @@ Skipped: 0 (0.00%)
 <div class="solution-tips">
 
 1. Use `graph.inputs[0]` to access the input tensor passed to the graph
-2. Call `ops.custom()` with the name matching your registered custom op ("softmax")
+2. Call `ops.custom()` with the name matching your registered custom op
+   ("softmax")
 3. Pass the input tensor as a value to the custom operation
 4. Specify the output type to match the input shape
 5. Include the "input_size" parameter which is required by the kernel
@@ -206,7 +230,7 @@ uv run poe p18
 
 When successful, you should see output similar to on CPU and GPU:
 
-```
+```text
 Input shape: (128,)
 First few random input values: [ 1.1810775   0.60472375  0.5718309   0.6644599  -0.08899796]
 Compiling softmax graph on Device(type=cpu,id=0)
@@ -223,14 +247,18 @@ Sum of all probabilities on CPU: 1.0
 Sum of all probabilities on GPU: 1.0
 ```
 
-This indicates that your custom MAX Graph operation correctly implements the softmax algorithm and produces a valid probability distribution.
+This indicates that your custom MAX Graph operation correctly implements the
+softmax algorithm and produces a valid probability distribution.
 
 ## Solution
 
 <details class="solution-details">
 <summary></summary>
 
-To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU) and the Python graph definition for our softmax custom operation. Similar to what we did in [Puzzle 17](../puzzle_17/puzzle_17.md), we're creating a bridge between Python's ecosystem and Mojo's GPU-accelerated computing capabilities.
+To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU)
+and the Python graph definition for our softmax custom operation. Similar to
+what we did in [Puzzle 17](../puzzle_17/puzzle_17.md), we're creating a bridge
+between Python's ecosystem and Mojo's GPU-accelerated computing capabilities.
 
 The softmax operation we're implementing is mathematically defined as:
 
@@ -290,7 +318,8 @@ The kernel allocates two shared memory buffers:
 global_i = thread_idx.x
 ```
 
-This implementation of softmax operates on a single 1d thread block. i.e. The global and local index are the same.
+This implementation of softmax operates on a single 1d thread block. i.e. The
+global and local index are the same.
 
 #### Maximum-finding phase
 
@@ -328,9 +357,11 @@ This implements a parallel tree-reduction pattern:
 3. Store the maximum in the lower index
 4. Synchronize all threads with a barrier
 5. Halve the stride and repeat
-6. After \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps, `shared_max[0]` contains the global maximum
+6. After \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps, `shared_max[0]` contains the
+   global maximum
 
-This logarithmic reduction is significantly faster than a linear scan on large inputs.
+This logarithmic reduction is significantly faster than a linear scan on large
+inputs.
 
 #### Exponentiation with numerical stability
 
@@ -347,7 +378,8 @@ Each thread:
 1. Reads the global maximum from shared memory
 2. Subtracts it from its input value before taking the exponential
 3. This subtraction is crucial for numerical stability - it prevents overflow
-4. The largest exponent becomes \\(e^0 = 1\\), and all others are \\(e^{negative} < 1\\)
+4. The largest exponent becomes \\(e^0 = 1\\), and all others are
+   \\(e^{negative} < 1\\)
 
 #### Parallel sum reduction
 
@@ -368,7 +400,8 @@ The second reduction phase:
 1. Stores all exponential values in shared memory
 2. Uses the same tree-based reduction pattern as for max
 3. But performs addition instead of maximum comparison
-4. After \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps, `shared_sum[0]` contains the total sum of all exponentials
+4. After \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps, `shared_sum[0]` contains the
+   total sum of all exponentials
 
 #### Final normalization
 
@@ -390,14 +423,20 @@ Each thread:
 
 The implementation has excellent performance characteristics:
 
-- **Complexity**: \\(O(\log n)\\) for both max and sum calculations vs \\(O(n)\\) in a sequential approach
-- **Memory efficiency**: Uses only \\(2 \times BLOCK\\_DIM\\_X~\\) elements of shared memory
-- **Work efficiency**: Each thread performs approximately \\(2 \times \log_2(BLOCK\\_DIM\\_X)~\\) operations
+- **Complexity**: \\(O(\log n)\\) for both max and sum calculations vs
+  \\(O(n)\\) in a sequential approach
+- **Memory efficiency**: Uses only \\(2 \times BLOCK\\_DIM\\_X~\\) elements of
+  shared memory
+- **Work efficiency**: Each thread performs approximately \\(2 \times
+  \log_2(BLOCK\\_DIM\\_X)~\\) operations
 - **Load balancing**: Each thread handles the same amount of work
 - **Synchronization**: Uses minimal barriers, only where necessary
-- **Memory access**: Coalesced global memory access pattern for optimal bandwidth
+- **Memory access**: Coalesced global memory access pattern for optimal
+  bandwidth
 
-The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.
+The algorithm is also numerically robust, handling potential overflow/underflow
+cases by applying the max-subtraction technique that maintains precision across
+the wide range of values common in neural network activations.
 </div>
 
 ### CPU fallback implementation
@@ -417,7 +456,10 @@ Our CPU implementation provides a sequential fallback that follows the same math
        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
    ```
 
-   We initialize with the minimum finite value and perform a linear scan through the array, keeping track of the maximum value encountered. This has \\(O(n)\\) complexity but works efficiently on CPU where we don't have many cores to parallelize across.
+   We initialize with the minimum finite value and perform a linear scan through
+   the array, keeping track of the maximum value encountered. This has
+   \\(O(n)\\) complexity but works efficiently on CPU where we don't have many
+   cores to parallelize across.
 
 2. **Exponential Computation and Summation**:
 
@@ -429,7 +471,10 @@ Our CPU implementation provides a sequential fallback that follows the same math
        sum_exp += exp_val
    ```
 
-   We compute \\(e^{x_i - max}\\) for each element, store the result in the output buffer, and accumulate the sum \\(\sum_{j=1}^{n} e^{x_j - max}\\) in a single pass. This approach minimizes memory operations compared to using separate loops.
+   We compute \\(e^{x_i - max}\\) for each element, store the result in the
+   output buffer, and accumulate the sum \\(\sum_{j=1}^{n} e^{x_j - max}\\) in a
+   single pass. This approach minimizes memory operations compared to using
+   separate loops.
 
 3. **Normalization**:
 
@@ -438,13 +483,19 @@ Our CPU implementation provides a sequential fallback that follows the same math
        output[i] = output[i] / sum_exp
    ```
 
-   Finally, we normalize each element by dividing by the sum, producing a proper probability distribution according to the softmax formula:
+   Finally, we normalize each element by dividing by the sum, producing a proper
+   probability distribution according to the softmax formula:
 
    $$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$
 
-The CPU implementation uses the same numerical stability technique (subtracting the maximum) but with sequential operations rather than parallel ones. It's simpler than the GPU version since it doesn't need to handle shared memory or thread synchronization, but it's also less efficient for large inputs.
+The CPU implementation uses the same numerical stability technique (subtracting
+the maximum) but with sequential operations rather than parallel ones. It's
+simpler than the GPU version since it doesn't need to handle shared memory or
+thread synchronization, but it's also less efficient for large inputs.
 
-Both implementations are registered with MAX Graph's custom operation system through the `@compiler.register("softmax")` decorator, allowing seamless execution on either device type based on availability.
+Both implementations are registered with MAX Graph's custom operation system
+through the `@compiler.register("softmax")` decorator, allowing seamless
+execution on either device type based on availability.
 </div>
 
 ### Python integration
@@ -476,7 +527,8 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    - Defines the input tensor type with proper dtype and shape
    - Maps the tensor to the target device (CPU or GPU)
    - Loads our custom Mojo operations from the specified directory
-   - The `custom_extensions` parameter is crucial for linking to our Mojo implementation
+   - The `custom_extensions` parameter is crucial for linking to our Mojo
+     implementation
 
 2. **Custom Operation Configuration**:
 
@@ -503,7 +555,8 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    - Name matching the `@compiler.register("softmax")` in our Mojo code
    - Input values passed as a list
    - Output type definition matching the input shape and type
-   - Parameters required by our kernel, including the target device, vector size and data type
+   - Parameters required by our kernel, including the target device, vector size
+     and data type
    - We extract the tensor from the first returned element with `[0].tensor`
 
 3. **Graph Output Definition**:
@@ -519,9 +572,12 @@ The main script includes comprehensive testing that:
 - Generates random input data: `np.random.randn(INPUT_SIZE).astype(np.float32)`
 - Calculates expected results with SciPy: `scipy_softmax(input_array)`
 - Verifies numerical accuracy: `np.testing.assert_allclose(..., rtol=1e-5)`
-- Confirms the output is a valid probability distribution: `np.sum(result.to_numpy())`
+- Confirms the output is a valid probability distribution:
+  `np.sum(result.to_numpy())`
 
-This implementation showcases the power of MAX Graph for integrating high-performance Mojo kernels with Python's scientific computing ecosystem, providing both efficiency and ease of use.
+This implementation showcases the power of MAX Graph for integrating
+high-performance Mojo kernels with Python's scientific computing ecosystem,
+providing both efficiency and ease of use.
 </div>
 
 </details>

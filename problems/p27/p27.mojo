@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.atomic import Atomic
 from std.gpu.primitives.warp import WARP_SIZE
@@ -223,7 +228,7 @@ def main() raises:
 
             # Traditional approach: works perfectly when size == TPB
             comptime kernel = traditional_dot_product[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -270,7 +275,7 @@ def main() raises:
 
             # Block.sum(): Same result with dramatically simpler code!
             comptime kernel = block_sum_dot_product[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -345,7 +350,7 @@ def main() raises:
 
                 # Execute histogram kernel for this specific bin
                 comptime kernel = block_histogram_bin_extract[TPB]
-                ctx.enqueue_function[kernel, kernel](
+                ctx.enqueue_function[kernel](
                     input_tensor,
                     bin_tensor,
                     count_tensor,
@@ -417,7 +422,7 @@ def main() raises:
 
             # Execute vector normalization kernel
             comptime kernel = block_normalize_vector[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 input_tensor,
                 output_tensor,
                 SIZE,

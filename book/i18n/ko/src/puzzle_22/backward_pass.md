@@ -4,7 +4,8 @@
 
 ## 개요
 
-이 퍼즐에서는 퓨전 LayerNorm + Linear 연산의 역방향 패스(backward pass) 구현을 살펴봅니다. 역방향 패스는 다음에 대한 기울기를 계산합니다:
+이 퍼즐에서는 퓨전 LayerNorm + Linear 연산의 역방향 패스(backward pass) 구현을
+살펴봅니다. 역방향 패스는 다음에 대한 기울기를 계산합니다:
 
 - 입력 텐서
 - LayerNorm 스케일 (\\(\gamma\\))과 시프트 (\\(\beta\\)) 파라미터
@@ -12,8 +13,12 @@
 
 구현할 수학적 연산은 다음과 같습니다:
 
-1. LayerNorm 역방향 패스 (유도 과정의 상세 내용은 [LayerNorm 역방향 패스의 상세 유도](#layernorm-역방향-패스의-상세-유도) 참조):
-\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \\]
+1. LayerNorm 역방향 패스 (유도 과정의 상세 내용은
+   [LayerNorm 역방향 패스의 상세 유도](#layernorm-역방향-패스의-상세-유도)
+   참조):
+\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot
+\gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x -
+\mu)^2}{H(\sigma^2 + \epsilon)}) \\]
 
 2. Linear 역방향 패스:
 \\[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \\]
@@ -21,8 +26,9 @@
 \\[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \\]
 
 3. 퓨전 연산의 연쇄 법칙:
-\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}} \frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial x} \\]
-여기서:
+\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}}
+\frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial
+x} \\] 여기서:
 
 - \\(y_{norm}\\)은 LayerNorm 출력
 - \\(y_{linear}\\)은 Linear 레이어 출력
@@ -68,9 +74,11 @@
 
 ## 구현 (고급)
 
-퓨전 역방향 패스 커널은 LayerNorm과 Linear의 역방향 패스 연산을 하나의 GPU 커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:
+퓨전 역방향 패스 커널은 LayerNorm과 Linear의 역방향 패스 연산을 하나의 GPU
+커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:
 
-- 기울기 누적을 위한 [원자적 연산](https://docs.modular.com/mojo/std/os/atomic/Atomic/)
+- 기울기 누적을 위한
+  [원자적 연산](https://docs.modular.com/mojo/std/os/atomic/Atomic/)
 - 기울기 계산에서의 수치 안정성
 - 효율적인 GPU 활용을 위한 메모리 접근 패턴
 - 연산 간 적절한 동기화
@@ -226,24 +234,34 @@ BACKWARD PASS Test Completed!
      - 출력 텐서: `[batch_size, seq_len, output_dim]`
      - 가중치 행렬: `[output_dim, hidden_dim]`
      - 기울기: 입력 기울기용 `[batch_size, seq_len, hidden_dim]`
-     - 파라미터 기울기: LayerNorm용 `[hidden_dim]`, Linear용 `[output_dim, hidden_dim]`
+     - 파라미터 기울기: LayerNorm용 `[hidden_dim]`, Linear용
+       `[output_dim, hidden_dim]`
 
 2. **LayerNorm 역방향 패스 단계**:
    - 순방향 패스와 동일한 순서로 순방향 패스 통계량을 재계산합니다:
      - 평균: \\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \\]
      - 분산: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \\]
-     - 역표준편차: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \\]
-   - 정규화된 값을 계산합니다: \\[\Large \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \\]
+     - 역표준편차: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 +
+       \epsilon}} \\]
+   - 정규화된 값을 계산합니다: \\[\Large \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2
+     - \epsilon}} \\]
    - 기울기를 계산합니다:
-     - 입력 기울기: \\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \\]
-     - 스케일 기울기: \\[\Large \frac{\partial L}{\partial \gamma} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \\]
-     - 시프트 기울기: \\[\Large \frac{\partial L}{\partial \beta} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \\]
+     - 입력 기울기: \\[\Large \frac{\partial L}{\partial x} = \frac{\partial
+       L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1
+       - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \\]
+     - 스케일 기울기: \\[\Large \frac{\partial L}{\partial \gamma} =
+       \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \\]
+     - 시프트 기울기: \\[\Large \frac{\partial L}{\partial \beta} =
+       \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \\]
 
 3. **Linear 역방향 패스 단계**:
    - 각 출력 차원에 대해:
-     - Bias 기울기: \\[\Large \frac{\partial L}{\partial b} = \frac{\partial L}{\partial y} \\]
-     - 가중치 기울기: \\[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \\]
-     - 입력 기울기: \\[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \\]
+     - Bias 기울기: \\[\Large \frac{\partial L}{\partial b} = \frac{\partial
+       L}{\partial y} \\]
+     - 가중치 기울기: \\[\Large \frac{\partial L}{\partial W} = \frac{\partial
+       L}{\partial y}x^T \\]
+     - 입력 기울기: \\[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial
+       L}{\partial y} \\]
    - 기울기 누적을 위한 원자적 연산 사용:
      - Bias 기울기에 적절한 정렬로 `atomic_add` 사용
      - 가중치 기울기에 적절한 정렬로 `atomic_add` 사용
@@ -295,13 +313,15 @@ BACKWARD PASS Test Completed!
 - 적절한 메모리 정렬 보장
 - 효율적인 오토그래드 통합
 
-퓨전 역방향 패스는 LayerNorm + Linear 연산이 자주 함께 사용되는 트랜스포머 아키텍처에서 특히 중요하며, 실제 애플리케이션에서 상당한 성능 이점을 제공합니다.
+퓨전 역방향 패스는 LayerNorm + Linear 연산이 자주 함께 사용되는 트랜스포머
+아키텍처에서 특히 중요하며, 실제 애플리케이션에서 상당한 성능 이점을 제공합니다.
 </div>
 </details>
 
 ## 성능 고려 사항
 
-역방향 패스 구현은 오버헤드를 최소화하기 위해 최적화된 `torch.compile`을 사용합니다:
+역방향 패스 구현은 오버헤드를 최소화하기 위해 최적화된 `torch.compile`을
+사용합니다:
 
 ```python
 # Compilation configuration
@@ -319,7 +339,8 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 - 적절한 오류 처리는 기울기 계산에 매우 중요합니다
 - 컴파일 오버헤드는 학습 시간에 큰 영향을 줄 수 있습니다
 
-역방향 패스는 정확성을 유지하면서 컴파일 오버헤드를 최소화하기 위해 `reduce-overhead` 모드로 컴파일됩니다. 이것이 특히 중요한 이유는:
+역방향 패스는 정확성을 유지하면서 컴파일 오버헤드를 최소화하기 위해
+`reduce-overhead` 모드로 컴파일됩니다. 이것이 특히 중요한 이유는:
 
 - 역방향 패스는 학습 중에 빈번하게 호출됩니다
 - 기울기 계산은 수치적으로 안정적이어야 합니다
@@ -329,7 +350,8 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 
 ## LayerNorm 역방향 패스의 상세 유도
 
-LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용하여 유도됩니다. 단계별 유도 과정은 다음과 같습니다:
+LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용하여 유도됩니다.
+단계별 유도 과정은 다음과 같습니다:
 
 ### 순방향 패스 연산
 
@@ -341,7 +363,8 @@ LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용
 ### 연쇄 법칙 적용
 
 \\(\frac{\partial L}{\partial x}\\)를 계산하기 위해 연쇄 법칙을 적용합니다:
-\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\\]
+\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}
+\frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\\]
 
 ### 기울기 구성 요소
 
@@ -351,21 +374,26 @@ LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용
 
 #### 정규화된 값에서 입력으로
 
-기울기 \\(\frac{\partial \hat{x}}{\partial x}\\)에는 세 가지 구성 요소가 있습니다:
+기울기 \\(\frac{\partial \hat{x}}{\partial x}\\)에는 세 가지 구성 요소가
+있습니다:
 
 - 분자를 통한 직접적 효과: \\(\frac{1}{\sqrt{\sigma^2 + \epsilon}}\\)
-- 평균을 통한 간접적 효과: \\(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 + \epsilon}}\\)
-- 분산을 통한 간접적 효과: \\(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x - \mu)\\)
+- 평균을 통한 간접적 효과: \\(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 +
+  \epsilon}}\\)
+- 분산을 통한 간접적 효과: \\(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x
+  - \mu)\\)
 
 ### 항 결합
 
-정규화 항을 통한 기울기는 다음과 같이 정리됩니다:
-\\[\Large \frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
+정규화 항을 통한 기울기는 다음과 같이 정리됩니다: \\[\Large \frac{\partial
+\hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} -
+\frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
 
 ### 최종 기울기 표현식
 
-모든 항을 결합하면:
-\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
+모든 항을 결합하면: \\[\Large \frac{\partial L}{\partial x} = \frac{\partial
+L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 -
+\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
 
 ### 핵심 통찰
 
@@ -382,4 +410,5 @@ LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용
 - 기울기가 은닉 차원 H 전체에 걸쳐 적절히 스케일링됩니다
 - 수치 안정성을 위해 연산 순서가 순방향 패스와 일치합니다
 
-이 유도를 통해 역방향 패스가 순방향 패스와 동일한 수치적 특성을 유지하면서 필요한 모든 기울기를 효율적으로 계산할 수 있습니다.
+이 유도를 통해 역방향 패스가 순방향 패스와 동일한 수치적 특성을 유지하면서
+필요한 모든 기울기를 효율적으로 계산할 수 있습니다.

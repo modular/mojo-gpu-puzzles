@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -72,7 +77,7 @@ def main() raises:
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        ctx.enqueue_function[dot_product, dot_product](
+        ctx.enqueue_function[dot_product](
             out_tensor,
             a_tensor,
             b_tensor,

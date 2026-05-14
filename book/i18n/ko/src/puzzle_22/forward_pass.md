@@ -4,12 +4,14 @@
 
 ## 개요
 
-이 퍼즐에서는 [LayerNorm](https://arxiv.org/abs/1607.06450)과 Linear 연산에 대한 두 가지 접근 방식을 구현하고 비교하며, 커널 퓨전의 성능 이점을 탐구합니다:
+이 퍼즐에서는 [LayerNorm](https://arxiv.org/abs/1607.06450)과 Linear 연산에 대한
+두 가지 접근 방식을 구현하고 비교하며, 커널 퓨전의 성능 이점을 탐구합니다:
 
 1. **언퓨전 방식**: LayerNorm과 Linear를 별도의 연산으로 실행
 2. **퓨전 커널**: LayerNorm과 Linear 연산을 하나의 GPU 커널로 결합
 
-이 비교를 통해 커널 퓨전이 다음과 같은 방법으로 성능을 크게 개선할 수 있음을 보여줍니다:
+이 비교를 통해 커널 퓨전이 다음과 같은 방법으로 성능을 크게 개선할 수 있음을
+보여줍니다:
 
 - 메모리 대역폭 사용량 절감
 - 커널 실행 오버헤드 최소화
@@ -29,29 +31,36 @@
 결합할 수학적 연산은 다음과 같습니다:
 
 1. LayerNorm:
-\\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+\\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 +
+\epsilon}} + \beta \\]
 
 2. Linear:
 \\[\Large \text{Linear}(x) = Wx + b \\]
 
-퓨전 연산으로 결합하면 다음을 계산합니다:
-\\[\Large \text{Fused}(x) = W(\gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \\]
+퓨전 연산으로 결합하면 다음을 계산합니다: \\[\Large \text{Fused}(x) = W(\gamma
+\odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \\]
 
 ## LayerNorm 이해하기
 
-LayerNorm은 심층 신경망의 학습을 안정화하고 가속하는 정규화 기법입니다. 구성 요소와 파라미터를 하나씩 살펴보겠습니다:
+LayerNorm은 심층 신경망의 학습을 안정화하고 가속하는 정규화 기법입니다. 구성
+요소와 파라미터를 하나씩 살펴보겠습니다:
 
 ### LayerNorm이 하는 일
 
-1. **정규화**: LayerNorm은 각 샘플의 특성(은닉 차원, hidden dimension) 전체에 걸쳐 활성화 값을 독립적으로 정규화합니다. 구체적으로:
+1. **정규화**: LayerNorm은 각 샘플의 특성(은닉 차원, hidden dimension) 전체에
+   걸쳐 활성화 값을 독립적으로 정규화합니다. 구체적으로:
    - 각 시퀀스 위치에서 은닉 차원에 대한 통계량을 계산합니다
    - 배치의 각 샘플은 독립적으로 정규화됩니다
-   - 배치 차원에 대해 정규화하는 [BatchNorm](https://arxiv.org/abs/1502.03167)과는 다릅니다
+   - 배치 차원에 대해 정규화하는
+     [BatchNorm](https://arxiv.org/abs/1502.03167)과는 다릅니다
 
 2. **파라미터**:
-   - \\(\gamma\\) (scale): 네트워크가 각 특성의 최적 스케일을 학습할 수 있게 하는 학습 가능한 파라미터 벡터
-   - \\(\beta\\) (shift): 네트워크가 각 특성의 최적 이동량을 학습할 수 있게 하는 학습 가능한 파라미터 벡터
-   - \\(\epsilon\\): 0으로 나누는 것을 방지하기 위해 분산에 더하는 작은 상수 (1e-5)
+   - \\(\gamma\\) (scale): 네트워크가 각 특성의 최적 스케일을 학습할 수 있게
+     하는 학습 가능한 파라미터 벡터
+   - \\(\beta\\) (shift): 네트워크가 각 특성의 최적 이동량을 학습할 수 있게 하는
+     학습 가능한 파라미터 벡터
+   - \\(\epsilon\\): 0으로 나누는 것을 방지하기 위해 분산에 더하는 작은 상수
+     (1e-5)
 
 ### LayerNorm의 실제 역할
 
@@ -60,7 +69,8 @@ LayerNorm은 심층 신경망에서 여러 중요한 기능을 수행합니다:
 1. **특성 표준화**:
    - 각 특성을 평균 0, 분산 1로 변환합니다
    - 네트워크의 학습 과정을 더 안정적으로 만듭니다
-   - 학습 중 레이어 입력의 분포가 변하는 "내부 공변량 이동(internal covariate shift)" 문제를 방지합니다
+   - 학습 중 레이어 입력의 분포가 변하는 "내부 공변량 이동(internal covariate
+     shift)" 문제를 방지합니다
 
 2. **기울기 흐름**:
    - 네트워크를 통한 기울기 흐름을 개선합니다
@@ -94,12 +104,14 @@ LayerNorm은 심층 신경망에서 여러 중요한 기능을 수행합니다:
    - 은닉 차원에 걸쳐 분산을 계산합니다
    - 정규화된 값의 스케일링에 사용됩니다
 
-3. **정규화와 스케일링**:
-   \\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+3. **정규화와 스케일링**: \\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x -
+   \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
    - 먼저 입력을 평균 0, 분산 1로 정규화합니다
-   - 그런 다음 학습 가능한 scale (\\(\gamma\\))과 shift (\\(\beta\\)) 파라미터를 적용합니다
+   - 그런 다음 학습 가능한 scale (\\(\gamma\\))과 shift (\\(\beta\\)) 파라미터를
+     적용합니다
    - \\(\odot\\) 기호는 요소별 곱셈(아다마르 곱)을 나타냅니다
-   - 예를 들어, \\(\gamma = [1.2, 0.8, 1.5]\\)이고 정규화된 입력이 \\([0.5, -0.3, 0.7]\\)이면, \\(\gamma \odot x = [0.6, -0.24, 1.05]\\)입니다
+   - 예를 들어, \\(\gamma = [1.2, 0.8, 1.5]\\)이고 정규화된 입력이
+     \\([0.5, -0.3, 0.7]\\)이면, \\(\gamma \odot x = [0.6, -0.24, 1.05]\\)입니다
 
 ### LayerNorm이 중요한 이유
 
@@ -108,7 +120,8 @@ LayerNorm은 심층 신경망에서 여러 중요한 기능을 수행합니다:
    - 네트워크 전체에 걸쳐 일관된 신호 크기를 유지합니다
 
 2. **특성 학습**:
-   - scale (\\(\gamma\\))과 shift (\\(\beta\\)) 파라미터를 통해 어떤 특성이 중요한지 학습할 수 있습니다
+   - scale (\\(\gamma\\))과 shift (\\(\beta\\)) 파라미터를 통해 어떤 특성이
+     중요한지 학습할 수 있습니다
    - 특정 특성을 무시하거나 강조하는 것을 효과적으로 학습할 수 있습니다
 
 3. **독립성**:
@@ -128,11 +141,14 @@ LayerNorm은 심층 신경망에서 여러 중요한 기능을 수행합니다:
 
 ### 1. 언퓨전 구현
 
-언퓨전 방식은 여러 커널을 사용하여 연산을 개별적으로 실행합니다. 이전 챕터에서 작성한 커널들을 살펴보겠습니다:
+언퓨전 방식은 여러 커널을 사용하여 연산을 개별적으로 실행합니다. 이전 챕터에서
+작성한 커널들을 살펴보겠습니다:
 
 #### 행렬 곱셈 커널
 
-[Puzzle 16: 행렬 곱셈 (MatMul)](../puzzle_16/puzzle_16.md)에서 사용한 타일링 행렬 곱셈 커널을 선형 변환에 재사용합니다. 이 커널은 다양한 행렬 크기를 안전하게 처리하기 위한 경계 검사를 포함합니다:
+[Puzzle 16: 행렬 곱셈 (MatMul)](../puzzle_16/puzzle_16.md)에서 사용한 타일링
+행렬 곱셈 커널을 선형 변환에 재사용합니다. 이 커널은 다양한 행렬 크기를 안전하게
+처리하기 위한 경계 검사를 포함합니다:
 
 ```mojo
 {{#include ../../../../../problems/p22/op/layernorm_linear.mojo:matmul_idiomatic_tiled}}
@@ -302,7 +318,8 @@ UNFUSED Algorithm Test Completed!
 
 <div class="solution-explanation">
 
-언퓨전 구현은 각 스레드가 출력 텐서의 하나의 요소를 처리하는 직관적인 방식을 따릅니다. 핵심 구성 요소를 하나씩 살펴보겠습니다:
+언퓨전 구현은 각 스레드가 출력 텐서의 하나의 요소를 처리하는 직관적인 방식을
+따릅니다. 핵심 구성 요소를 하나씩 살펴보겠습니다:
 
 1. **스레드와 블록 구성**:
 
@@ -356,7 +373,8 @@ UNFUSED Algorithm Test Completed!
    output[batch_idx, seq_idx, hidden_idx] = normalized
    ```
 
-   - 정규화를 적용합니다: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+   - 정규화를 적용합니다: \\[\Large \text{normalized} = \gamma \odot \frac{x -
+     \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
    - 학습 가능한 파라미터 `γ` (ln_weight)로 스케일링합니다
    - 학습 가능한 bias `β` (ln_bias)를 더합니다
    - 결과를 출력 텐서에 저장합니다
@@ -395,7 +413,9 @@ UNFUSED Algorithm Test Completed!
      - 높은 메모리 대역폭 사용량
      - 여러 번의 커널 실행 필요
 
-이 구현은 정확하지만 성능 면에서 최적이 아니며, 벤치마크 결과에서 CPU 버전보다 약간 느린 것을 확인할 수 있습니다. 퓨전 구현에서는 다음을 통해 이러한 성능 한계를 해결합니다:
+이 구현은 정확하지만 성능 면에서 최적이 아니며, 벤치마크 결과에서 CPU 버전보다
+약간 느린 것을 확인할 수 있습니다. 퓨전 구현에서는 다음을 통해 이러한 성능
+한계를 해결합니다:
 
 - 시퀀스당 통계량을 한 번만 계산
 - 정규화된 값 재사용
@@ -553,13 +573,17 @@ FUSED Algorithm Test Completed!
 2. **LayerNorm 단계**:
    - 시퀀스 위치에 대한 합계와 제곱합 계산
    - 평균 계산: \\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \\]
-   - 분산 계산: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \\]
-   - 역표준편차 계산: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \\]
+   - 분산 계산: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2
+     \\]
+   - 역표준편차 계산: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 +
+     \epsilon}} \\]
 
 3. **Linear 단계**:
    - 각 출력 차원에 대해:
-     - 정규화된 값 계산: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
-     - 선형 가중치와 곱하고 누적: \\[\Large \text{acc} = \sum_{h=1}^{H} \text{normalized}_h \cdot W_{out,h} \\]
+     - 정규화된 값 계산: \\[\Large \text{normalized} = \gamma \odot \frac{x -
+       \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+     - 선형 가중치와 곱하고 누적: \\[\Large \text{acc} = \sum_{h=1}^{H}
+       \text{normalized}_h \cdot W_{out,h} \\]
      - 선형 bias 추가: \\[\Large \text{output} = \text{acc} + b_{out} \\]
    - 결과를 `output[batch_idx, seq_idx, out_idx]`에 저장
 
@@ -570,7 +594,8 @@ FUSED Algorithm Test Completed!
    - 중간 텐서 할당 불필요
    - 효율적인 메모리 접근 패턴
 
-이 구현은 메모리 대역폭 사용량과 커널 실행 오버헤드를 줄여 언퓨전 버전보다 더 나은 성능을 달성합니다.
+이 구현은 메모리 대역폭 사용량과 커널 실행 오버헤드를 줄여 언퓨전 버전보다 더
+나은 성능을 달성합니다.
 </div>
 </details>
 
@@ -598,7 +623,9 @@ FUSED Algorithm Test Completed!
    - 연산 간 중간 텐서 할당 불필요
    - 전역 메모리 읽기/쓰기 감소
    - 선형 변환을 위한 정규화된 값 재사용
-   - 메모리 대역폭 절감률: \\[\Large \text{reduction} = \frac{\text{unfused\_bandwidth} - \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
+   - 메모리 대역폭 절감률: \\[\Large \text{reduction} =
+     \frac{\text{unfused\_bandwidth} -
+     \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
 
 2. **캐시 효율**:
    - L1/L2 캐시 활용도 향상
@@ -634,4 +661,6 @@ FUSED Algorithm Test Completed!
    - 중간 결과의 정밀도 향상
    - 최적화된 연산 순서
 
-💡 **핵심 통찰**: 커널 퓨전은 트랜스포머 아키텍처의 LayerNorm + Linear처럼 신경망에서 자주 함께 사용되는 연산에 특히 유리합니다. 입력 크기가 크고 모델이 복잡할수록 성능 이점은 더욱 커집니다.
+💡 **핵심 통찰**: 커널 퓨전은 트랜스포머 아키텍처의 LayerNorm + Linear처럼
+신경망에서 자주 함께 사용되는 연산에 특히 유리합니다. 입력 크기가 크고 모델이
+복잡할수록 성능 이점은 더욱 커집니다.

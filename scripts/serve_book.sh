@@ -1,4 +1,9 @@
 #!/bin/bash
+##===----------------------------------------------------------------------===##
+#
+# This file is Modular Inc proprietary.
+#
+##===----------------------------------------------------------------------===##
 # Serve English + all translated mdbook languages with live reload.
 #
 # - Auto-discovers languages from book/i18n/*/book.toml

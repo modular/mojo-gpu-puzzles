@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -155,7 +160,7 @@ def main() raises:
             var b_tensor = TileTensor[mut=False, dtype, ConvLayout](
                 b, conv_layout
             )
-            ctx.enqueue_function[conv_1d_simple, conv_1d_simple](
+            ctx.enqueue_function[conv_1d_simple](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -170,9 +175,7 @@ def main() raises:
             var b_tensor = TileTensor[mut=False, dtype, Conv2Layout](
                 b, conv_2_layout
             )
-            ctx.enqueue_function[
-                conv_1d_block_boundary, conv_1d_block_boundary
-            ](
+            ctx.enqueue_function[conv_1d_block_boundary](
                 out_tensor,
                 a_tensor,
                 b_tensor,

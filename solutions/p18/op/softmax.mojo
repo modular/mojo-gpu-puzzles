@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.memory import UnsafePointer
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
@@ -151,7 +156,7 @@ struct SoftmaxCustomOp:
             )
 
             comptime kernel = softmax_gpu_kernel[input_size, dtype]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 grid_dim=1,

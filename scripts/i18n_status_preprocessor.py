@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 """
 mdBook preprocessor for checking translation status.
 
@@ -14,11 +19,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List
-
 
 # Warning messages by language code
-WARNING_MESSAGES: Dict[str, str] = {
+WARNING_MESSAGES: dict[str, str] = {
     "ko": "이 번역은 원본 문서보다 오래되었을 수 있습니다.",
 }
 DEFAULT_WARNING = "This translation may be outdated."
@@ -56,11 +59,15 @@ def get_file_commit(relative_path: str, book_root: Path) -> str | None:
 
 def extract_source_commit(content: str) -> str | None:
     """Extract i18n source commit from markdown content."""
-    commit_match = re.search(r"<!--\s*i18n-source-commit:\s*([a-f0-9]+)\s*-->", content)
+    commit_match = re.search(
+        r"<!--\s*i18n-source-commit:\s*([a-f0-9]+)\s*-->", content
+    )
     return commit_match.group(1) if commit_match else None
 
 
-def process_content(content: str, source_file: str, book_root: Path, lang: str) -> str:
+def process_content(
+    content: str, source_file: str, book_root: Path, lang: str
+) -> str:
     """Process content and inject warning banner if translation is outdated."""
     source_commit = extract_source_commit(content)
 
@@ -97,7 +104,7 @@ def process_content(content: str, source_file: str, book_root: Path, lang: str) 
     return content
 
 
-def process_items(items: List, book_root: Path, lang: str) -> None:
+def process_items(items: list, book_root: Path, lang: str) -> None:
     """Recursively process chapter items."""
     for item in items:
         if "Chapter" in item:

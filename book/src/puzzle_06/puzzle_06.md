@@ -2,9 +2,17 @@
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of vector `a` and stores it in `output`.
+Implement a kernel that adds 10 to each position of vector `a` and stores it in
+`output`.
 
-A **thread block** (or just **block**) is a group of threads that execute together on a single GPU multiprocessor. All threads in a block share the same shared memory and can synchronize with each other. When data is larger than one block can handle, the GPU schedules multiple blocks — each block independently processes its portion of the data. The global position of a thread is computed from both its position within the block (`thread_idx.x`) and which block it belongs to (`block_idx.x`): `global_i = block_dim.x * block_idx.x + thread_idx.x`.
+A **thread block** (or just **block**) is a group of threads that execute
+together on a single GPU multiprocessor. All threads in a block share the same
+shared memory and can synchronize with each other. When data is larger than one
+block can handle, the GPU schedules multiple blocks — each block independently
+processes its portion of the data. The global position of a thread is computed
+from both its position within the block (`thread_idx.x`) and which block it
+belongs to (`block_idx.x`):
+`global_i = block_dim.x * block_idx.x + thread_idx.x`.
 
 **Note:** _You have fewer threads per block than the size of a._
 
@@ -19,7 +27,9 @@ This puzzle covers:
 - Coordinating multiple blocks of threads
 - Computing global thread positions
 
-The key insight is understanding how blocks of threads work together to process data that's larger than a single block's capacity, while maintaining correct element-to-thread mapping.
+The key insight is understanding how blocks of threads work together to process
+data that's larger than a single block's capacity, while maintaining correct
+element-to-thread mapping.
 
 ## Code to complete
 
@@ -29,7 +39,8 @@ The key insight is understanding how blocks of threads work together to process 
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a>
 
-> Note: The `TileTensor` variant of this puzzle is very similar so we leave it to the reader.
+> Note: The `TileTensor` variant of this puzzle is very similar so we leave it
+> to the reader.
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -105,7 +116,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 This solution covers key concepts of block-based GPU processing:
 
 1. **Global thread indexing**
-   - Combines block and thread indices: `block_dim.x * block_idx.x + thread_idx.x`
+   - Combines block and thread indices:
+     `block_dim.x * block_idx.x + thread_idx.x`
    - Maps each thread to a unique global position
    - Example for 3 threads per block:
 
@@ -129,7 +141,8 @@ This solution covers key concepts of block-based GPU processing:
 
 3. **Bounds checking**
    - Guard condition `i < size` handles edge cases
-   - Prevents out-of-bounds access when size isn't perfectly divisible by block size
+   - Prevents out-of-bounds access when size isn't perfectly divisible by block
+     size
    - Essential for handling partial blocks at the end of data
 
 4. **Memory access pattern**
@@ -137,6 +150,7 @@ This solution covers key concepts of block-based GPU processing:
    - Each thread processes one element: `output[i] = a[i] + 10.0`
    - Block-level parallelism provides efficient memory bandwidth utilization
 
-This pattern forms the foundation for processing large datasets that exceed the size of a single thread block.
+This pattern forms the foundation for processing large datasets that exceed the
+size of a single thread block.
 </div>
 </details>

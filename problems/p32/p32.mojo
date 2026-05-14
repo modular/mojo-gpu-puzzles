@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -121,7 +126,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         )
 
         comptime kernel = no_conflict_kernel
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             test_size,
@@ -158,7 +163,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         )
 
         comptime kernel = two_way_conflict_kernel
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             test_size,
@@ -190,7 +195,7 @@ def test_no_conflict() raises:
         )
 
         comptime kernel = no_conflict_kernel
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             SIZE,
@@ -224,7 +229,7 @@ def test_two_way_conflict() raises:
         )
 
         comptime kernel = two_way_conflict_kernel
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             SIZE,

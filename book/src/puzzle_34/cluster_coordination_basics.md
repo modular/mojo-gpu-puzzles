@@ -2,17 +2,34 @@
 
 ## Overview
 
-Welcome to your first **cluster programming challenge**! This section introduces the fundamental building blocks of inter-block coordination using SM90+ cluster APIs.
+Welcome to your first **cluster programming challenge**! This section introduces
+the fundamental building blocks of inter-block coordination using SM90+ cluster
+APIs.
 
-**The Challenge**: Implement a multi-block histogram algorithm where **4 thread blocks coordinate** to process different ranges of data and store results in a shared output array.
+**The Challenge**: Implement a multi-block histogram algorithm where
+**4 thread blocks coordinate** to process different ranges of data and store
+results in a shared output array.
 
-**Key Learning**: Learn the essential cluster synchronization pattern: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) → process → [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait), extending the synchronization concepts from [barrier() in Puzzle 29](../puzzle_29/barrier.md).
+**Key Learning**: Learn the essential cluster synchronization pattern:
+[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+→ process →
+[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait),
+extending the synchronization concepts from
+[barrier() in Puzzle 29](../puzzle_29/barrier.md).
 
 ## The problem: multi-block histogram binning
 
-Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzle_27.md) can only process data that fits within one block's thread capacity (e.g., 256 threads). For larger datasets exceeding [shared memory capacity from Puzzle 8](../puzzle_08/puzzle_08.md), we need **multiple blocks to cooperate**.
+Traditional single-block algorithms like those in
+[Puzzle 27](../puzzle_27/puzzle_27.md) can only process data that fits within
+one block's thread capacity (e.g., 256 threads). For larger datasets exceeding
+[shared memory capacity from Puzzle 8](../puzzle_08/puzzle_08.md), we need
+**multiple blocks to cooperate**.
 
-**Your task**: Implement a histogram where each of 4 blocks processes a different data range, scales values by its unique block rank, and coordinates with other blocks using [synchronization patterns from Puzzle 29](../puzzle_29/barrier.md) to ensure all processing completes before any block reads the final results.
+**Your task**: Implement a histogram where each of 4 blocks processes a
+different data range, scales values by its unique block rank, and coordinates
+with other blocks using
+[synchronization patterns from Puzzle 29](../puzzle_29/barrier.md) to ensure all
+processing completes before any block reads the final results.
 
 ### Problem specification
 
@@ -25,8 +42,10 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 
 **Coordination Requirements:**
 
-1. Each block must signal completion using [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
-2. All blocks must wait for others using [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+1. Each block must signal completion using
+   [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+2. All blocks must wait for others using
+   [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
 3. Final output shows each block's processed sum in a 4-element array
 
 ## Configuration
@@ -35,7 +54,8 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 - **Block Configuration**: `TPB = 256` threads per block `(256, 1)`
 - **Grid Configuration**: `CLUSTER_SIZE = 4` blocks per cluster `(4, 1)`
 - **Data Type**: `DType.float32`
-- **Memory Layout**: Input `row_major[SIZE]()`, Output `row_major[CLUSTER_SIZE]()`
+- **Memory Layout**: Input `row_major[SIZE]()`, Output
+  `row_major[CLUSTER_SIZE]()`
 
 **Thread Block Distribution:**
 
@@ -59,27 +79,39 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 
 ### **Block identification patterns**
 
-- Use [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster) to get the cluster rank (0-3)
+- Use
+  [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)
+  to get the cluster rank (0-3)
 - Use `Int(block_idx.x)` for reliable block indexing in grid launch
 - Scale data processing by block position for distinct results
 
 ### **Shared memory coordination**
 
-- Allocate shared memory using `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())` (see [shared memory basics from Puzzle 8](../puzzle_08/puzzle_08.md))
-- Process input data scaled by `block_id + 1` to create distinct scaling per block
-- Use bounds checking when accessing input data (pattern from [guards in Puzzle 3](../puzzle_03/puzzle_03.md))
+- Allocate shared memory using
+  `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())`
+  (see [shared memory basics from Puzzle 8](../puzzle_08/puzzle_08.md))
+- Process input data scaled by `block_id + 1` to create distinct scaling per
+  block
+- Use bounds checking when accessing input data (pattern from
+  [guards in Puzzle 3](../puzzle_03/puzzle_03.md))
 
 ### **Cluster synchronization pattern**
 
 1. **Process**: Each block works on its portion of data
-2. **Signal**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) announces processing completion
+2. **Signal**:
+   [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+   announces processing completion
 3. **Compute**: Block-local operations (reduction, aggregation)
-4. **Wait**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) ensures all blocks complete before proceeding
+4. **Wait**:
+   [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+   ensures all blocks complete before proceeding
 
 ### **Thread coordination within blocks**
 
-- Use `barrier()` for intra-block synchronization before cluster operations (from [barrier concepts in Puzzle 29](../puzzle_29/barrier.md))
-- Only thread 0 should write the final block result (single-writer pattern from [block programming](../puzzle_27/block_sum.md))
+- Use `barrier()` for intra-block synchronization before cluster operations
+  (from [barrier concepts in Puzzle 29](../puzzle_29/barrier.md))
+- Only thread 0 should write the final block result (single-writer pattern from
+  [block programming](../puzzle_27/block_sum.md))
 - Store results at `output[block_id]` for reliable indexing
 
 </div>
@@ -110,7 +142,7 @@ uv run poe p34 --coordination
 
 **Expected Output:**
 
-```
+```text
 Testing Multi-Block Coordination
 SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
 Block coordination results:
@@ -138,7 +170,8 @@ Block coordination results:
 
 <div class="solution-explanation">
 
-**The cluster coordination solution demonstrates the fundamental multi-block synchronization pattern using a carefully orchestrated two-phase approach:**
+**The cluster coordination solution demonstrates the fundamental multi-block
+synchronization pattern using a carefully orchestrated two-phase approach:**
 
 ## **Phase 1: Independent block processing**
 
@@ -153,23 +186,32 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 
 **Shared memory allocation and data processing:**
 
-- Each block allocates its own shared memory workspace: `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())`
-- **Scaling strategy**: `data_scale = Float32(block_id + 1)` ensures each block processes data differently
-  - Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0
-- **Bounds checking**: `if global_i < size:` prevents out-of-bounds memory access
-- **Data processing**: `shared_data[local_i] = input[global_i] * data_scale` scales input data per block
+- Each block allocates its own shared memory workspace:
+  `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())`
+- **Scaling strategy**: `data_scale = Float32(block_id + 1)` ensures each block
+  processes data differently
+  - Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by
+    4.0
+- **Bounds checking**: `if global_i < size:` prevents out-of-bounds memory
+  access
+- **Data processing**: `shared_data[local_i] = input[global_i] * data_scale`
+  scales input data per block
 
 **Intra-block synchronization:**
 
-- `barrier()` ensures all threads within each block complete data loading before proceeding
-- This prevents race conditions between data loading and subsequent cluster coordination
+- `barrier()` ensures all threads within each block complete data loading before
+  proceeding
+- This prevents race conditions between data loading and subsequent cluster
+  coordination
 
 ## **Phase 2: Cluster coordination**
 
 **Inter-block signaling:**
 
-- [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) signals that this block has completed its local processing phase
-- This is a **non-blocking** operation that registers completion with the cluster hardware
+- [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+  signals that this block has completed its local processing phase
+- This is a **non-blocking** operation that registers completion with the
+  cluster hardware
 
 **Local aggregation (Thread 0 only):**
 
@@ -182,11 +224,13 @@ if local_i == 0:
 ```
 
 - Only thread 0 performs the sum to avoid race conditions
-- Results stored at `output[block_id]` ensures each block writes to unique location
+- Results stored at `output[block_id]` ensures each block writes to unique
+  location
 
 **Final synchronization:**
 
-- [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) blocks until ALL blocks in the cluster have completed their work
+- [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+  blocks until ALL blocks in the cluster have completed their work
 - This ensures deterministic completion order across the entire cluster
 
 ## **Key technical insights**
@@ -194,8 +238,10 @@ if local_i == 0:
 **Why use `block_id` instead of `my_block_rank`?**
 
 - `block_idx.x` provides reliable grid-launch indexing (0, 1, 2, 3)
-- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster) may behave differently depending on cluster configuration
-- Using `block_id` guarantees each block gets unique data portions and output positions
+- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)
+  may behave differently depending on cluster configuration
+- Using `block_id` guarantees each block gets unique data portions and output
+  positions
 
 **Memory access pattern:**
 
@@ -206,13 +252,17 @@ if local_i == 0:
 **Synchronization hierarchy:**
 
 1. **`barrier()`**: Synchronizes threads within each block (intra-block)
-2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: Signals completion to other blocks (inter-block, non-blocking)
-3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: Waits for all blocks to complete (inter-block, blocking)
+2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**:
+   Signals completion to other blocks (inter-block, non-blocking)
+3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**:
+   Waits for all blocks to complete (inter-block, blocking)
 
 **Performance characteristics:**
 
-- **Compute complexity**: O(TPB) per block for local sum, O(1) for cluster coordination
-- **Memory bandwidth**: Each input element read once, minimal inter-block communication
+- **Compute complexity**: O(TPB) per block for local sum, O(1) for cluster
+  coordination
+- **Memory bandwidth**: Each input element read once, minimal inter-block
+  communication
 - **Scalability**: Pattern scales to larger cluster sizes with minimal overhead
 
 </div>
@@ -220,11 +270,21 @@ if local_i == 0:
 
 ## Understanding the pattern
 
-The essential cluster coordination pattern follows a simple but powerful structure:
+The essential cluster coordination pattern follows a simple but powerful
+structure:
 
 1. **Phase 1**: Each block processes its assigned data portion independently
-2. **Signal**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) announces completion of processing
-3. **Phase 2**: Blocks can safely perform operations that depend on other blocks' results
-4. **Synchronize**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) ensures all blocks finish before proceeding
+2. **Signal**:
+   [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+   announces completion of processing
+3. **Phase 2**: Blocks can safely perform operations that depend on other
+   blocks' results
+4. **Synchronize**:
+   [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+   ensures all blocks finish before proceeding
 
-**Next step**: Ready for more advanced coordination? Continue to **[Cluster-Wide Collective Operations](./cluster_collective_ops.md)** to learn how to extend [`block.sum()` patterns from Puzzle 27](../puzzle_27/block_sum.md) to cluster scale, building on [warp-level reductions from Puzzle 24](../puzzle_24/warp_sum.md)!
+**Next step**: Ready for more advanced coordination? Continue to
+**[Cluster-Wide Collective Operations](./cluster_collective_ops.md)** to learn
+how to extend [`block.sum()` patterns from Puzzle 27](../puzzle_27/block_sum.md)
+to cluster scale, building on
+[warp-level reductions from Puzzle 24](../puzzle_24/warp_sum.md)!

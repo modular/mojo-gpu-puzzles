@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.sys import argv
 from std.testing import assert_equal
 from std.gpu.host import DeviceContext
@@ -112,7 +117,7 @@ def main() raises:
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](inp2, layout)
 
         if argv()[1] == "--naive":
-            ctx.enqueue_function[naive_matmul, naive_matmul](
+            ctx.enqueue_function[naive_matmul](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -120,7 +125,7 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            ctx.enqueue_function[single_block_matmul, single_block_matmul](
+            ctx.enqueue_function[single_block_matmul](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -137,7 +142,7 @@ def main() raises:
                 inp2, layout_tiled
             )
 
-            ctx.enqueue_function[matmul_tiled, matmul_tiled](
+            ctx.enqueue_function[matmul_tiled](
                 out_tensor_tiled,
                 a_tensor_tiled,
                 b_tensor_tiled,

@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx
 from std.gpu.host import DeviceContext
 from layout import TileTensor
@@ -46,7 +51,7 @@ def main() raises:
 
         var a_tensor = TileTensor(a, layout)
 
-        ctx.enqueue_function[add_10_2d, add_10_2d](
+        ctx.enqueue_function[add_10_2d](
             out_tensor,
             a_tensor,
             SIZE,

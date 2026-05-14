@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -87,7 +92,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 expected[i] = Scalar[dtype](i + 10)
 
-            ctx.enqueue_function[add_10_2d, add_10_2d](
+            ctx.enqueue_function[add_10_2d](
                 out_tensor,
                 a_tensor,
                 SIZE,
@@ -116,7 +121,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 expected[i] = total_sum
 
-            ctx.enqueue_function[shared_memory_race, shared_memory_race](
+            ctx.enqueue_function[shared_memory_race](
                 out_tensor,
                 a_tensor,
                 SIZE,

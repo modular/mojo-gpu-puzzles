@@ -1,0 +1,57 @@
+##===----------------------------------------------------------------------===##
+#
+# This file is Modular Inc proprietary.
+#
+##===----------------------------------------------------------------------===##
+name: Publish Puzzles
+
+on:
+  push:
+    branches:
+      - stable
+    paths:
+      - "pixi.lock"
+  pull_request:
+    branches:
+      - stable
+    paths:
+      - "pixi.lock"
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7
+        with:
+          path: |
+            ~/.modular
+            ~/.cache/modular
+          key: ${{ runner.os }}-modular-${{ hashFiles('**/pixi.toml') }}
+
+      - uses: prefix-dev/setup-pixi@fef5c9568ca6c4ff7707bf840ab0692ba3f08293
+        with:
+          pixi-version: v0.63.2
+          cache: false
+          post-cleanup: false
+
+      - name: Build
+        shell: bash
+        run: |
+          cd book
+          pixi run build-book
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@4b09552702d0b65573696410d4707c765da2630b
+        if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./book/html
+          cname: puzzles.modular.com
+          allow_empty_commit: true

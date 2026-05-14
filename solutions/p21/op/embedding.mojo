@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.gpu.host import DeviceContext
@@ -196,7 +201,7 @@ struct EmbeddingCustomOp:
                 WeightsLayout,
                 output.dtype,
             ]
-            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,
@@ -295,7 +300,7 @@ struct Embedding2DCustomOp:
                 output.dtype,
             ]
 
-            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,

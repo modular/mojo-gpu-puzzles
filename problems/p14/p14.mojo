@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -96,7 +101,7 @@ def main() raises:
             a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
             out_tensor = TileTensor(out, layout)
 
-            ctx.enqueue_function[prefix_sum_simple, prefix_sum_simple](
+            ctx.enqueue_function[prefix_sum_simple](
                 out_tensor,
                 a_tensor,
                 size,
@@ -111,9 +116,7 @@ def main() raises:
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase, prefix_sum_local_phase
-            ](
+            ctx.enqueue_function[prefix_sum_local_phase](
                 out_tensor,
                 a_tensor,
                 size,
@@ -125,9 +128,7 @@ def main() raises:
             # No explicit ctx.synchronize() needed in this case.
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[
-                prefix_sum_block_sum_phase, prefix_sum_block_sum_phase
-            ](
+            ctx.enqueue_function[prefix_sum_block_sum_phase](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,

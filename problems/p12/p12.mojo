@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.testing import assert_equal
 from std.gpu.host import DeviceContext
 
@@ -51,7 +56,7 @@ def main() raises:
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        ctx.enqueue_function[dot_product, dot_product](
+        ctx.enqueue_function[dot_product](
             out_tensor,
             a_tensor,
             b_tensor,

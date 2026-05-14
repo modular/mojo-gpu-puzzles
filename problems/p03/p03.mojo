@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.memory import UnsafePointer
 from std.gpu import thread_idx
 from std.gpu.host import DeviceContext
@@ -32,7 +37,7 @@ def main() raises:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i)
 
-        ctx.enqueue_function[add_10_guard, add_10_guard](
+        ctx.enqueue_function[add_10_guard](
             out,
             a,
             SIZE,

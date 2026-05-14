@@ -1,4 +1,9 @@
 #!/bin/bash
+##===----------------------------------------------------------------------===##
+#
+# This file is Modular Inc proprietary.
+#
+##===----------------------------------------------------------------------===##
 #
 # Setup CUDA-GDB by linking system CUDA installation binaries to conda environment
 #

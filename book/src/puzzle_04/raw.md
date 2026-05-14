@@ -1,6 +1,7 @@
 ## Overview
 
-Implement a kernel that adds 10 to each position of 2D square matrix `a` and stores it in 2D square matrix `output`.
+Implement a kernel that adds 10 to each position of 2D square matrix `a` and
+stores it in 2D square matrix `output`.
 
 **Note:** _You have more threads than positions_.
 
@@ -12,12 +13,15 @@ In this puzzle, you'll learn about:
 - Converting 2D coordinates to 1D memory indices
 - Handling boundary checks in two dimensions
 
-The key insight is understanding how to map from 2D thread coordinates \\((i,j)\\) to elements in a row-major matrix of size \\(n \times n\\), while ensuring thread indices are within bounds.
+The key insight is understanding how to map from 2D thread coordinates
+\\((i,j)\\) to elements in a row-major matrix of size \\(n \times n\\), while
+ensuring thread indices are within bounds.
 
 - **2D indexing**: Each thread has a unique \\((i,j)\\) position
 - **Memory layout**: Row-major ordering maps 2D to 1D memory
 - **Guard condition**: Need bounds checking in both dimensions
-- **Thread bounds**: More threads \\((3 \times 3)\\) than matrix elements \\((2 \times 2)\\)
+- **Thread bounds**: More threads \\((3 \times 3)\\) than matrix elements \\((2
+  \times 2)\\)
 
 ## Code to complete
 
@@ -100,7 +104,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 
 This solution:
 
-1. Get 2D indices:  `row = thread_idx.y`, `col = thread_idx.x`
+1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
 2. Add guard: `if row < size and col < size`
 3. Inside guard: `output[row * size + col] = a[row * size + col] + 10.0`
 

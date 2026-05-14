@@ -1,4 +1,10 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from manim import *
+
 
 class MatmulVisualization(Scene):
     def construct(self):
@@ -18,7 +24,7 @@ class MatmulVisualization(Scene):
             height=array_scale * 5,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         # Create A matrix cells
@@ -49,7 +55,7 @@ class MatmulVisualization(Scene):
             height=array_scale * 4,
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         # Create B matrix cells
@@ -89,7 +95,7 @@ class MatmulVisualization(Scene):
             height=array_scale * 5,
             stroke_color=PURPLE_D,
             fill_color=PURPLE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         # Create C matrix cells
@@ -128,7 +134,7 @@ class MatmulVisualization(Scene):
             Write(mult_symbol),
             Write(matrix_b),
             Write(equals_symbol),
-            Write(matrix_c)
+            Write(matrix_c),
         )
         self.wait(0.5)
 
@@ -141,7 +147,7 @@ class MatmulVisualization(Scene):
             height=array_scale + 0.1,
             stroke_color=YELLOW,
             fill_color=YELLOW,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).move_to(matrix_a_cells[i])
 
         # Highlight column j of matrix B
@@ -150,7 +156,7 @@ class MatmulVisualization(Scene):
             height=array_scale * 3 + 0.2,
             stroke_color=YELLOW,
             fill_color=YELLOW,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).move_to(VGroup(*[matrix_b_cells[k][j] for k in range(3)]))
 
         # Highlight target cell in C
@@ -158,13 +164,13 @@ class MatmulVisualization(Scene):
             side_length=array_scale + 0.1,
             stroke_color=YELLOW,
             fill_color=YELLOW,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).move_to(matrix_c_cells[i][j])
 
         self.play(
             FadeIn(row_highlight),
             FadeIn(col_highlight),
-            FadeIn(target_highlight)
+            FadeIn(target_highlight),
         )
 
         # Show dot product computation in a horizontal line
@@ -198,7 +204,7 @@ class MatmulVisualization(Scene):
                 buff=0.1,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.15
+                max_tip_length_to_length_ratio=0.15,
             ).set_opacity(0.6)
 
             arrow2 = Arrow(
@@ -207,7 +213,7 @@ class MatmulVisualization(Scene):
                 buff=0.1,
                 color=GREEN_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.15
+                max_tip_length_to_length_ratio=0.15,
             ).set_opacity(0.6)
 
             arrows.add(arrow1, arrow2)
@@ -218,14 +224,10 @@ class MatmulVisualization(Scene):
                     Create(arrow1),
                     Create(arrow2),
                     Write(term),
-                    Write(plus_signs[-1])
+                    Write(plus_signs[-1]),
                 )
             else:
-                self.play(
-                    Create(arrow1),
-                    Create(arrow2),
-                    Write(term)
-                )
+                self.play(Create(arrow1), Create(arrow2), Write(term))
             self.wait(0.3)
 
         # Show equals sign and result
@@ -242,14 +244,10 @@ class MatmulVisualization(Scene):
             buff=0.1,
             color=PURPLE_C,
             stroke_width=2,
-            max_tip_length_to_length_ratio=0.15
+            max_tip_length_to_length_ratio=0.15,
         ).set_opacity(0.6)
 
-        self.play(
-            Write(equals_sign),
-            Write(result_text),
-            Create(result_arrow)
-        )
+        self.play(Write(equals_sign), Write(result_text), Create(result_arrow))
         self.wait(0.5)
 
         # Cleanup
@@ -262,28 +260,30 @@ class MatmulVisualization(Scene):
             FadeOut(result_arrow),
             FadeOut(row_highlight),
             FadeOut(col_highlight),
-            FadeOut(target_highlight)
+            FadeOut(target_highlight),
         )
 
         # Show text about repeating for all elements
-        final_text = Text("Repeat for all elements of C", font_size=18, color=YELLOW)
+        final_text = Text(
+            "Repeat for all elements of C", font_size=18, color=YELLOW
+        )
         final_text.next_to(matrix_b, DOWN, buff=1)
         self.play(Write(final_text))
         self.wait(60)
 
         # At the end, fade out title and subtitle with everything else
-        self.play(
-            FadeOut(title),
-            *[FadeOut(mob) for mob in self.mobjects]
-        )
+        self.play(FadeOut(title), *[FadeOut(mob) for mob in self.mobjects])
+
 
 if __name__ == "__main__":
-    with tempconfig({
-        "preview": True,
-        "format": "gif",
-        "media_dir": "./media",
-        "quality": "medium_quality",
-        "output_file": "puzzle_16_viz"
-    }):
+    with tempconfig(
+        {
+            "preview": True,
+            "format": "gif",
+            "media_dir": "./media",
+            "quality": "medium_quality",
+            "output_file": "puzzle_16_viz",
+        }
+    ):
         scene = MatmulVisualization()
         scene.render()

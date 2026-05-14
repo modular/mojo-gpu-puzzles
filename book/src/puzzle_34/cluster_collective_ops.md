@@ -2,21 +2,40 @@
 
 ## Overview
 
-Building on basic cluster coordination from the previous section, this challenge teaches you to implement **cluster-wide collective operations** - extending the familiar [`block.sum`](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) pattern from [Puzzle 27](../puzzle_27/block_sum.md) to coordinate across **multiple thread blocks**.
+Building on basic cluster coordination from the previous section, this challenge
+teaches you to implement **cluster-wide collective operations** - extending the
+familiar
+[`block.sum`](https://docs.modular.com/mojo/std/gpu/primitives/block/sum)
+pattern from [Puzzle 27](../puzzle_27/block_sum.md) to coordinate across
+**multiple thread blocks**.
 
-**The Challenge**: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.
+**The Challenge**: Implement a cluster-wide reduction that processes 1024
+elements across 4 coordinated blocks, combining their individual reductions into
+a single global result.
 
-**Key Learning**: Learn [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync) for full cluster coordination and [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync) for efficient final reductions.
+**Key Learning**: Learn
+[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)
+for full cluster coordination and
+[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)
+for efficient final reductions.
 
 ## The problem: large-scale global sum
 
-Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited by their thread count and [shared memory capacity from Puzzle 8](../puzzle_08/puzzle_08.md). For **large datasets** requiring global statistics (mean, variance, sum) beyond [single-block reductions](../puzzle_27/block_sum.md), we need **cluster-wide collective operations**.
+Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited
+by their thread count and
+[shared memory capacity from Puzzle 8](../puzzle_08/puzzle_08.md). For
+**large datasets** requiring global statistics (mean, variance, sum) beyond
+[single-block reductions](../puzzle_27/block_sum.md), we need
+**cluster-wide collective operations**.
 
 **Your task**: Implement a cluster-wide sum reduction where:
 
-1. Each block performs local reduction (like [`block.sum()` from Puzzle 27](../puzzle_27/block_sum.md))
-2. Blocks coordinate to combine their partial results using [synchronization from Puzzle 29](../puzzle_29/barrier.md)
-3. One elected thread computes the final global sum using [warp election patterns](../puzzle_24/warp_sum.md)
+1. Each block performs local reduction (like
+   [`block.sum()` from Puzzle 27](../puzzle_27/block_sum.md))
+2. Blocks coordinate to combine their partial results using
+   [synchronization from Puzzle 29](../puzzle_29/barrier.md)
+3. One elected thread computes the final global sum using
+   [warp election patterns](../puzzle_24/warp_sum.md)
 
 ### Problem specification
 
@@ -31,7 +50,9 @@ Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited
 **Coordination Requirements:**
 
 1. **Local reduction**: Each block computes partial sum using tree reduction
-2. **Cluster sync**: [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync) ensures all partial results are ready
+2. **Cluster sync**:
+   [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)
+   ensures all partial results are ready
 3. **Final aggregation**: One elected thread combines all partial results
 
 ## Configuration
@@ -60,46 +81,65 @@ Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited
 
 ### **Local reduction pattern**
 
-- Use [tree reduction pattern from Puzzle 27's block sum](../puzzle_27/block_sum.md)
-- Start with stride = `tpb // 2` and halve each iteration (classic [reduction from Puzzle 12](../puzzle_12/puzzle_12.md))
+- Use
+  [tree reduction pattern from Puzzle 27's block sum](../puzzle_27/block_sum.md)
+- Start with stride = `tpb // 2` and halve each iteration (classic
+  [reduction from Puzzle 12](../puzzle_12/puzzle_12.md))
 - Only threads with `local_i < stride` participate in each step
-- Use `barrier()` between reduction steps (from [barrier concepts in Puzzle 29](../puzzle_29/barrier.md))
+- Use `barrier()` between reduction steps (from
+  [barrier concepts in Puzzle 29](../puzzle_29/barrier.md))
 
 ### **Cluster coordination strategy**
 
 - Store partial results in `temp_storage[block_id]` for reliable indexing
-- Use [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync) for full cluster synchronization (stronger than arrive/wait)
+- Use
+  [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)
+  for full cluster synchronization (stronger than arrive/wait)
 - Only one thread should perform the final global aggregation
 
 ### **Election pattern for efficiency**
 
-- Use [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync) within the first block (`my_block_rank == 0`) (pattern from [warp programming](../puzzle_24/warp_sum.md))
+- Use
+  [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)
+  within the first block (`my_block_rank == 0`) (pattern from
+  [warp programming](../puzzle_24/warp_sum.md))
 - This ensures only one thread performs the final sum to avoid redundancy
-- The elected thread reads all partial results from `temp_storage` (similar to [shared memory access from Puzzle 8](../puzzle_08/puzzle_08.md))
+- The elected thread reads all partial results from `temp_storage` (similar to
+  [shared memory access from Puzzle 8](../puzzle_08/puzzle_08.md))
 
 ### **Memory access patterns**
 
-- Each thread reads `input[global_i]` with bounds checking (from [guards in Puzzle 3](../puzzle_03/puzzle_03.md))
-- Store intermediate results in [shared memory for intra-block reduction](../puzzle_08/puzzle_08.md)
-- Store partial results in `temp_storage[block_id]` for inter-block communication
-- Final result goes to `output[0]` (single-writer pattern from [block coordination](../puzzle_27/block_sum.md))
+- Each thread reads `input[global_i]` with bounds checking (from
+  [guards in Puzzle 3](../puzzle_03/puzzle_03.md))
+- Store intermediate results in
+  [shared memory for intra-block reduction](../puzzle_08/puzzle_08.md)
+- Store partial results in `temp_storage[block_id]` for inter-block
+  communication
+- Final result goes to `output[0]` (single-writer pattern from
+  [block coordination](../puzzle_27/block_sum.md))
 
 </div>
 </details>
 
 ## Cluster APIs reference
 
-**From [`gpu.primitives.cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/) module:**
+**From
+[`gpu.primitives.cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/)
+module:**
 
-- **[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)**: Full cluster synchronization - stronger than arrive/wait pattern
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**: Elects single thread within warp for efficient coordination
-- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)**: Returns unique block identifier within cluster
+- **[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)**:
+  Full cluster synchronization - stronger than arrive/wait pattern
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**:
+  Elects single thread within warp for efficient coordination
+- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)**:
+  Returns unique block identifier within cluster
 
 ## Tree reduction pattern
 
-Recall the **tree reduction pattern** from [Puzzle 27's traditional dot product](../puzzle_27/puzzle_27.md):
+Recall the **tree reduction pattern** from
+[Puzzle 27's traditional dot product](../puzzle_27/puzzle_27.md):
 
-```
+```text
 Stride 128: [T0] += [T128], [T1] += [T129], [T2] += [T130], ...
 Stride 64:  [T0] += [T64],  [T1] += [T65],  [T2] += [T66],  ...
 Stride 32:  [T0] += [T32],  [T1] += [T33],  [T2] += [T34],  ...
@@ -108,7 +148,8 @@ Stride 16:  [T0] += [T16],  [T1] += [T17],  [T2] += [T18],  ...
 Stride 1:   [T0] += [T1] → Final result at T0
 ```
 
-**Now extend this pattern to cluster scale** where each block produces one partial result, then combine across blocks.
+**Now extend this pattern to cluster scale** where each block produces one
+partial result, then combine across blocks.
 
 ## Running the code
 
@@ -135,7 +176,7 @@ uv run poe p34 --reduction
 
 **Expected Output:**
 
-```
+```text
 Testing Cluster-Wide Reduction
 SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
 Expected sum: 523776.0
@@ -163,7 +204,9 @@ Error: 0.0
 
 <div class="solution-explanation">
 
-**The cluster collective operations solution demonstrates the classic distributed computing pattern: local reduction → global coordination → final aggregation:**
+**The cluster collective operations solution demonstrates the classic
+distributed computing pattern: local reduction → global coordination → final
+aggregation:**
 
 ## **Phase 1: Local block reduction (traditional tree reduction)**
 
@@ -190,7 +233,7 @@ while stride > 0:
 
 **Tree reduction visualization (TPB=256):**
 
-```
+```text
 Step 1: stride=128  [T0]+=T128, [T1]+=T129, ..., [T127]+=T255
 Step 2: stride=64   [T0]+=T64,  [T1]+=T65,  ..., [T63]+=T127
 Step 3: stride=32   [T0]+=T32,  [T1]+=T33,  ..., [T31]+=T63
@@ -204,14 +247,18 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 **Partial result storage:**
 
 - Only thread 0 writes: `temp_storage[block_id] = shared_mem[0]`
-- Each block stores its sum at `temp_storage[0]`, `temp_storage[1]`, `temp_storage[2]`, `temp_storage[3]`
+- Each block stores its sum at `temp_storage[0]`, `temp_storage[1]`,
+  `temp_storage[2]`, `temp_storage[3]`
 
 ## **Phase 2: Cluster synchronization**
 
 **Full cluster barrier:**
 
-- [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync) provides **stronger guarantees** than [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
-- Ensures **all blocks complete their local reductions** before any block proceeds
+- [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)
+  provides **stronger guarantees** than
+  [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+- Ensures **all blocks complete their local reductions** before any block
+  proceeds
 - Hardware-accelerated synchronization across all blocks in the cluster
 
 ## **Phase 3: Final global aggregation**
@@ -228,9 +275,12 @@ if elect_one_sync() and my_block_rank == 0:
 
 **Why this election strategy?**
 
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**: Hardware primitive that selects exactly one thread per warp
-- **`my_block_rank == 0`**: Only elect from the first block to ensure single writer
-- **Result**: Only ONE thread across the entire cluster performs the final summation
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**:
+  Hardware primitive that selects exactly one thread per warp
+- **`my_block_rank == 0`**: Only elect from the first block to ensure single
+  writer
+- **Result**: Only ONE thread across the entire cluster performs the final
+  summation
 - **Efficiency**: Avoids redundant computation across all 1024 threads
 
 ## **Key technical insights**
@@ -238,8 +288,10 @@ if elect_one_sync() and my_block_rank == 0:
 **Three-level reduction hierarchy:**
 
 1. **Thread → Warp**: Individual threads contribute to warp-level partial sums
-2. **Warp → Block**: Tree reduction combines warps into single block result (256 → 1)
-3. **Block → Cluster**: Simple loop combines block results into final sum (4 → 1)
+2. **Warp → Block**: Tree reduction combines warps into single block result (256
+   → 1)
+3. **Block → Cluster**: Simple loop combines block results into final sum (4 →
+   1)
 
 **Memory access patterns:**
 
@@ -250,8 +302,10 @@ if elect_one_sync() and my_block_rank == 0:
 
 **Synchronization guarantees:**
 
-- **`barrier()`**: Ensures all threads in block complete each tree reduction step
-- **[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)**: **Global barrier** - all blocks reach same execution point
+- **`barrier()`**: Ensures all threads in block complete each tree reduction
+  step
+- **[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)**:
+  **Global barrier** - all blocks reach same execution point
 - **Single writer**: Election prevents race conditions on final output
 
 **Algorithm complexity analysis:**
@@ -273,7 +327,8 @@ if elect_one_sync() and my_block_rank == 0:
 
 ## Understanding the collective pattern
 
-This puzzle demonstrates the classic **two-phase reduction pattern** used in distributed computing:
+This puzzle demonstrates the classic **two-phase reduction pattern** used in
+distributed computing:
 
 1. **Local aggregation**: Each processing unit (block) reduces its data portion
 2. **Global coordination**: Processing units synchronize and exchange results
@@ -292,4 +347,10 @@ This puzzle demonstrates the classic **two-phase reduction pattern** used in dis
 - **Better utilization**: Use more GPU compute units simultaneously
 - **Scalable patterns**: Foundation for complex multi-stage algorithms
 
-**Next step**: Ready for the ultimate challenge? Continue to **[Advanced Cluster Algorithms](./advanced_cluster_patterns.md)** to learn hierarchical [warp programming](../puzzle_24/warp_sum.md)+[block coordination](../puzzle_27/block_sum.md)+cluster synchronization, building on [performance optimization techniques](../puzzle_30/profile_kernels.md)!
+**Next step**: Ready for the ultimate challenge? Continue to
+**[Advanced Cluster Algorithms](./advanced_cluster_patterns.md)** to learn
+hierarchical
+[warp
+programming](../puzzle_24/warp_sum.md)+[block coordination](../puzzle_27/block_sum.md)+cluster
+synchronization, building on
+[performance optimization techniques](../puzzle_30/profile_kernels.md)!

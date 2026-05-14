@@ -1,9 +1,14 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from manim import *
+
 
 class Puzzle04Visualization(Scene):
     def construct(self):
         array_scale = 0.6  # Match other puzzles
-        thread_scale = 0.4
 
         # Input 2D matrix - positioned on the left
         input_matrix = VGroup()
@@ -12,7 +17,7 @@ class Puzzle04Visualization(Scene):
             height=array_scale * 2 + 1.0,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         for j in range(2):
@@ -24,7 +29,9 @@ class Puzzle04Visualization(Scene):
         input_matrix.arrange_in_grid(rows=2, cols=2, buff=0)
         input_matrix.move_to(input_bg)
         input_group = VGroup(input_bg, input_matrix)
-        input_label = Text("Input Matrix (2×2)", font_size=18).next_to(input_group, UP, buff=0.2)
+        input_label = Text("Input Matrix (2×2)", font_size=18).next_to(
+            input_group, UP, buff=0.2
+        )
         input_group = VGroup(input_label, input_group)
 
         # Position the entire input group
@@ -36,9 +43,11 @@ class Puzzle04Visualization(Scene):
             height=6,  # Make it square for matrix layout
             stroke_color=GOLD_D,
             fill_color=DARK_GRAY,
-            fill_opacity=0.1
+            fill_opacity=0.1,
         )
-        block_label = Text("GPU Thread Block", font_size=18).next_to(block_bg, UP, buff=0.2)
+        block_label = Text("GPU Thread Block", font_size=18).next_to(
+            block_bg, UP, buff=0.2
+        )
 
         threads = VGroup()
         for j in range(3):
@@ -49,11 +58,19 @@ class Puzzle04Visualization(Scene):
                     corner_radius=0.1,
                     stroke_color=WHITE,
                     fill_color=DARK_GRAY,
-                    fill_opacity=0.8
+                    fill_opacity=0.8,
                 )
-                thread_text = Text(f"thread_idx=({j},{i})", font_size=14, color=YELLOW)
-                valid_text = Text("if i,j < size", font_size=10, color=GREEN_A if (i < 2 and j < 2) else RED)
-                thread_info = VGroup(thread_text, valid_text).arrange(DOWN, buff=0.05)
+                thread_text = Text(
+                    f"thread_idx=({j},{i})", font_size=14, color=YELLOW
+                )
+                valid_text = Text(
+                    "if i,j < size",
+                    font_size=10,
+                    color=GREEN_A if (i < 2 and j < 2) else RED,
+                )
+                thread_info = VGroup(thread_text, valid_text).arrange(
+                    DOWN, buff=0.05
+                )
                 thread_cell.add(thread_info)
                 threads.add(thread_cell)
 
@@ -70,7 +87,7 @@ class Puzzle04Visualization(Scene):
             height=array_scale * 2 + 1.0,
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         for j in range(2):
@@ -82,7 +99,9 @@ class Puzzle04Visualization(Scene):
         output_matrix.arrange_in_grid(rows=2, cols=2, buff=0)
         output_matrix.move_to(output_bg)
         output_group = VGroup(output_bg, output_matrix)
-        output_label = Text("Output Matrix (2×2)", font_size=18).next_to(output_group, UP, buff=0.2)
+        output_label = Text("Output Matrix (2×2)", font_size=18).next_to(
+            output_group, UP, buff=0.2
+        )
         output_group = VGroup(output_label, output_group)
 
         # Position the entire output group
@@ -107,39 +126,46 @@ class Puzzle04Visualization(Scene):
                     start = input_matrix[j * 2 + i].get_right()
                     end = threads[j * 3 + i].get_left()
                     arrow1 = Arrow(
-                        start, end,
+                        start,
+                        end,
                         buff=0.2,
                         color=BLUE_C,
                         stroke_width=2,
-                        max_tip_length_to_length_ratio=0.2
+                        max_tip_length_to_length_ratio=0.2,
                     ).set_opacity(0.6)
 
                     # Arrow from thread to output
                     start = threads[j * 3 + i].get_right()
                     end = output_matrix[j * 2 + i].get_left()
                     arrow2 = Arrow(
-                        start, end,
+                        start,
+                        end,
                         buff=0.2,
                         color=GREEN_C,
                         stroke_width=2,
-                        max_tip_length_to_length_ratio=0.2
+                        max_tip_length_to_length_ratio=0.2,
                     ).set_opacity(0.6)
 
                     arrows.add(arrow1, arrow2)
                 else:
-                    warning = Text("×", font_size=36, color=RED).move_to(threads[j * 3 + i])
+                    warning = Text("×", font_size=36, color=RED).move_to(
+                        threads[j * 3 + i]
+                    )
                     arrows.add(warning)
 
         self.play(FadeIn(arrows), run_time=0.3)
         self.wait(60)
 
+
 if __name__ == "__main__":
-    with tempconfig({
-        "preview": True,
-        "format": "gif",
-        "media_dir": "./media",
-        "quality": "medium_quality",
-        "output_file": "puzzle_04_viz"
-    }):
+    with tempconfig(
+        {
+            "preview": True,
+            "format": "gif",
+            "media_dir": "./media",
+            "quality": "medium_quality",
+            "output_file": "puzzle_04_viz",
+        }
+    ):
         scene = Puzzle04Visualization()
         scene.render()

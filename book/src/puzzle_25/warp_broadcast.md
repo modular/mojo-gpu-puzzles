@@ -1,10 +1,21 @@
 # `warp.broadcast()` One-to-Many Communication
 
-For warp-level coordination we can use `broadcast()` to share data from one lane to all other lanes within a warp. This powerful primitive enables efficient block-level computations, conditional logic coordination, and one-to-many communication patterns without shared memory or explicit synchronization.
+For warp-level coordination we can use `broadcast()` to share data from one lane
+to all other lanes within a warp. This powerful primitive enables efficient
+block-level computations, conditional logic coordination, and one-to-many
+communication patterns without shared memory or explicit synchronization.
 
-**Key insight:** _The [broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast) operation leverages SIMT execution to let one lane (typically lane 0) share its computed value with all other lanes in the same warp, enabling efficient coordination patterns and collective decision-making._
+**Key insight:** _The
+[broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)
+operation leverages SIMT execution to let one lane (typically lane 0) share its
+computed value with all other lanes in the same warp, enabling efficient
+coordination patterns and collective decision-making._
 
-> **What are broadcast operations?** Broadcast operations are communication patterns where one thread computes a value and shares it with all other threads in a group. This is essential for coordination tasks like computing block-level statistics, making collective decisions, or sharing configuration parameters across all threads in a warp.
+> **What are broadcast operations?** Broadcast operations are communication
+> patterns where one thread computes a value and shares it with all other
+> threads in a group. This is essential for coordination tasks like computing
+> block-level statistics, making collective decisions, or sharing configuration
+> parameters across all threads in a warp.
 
 ## Key concepts
 
@@ -16,10 +27,12 @@ In this puzzle, you'll learn:
 - **Conditional coordination** across lanes
 - **Combined broadcast-shuffle** operations
 
-The `broadcast` operation enables one lane (by default lane 0) to share its value with all other lanes:
-\\[\\Large \text{broadcast}(\text{value}) = \text{value_from_lane_0_to_all_lanes}\\]
+The `broadcast` operation enables one lane (by default lane 0) to share its
+value with all other lanes: \\[\\Large \text{broadcast}(\text{value}) =
+\text{value_from_lane_0_to_all_lanes}\\]
 
-This transforms complex coordination patterns into simple warp-level operations, enabling efficient collective computations without explicit synchronization.
+This transforms complex coordination patterns into simple warp-level operations,
+enabling efficient collective computations without explicit synchronization.
 
 ## The broadcast concept
 
@@ -62,17 +75,21 @@ result = use_collective_value(collective_value)
 
 ## 1. Basic broadcast
 
-Implement a basic broadcast pattern where lane 0 computes a block-level statistic and shares it with all lanes.
+Implement a basic broadcast pattern where lane 0 computes a block-level
+statistic and shares it with all lanes.
 
 **Requirements:**
 
 - Lane 0 should compute the sum of the first 4 elements in the current block
-- This computed value must be shared with all other lanes in the warp using `broadcast()`
+- This computed value must be shared with all other lanes in the warp using
+  `broadcast()`
 - Each lane should then add this shared value to its own input element
 
-**Test data:** Input `[1, 2, 3, 4, 5, 6, 7, 8, ...]` should produce output `[11, 12, 13, 14, 15, 16, 17, 18, ...]`
+**Test data:** Input `[1, 2, 3, 4, 5, 6, 7, 8, ...]` should produce output
+`[11, 12, 13, 14, 15, 16, 17, 18, ...]`
 
-**Challenge:** How do you coordinate so that only one lane does the block-level computation, but all lanes can use the result in their individual operations?
+**Challenge:** How do you coordinate so that only one lane does the block-level
+computation, but all lanes can use the result in their individual operations?
 
 ### Configuration
 
@@ -97,26 +114,30 @@ Implement a basic broadcast pattern where lane 0 computes a block-level statisti
 
 ### 1. **Understanding broadcast mechanics**
 
-The `broadcast(value)` operation takes the value from lane 0 and distributes it to all lanes in the warp.
+The `broadcast(value)` operation takes the value from lane 0 and distributes it
+to all lanes in the warp.
 
-**Key insight:** Only lane 0's value matters for the broadcast. Other lanes' values are ignored, but all lanes receive lane 0's value.
+**Key insight:** Only lane 0's value matters for the broadcast. Other lanes'
+values are ignored, but all lanes receive lane 0's value.
 
 **Visualization:**
 
-```
+```text
 Before broadcast: Lane 0 has \(\text{val}_0\), Lane 1 has \(\text{val}_1\), Lane 2 has \(\text{val}_2\), ...
 After broadcast:  Lane 0 has \(\text{val}_0\), Lane 1 has \(\text{val}_0\), Lane 2 has \(\text{val}_0\), ...
 ```
 
-**Think about:** How can you ensure only lane 0 computes the value you want to broadcast?
+**Think about:** How can you ensure only lane 0 computes the value you want to
+broadcast?
 
 ### 2. **Lane-specific computation**
 
-Design your algorithm so that lane 0 performs the special computation while other lanes wait.
+Design your algorithm so that lane 0 performs the special computation while
+other lanes wait.
 
 **Pattern to consider:**
 
-```
+```text
 var shared_value = initial_value
 if lane == 0:
     # Only lane 0 computes
@@ -132,9 +153,11 @@ shared_value = broadcast(shared_value)
 
 ### 3. **Collective usage**
 
-After broadcasting, all lanes have the same value and can use it in their individual computations.
+After broadcasting, all lanes have the same value and can use it in their
+individual computations.
 
-**Think about:** How does each lane combine the broadcast value with its own local data?
+**Think about:** How does each lane combine the broadcast value with its own
+local data?
 
 </div>
 </details>
@@ -198,7 +221,8 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 
 <div class="solution-explanation">
 
-This solution demonstrates the fundamental broadcast pattern for warp-level coordination.
+This solution demonstrates the fundamental broadcast pattern for warp-level
+coordination.
 
 **Algorithm breakdown:**
 
@@ -224,7 +248,7 @@ if global_i < size:
 
 **SIMT execution trace:**
 
-```
+```text
 Cycle 1: Lane-specific computation
   Lane 0: Computes sum of input[0] + input[1] + input[2] + input[3] = 1+2+3+4 = 10
   Lane 1: broadcast_value remains 0.0 (not lane 0)
@@ -265,17 +289,22 @@ Cycle 3: Individual computation with broadcast value
 
 ## 2. Conditional broadcast
 
-Implement conditional coordination where lane 0 analyzes block data and makes a decision that affects all lanes.
+Implement conditional coordination where lane 0 analyzes block data and makes a
+decision that affects all lanes.
 
 **Requirements:**
 
-- Lane 0 should analyze the first 8 elements in the current block and find their maximum value
+- Lane 0 should analyze the first 8 elements in the current block and find their
+  maximum value
 - This maximum value must be broadcast to all other lanes using `broadcast()`
-- Each lane should then apply conditional logic: if their element is above half the maximum, double it; otherwise, halve it
+- Each lane should then apply conditional logic: if their element is above half
+  the maximum, double it; otherwise, halve it
 
-**Test data:** Input `[3, 1, 7, 2, 9, 4, 6, 8, ...]` (repeating pattern) should produce output `[1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, ...]`
+**Test data:** Input `[3, 1, 7, 2, 9, 4, 6, 8, ...]` (repeating pattern) should
+produce output `[1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, ...]`
 
-**Challenge:** How do you coordinate block-level analysis with element-wise conditional transformations across all lanes?
+**Challenge:** How do you coordinate block-level analysis with element-wise
+conditional transformations across all lanes?
 
 ### Configuration
 
@@ -296,7 +325,8 @@ Implement conditional coordination where lane 0 analyzes block data and makes a 
 
 ### 1. **Analysis and decision-making**
 
-Lane 0 needs to analyze multiple data points and make a decision that will guide all other lanes.
+Lane 0 needs to analyze multiple data points and make a decision that will guide
+all other lanes.
 
 **Key questions:**
 
@@ -306,7 +336,7 @@ Lane 0 needs to analyze multiple data points and make a decision that will guide
 
 **Pattern to consider:**
 
-```
+```text
 var decision = default_value
 if lane == 0:
     # Analyze block-local data
@@ -316,7 +346,8 @@ decision = broadcast(decision)
 
 ### 2. **Conditional execution coordination**
 
-After receiving the broadcast decision, all lanes need to apply different logic based on the decision.
+After receiving the broadcast decision, all lanes need to apply different logic
+based on the decision.
 
 **Think about:**
 
@@ -326,7 +357,7 @@ After receiving the broadcast decision, all lanes need to apply different logic 
 
 **Conditional pattern:**
 
-```
+```text
 if (local_data meets_broadcast_criteria):
     # Apply one transformation
 else:
@@ -398,7 +429,8 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 
 <div class="solution-explanation">
 
-This solution demonstrates advanced broadcast patterns for conditional coordination across lanes.
+This solution demonstrates advanced broadcast patterns for conditional
+coordination across lanes.
 
 **Complete algorithm analysis:**
 
@@ -430,7 +462,7 @@ if global_i < size:
 
 **Decision-making execution trace:**
 
-```
+```text
 Input data: [3.0, 1.0, 7.0, 2.0, 9.0, 4.0, 6.0, 8.0, ...]
 
 Step 1: Lane 0 finds maximum of first 8 elements
@@ -466,19 +498,23 @@ Step 3: Conditional execution per lane
 \\frac{x}{2} & \\text{if } x < \\tau
 \\end{cases}\\]
 
-Where \\(\\tau = \\frac{\\max(\\text{block\_data})}{2}\\) is the broadcast threshold.
+Where \\(\\tau = \\frac{\\max(\\text{block\_data})}{2}\\) is the broadcast
+threshold.
 
 **Coordination pattern benefits:**
 
 1. **Centralized analysis**: One lane analyzes, all lanes benefit
 2. **Consistent decisions**: All lanes use the same threshold
 3. **Adaptive behavior**: Threshold adapts to block-local data characteristics
-4. **Efficient coordination**: Single broadcast coordinates complex conditional logic
+4. **Efficient coordination**: Single broadcast coordinates complex conditional
+   logic
 
 **Applications:**
 
-- **Adaptive algorithms**: Adjusting parameters based on local data characteristics
-- **Quality control**: Applying different processing based on data quality metrics
+- **Adaptive algorithms**: Adjusting parameters based on local data
+  characteristics
+- **Quality control**: Applying different processing based on data quality
+  metrics
 - **Load balancing**: Distributing work based on block-local complexity analysis
 
 </div>
@@ -486,21 +522,29 @@ Where \\(\\tau = \\frac{\\max(\\text{block\_data})}{2}\\) is the broadcast thres
 
 ## 3. Broadcast-shuffle coordination
 
-Implement advanced coordination combining both `broadcast()` and `shuffle_down()` operations.
+Implement advanced coordination combining both `broadcast()` and
+`shuffle_down()` operations.
 
 **Requirements:**
 
-- Lane 0 should compute the average of the first 4 elements in the block and broadcast this scaling factor to all lanes
-- Each lane should use `shuffle_down(offset=1)` to get their next neighbor's value
-- For most lanes: multiply the scaling factor by `(current_value + next_neighbor_value)`
-- For the last lane in the warp: multiply the scaling factor by just `current_value` (no valid neighbor)
+- Lane 0 should compute the average of the first 4 elements in the block and
+  broadcast this scaling factor to all lanes
+- Each lane should use `shuffle_down(offset=1)` to get their next neighbor's
+  value
+- For most lanes: multiply the scaling factor by
+  `(current_value + next_neighbor_value)`
+- For the last lane in the warp: multiply the scaling factor by just
+  `current_value` (no valid neighbor)
 
-**Test data:** Input follows pattern `[2, 4, 6, 8, 1, 3, 5, 7, ...]` (first 4 elements: 2,4,6,8 then repeating 1,3,5,7)
+**Test data:** Input follows pattern `[2, 4, 6, 8, 1, 3, 5, 7, ...]` (first 4
+elements: 2,4,6,8 then repeating 1,3,5,7)
 
 - Lane 0 computes scaling factor: `(2+4+6+8)/4 = 5.0`
 - Expected output: `[30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, ...]`
 
-**Challenge:** How do you coordinate multiple warp primitives so that one lane's computation affects all lanes, while each lane also accesses its neighbor's data?
+**Challenge:** How do you coordinate multiple warp primitives so that one lane's
+computation affects all lanes, while each lane also accesses its neighbor's
+data?
 
 ### Configuration
 
@@ -521,7 +565,8 @@ Implement advanced coordination combining both `broadcast()` and `shuffle_down()
 
 ### 1. **Multi-primitive coordination**
 
-This puzzle requires orchestrating both broadcast and shuffle operations in sequence.
+This puzzle requires orchestrating both broadcast and shuffle operations in
+sequence.
 
 **Think about the flow:**
 
@@ -532,7 +577,7 @@ This puzzle requires orchestrating both broadcast and shuffle operations in sequ
 
 **Coordination pattern:**
 
-```
+```text
 # Phase 1: Broadcast coordination
 var shared_param = compute_if_lane_0()
 shared_param = broadcast(shared_param)
@@ -547,7 +592,8 @@ result = combine(current_val, neighbor_val, shared_param)
 
 ### 2. **Parameter computation strategy**
 
-Consider what kind of block-level parameter would be useful for scaling neighbor operations.
+Consider what kind of block-level parameter would be useful for scaling neighbor
+operations.
 
 **Questions to explore:**
 
@@ -557,7 +603,8 @@ Consider what kind of block-level parameter would be useful for scaling neighbor
 
 ### 3. **Combined operation design**
 
-Think about how to meaningfully combine broadcast parameters with shuffle-based neighbor access.
+Think about how to meaningfully combine broadcast parameters with shuffle-based
+neighbor access.
 
 **Pattern considerations:**
 
@@ -619,7 +666,8 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 
 <div class="solution-explanation">
 
-This solution demonstrates the most advanced warp coordination pattern, combining broadcast and shuffle primitives.
+This solution demonstrates the most advanced warp coordination pattern,
+combining broadcast and shuffle primitives.
 
 **Complete algorithm analysis:**
 
@@ -651,7 +699,7 @@ if global_i < size:
 
 **Multi-primitive execution trace:**
 
-```
+```text
 Input data: [2, 4, 6, 8, 1, 3, 5, 7, ...]
 
 Phase 1: Lane 0 computes scaling factor
@@ -690,26 +738,30 @@ This algorithm implements a **hierarchical coordination pattern**:
 2. **Horizontal coordination** (shuffle): Lane i → Lane i+1
 3. **Combined computation**: Uses both broadcast and shuffle data
 
-**Mathematical foundation:**
-\\[\\Large \\text{output}[i] = \\begin{cases}
-(\\text{input}[i] + \\text{input}[i+1]) \\cdot \\beta & \\text{if lane } i < \\text{WARP\_SIZE} - 1 \\\\
+**Mathematical foundation:** \\[\\Large \\text{output}[i] = \\begin{cases}
+(\\text{input}[i] + \\text{input}[i+1]) \\cdot \\beta & \\text{if lane} i <
+\\text{WARP\_SIZE} - 1 \\\\
 \\text{input}[i] \\cdot \\beta & \\text{if lane } i = \\text{WARP\_SIZE} - 1
 \\end{cases}\\]
 
-Where \\(\\beta = \\frac{1}{4}\\sum_{k=0}^{3} \\text{input}[\\text{block\_start} + k]\\) is the broadcast scaling factor.
+Where \\(\\beta = \\frac{1}{4}\\sum_{k=0}^{3}
+\\text{input}[\\text{block\_start} + k]\\) is the broadcast scaling factor.
 
 **Advanced coordination benefits:**
 
-1. **Multi-level communication**: Combines global (broadcast) and local (shuffle) coordination
+1. **Multi-level communication**: Combines global (broadcast) and local
+   (shuffle) coordination
 2. **Adaptive scaling**: Block-level parameters influence neighbor operations
 3. **Efficient composition**: Two primitives work together seamlessly
 4. **Complex algorithms**: Enables sophisticated parallel algorithms
 
 **Real-world applications:**
 
-- **Adaptive filtering**: Block-level noise estimation with neighbor-based filtering
+- **Adaptive filtering**: Block-level noise estimation with neighbor-based
+  filtering
 - **Dynamic load balancing**: Global work distribution with local coordination
-- **Multi-scale processing**: Global parameters controlling local stencil operations
+- **Multi-scale processing**: Global parameters controlling local stencil
+  operations
 
 </div>
 </details>
@@ -730,6 +782,8 @@ result = use_shared_value(shared_value, local_data)
 
 - **One-to-many coordination**: Single lane computes, all lanes benefit
 - **Zero synchronization overhead**: SIMT execution handles coordination
-- **Composable patterns**: Easily combines with shuffle and other warp operations
+- **Composable patterns**: Easily combines with shuffle and other warp
+  operations
 
-**Applications**: Block statistics, collective decisions, parameter sharing, adaptive algorithms.
+**Applications**: Block statistics, collective decisions, parameter sharing,
+adaptive algorithms.

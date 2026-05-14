@@ -1,10 +1,23 @@
 # `warp.shuffle_down()` One-to-One Communication
 
-For warp-level neighbor communication we can use `shuffle_down()` to access data from adjacent lanes within a warp. This powerful primitive enables efficient finite differences, moving averages, and neighbor-based computations without shared memory or explicit synchronization.
+For warp-level neighbor communication we can use `shuffle_down()` to access data
+from adjacent lanes within a warp. This powerful primitive enables efficient
+finite differences, moving averages, and neighbor-based computations without
+shared memory or explicit synchronization.
 
-**Key insight:** _The [shuffle_down()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down) operation leverages SIMT execution to let each lane access data from its neighbors within the same warp, enabling efficient stencil patterns and sliding window operations._
+**Key insight:** _The
+[shuffle_down()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)
+operation leverages SIMT execution to let each lane access data from its
+neighbors within the same warp, enabling efficient stencil patterns and sliding
+window operations._
 
-> **What are stencil operations?** [Stencil](https://en.wikipedia.org/wiki/Iterative_Stencil_Loops) operations are computations where each output element depends on a fixed pattern of neighboring input elements. Common examples include finite differences (derivatives), convolutions, and moving averages. The "stencil" refers to the pattern of neighbor access - like a 3-point stencil that reads `[i-1, i, i+1]` or a 5-point stencil that reads `[i-2, i-1, i, i+1, i+2]`.
+> **What are stencil operations?**
+> [Stencil](https://en.wikipedia.org/wiki/Iterative_Stencil_Loops) operations
+> are computations where each output element depends on a fixed pattern of
+> neighboring input elements. Common examples include finite differences
+> (derivatives), convolutions, and moving averages. The "stencil" refers to the
+> pattern of neighbor access - like a 3-point stencil that reads `[i-1, i, i+1]`
+> or a 5-point stencil that reads `[i-2, i-1, i, i+1, i+2]`.
 
 ## Key concepts
 
@@ -16,10 +29,13 @@ In this puzzle, you'll learn:
 - **Multi-offset shuffling** for extended neighbor access
 - **Cross-warp coordination** in multi-block scenarios
 
-The `shuffle_down` operation enables each lane to access data from lanes at higher indices:
-\\[\\Large \text{shuffle\_down}(\text{value}, \text{offset}) = \text{value_from_lane}(\text{lane\_id} + \text{offset})\\]
+The `shuffle_down` operation enables each lane to access data from lanes at
+higher indices: \\[\\Large \text{shuffle\_down}(\text{value}, \text{offset}) =
+\text{value_from_lane}(\text{lane\_id} + \text{offset})\\]
 
-This transforms complex neighbor access patterns into simple warp-level operations, enabling efficient stencil computations without explicit memory indexing.
+This transforms complex neighbor access patterns into simple warp-level
+operations, enabling efficient stencil computations without explicit memory
+indexing.
 
 ## 1. Basic neighbor difference
 
@@ -70,10 +86,13 @@ if lane < WARP_SIZE - 1:
 
 Implement finite differences using `shuffle_down()` to access the next element.
 
-**Mathematical operation:** Compute the discrete derivative (finite difference) for each element:
-\\[\\Large \\text{output}[i] = \\text{input}[i+1] - \\text{input}[i]\\]
+**Mathematical operation:** Compute the discrete derivative (finite difference)
+for each element: \\[\\Large \\text{output}[i] = \\text{input}[i+1] -
+\\text{input}[i]\\]
 
-This transforms input data `[0, 1, 4, 9, 16, 25, ...]` (squares: `i * i`) into differences `[1, 3, 5, 7, 9, ...]` (odd numbers), effectively computing the discrete derivative of the quadratic function.
+This transforms input data `[0, 1, 4, 9, 16, 25, ...]` (squares: `i * i`) into
+differences `[1, 3, 5, 7, 9, ...]` (odd numbers), effectively computing the
+discrete derivative of the quadratic function.
 
 ```mojo
 {{#include ../../../problems/p25/p25.mojo:neighbor_difference}}
@@ -88,7 +107,9 @@ This transforms input data `[0, 1, 4, 9, 16, 25, ...]` (squares: `i * i`) into d
 
 ### 1. **Understanding shuffle_down**
 
-The `shuffle_down(value, offset)` operation allows each lane to receive data from a lane at a higher index. Study how this can give you access to neighboring elements without explicit memory loads.
+The `shuffle_down(value, offset)` operation allows each lane to receive data
+from a lane at a higher index. Study how this can give you access to neighboring
+elements without explicit memory loads.
 
 **What `shuffle_down(val, 1)` does:**
 
@@ -100,15 +121,18 @@ The `shuffle_down(value, offset)` operation allows each lane to receive data fro
 
 ### 2. **Warp boundary considerations**
 
-Consider what happens at the edges of a warp. Some lanes may not have valid neighbors to access via shuffle operations.
+Consider what happens at the edges of a warp. Some lanes may not have valid
+neighbors to access via shuffle operations.
 
-**Challenge:** Design your algorithm to handle cases where shuffle operations may return undefined data for lanes at warp boundaries.
+**Challenge:** Design your algorithm to handle cases where shuffle operations
+may return undefined data for lanes at warp boundaries.
 
 For neighbor difference with `WARP_SIZE = 32`:
 
 - **Valid difference** (`lane < WARP_SIZE - 1`): **Lanes 0-30** (31 lanes)
   - **When**: \\(\text{lane\_id}() \in \{0, 1, \cdots, 30\}\\)
-  - **Why**: `shuffle_down(current_val, 1)` successfully gets next neighbor's value
+  - **Why**: `shuffle_down(current_val, 1)` successfully gets next neighbor's
+    value
   - **Result**: `output[i] = input[i+1] - input[i]` (finite difference)
 
 - **Boundary case** (else): **Lane 31** (1 lane)
@@ -122,7 +146,8 @@ For neighbor difference with `WARP_SIZE = 32`:
 lane = lane_id()  # Returns 0 to WARP_SIZE-1
 ```
 
-**Lane numbering:** Within each warp, lanes are numbered 0, 1, 2, ..., `WARP_SIZE-1`
+**Lane numbering:** Within each warp, lanes are numbered 0, 1, 2,...,
+`WARP_SIZE-1`
 
 </div>
 </details>
@@ -186,7 +211,8 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 
 <div class="solution-explanation">
 
-This solution demonstrates how `shuffle_down()` transforms traditional array indexing into efficient warp-level communication.
+This solution demonstrates how `shuffle_down()` transforms traditional array
+indexing into efficient warp-level communication.
 
 **Algorithm breakdown:**
 
@@ -203,7 +229,7 @@ if global_i < size:
 
 **SIMT execution deep dive:**
 
-```
+```text
 Cycle 1: All lanes load their values simultaneously
   Lane 0: current_val = input[0] = 0
   Lane 1: current_val = input[1] = 1
@@ -227,18 +253,21 @@ Cycle 3: Difference computation (lanes 0-30 only)
   Lane 31: output[31] = 0 (boundary condition)
 ```
 
-**Mathematical insight:** This implements the discrete derivative operator \\(D\\):
-\\[\\Large D\\lbrack f\\rbrack(i) = f(i+1) - f(i)\\]
+**Mathematical insight:** This implements the discrete derivative operator
+\\(D\\): \\[\\Large D\\lbrack f\\rbrack(i) = f(i+1) - f(i)\\]
 
 For our quadratic input \\(f(i) = i^2\\):
 \\[\\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\\]
 
 **Why shuffle_down is superior:**
 
-1. **Memory efficiency**: Traditional approach requires `input[global_i + 1]` load, potentially causing cache misses
-2. **Bounds safety**: No risk of out-of-bounds access; hardware handles warp boundaries
+1. **Memory efficiency**: Traditional approach requires `input[global_i + 1]`
+   load, potentially causing cache misses
+2. **Bounds safety**: No risk of out-of-bounds access; hardware handles warp
+   boundaries
 3. **SIMT optimization**: Single instruction processes all lanes simultaneously
-4. **Register communication**: Data moves between registers, not through memory hierarchy
+4. **Register communication**: Data moves between registers, not through memory
+   hierarchy
 
 **Performance characteristics:**
 
@@ -261,16 +290,22 @@ For our quadratic input \\(f(i) = i^2\\):
 
 Implement a 3-point moving average using multiple `shuffle_down` operations.
 
-**Mathematical operation:** Compute a sliding window average using three consecutive elements:
-\\[\\Large \\text{output}[i] = \\frac{1}{3}\\left(\\text{input}[i] + \\text{input}[i+1] + \\text{input}[i+2]\\right)\\]
+**Mathematical operation:** Compute a sliding window average using three
+consecutive elements: \\[\\Large \\text{output}[i] =
+\\frac{1}{3}\\left(\\text{input}[i] + \\text{input}[i+1] +
+\\text{input}[i+2]\\right)\\]
 
 **Boundary handling:** The algorithm gracefully degrades at warp boundaries:
 
-- **Full 3-point window**: \\(\\text{output}[i] = \\frac{1}{3}\\sum_{k=0}^{2} \\text{input}[i+k]\\) when all neighbors available
-- **2-point window**: \\(\\text{output}[i] = \\frac{1}{2}\\sum_{k=0}^{1} \\text{input}[i+k]\\) when only next neighbor available
-- **1-point window**: \\(\\text{output}[i] = \\text{input}[i]\\) when no neighbors available
+- **Full 3-point window**: \\(\\text{output}[i] = \\frac{1}{3}\\sum_{k=0}^{2}
+  \\text{input}[i+k]\\) when all neighbors available
+- **2-point window**: \\(\\text{output}[i] = \\frac{1}{2}\\sum_{k=0}^{1}
+  \\text{input}[i+k]\\) when only next neighbor available
+- **1-point window**: \\(\\text{output}[i] = \\text{input}[i]\\) when no
+  neighbors available
 
-This demonstrates how `shuffle_down()` enables efficient stencil operations with automatic boundary handling within warp limits.
+This demonstrates how `shuffle_down()` enables efficient stencil operations with
+automatic boundary handling within warp limits.
 
 ```mojo
 {{#include ../../../problems/p25/p25.mojo:moving_average_3}}
@@ -283,7 +318,8 @@ This demonstrates how `shuffle_down()` enables efficient stencil operations with
 
 ### 1. **Multi-offset shuffle patterns**
 
-This puzzle requires accessing multiple neighbors simultaneously. You'll need to use shuffle operations with different offsets.
+This puzzle requires accessing multiple neighbors simultaneously. You'll need to
+use shuffle operations with different offsets.
 
 **Key questions:**
 
@@ -293,16 +329,18 @@ This puzzle requires accessing multiple neighbors simultaneously. You'll need to
 
 **Visualization concept:**
 
-```
+```text
 Your lane needs:  current_val, next_val, next_next_val
 Shuffle offsets:  0 (direct),  1,        2
 ```
 
-**Think about:** How many shuffle operations do you need, and what offsets should you use?
+**Think about:** How many shuffle operations do you need, and what offsets
+should you use?
 
 ### 2. **Tiered boundary handling**
 
-Unlike the simple neighbor difference, this puzzle has multiple boundary scenarios because you need access to 2 neighbors.
+Unlike the simple neighbor difference, this puzzle has multiple boundary
+scenarios because you need access to 2 neighbors.
 
 **Boundary scenarios to consider:**
 
@@ -318,7 +356,7 @@ Unlike the simple neighbor difference, this puzzle has multiple boundary scenari
 
 **Pattern to consider:**
 
-```
+```text
 if (can_access_both_neighbors):
     # 3-point average
 elif (can_access_one_neighbor):
@@ -329,7 +367,8 @@ else:
 
 ### 3. **Multi-block coordination**
 
-This puzzle uses multiple blocks, each processing a different section of the data.
+This puzzle uses multiple blocks, each processing a different section of the
+data.
 
 **Important considerations:**
 
@@ -343,7 +382,8 @@ This puzzle uses multiple blocks, each processing a different section of the dat
 - Are you checking both lane boundaries AND global array boundaries?
 - How does `global_i` relate to `lane_id()` in different blocks?
 
-**Debugging tip:** Test your logic by tracing through what happens at the boundary lanes of each block.
+**Debugging tip:** Test your logic by tracing through what happens at the
+boundary lanes of each block.
 
 </div>
 </details>
@@ -399,7 +439,8 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 
 <div class="solution-explanation">
 
-This solution demonstrates advanced multi-offset shuffling for complex stencil operations.
+This solution demonstrates advanced multi-offset shuffling for complex stencil
+operations.
 
 **Complete algorithm analysis:**
 
@@ -424,7 +465,7 @@ if global_i < size:
 
 **Multi-offset execution trace (`WARP_SIZE = 32`):**
 
-```
+```text
 Initial state (Block 0, elements 0-31):
   Lane 0: current_val = input[0] = 1
   Lane 1: current_val = input[1] = 2
@@ -455,18 +496,20 @@ Computation phase:
   Lane 31:    1-point average → current (passthrough)
 ```
 
-**Mathematical foundation:** This implements a variable-width discrete convolution:
-\\[\\Large h[i] = \\sum_{k=0}^{K(i)-1} w_k^{(i)} \\cdot f[i+k]\\]
+**Mathematical foundation:** This implements a variable-width discrete
+convolution: \\[\\Large h[i] = \\sum_{k=0}^{K(i)-1} w_k^{(i)} \\cdot f[i+k]\\]
 
 Where the kernel adapts based on position:
 
-- **Interior points**: \\(K(i) = 3\\), \\(\\mathbf{w}^{(i)} = [\\frac{1}{3}, \\frac{1}{3}, \\frac{1}{3}]\\)
-- **Near boundary**: \\(K(i) = 2\\), \\(\\mathbf{w}^{(i)} = [\\frac{1}{2}, \\frac{1}{2}]\\)
+- **Interior points**: \\(K(i) = 3\\), \\(\\mathbf{w}^{(i)} =
+  [\\frac{1}{3}, \\frac{1}{3}, \\frac{1}{3}]\\)
+- **Near boundary**: \\(K(i) = 2\\), \\(\\mathbf{w}^{(i)} =
+  [\\frac{1}{2}, \\frac{1}{2}]\\)
 - **At boundary**: \\(K(i) = 1\\), \\(\\mathbf{w}^{(i)} = [1]\\)
 
 **Multi-block coordination:** With `SIZE_2 = 64` and 2 blocks:
 
-```
+```text
 Block 0 (global indices 0-31):
   Lane boundaries apply to global indices 29, 30, 31
 
@@ -478,11 +521,15 @@ Block 1 (global indices 32-63):
 **Performance optimizations:**
 
 1. **Parallel data acquisition**: Both shuffle operations execute simultaneously
-2. **Conditional branching**: GPU handles divergent lanes efficiently via predication
-3. **Memory coalescing**: Sequential global memory access pattern optimal for GPU
+2. **Conditional branching**: GPU handles divergent lanes efficiently via
+   predication
+3. **Memory coalescing**: Sequential global memory access pattern optimal for
+   GPU
 4. **Register reuse**: All intermediate values stay in registers
 
-**Signal processing perspective:** This is a causal FIR filter with impulse response \\(h[n] = \\frac{1}{3}[\\delta[n] + \\delta[n-1] + \\delta[n-2]]\\), providing smoothing with a cutoff frequency at \\(f_c \\approx 0.25f_s\\).
+**Signal processing perspective:** This is a causal FIR filter with impulse
+response \\(h[n] = \\frac{1}{3}[\\delta[n] + \\delta[n-1] + \\delta[n-2]]\\),
+providing smoothing with a cutoff frequency at \\(f_c \\approx 0.25f_s\\).
 
 </div>
 </details>
@@ -504,4 +551,5 @@ if lane < WARP_SIZE - offset:
 - **Boundary safety**: Automatic warp limit handling
 - **SIMT optimization**: Single instruction, all lanes parallel
 
-**Applications**: Finite differences, stencil operations, moving averages, convolutions.
+**Applications**: Finite differences, stencil operations, moving averages,
+convolutions.

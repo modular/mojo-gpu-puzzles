@@ -2,8 +2,9 @@
 
 ## Overview
 
-Implement a kernel that multiplies square matrices \\(A\\) and \\(B\\) and stores the result in \\(\text{output}\\).
-This is the most straightforward implementation where each thread computes one element of the output matrix.
+Implement a kernel that multiplies square matrices \\(A\\) and \\(B\\) and
+stores the result in \\(\text{output}\\). This is the most straightforward
+implementation where each thread computes one element of the output matrix.
 
 ## Key concepts
 
@@ -14,7 +15,8 @@ This puzzle covers:
 - Matrix indexing in row-major layout
 - Thread-to-output element mapping
 
-The key insight is understanding how to map 2D thread indices to matrix elements and compute dot products in parallel.
+The key insight is understanding how to map 2D thread indices to matrix elements
+and compute dot products in parallel.
 
 ## Configuration
 
@@ -147,11 +149,14 @@ Matrix A:          Matrix B:                   Output C:
 ### Key language features
 
 1. **Variable declaration**:
-   - The use of `var` in `var acc: output.element_type = 0` allows for type inference with `output.element_type` ensures type compatibility with the output tensor
+   - The use of `var` in `var acc: output.element_type = 0` allows for type
+     inference with `output.element_type` ensures type compatibility with the
+     output tensor
    - Initialized to zero before accumulation
 
 2. **Loop pptimization**:
-   - [`@parameter`](https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement) decorator unrolls the loop at compile time
+   - [`@parameter`](https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement)
+     decorator unrolls the loop at compile time
    - Improves performance for small, known matrix sizes
    - Enables better instruction scheduling
 
@@ -172,6 +177,8 @@ Matrix A:          Matrix B:                   Output C:
    - Poor data locality
    - Limited scalability for large matrices
 
-This naive implementation serves as a baseline for understanding matrix multiplication on GPUs, highlighting the need for optimization in memory access patterns.
+This naive implementation serves as a baseline for understanding matrix
+multiplication on GPUs, highlighting the need for optimization in memory access
+patterns.
 </div>
 </details>

@@ -1,5 +1,10 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.host import DeviceContext
+from std.gpu.host import DeviceContext, Dim
 from std.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
@@ -219,12 +224,13 @@ def main() raises:
             )
 
             comptime kernel = cluster_coordination_basics[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
+                cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
             )
 
             ctx.synchronize()
@@ -284,13 +290,14 @@ def main() raises:
             )
 
             comptime kernel = cluster_collective_operations[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 temp_tensor,
                 SIZE,
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
+                cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
             )
 
             ctx.synchronize()
@@ -331,12 +338,13 @@ def main() raises:
             )
 
             comptime kernel = advanced_cluster_patterns[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
+                cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
             )
 
             ctx.synchronize()

@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
@@ -195,7 +200,7 @@ def benchmark_simple_warp_parameterized[
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
         comptime kernel = simple_warp_dot_product[test_size]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -298,10 +303,7 @@ def benchmark_traditional_parameterized[
     @parameter
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
-        ctx.enqueue_function[
-            traditional_dot_product_p12_style[test_size],
-            traditional_dot_product_p12_style[test_size],
-        ](
+        ctx.enqueue_function[traditional_dot_product_p12_style[test_size]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -347,10 +349,7 @@ def main() raises:
                     b_host[i] = Scalar[dtype](i)
 
             if argv()[1] == "--traditional":
-                ctx.enqueue_function[
-                    traditional_dot_product_p12_style[SIZE],
-                    traditional_dot_product_p12_style[SIZE],
-                ](
+                ctx.enqueue_function[traditional_dot_product_p12_style[SIZE]](
                     out_tensor,
                     a_tensor,
                     b_tensor,
@@ -358,10 +357,7 @@ def main() raises:
                     block_dim=THREADS_PER_BLOCK,
                 )
             elif argv()[1] == "--kernel":
-                ctx.enqueue_function[
-                    simple_warp_dot_product[SIZE],
-                    simple_warp_dot_product[SIZE],
-                ](
+                ctx.enqueue_function[simple_warp_dot_product[SIZE]](
                     out_tensor,
                     a_tensor,
                     b_tensor,

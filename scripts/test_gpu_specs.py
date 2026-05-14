@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 """
 Unit tests for gpu_specs.py
 
 Tests the new bash-friendly flags and mock support.
 """
 
+import os
 import subprocess
 import sys
-import os
 
 
 def run_command(cmd, env=None):
@@ -16,32 +21,28 @@ def run_command(cmd, env=None):
     if env:
         full_env.update(env)
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        env=full_env
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True, env=full_env)
     return result.returncode, result.stdout.strip(), result.stderr.strip()
 
 
 def test_platform_flag():
     """Test --platform flag outputs valid platform name"""
     print("Testing --platform flag...")
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--platform"]
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
-    assert stdout in ["nvidia", "amd", "apple", "unknown"], \
+    assert stdout in ["nvidia", "amd", "apple", "unknown"], (
         f"Expected platform name (nvidia/amd/apple/unknown), got '{stdout}'"
+    )
     print(f"  ✓ Platform detected: {stdout}")
 
 
 def test_compute_cap_flag():
     """Test --compute-cap flag outputs valid format or empty string"""
     print("Testing --compute-cap flag...")
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--compute-cap"]
     )
 
@@ -52,11 +53,12 @@ def test_compute_cap_flag():
         # Check format: should be digits.digits
         parts = stdout.split(".")
         assert len(parts) == 2, f"Expected format X.Y, got '{stdout}'"
-        assert parts[0].isdigit() and parts[1].isdigit(), \
+        assert parts[0].isdigit() and parts[1].isdigit(), (
             f"Expected numeric format, got '{stdout}'"
+        )
         print(f"  ✓ Compute capability: {stdout}")
     else:
-        print(f"  ✓ Compute capability: (empty - not NVIDIA)")
+        print("  ✓ Compute capability: (empty - not NVIDIA)")
 
 
 def test_check_platform_match():
@@ -68,12 +70,13 @@ def test_check_platform_match():
         ["python3", "scripts/gpu_specs.py", "--platform"]
     )
 
-    returncode, stdout, stderr = run_command(
+    returncode, _, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--check-platform", platform]
     )
 
-    assert returncode == 0, \
+    assert returncode == 0, (
         f"Expected exit code 0 for matching platform '{platform}', got {returncode}"
+    )
     print(f"  ✓ Platform check passed for '{platform}'")
 
 
@@ -89,12 +92,13 @@ def test_check_platform_mismatch():
     # Pick a different platform to test mismatch
     test_platform = "nvidia" if platform != "nvidia" else "amd"
 
-    returncode, stdout, stderr = run_command(
+    returncode, _, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--check-platform", test_platform]
     )
 
-    assert returncode == 1, \
+    assert returncode == 1, (
         f"Expected exit code 1 for non-matching platform '{test_platform}', got {returncode}"
+    )
     print(f"  ✓ Platform check correctly failed for '{test_platform}'")
 
 
@@ -102,87 +106,85 @@ def test_mock_nvidia_platform():
     """Test mocking NVIDIA platform"""
     print("Testing NVIDIA platform mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--platform"],
-        env={"MOCK_GPU_PLATFORM": "nvidia"}
+        env={"MOCK_GPU_PLATFORM": "nvidia"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert stdout == "nvidia", f"Expected 'nvidia', got '{stdout}'"
-    print(f"  ✓ Mock NVIDIA platform works")
+    print("  ✓ Mock NVIDIA platform works")
 
 
 def test_mock_nvidia_compute_cap():
     """Test mocking NVIDIA compute capability"""
     print("Testing NVIDIA compute capability mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--compute-cap"],
-        env={
-            "MOCK_GPU_PLATFORM": "nvidia",
-            "MOCK_COMPUTE_CAP": "8.6"
-        }
+        env={"MOCK_GPU_PLATFORM": "nvidia", "MOCK_COMPUTE_CAP": "8.6"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert stdout == "8.6", f"Expected '8.6', got '{stdout}'"
-    print(f"  ✓ Mock compute capability works")
+    print("  ✓ Mock compute capability works")
 
 
 def test_mock_amd_platform():
     """Test mocking AMD platform"""
     print("Testing AMD platform mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--platform"],
-        env={"MOCK_GPU_PLATFORM": "amd"}
+        env={"MOCK_GPU_PLATFORM": "amd"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert stdout == "amd", f"Expected 'amd', got '{stdout}'"
-    print(f"  ✓ Mock AMD platform works")
+    print("  ✓ Mock AMD platform works")
 
 
 def test_mock_apple_platform():
     """Test mocking Apple Silicon platform"""
     print("Testing Apple Silicon platform mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--platform"],
-        env={"MOCK_GPU_PLATFORM": "apple_silicon"}
+        env={"MOCK_GPU_PLATFORM": "apple_silicon"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert stdout == "apple", f"Expected 'apple', got '{stdout}'"
-    print(f"  ✓ Mock Apple Silicon platform works")
+    print("  ✓ Mock Apple Silicon platform works")
 
 
 def test_mock_unknown_platform():
     """Test mocking unknown platform"""
     print("Testing unknown platform mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--platform"],
-        env={"MOCK_GPU_PLATFORM": "unknown"}
+        env={"MOCK_GPU_PLATFORM": "unknown"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert stdout == "unknown", f"Expected 'unknown', got '{stdout}'"
-    print(f"  ✓ Mock unknown platform works")
+    print("  ✓ Mock unknown platform works")
 
 
 def test_mock_check_platform():
     """Test --check-platform with mocked platform"""
     print("Testing --check-platform with mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, _, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--check-platform", "nvidia"],
-        env={"MOCK_GPU_PLATFORM": "nvidia"}
+        env={"MOCK_GPU_PLATFORM": "nvidia"},
     )
 
-    assert returncode == 0, \
+    assert returncode == 0, (
         f"Expected exit code 0 for mocked NVIDIA platform, got {returncode}"
-    print(f"  ✓ Mock platform check works")
+    )
+    print("  ✓ Mock platform check works")
 
 
 def test_default_output():
@@ -194,35 +196,33 @@ def test_default_output():
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
-    assert "Detected Platform:" in stdout or "Error" in stderr, \
+    assert "Detected Platform:" in stdout or "Error" in stderr, (
         "Expected either platform info or error message"
-    print(f"  ✓ Default output works")
+    )
+    print("  ✓ Default output works")
 
 
 def test_summary_output():
     """Test --summary flag output"""
     print("Testing --summary flag...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--summary"]
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert "GPU:" in stdout, "Expected 'GPU:' in summary output"
     assert "Platform:" in stdout, "Expected 'Platform:' in summary output"
-    print(f"  ✓ Summary output works")
+    print("  ✓ Summary output works")
 
 
 def test_summary_nvidia_mock():
     """Test --summary with NVIDIA mock"""
     print("Testing --summary with NVIDIA mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--summary"],
-        env={
-            "MOCK_GPU_PLATFORM": "nvidia",
-            "MOCK_COMPUTE_CAP": "8.6"
-        }
+        env={"MOCK_GPU_PLATFORM": "nvidia", "MOCK_COMPUTE_CAP": "8.6"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
@@ -230,22 +230,22 @@ def test_summary_nvidia_mock():
     assert "Compute 8.6" in stdout, "Expected compute capability in summary"
     assert "Ampere" in stdout, "Expected architecture in summary"
     assert "Platform: NVIDIA" in stdout, "Expected NVIDIA platform"
-    print(f"  ✓ NVIDIA summary works")
+    print("  ✓ NVIDIA summary works")
 
 
 def test_summary_amd_mock():
     """Test --summary with AMD mock"""
     print("Testing --summary with AMD mock...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/gpu_specs.py", "--summary"],
-        env={"MOCK_GPU_PLATFORM": "amd"}
+        env={"MOCK_GPU_PLATFORM": "amd"},
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert "GPU:" in stdout, "Expected 'GPU:' in summary"
     assert "Platform: AMD" in stdout, "Expected AMD platform"
-    print(f"  ✓ AMD summary works")
+    print("  ✓ AMD summary works")
 
 
 def main():

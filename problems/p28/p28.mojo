@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace, async_copy_wait_all
@@ -81,7 +86,7 @@ def test_async_copy_overlap_convolution() raises:
         )
 
         comptime kernel = async_copy_overlap_convolution[dtype]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             kernel_tensor,

@@ -4,7 +4,10 @@
 
 ### What is a warp?
 
-A **warp** is a group of 32 (or 64) GPU threads that execute **the same instruction at the same time** on different data. Think of it as a **synchronized vector unit** where each thread acts like a "lane" in a vector processor.
+A **warp** is a group of 32 (or 64) GPU threads that execute
+**the same instruction at the same time** on different data. Think of it as a
+**synchronized vector unit** where each thread acts like a "lane" in a vector
+processor.
 
 **Simple example:**
 
@@ -15,20 +18,23 @@ var my_value = input[my_thread_id]     # Each gets different data
 var warp_total = sum(my_value)         # All contribute to one sum
 ```
 
-What just happened? Instead of 32 separate threads doing complex coordination, the **warp** automatically synchronized them to produce a single result. This is **SIMT (Single Instruction, Multiple Thread)** execution.
+What just happened? Instead of 32 separate threads doing complex coordination,
+the **warp** automatically synchronized them to produce a single result. This is
+**SIMT (Single Instruction, Multiple Thread)** execution.
 
 ### SIMT vs SIMD comparison
 
-If you're familiar with CPU vector programming (SIMD), GPU warps are similar but with key differences:
+If you're familiar with CPU vector programming (SIMD), GPU warps are similar but
+with key differences:
 
-| Aspect | CPU SIMD (e.g., AVX) | GPU Warp (SIMT) |
-|--------|---------------------|------------------|
-| **Programming model** | Explicit vector operations | Thread-based programming |
-| **Data width** | Fixed (256/512 bits) | Flexible (32/64 threads) |
-| **Synchronization** | Implicit within instruction | Implicit within warp |
-| **Communication** | Via memory/registers | Via shuffle operations |
-| **Divergence handling** | Not applicable | Hardware masking |
-| **Example** | `a + b` | `sum(thread_value)` |
+| Aspect                  | CPU SIMD (e.g., AVX)        | GPU Warp (SIMT)          |
+|-------------------------|-----------------------------|--------------------------|
+| **Programming model**   | Explicit vector operations  | Thread-based programming |
+| **Data width**          | Fixed (256/512 bits)        | Flexible (32/64 threads) |
+| **Synchronization**     | Implicit within instruction | Implicit within warp     |
+| **Communication**       | Via memory/registers        | Via shuffle operations   |
+| **Divergence handling** | Not applicable              | Hardware masking         |
+| **Example**             | `a + b`                     | `sum(thread_value)`      |
 
 **CPU SIMD approach (C++ intrinsics):**
 
@@ -58,7 +64,8 @@ var total = sum(partial)               # Hardware coordinates the sum
 
 ### Core concepts that make warps powerful
 
-**1. Lane identity:** Each thread has a "lane ID" (0 to 31) that's essentially free to access
+**1. Lane identity:** Each thread has a "lane ID" (0 to 31) that's essentially
+free to access
 
 ```mojo
 var my_lane = lane_id()  # Just reading a hardware register
@@ -78,13 +85,17 @@ var sum = sum(my_contribution)
 var broadcasted = shuffle_idx(my_value, 0)
 ```
 
-**Key insight:** SIMT lets you write natural thread code that executes as efficient vector operations, combining the ease of thread programming with the performance of vector processing.
+**Key insight:** SIMT lets you write natural thread code that executes as
+efficient vector operations, combining the ease of thread programming with the
+performance of vector processing.
 
 ### Where warps fit in GPU execution hierarchy
 
-For complete context on how warps relate to the overall GPU execution model, see [GPU Threading vs SIMD](../puzzle_23/gpu-thread-vs-simd.md). Here's where warps fit:
+For complete context on how warps relate to the overall GPU execution model, see
+[GPU Threading vs SIMD](../puzzle_23/gpu-thread-vs-simd.md). Here's where warps
+fit:
 
-```
+```text
 GPU Device
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
@@ -96,30 +107,38 @@ GPU Device
 │   └── Block 2 (independent group)
 ```
 
-**Warp programming operates at the "Warp level"** - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like `sum()` that would otherwise require complex shared memory coordination.
+**Warp programming operates at the "Warp level"** - you work with operations
+that coordinate all 32 threads within a single warp, enabling powerful
+primitives like `sum()` that would otherwise require complex shared memory
+coordination.
 
-This mental model supports recognizing when problems map naturally to warp operations versus requiring traditional shared memory approaches.
+This mental model supports recognizing when problems map naturally to warp
+operations versus requiring traditional shared memory approaches.
 
 ## The hardware foundation of warp programming
 
-Understanding **Single Instruction, Multiple Thread (SIMT)** execution is crucial for effective warp programming. This isn't just a software abstraction - it's how GPU hardware actually works at the silicon level.
+Understanding **Single Instruction, Multiple Thread (SIMT)** execution is
+crucial for effective warp programming. This isn't just a software abstraction -
+it's how GPU hardware actually works at the silicon level.
 
 ## What is SIMT execution?
 
-**SIMT** means that within a warp, all threads execute the **same instruction** at the **same time** on **different data**. This is fundamentally different from CPU threads, which can execute completely different instructions independently.
+**SIMT** means that within a warp, all threads execute the **same instruction**
+at the **same time** on **different data**. This is fundamentally different from
+CPU threads, which can execute completely different instructions independently.
 
 ### CPU vs GPU Execution Models
 
-| Aspect | CPU (MIMD) | GPU Warp (SIMT) |
-|--------|------------|------------------|
+| Aspect                | CPU (MIMD)                           | GPU Warp (SIMT)                     |
+|-----------------------|--------------------------------------|-------------------------------------|
 | **Instruction Model** | Multiple Instructions, Multiple Data | Single Instruction, Multiple Thread |
-| **Core 1** | `add r1, r2` | `add r1, r2` |
-| **Core 2** | `load r3, [mem]` | `add r1, r2` (same instruction) |
-| **Core 3** | `branch loop` | `add r1, r2` (same instruction) |
-| **... Core 32** | `different instruction` | `add r1, r2` (same instruction) |
-| **Execution** | Independent, asynchronous | Synchronized, lockstep |
-| **Scheduling** | Complex, OS-managed | Simple, hardware-managed |
-| **Data** | Independent data sets | Different data, same operation |
+| **Core 1**            | `add r1, r2`                         | `add r1, r2`                        |
+| **Core 2**            | `load r3, [mem]`                     | `add r1, r2` (same instruction)     |
+| **Core 3**            | `branch loop`                        | `add r1, r2` (same instruction)     |
+| **... Core 32**       | `different instruction`              | `add r1, r2` (same instruction)     |
+| **Execution**         | Independent, asynchronous            | Synchronized, lockstep              |
+| **Scheduling**        | Complex, OS-managed                  | Simple, hardware-managed            |
+| **Data**              | Independent data sets                | Different data, same operation      |
 
 **GPU Warp Execution Pattern:**
 
@@ -130,7 +149,8 @@ Understanding **Single Instruction, Multiple Thread (SIMT)** execution is crucia
 - **... (all lanes execute simultaneously)**
 - **Lane 31**: Operates on `Data31` → `Result31`
 
-**Key insight:** All lanes execute the **same instruction** at the **same time** on **different data**.
+**Key insight:** All lanes execute the **same instruction** at the **same time**
+on **different data**.
 
 ### Why SIMT works for GPUs
 
@@ -155,7 +175,8 @@ from gpu.primitives.warp import WARP_SIZE
 my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 ```
 
-**Key insight:** `lane_id()` is **free** - it's just reading a hardware register, not computing a value.
+**Key insight:** `lane_id()` is **free** - it's just reading a hardware
+register, not computing a value.
 
 ### Synchronization within warps
 
@@ -175,7 +196,9 @@ from gpu.primitives.warp import sum
 var total = sum(partial_result)  # Implicit synchronization!
 ```
 
-**Why no barriers needed?** All lanes execute each instruction at exactly the same time. When `sum()` starts, all lanes have already computed their `partial_result`.
+**Why no barriers needed?** All lanes execute each instruction at exactly the
+same time. When `sum()` starts, all lanes have already computed their
+`partial_result`.
 
 ## Warp divergence and convergence
 
@@ -193,19 +216,21 @@ else:
 
 **Hardware behaviour steps:**
 
-| Step | Phase | Active Lanes | Waiting Lanes | Efficiency | Performance Cost |
-|------|-------|--------------|---------------|------------|------------------|
-| **1** | Condition evaluation | All 32 lanes | None | 100% | Normal speed |
-| **2** | Even lanes branch | Lanes 0,2,4...30 (16 lanes) | Lanes 1,3,5...31 (16 lanes) | 50% | **2× slower** |
-| **3** | Odd lanes branch | Lanes 1,3,5...31 (16 lanes) | Lanes 0,2,4...30 (16 lanes) | 50% | **2× slower** |
-| **4** | Convergence | All 32 lanes | None | 100% | Normal speed resumed |
+| Step  | Phase                | Active Lanes                | Waiting Lanes               | Efficiency | Performance Cost     |
+|-------|----------------------|-----------------------------|-----------------------------|------------|----------------------|
+| **1** | Condition evaluation | All 32 lanes                | None                        | 100%       | Normal speed         |
+| **2** | Even lanes branch    | Lanes 0,2,4...30 (16 lanes) | Lanes 1,3,5...31 (16 lanes) | 50%        | **2× slower**        |
+| **3** | Odd lanes branch     | Lanes 1,3,5...31 (16 lanes) | Lanes 0,2,4...30 (16 lanes) | 50%        | **2× slower**        |
+| **4** | Convergence          | All 32 lanes                | None                        | 100%       | Normal speed resumed |
 
 **Example breakdown:**
 
 - **Step 2**: Only even lanes execute `compute_even()` while odd lanes wait
 - **Step 3**: Only odd lanes execute `compute_odd()` while even lanes wait
-- **Total time**: `time(compute_even) + time(compute_odd)` (sequential execution)
-- **Without divergence**: `max(time(compute_even), time(compute_odd))` (parallel execution)
+- **Total time**: `time(compute_even) + time(compute_odd)` (sequential
+  execution)
+- **Without divergence**: `max(time(compute_even), time(compute_odd))` (parallel
+  execution)
 
 **Performance impact:**
 
@@ -319,10 +344,10 @@ comptime REDUCTION_SIZE = 32           # Wrong on AMD!
 
 ### Real hardware impact
 
-| GPU Architecture | WARP_SIZE | Memory per Warp | Reduction Steps | Lane Pattern |
-|------------------|-----------|-----------------|-----------------|--------------|
-| **NVIDIA/AMD RDNA** | 32 | 128 bytes (4×32) | 5 steps: 32→16→8→4→2→1 | Lanes 0-31 |
-| **AMD CDNA** | 64 | 256 bytes (4×64) | 6 steps: 64→32→16→8→4→2→1 | Lanes 0-63 |
+| GPU Architecture    | WARP_SIZE | Memory per Warp  | Reduction Steps           | Lane Pattern |
+|---------------------|-----------|------------------|---------------------------|--------------|
+| **NVIDIA/AMD RDNA** | 32        | 128 bytes (4×32) | 5 steps: 32→16→8→4→2→1    | Lanes 0-31   |
+| **AMD CDNA**        | 64        | 256 bytes (4×64) | 6 steps: 64→32→16→8→4→2→1 | Lanes 0-63   |
 
 **Performance implications of 64 vs 32:**
 
@@ -344,12 +369,12 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 
 **Memory access patterns:**
 
-| Access Pattern | NVIDIA/RDNA (32 lanes) | CDNA (64 lanes) | Bandwidth Utilization | Performance |
-|----------------|-------------------|----------------|----------------------|-------------|
-| **✅ Coalesced** | Lane N → Address 4×N | Lane N → Address 4×N | 100% | Optimal |
-| | 1 transaction: 128 bytes | 1 transaction: 256 bytes | Full bus width | Fast |
-| **❌ Scattered** | Lane N → Random address | Lane N → Random address | ~6% | Terrible |
-| | 32 separate transactions | 64 separate transactions | Mostly idle bus | **32× slower** |
+| Access Pattern   | NVIDIA/RDNA (32 lanes)   | CDNA (64 lanes)          | Bandwidth Utilization | Performance    |
+|------------------|--------------------------|--------------------------|-----------------------|----------------|
+| **✅ Coalesced** | Lane N → Address 4×N     | Lane N → Address 4×N     | 100%                  | Optimal        |
+|                  | 1 transaction: 128 bytes | 1 transaction: 256 bytes | Full bus width        | Fast           |
+| **❌ Scattered** | Lane N → Random address  | Lane N → Random address  | ~6%                   | Terrible       |
+|                  | 32 separate transactions | 64 separate transactions | Mostly idle bus       | **32× slower** |
 
 **Example addresses:**
 
@@ -360,36 +385,43 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 
 **What is a bank conflict?**
 
-Assume that a GPU shared memory is divided into 32 independent **banks** that can be accessed simultaneously. A **bank conflict** occurs when multiple threads in a warp try to access different addresses within the same bank at the same time. When this happens, the hardware must **serialize** these accesses, turning what should be a single-cycle operation into multiple cycles.
+Assume that a GPU shared memory is divided into 32 independent **banks** that
+can be accessed simultaneously. A **bank conflict** occurs when multiple threads
+in a warp try to access different addresses within the same bank at the same
+time. When this happens, the hardware must **serialize** these accesses, turning
+what should be a single-cycle operation into multiple cycles.
 
 **Key concepts:**
 
-- **No conflict**: Each thread accesses a different bank → All accesses happen simultaneously (1 cycle)
-- **Bank conflict**: Multiple threads access the same bank → Accesses happen sequentially (N cycles for N threads)
-- **Broadcast**: All threads access the same address → Hardware optimizes this to 1 cycle
+- **No conflict**: Each thread accesses a different bank → All accesses happen
+  simultaneously (1 cycle)
+- **Bank conflict**: Multiple threads access the same bank → Accesses happen
+  sequentially (N cycles for N threads)
+- **Broadcast**: All threads access the same address → Hardware optimizes this
+  to 1 cycle
 
 **Shared memory bank organization:**
 
-| Bank | Addresses (byte offsets) | Example Data (float32) |
-|------|--------------------------|------------------------|
-| Bank 0 | 0, 128, 256, 384, ... | `shared[0]`, `shared[32]`, `shared[64]`, ... |
-| Bank 1 | 4, 132, 260, 388, ... | `shared[1]`, `shared[33]`, `shared[65]`, ... |
-| Bank 2 | 8, 136, 264, 392, ... | `shared[2]`, `shared[34]`, `shared[66]`, ... |
-| ... | ... | ... |
-| Bank 31 | 124, 252, 380, 508, ... | `shared[31]`, `shared[63]`, `shared[95]`, ... |
+| Bank    | Addresses (byte offsets) | Example Data (float32)                        |
+|---------|--------------------------|-----------------------------------------------|
+| Bank 0  | 0, 128, 256, 384, ...    | `shared[0]`, `shared[32]`, `shared[64]`, ...  |
+| Bank 1  | 4, 132, 260, 388, ...    | `shared[1]`, `shared[33]`, `shared[65]`, ...  |
+| Bank 2  | 8, 136, 264, 392, ...    | `shared[2]`, `shared[34]`, `shared[66]`, ...  |
+| ...     | ...                      | ...                                           |
+| Bank 31 | 124, 252, 380, 508, ...  | `shared[31]`, `shared[63]`, `shared[95]`, ... |
 
 **Bank conflict examples:**
 
-| Access Pattern | Bank Usage | Cycles | Performance | Explanation |
-|----------------|------------|--------|-------------|-------------|
-| **✅ Sequential** | `shared[thread_idx.x]` | 1 cycle | 100% | Each lane hits different bank |
-| | Lane 0→Bank 0, Lane 1→Bank 1, ... | | Optimal | No conflicts |
-| **✅ Same index** | `shared[0]`| 1 cycle | 100% | All lanes broadcast from same address |
-| | All 32 lanes→Bank 0 (Same address) | | Optimal | No conflicts |
-| **❌ Stride 2** | `shared[thread_idx.x * 2]` | 2 cycles | 50% | 2 lanes per bank |
-| | Lane 0,16→Bank 0; Lane 1,17→Bank 1 | | **2× slower** | Serialized access |
-| **💀 Stride 32** | `shared[thread_idx.x * 32]` | 32 cycles | 3% | All lanes hit same bank |
-| | All 32 lanes→Bank 0 (Different address) | | **32× slower** | Completely serialized |
+| Access Pattern    | Bank Usage                              | Cycles    | Performance    | Explanation                           |
+|-------------------|-----------------------------------------|-----------|----------------|---------------------------------------|
+| **✅ Sequential** | `shared[thread_idx.x]`                  | 1 cycle   | 100%           | Each lane hits different bank         |
+|                   | Lane 0→Bank 0, Lane 1→Bank 1, ...       |           | Optimal        | No conflicts                          |
+| **✅ Same index** | `shared[0]`                             | 1 cycle   | 100%           | All lanes broadcast from same address |
+|                   | All 32 lanes→Bank 0 (Same address)      |           | Optimal        | No conflicts                          |
+| **❌ Stride 2**   | `shared[thread_idx.x * 2]`              | 2 cycles  | 50%            | 2 lanes per bank                      |
+|                   | Lane 0,16→Bank 0; Lane 1,17→Bank 1      |           | **2× slower**  | Serialized access                     |
+| **💀 Stride 32**  | `shared[thread_idx.x * 32]`             | 32 cycles | 3%             | All lanes hit same bank               |
+|                   | All 32 lanes→Bank 0 (Different address) |           | **32× slower** | Completely serialized                 |
 
 ## Practical implications for warp programming
 
@@ -402,15 +434,18 @@ Assume that a GPU shared memory is divided into 32 independent **banks** that ca
 
 ### Performance characteristics
 
-| Operation Type | Traditional | Warp Operations |
-|----------------|------------|-----------------|
+| Operation Type              | Traditional      | Warp Operations |
+|-----------------------------|------------------|-----------------|
 | **Reduction (32 elements)** | ~20 instructions | 10 instructions |
-| **Memory traffic** | High | Minimal |
-| **Synchronization cost** | Expensive | Free |
-| **Code complexity** | High | Low |
+| **Memory traffic**          | High             | Minimal         |
+| **Synchronization cost**    | Expensive        | Free            |
+| **Code complexity**         | High             | Low             |
 
 ## Next steps
 
-Now that you understand the SIMT foundation, you're ready to see how these concepts enable powerful warp operations. The next section will show you how `sum()` transforms complex reduction patterns into simple, efficient function calls.
+Now that you understand the SIMT foundation, you're ready to see how these
+concepts enable powerful warp operations. The next section will show you how
+`sum()` transforms complex reduction patterns into simple, efficient function
+calls.
 
 **→ Continue to [warp.sum() Essentials](./warp_sum.md)**

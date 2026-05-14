@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.math import sqrt
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace
@@ -561,7 +566,7 @@ struct LayerNormLinearCustomOp:
                     WeightLayout,
                     BiasLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel, kernel](
+                gpu_ctx.enqueue_function[kernel](
                     output_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -590,7 +595,7 @@ struct LayerNormLinearCustomOp:
                     InputLayout,
                     LnParamsLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel, kernel](
+                gpu_ctx.enqueue_function[kernel](
                     normalized_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -647,7 +652,7 @@ struct LayerNormLinearCustomOp:
                     TransposedWeightLayout,
                     WeightLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel2, kernel2](
+                gpu_ctx.enqueue_function[kernel2](
                     transposed_weight_tensor,
                     linear_weight_tensor,
                     grid_dim=(transpose_blocks_x, transpose_blocks_y),
@@ -676,7 +681,7 @@ struct LayerNormLinearCustomOp:
                     FlatNormalizedLayout,
                     TransposedWeightLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel3, kernel3](
+                gpu_ctx.enqueue_function[kernel3](
                     flat_matmul,
                     flat_normalized,
                     transposed_weight_tensor,
@@ -701,7 +706,7 @@ struct LayerNormLinearCustomOp:
                     ReshapedMatmulLayout,
                     BiasLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel4, kernel4](
+                gpu_ctx.enqueue_function[kernel4](
                     output_tensor,
                     reshaped_matmul,
                     linear_bias_tensor,
@@ -848,7 +853,7 @@ struct LayerNormLinearBackwardCustomOp:
                 LnParamsLayout,
                 WeightLayout,
             ]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 grad_input_tensor,
                 grad_ln_weight_tensor,
                 grad_ln_bias_tensor,

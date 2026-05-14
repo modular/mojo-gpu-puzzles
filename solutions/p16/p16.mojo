@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -235,7 +240,9 @@ def main() raises:
                     var val = row * size + col
                     # row major: placing elements row by row
                     inp1_host[row * size + col] = Scalar[dtype](val)
-                    inp2_host[row * size + col] = Scalar[dtype](2.0 * val)
+                    inp2_host[row * size + col] = Scalar[dtype](
+                        2.0 * Float64(val)
+                    )
 
             # inp1 @ inp2
             for i in range(size):
@@ -251,7 +258,7 @@ def main() raises:
 
         if argv()[1] == "--naive":
             comptime kernel = naive_matmul[SIZE]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -260,7 +267,7 @@ def main() raises:
             )
         elif argv()[1] == "--single-block":
             comptime kernel = single_block_matmul[SIZE]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -278,7 +285,7 @@ def main() raises:
             )
 
             comptime kernel = matmul_tiled[SIZE_TILED]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
                 b_tensor_tiled,
@@ -295,7 +302,7 @@ def main() raises:
             )
 
             comptime kernel = matmul_idiomatic_tiled[SIZE_TILED]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
                 b_tensor_tiled,

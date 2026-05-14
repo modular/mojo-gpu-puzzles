@@ -1,4 +1,9 @@
 #!/bin/bash
+##===----------------------------------------------------------------------===##
+#
+# This file is Modular Inc proprietary.
+#
+##===----------------------------------------------------------------------===##
 # Shared configuration for test runner and sanitizer scripts
 
 # Color definitions

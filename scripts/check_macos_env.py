@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 """
 macOS Environment Validation Script
 
@@ -26,8 +31,6 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import Optional
-
 
 # ==============================================================================
 # CONFIGURATION - Update required versions here
@@ -35,7 +38,9 @@ from typing import Optional
 # These values define the minimum required versions for the project.
 # Update these when project requirements change.
 
-REQUIRED_MACOS_VERSION = "15.0"  # Minimum macOS version for optimal compatibility
+REQUIRED_MACOS_VERSION = (
+    "15.0"  # Minimum macOS version for optimal compatibility
+)
 REQUIRED_XCODE_VERSION = "16.0"  # Minimum Xcode version required
 
 # ==============================================================================
@@ -44,14 +49,17 @@ REQUIRED_XCODE_VERSION = "16.0"  # Minimum Xcode version required
 @dataclass
 class CheckResult:
     """Result of an environment check"""
+
     name: str
     passed: bool
-    version: Optional[str] = None
+    version: str | None = None
     message: str = ""
-    fix_command: Optional[str] = None
+    fix_command: str | None = None
 
 
-def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> CheckResult:
+def check_macos_version(
+    required_version: str = REQUIRED_MACOS_VERSION,
+) -> CheckResult:
     """Check if macOS version meets requirements
 
     Args:
@@ -68,14 +76,18 @@ def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> Check
             current_version = f"{major}.{minor}"
             req_major, req_minor = map(int, required_version.split(".")[:2])
 
-            passed = (major > req_major) or (major == req_major and minor >= req_minor)
+            passed = (major > req_major) or (
+                major == req_major and minor >= req_minor
+            )
 
             return CheckResult(
                 name="macOS Version",
                 passed=passed,
                 version=current_version,
                 message=f"macOS {current_version} {'meets' if passed else 'does not meet'} requirement (>= {required_version})",
-                fix_command=f"Upgrade to macOS {required_version} or later" if not passed else None
+                fix_command=f"Upgrade to macOS {required_version} or later"
+                if not passed
+                else None,
             )
         except (ValueError, IndexError):
             pass
@@ -86,7 +98,7 @@ def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> Check
             name="macOS Version",
             passed=False,
             message="Not running on macOS",
-            fix_command="This check is only applicable on macOS systems"
+            fix_command="This check is only applicable on macOS systems",
         )
 
     try:
@@ -95,7 +107,7 @@ def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> Check
             ["sw_vers", "-productVersion"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
 
         if result.returncode != 0:
@@ -103,7 +115,7 @@ def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> Check
                 name="macOS Version",
                 passed=False,
                 message="Failed to detect macOS version",
-                fix_command="Ensure sw_vers command is available"
+                fix_command="Ensure sw_vers command is available",
             )
 
         version_str = result.stdout.strip()
@@ -115,7 +127,7 @@ def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> Check
                 name="macOS Version",
                 passed=False,
                 version=version_str,
-                message=f"Could not parse macOS version: {version_str}"
+                message=f"Could not parse macOS version: {version_str}",
             )
 
         major = int(version_match.group(1))
@@ -126,25 +138,31 @@ def check_macos_version(required_version: str = REQUIRED_MACOS_VERSION) -> Check
         req_major, req_minor = map(int, required_version.split(".")[:2])
 
         # Check if version meets requirement
-        passed = (major > req_major) or (major == req_major and minor >= req_minor)
+        passed = (major > req_major) or (
+            major == req_major and minor >= req_minor
+        )
 
         return CheckResult(
             name="macOS Version",
             passed=passed,
             version=current_version,
             message=f"macOS {current_version} {'meets' if passed else 'does not meet'} requirement (>= {required_version})",
-            fix_command=f"Upgrade to macOS {required_version} or later" if not passed else None
+            fix_command=f"Upgrade to macOS {required_version} or later"
+            if not passed
+            else None,
         )
 
     except Exception as e:
         return CheckResult(
             name="macOS Version",
             passed=False,
-            message=f"Error checking macOS version: {e}"
+            message=f"Error checking macOS version: {e}",
         )
 
 
-def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> CheckResult:
+def check_xcode_version(
+    required_version: str = REQUIRED_XCODE_VERSION,
+) -> CheckResult:
     """Check if Xcode version meets requirements
 
     Args:
@@ -167,7 +185,9 @@ def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> Check
                 passed=passed,
                 version=mock_version,
                 message=f"Xcode {mock_version} {'meets' if passed else 'does not meet'} requirement (>= {required_version})",
-                fix_command=f"Upgrade to Xcode {required_version} or later from the App Store" if not passed else None
+                fix_command=f"Upgrade to Xcode {required_version} or later from the App Store"
+                if not passed
+                else None,
             )
         except (ValueError, IndexError):
             pass
@@ -178,7 +198,7 @@ def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> Check
             ["xcodebuild", "-version"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         if result.returncode != 0:
@@ -186,7 +206,7 @@ def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> Check
                 name="Xcode Version",
                 passed=False,
                 message="Xcode not found or not properly installed",
-                fix_command="Install Xcode 16 or later from the App Store"
+                fix_command="Install Xcode 16 or later from the App Store",
             )
 
         # Parse version from output (format: "Xcode 16.0\nBuild version...")
@@ -198,7 +218,7 @@ def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> Check
                 name="Xcode Version",
                 passed=False,
                 message=f"Could not parse Xcode version from: {output}",
-                fix_command="Ensure Xcode is properly installed"
+                fix_command="Ensure Xcode is properly installed",
             )
 
         version_str = version_match.group(1)
@@ -212,7 +232,9 @@ def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> Check
             passed=passed,
             version=version_str,
             message=f"Xcode {version_str} {'meets' if passed else 'does not meet'} requirement (>= {required_version})",
-            fix_command=f"Upgrade to Xcode {required_version} or later from the App Store" if not passed else None
+            fix_command=f"Upgrade to Xcode {required_version} or later from the App Store"
+            if not passed
+            else None,
         )
 
     except FileNotFoundError:
@@ -220,13 +242,13 @@ def check_xcode_version(required_version: str = REQUIRED_XCODE_VERSION) -> Check
             name="Xcode Version",
             passed=False,
             message="xcodebuild command not found",
-            fix_command="Install Xcode 16 or later from the App Store"
+            fix_command="Install Xcode 16 or later from the App Store",
         )
     except Exception as e:
         return CheckResult(
             name="Xcode Version",
             passed=False,
-            message=f"Error checking Xcode version: {e}"
+            message=f"Error checking Xcode version: {e}",
         )
 
 
@@ -244,7 +266,9 @@ def check_metal_toolchain() -> CheckResult:
             name="Metal Toolchain",
             passed=is_available,
             message=f"Metal toolchain is {'available' if is_available else 'not available'} (mocked)",
-            fix_command="xcodebuild -downloadComponent MetalToolchain" if not is_available else None
+            fix_command="xcodebuild -downloadComponent MetalToolchain"
+            if not is_available
+            else None,
         )
 
     try:
@@ -254,7 +278,7 @@ def check_metal_toolchain() -> CheckResult:
             ["xcrun", "-sdk", "macosx", "metal"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
 
         # Combine stdout and stderr for checking
@@ -266,7 +290,7 @@ def check_metal_toolchain() -> CheckResult:
                 name="Metal Toolchain",
                 passed=False,
                 message="Metal toolchain not installed",
-                fix_command="xcodebuild -downloadComponent MetalToolchain"
+                fix_command="xcodebuild -downloadComponent MetalToolchain",
             )
 
         # Check for "no input files" error, which indicates Metal is working correctly
@@ -274,13 +298,15 @@ def check_metal_toolchain() -> CheckResult:
         if "no input files" in output.lower():
             # Try to extract version if available
             version_match = re.search(r"metal version (\S+)", output)
-            version_str = version_match.group(1) if version_match else "installed"
+            version_str = (
+                version_match.group(1) if version_match else "installed"
+            )
 
             return CheckResult(
                 name="Metal Toolchain",
                 passed=True,
                 version=version_str if version_match else None,
-                message=f"Metal toolchain is available{'(' + version_str + ')' if version_match else ''}"
+                message=f"Metal toolchain is available{'(' + version_str + ')' if version_match else ''}",
             )
 
         # Some other error occurred
@@ -288,7 +314,7 @@ def check_metal_toolchain() -> CheckResult:
             name="Metal Toolchain",
             passed=False,
             message=f"Unexpected Metal toolchain error: {output.strip()}",
-            fix_command="xcodebuild -downloadComponent MetalToolchain"
+            fix_command="xcodebuild -downloadComponent MetalToolchain",
         )
 
     except FileNotFoundError:
@@ -296,14 +322,14 @@ def check_metal_toolchain() -> CheckResult:
             name="Metal Toolchain",
             passed=False,
             message="xcrun command not found (Xcode Command Line Tools not installed)",
-            fix_command="Install Xcode Command Line Tools: xcode-select --install"
+            fix_command="Install Xcode Command Line Tools: xcode-select --install",
         )
     except Exception as e:
         return CheckResult(
             name="Metal Toolchain",
             passed=False,
             message=f"Error checking Metal toolchain: {e}",
-            fix_command="xcodebuild -downloadComponent MetalToolchain"
+            fix_command="xcodebuild -downloadComponent MetalToolchain",
         )
 
 
@@ -317,7 +343,9 @@ def print_summary(results: list[CheckResult]) -> None:
 
     for result in results:
         status = "✓ PASS" if result.passed else "✗ FAIL"
-        status_color = "\033[32m" if result.passed else "\033[31m"  # Green or Red
+        status_color = (
+            "\033[32m" if result.passed else "\033[31m"
+        )  # Green or Red
         reset_color = "\033[0m"
 
         print(f"{status_color}{status}{reset_color} {result.name}")
@@ -338,7 +366,9 @@ def print_summary(results: list[CheckResult]) -> None:
     if all_passed:
         print("\033[32m✓ All checks passed!\033[0m")
     else:
-        print("\033[31m✗ Some checks failed. Please address the issues above.\033[0m")
+        print(
+            "\033[31m✗ Some checks failed. Please address the issues above.\033[0m"
+        )
     print()
 
 
@@ -352,10 +382,10 @@ def print_json(results: list[CheckResult]) -> None:
                 "passed": r.passed,
                 "version": r.version,
                 "message": r.message,
-                "fix_command": r.fix_command
+                "fix_command": r.fix_command,
             }
             for r in results
-        ]
+        ],
     }
     print(json.dumps(output, indent=2))
 
@@ -374,19 +404,17 @@ Testing:
   MOCK_MACOS_VERSION=15.0 python3 scripts/check_macos_env.py
   MOCK_XCODE_VERSION=16.0 python3 scripts/check_macos_env.py
   MOCK_METAL_AVAILABLE=true python3 scripts/check_macos_env.py
-        """
+        """,
     )
 
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output results in JSON format"
+        "--json", action="store_true", help="Output results in JSON format"
     )
 
     parser.add_argument(
         "--quiet",
         action="store_true",
-        help="No output, only exit code (0 = pass, 1 = fail)"
+        help="No output, only exit code (0 = pass, 1 = fail)",
     )
 
     args = parser.parse_args()

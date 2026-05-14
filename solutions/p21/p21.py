@@ -1,6 +1,12 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 import time
-import torch
 from pathlib import Path
+
+import torch
 from max.experimental.torch import CustomOpLibrary
 
 mojo_kernels = Path(__file__).parent / "op"

@@ -2,7 +2,8 @@
 
 ## Overview
 
-Implement a kernel that computes a sum over each row of 2D matrix `a` and stores it in `output` using TileTensor.
+Implement a kernel that computes a sum over each row of 2D matrix `a` and stores
+it in `output` using TileTensor.
 
 <img src="./media/15-w.png" alt="Axis sum visualization" class="light-mode-img">
 <img src="./media/15-b.png" alt="Axis sum visualization" class="dark-mode-img">
@@ -16,7 +17,9 @@ This puzzle covers:
 - Efficient shared memory reduction patterns
 - Working with multi-dimensional tensor layouts
 
-The key insight is understanding how to map thread blocks to matrix rows and perform efficient parallel reduction within each block while leveraging TileTensor's dimensional indexing.
+The key insight is understanding how to map thread blocks to matrix rows and
+perform efficient parallel reduction within each block while leveraging
+TileTensor's dimensional indexing.
 
 ## Configuration
 
@@ -116,7 +119,8 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 
 <div class="solution-explanation">
 
-The solution implements a parallel row-wise sum reduction for a 2D matrix using TileTensor. Here's a comprehensive breakdown:
+The solution implements a parallel row-wise sum reduction for a 2D matrix using
+TileTensor. Here's a comprehensive breakdown:
 
 ### Matrix layout and block mapping
 
@@ -171,7 +175,9 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
        stride //= 2
    ```
 
-   **Note**: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:
+   **Note**: This implementation has a potential race condition where threads
+   simultaneously read from and write to shared memory during the same
+   iteration. A safer approach would separate the read and write phases:
 
    ```mojo
    stride = TPB // 2
@@ -209,7 +215,9 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    - Minimal barriers (only during reduction)
    - Independent processing between rows
    - No inter-block communication needed
-   - **Race condition consideration**: The current implementation may have read-write hazards during parallel reduction that could be resolved with explicit read-write phase separation
+   - **Race condition consideration**: The current implementation may have
+     read-write hazards during parallel reduction that could be resolved with
+     explicit read-write phase separation
 
 ### Complexity analysis
 

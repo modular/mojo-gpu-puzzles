@@ -2,11 +2,17 @@
 
 ## Overview
 
-**Part VI: GPU Warp Programming** introduces GPU **warp-level primitives** - hardware-accelerated operations that leverage synchronized thread execution within warps. You'll learn to use built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.
+**Part VI: GPU Warp Programming** introduces GPU **warp-level primitives** -
+hardware-accelerated operations that leverage synchronized thread execution
+within warps. You'll learn to use built-in warp operations to replace complex
+shared memory patterns with simple, efficient function calls.
 
-**Goal:** Replace complex shared memory + barrier + tree reduction patterns with efficient warp primitive calls that leverage hardware synchronization.
+**Goal:** Replace complex shared memory + barrier + tree reduction patterns with
+efficient warp primitive calls that leverage hardware synchronization.
 
-**Key insight:** _GPU warps execute in lockstep - Mojo's warp operations use this synchronization to provide powerful parallel primitives with zero explicit synchronization._
+**Key insight:** _GPU warps execute in lockstep - Mojo's warp operations use
+this synchronization to provide powerful parallel primitives with zero explicit
+synchronization._
 
 ## What you'll learn
 
@@ -14,7 +20,7 @@
 
 Understand the fundamental hardware unit of GPU parallelism:
 
-```
+```text
 GPU Block (e.g., 256 threads)
 ├── Warp 0 (32 threads, SIMT lockstep execution)
 │   ├── Lane 0  ─┐
@@ -31,8 +37,10 @@ GPU Block (e.g., 256 threads)
 
 - **32 threads per warp** on NVIDIA GPUs (`WARP_SIZE=32`)
 - **32 or 64 threads per warp** on AMD GPUs (`WARP_SIZE=32 or 64`)
-- **Lockstep execution**: All threads in a warp execute the same instruction simultaneously
-- **Zero synchronization cost**: Warp operations happen instantly within each warp
+- **Lockstep execution**: All threads in a warp execute the same instruction
+  simultaneously
+- **Zero synchronization cost**: Warp operations happen instantly within each
+  warp
 
 ### **Warp operations available in Mojo**
 
@@ -79,7 +87,7 @@ total = sum(partial_product)  # Internally no barriers, no race conditions!
 
 Learn the performance characteristics:
 
-```
+```text
 Problem Scale         Traditional    Warp Operations
 Single warp (32)      Fast          Fastest (no barriers)
 Few warps (128)       Good          Excellent (minimal overhead)
@@ -111,7 +119,8 @@ Understand the hardware foundation that makes warp operations possible.
 - Lane synchronization within warps
 - Hardware vs software thread management
 
-**Key insight:** Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.
+**Key insight:** Warps are the fundamental unit of GPU execution - understanding
+SIMT unlocks warp programming.
 
 ### **2. Warp sum fundamentals**
 
@@ -148,7 +157,8 @@ Learn the decision framework for choosing warp operations over alternatives.
 - Memory bandwidth vs computation trade-offs
 - Warp operation selection guidelines
 
-**Decision framework:** When reduction operations become the bottleneck, warp primitives often provide the breakthrough.
+**Decision framework:** When reduction operations become the bottleneck, warp
+primitives often provide the breakthrough.
 
 ## Key concepts to learn
 
@@ -178,10 +188,16 @@ Recognizing when warp operations provide advantages:
 
 ## Getting started
 
-Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.
+Start with understanding the SIMT execution model, then dive into practical warp
+sum implementation, and finish with the strategic decision framework.
 
-💡 **Success tip**: Think of warps as **synchronized vector units** rather than independent threads. This mental model will guide you toward effective warp programming patterns.
+💡 **Success tip**: Think of warps as **synchronized vector units** rather than
+independent threads. This mental model will guide you toward effective warp
+programming patterns.
 
-**Learning objective**: By the end of Part VI, you'll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.
+**Learning objective**: By the end of Part VI, you'll recognize when warp
+operations can replace complex synchronization patterns, enabling you to write
+simpler, faster GPU code.
 
-**Ready to begin?** Start with **[SIMT Execution Model](./warp_simt.md)** and discover the power of warp-level programming!
+**Ready to begin?** Start with **[SIMT Execution Model](./warp_simt.md)** and
+discover the power of warp-level programming!

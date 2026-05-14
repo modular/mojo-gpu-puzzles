@@ -1,5 +1,10 @@
-from typing import Optional
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from pathlib import Path
+
 import numpy as np
 import torch
 from max.experimental.torch import CustomOpLibrary
@@ -39,7 +44,7 @@ def conv1d_pytorch(
 def conv1d_max_graph_reference(
     input_array: np.ndarray,
     kernel_array: np.ndarray,
-    device: Optional[str] = None,
+    device: str | None = None,
 ) -> np.ndarray:
     """
     Reference implementation using MAX Graph (like p15) for comparison.
