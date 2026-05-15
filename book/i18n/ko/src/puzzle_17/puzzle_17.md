@@ -266,14 +266,14 @@ struct Conv1DCustomOp:
 커스텀 연산을 파이썬에서 사용하려면 먼저 패키징해야 합니다:
 
 ```bash
-mojo package op -o op.mojopkg
+mojo package op -o op.mojoc
 ```
 
 이 명령은:
 
 1. Mojo 코드를 배포 가능한 패키지로 컴파일
 2. MAX 그래프가 연산을 이해하는 데 필요한 메타데이터 생성
-3. 파이썬에서 로드할 수 있는 바이너리 아티팩트(`op.mojopkg`)를 생성
+3. 파이썬에서 로드할 수 있는 바이너리 아티팩트(`op.mojoc`)를 생성
 
 패키지는 MAX 그래프가 찾을 수 있는 위치에 배치해야 하며, 보통 파이썬 코드에서
 접근 가능한 디렉토리에 둡니다.
