@@ -192,7 +192,7 @@ Let's break down how this works in the larger context:
            output: OutputTensor[rank=1],
            input: InputTensor[dtype = output.dtype, rank = output.rank],
            kernel: InputTensor[dtype = output.dtype, rank = output.rank],
-           ctx: DeviceContextPtr,
+           ctx: DeviceContext,
        ) raises:
            # Implementation
    ```
@@ -252,7 +252,7 @@ struct Conv1DCustomOp:
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[type = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # Implementation here
 ```
@@ -264,7 +264,7 @@ Key components of the registration:
 - The **struct** must have an `execute` method with the correct signature
 - **OutputTensor** and **InputTensor** types define the interface for Python
   data
-- **DeviceContextPtr** provides access to the execution environment
+- **DeviceContext** provides access to the execution environment
 
 ### Packaging custom ops
 

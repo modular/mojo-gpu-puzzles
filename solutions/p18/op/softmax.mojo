@@ -119,7 +119,7 @@ def softmax_cpu_kernel[
 # ANCHOR_END: softmax_cpu_kernel_solution
 
 import compiler
-from std.runtime.asyncrt import DeviceContextPtr
+
 from tensor import InputTensor, OutputTensor
 
 
@@ -133,7 +133,7 @@ struct SoftmaxCustomOp:
     ](
         output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         var output_tensor = TileTensor[
             mut=True, dtype, LayoutType, MutAnyOrigin
@@ -143,7 +143,7 @@ struct SoftmaxCustomOp:
         ](input.unsafe_ptr(), layout)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[dtype](

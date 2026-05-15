@@ -103,7 +103,7 @@ def embedding_kernel_2d[
 # ANCHOR_END: embedding_kernel_2d
 
 import compiler
-from std.runtime.asyncrt import DeviceContextPtr
+
 from tensor import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
@@ -128,14 +128,14 @@ struct EmbeddingCustomOp:
         weights: InputTensor[
             dtype=output.dtype, rank=2, static_spec=_
         ],  # [vocab_size, embed_dim]
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         var output_tensor = output.to_layout_tensor()
         var indices_tensor = indices.to_layout_tensor()
         var weights_tensor = weights.to_layout_tensor()
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -203,14 +203,14 @@ struct Embedding2DCustomOp:
         weights: InputTensor[
             dtype=output.dtype, rank=2, static_spec=_
         ],  # [vocab_size, embed_dim]
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         var output_tensor = output.to_layout_tensor()
         var indices_tensor = indices.to_layout_tensor()
         var weights_tensor = weights.to_layout_tensor()
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
