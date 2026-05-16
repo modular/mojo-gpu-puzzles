@@ -72,7 +72,7 @@ def conv1d_kernel[
 
 
 import compiler
-
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
@@ -92,7 +92,7 @@ struct Conv1DCustomOp:
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         # the context is needed for some GPU calls
-        ctx: DeviceContext,
+        ctx: DeviceContextPtr,
     ) raises:
         comptime out_layout_val = row_major[input_size]()
         comptime OutLayout = type_of(out_layout_val)
@@ -110,7 +110,7 @@ struct Conv1DCustomOp:
         ](kernel.unsafe_ptr(), conv_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](

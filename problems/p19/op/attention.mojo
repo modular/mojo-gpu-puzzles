@@ -15,7 +15,7 @@ from std.math import exp
 from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
 import compiler
-
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
 comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
@@ -269,7 +269,7 @@ struct AttentionCustomOp:
         q: InputTensor[rank=1, static_spec=_],  # Query vector (d,)
         k: InputTensor[rank=2, static_spec=_],  # Key matrix (seq_len, d)
         v: InputTensor[rank=2, static_spec=_],  # Value matrix (seq_len, d)
-        ctx: DeviceContext,
+        ctx: DeviceContextPtr,
     ) raises:
         # Define layouts
         comptime layout_q = row_major[d]()

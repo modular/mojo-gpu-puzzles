@@ -11,9 +11,7 @@ from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 import compiler
-
-from std.gpu.host import DeviceContext
-
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 from std.utils import StaticTuple
 
@@ -517,7 +515,7 @@ struct LayerNormLinearCustomOp:
         ln_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
         linear_weight: InputTensor[dtype=dtype, rank=2, static_spec=_],
         linear_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
-        ctx: DeviceContext,
+        ctx: DeviceContextPtr,
     ) raises:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
         comptime ln_params_layout_val = row_major[hidden_dim]()
@@ -552,7 +550,7 @@ struct LayerNormLinearCustomOp:
         ](linear_bias.unsafe_ptr(), bias_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx
+            var gpu_ctx = ctx.get_device_context()
 
             # ANCHOR: layernorm_linear_custom_op
             comptime if algorithm == "fused":
@@ -780,7 +778,7 @@ struct LayerNormLinearBackwardCustomOp:
         ln_weight: InputTensor[dtype=dtype, rank=1, static_spec=_],
         ln_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
         linear_weight: InputTensor[dtype=dtype, rank=2, static_spec=_],
-        ctx: DeviceContext,
+        ctx: DeviceContextPtr,
     ) raises:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
         comptime ln_params_layout_val = row_major[hidden_dim]()
@@ -837,7 +835,7 @@ struct LayerNormLinearBackwardCustomOp:
         ](linear_weight.unsafe_ptr(), weight_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx
+            var gpu_ctx = ctx.get_device_context()
 
             # Launch backward kernel
             comptime kernel = minimal_fused_kernel_backward[

@@ -60,7 +60,7 @@ def softmax_cpu_kernel[
 # ANCHOR_END: softmax_cpu_kernel
 
 import compiler
-
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
 
@@ -74,7 +74,7 @@ struct SoftmaxCustomOp:
     ](
         output: OutputTensor[rank=1, static_spec=_],
         input: InputTensor[rank=output.rank, static_spec=_],
-        ctx: DeviceContext,
+        ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
         var output_tensor = rebind[
@@ -85,7 +85,7 @@ struct SoftmaxCustomOp:
         ](input.to_layout_tensor())
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](
