@@ -54,7 +54,7 @@ def single_block_matmul(
 
 # ANCHOR: matmul_tiled
 comptime SIZE_TILED = 9
-comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
+comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block covers 3x3 elements
 comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
 comptime layout_tiled = row_major[SIZE_TILED, SIZE_TILED]()
 comptime LayoutTiledType = type_of(layout_tiled)

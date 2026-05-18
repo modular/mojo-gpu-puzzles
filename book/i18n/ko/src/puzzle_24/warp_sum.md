@@ -508,7 +508,7 @@ Benchmarks completed!
 WARP OPERATIONS PERFORMANCE ANALYSIS:
    GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
    - 1,...,256 x WARP_SIZE: Grid size too small to benchmark
-   - 2048 x WARP_SIZE: Warp primative benefits emerge
+   - 2048 x WARP_SIZE: Warp primitive benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
 

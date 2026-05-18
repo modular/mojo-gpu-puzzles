@@ -135,7 +135,7 @@ bugs.
 
 ## Challenge
 
-Equiped with these tools, fix the kernel failing kernel.
+Equipped with these tools, fix the kernel failing kernel.
 
 <details>
 <summary><strong>Tips</strong></summary>
