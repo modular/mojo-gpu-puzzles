@@ -189,7 +189,7 @@ Verification passed: Custom kernel results match NumPy calculation
            output: OutputTensor[rank=1],
            input: InputTensor[dtype = output.dtype, rank = output.rank],
            kernel: InputTensor[dtype = output.dtype, rank = output.rank],
-           ctx: DeviceContextPtr,
+           ctx: DeviceContext,
        ) raises:
            # 구현
    ```
@@ -248,7 +248,7 @@ struct Conv1DCustomOp:
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[type = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # 구현
 ```
@@ -259,7 +259,7 @@ struct Conv1DCustomOp:
   때 사용하는 이름
 - **구조체**에는 올바른 시그니처를 가진 `execute` 메서드가 있어야 함
 - **OutputTensor**와 **InputTensor** 타입이 파이썬 데이터와의 인터페이스를 정의
-- **DeviceContextPtr**이 실행 환경에 대한 접근을 제공
+- **DeviceContext**가 실행 환경에 대한 접근을 제공
 
 ### 커스텀 op 패키징
 
