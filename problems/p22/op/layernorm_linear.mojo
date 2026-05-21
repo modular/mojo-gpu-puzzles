@@ -15,7 +15,7 @@ import compiler
 
 from std.gpu.host import DeviceContext
 
-from tensor import InputTensor, OutputTensor
+from extensibility import InputTensor, OutputTensor
 from std.utils import StaticTuple
 
 comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output

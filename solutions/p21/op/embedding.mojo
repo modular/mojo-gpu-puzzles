@@ -129,7 +129,7 @@ def embedding_kernel_2d[
 # ANCHOR: embedding_custom_op_solution
 import compiler
 
-from tensor import InputTensor, OutputTensor
+from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 

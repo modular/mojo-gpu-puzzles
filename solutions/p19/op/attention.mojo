@@ -15,7 +15,7 @@ from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
 import compiler
 
-from tensor import InputTensor, OutputTensor
+from extensibility import InputTensor, OutputTensor
 
 comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 comptime D = 16  # This must be equal to D in p19.py

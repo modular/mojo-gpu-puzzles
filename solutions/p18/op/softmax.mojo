@@ -120,7 +120,7 @@ def softmax_cpu_kernel[
 
 import compiler
 
-from tensor import InputTensor, OutputTensor
+from extensibility import InputTensor, OutputTensor
 
 
 @compiler.register("softmax")

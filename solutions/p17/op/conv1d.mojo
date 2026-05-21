@@ -73,7 +73,7 @@ def conv1d_kernel[
 
 import compiler
 
-from tensor import InputTensor, OutputTensor
+from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 
