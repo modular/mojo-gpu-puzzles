@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: f614177b516e68590fa807e66e31c9f20488c7e7 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 ## 왜 TileTensor를 고려해야 할까요?
 

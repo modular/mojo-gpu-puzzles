@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 1cd13cbe87682d50679d452938efab4cc79ddb78 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # 단일 블록을 사용한 기본 버전
 

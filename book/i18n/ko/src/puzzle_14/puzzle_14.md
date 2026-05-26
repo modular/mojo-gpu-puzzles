@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 14: 누적 합
 

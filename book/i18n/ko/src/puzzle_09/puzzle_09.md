@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+<!-- i18n-source-commit: da0038838288ad5b074c8af85622d9d3adfca0a1 -->
 
 # Puzzle 9: GPU 디버깅 워크플로우
 
