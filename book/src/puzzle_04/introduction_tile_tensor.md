@@ -71,7 +71,7 @@ tensor[1, 2] = 2.0  # Last element
 ```
 
 To learn more about `Layout` and `TileTensor`, see these guides from the
-[Mojo manual](https://docs.modular.com/mojo/manual/)
+[Mojo manual](https://docs.modular.com/mojo/manual/):
 
 - [Introduction to layouts](https://docs.modular.com/mojo/manual/layout/layouts)
 - [Using TileTensor](https://docs.modular.com/mojo/manual/layout/tensors)
