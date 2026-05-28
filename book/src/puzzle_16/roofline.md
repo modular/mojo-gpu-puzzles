@@ -71,7 +71,8 @@ while those above are compute-bound.
 The animation below shows how our puzzle implementations map onto the A100's
 roofline model:
 
-![Roofline Model Visualization](media/videos/720p30/roofline_model_viz.gif)
+<img src="./media/roofline-w.png" alt="Roofline visualization" class="light-mode-img">
+<img src="./media/roofline-b.png" alt="Roofline visualization" class="dark-mode-img">
 
 The visualization demonstrates the optimization journey we'll take in this
 puzzle:
