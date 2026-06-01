@@ -9,9 +9,10 @@ from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.memory import AddressSpace
 from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from std.algorithm.functional import elementwise
-from layout import TileTensor
+from layout import TileTensor, TensorLayout
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
+from std.utils.coord import Coord
 from std.utils import IndexList
 from std.sys import argv, simd_width_of, align_of
 from std.testing import assert_equal
@@ -94,22 +95,25 @@ def simple_warp_dot_product[
 
 # ANCHOR: functional_warp_approach
 def functional_warp_dot_product[
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
+    //,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
     @always_inline
     def compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -> None:
-        var idx = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -> None:
+        var idx = Int(indices[0].value())
         print("idx:", idx)
         # FILL IN (10 lines at most)
 
@@ -242,13 +246,15 @@ def benchmark_functional_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = TileTensor[
-        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
-    ](a, bench_in_layout)
-    var b_tensor = TileTensor[
-        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
-    ](b, bench_in_layout)
-    var out_tensor = TileTensor(out, bench_out_layout)
+    var a_tensor = TileTensor[dtype, BenchInLayoutType, ImmutAnyOrigin](
+        a, bench_in_layout
+    )
+    var b_tensor = TileTensor[dtype, BenchInLayoutType, ImmutAnyOrigin](
+        b, bench_in_layout
+    )
+    var out_tensor = TileTensor[dtype, BenchOutLayoutType, MutAnyOrigin](
+        out, bench_out_layout
+    )
 
     @parameter
     @always_inline
