@@ -121,3 +121,10 @@
   - [🔰 Multi-Block Coordination Basics](./puzzle_34/cluster_coordination_basics.md)
   - [☸️ Cluster-Wide Collective Operations](./puzzle_34/cluster_collective_ops.md)
   - [🧠 Advanced Cluster Algorithms](./puzzle_34/advanced_cluster_patterns.md)
+
+## Part XII: 🎯 Memory Alignment
+
+- [Puzzle 35: Memory Alignment for Load/Store Performance](./puzzle_35/puzzle_35.md)
+  - [📐 Why Alignment Matters](./puzzle_35/alignment_basics.md)
+  - [🔧 Aligned Load & Store](./puzzle_35/aligned_load_store.md)
+  - [📊 Benchmark & Profile](./puzzle_35/benchmark_and_profile.md)

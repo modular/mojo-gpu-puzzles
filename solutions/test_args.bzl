@@ -32,4 +32,5 @@ TEST_ARGS = {
     "p27/p27.mojo": ["--block-sum-dot-product", "--histogram", "--normalize", "--traditional-dot-product"],
     "p29/p29.mojo": ["--double-buffer", "--multi-stage"],
     "p34/p34.mojo": ["--advanced", "--coordination", "--reduction"],
+    "p35/p35.mojo": ["--aligned", "--benchmark", "--simple", "--unaligned"],
 }
