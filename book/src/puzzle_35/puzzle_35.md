@@ -3,14 +3,14 @@
 ## Why this puzzle matters
 
 You can write a GPU kernel that is mathematically correct, uses a sensible SIMD
-width, and still makes unefficient use of memory bandwidth. The culprit is alignment:
+width, and still makes inefficient use of memory bandwidth. The culprit is alignment:
 whether the compiler *knows* a vectorized load or store lands on a properly aligned
 address.
 
 This is not a contrived concern. Picture a memory-bound kernel on recent NVIDIA
 hardware that issues scalar global loads where it could have issued a single
 128-bit vectorized load, purely because the access alignment is under-stated at
-the API boundary. If the compiler hasn't been guarantted that the data is aligned,
+the API boundary. If the compiler hasn't been guaranteed that the data is aligned,
 it conservatively emits the slow path. Explicitly stating alignment allows for more
 efficient instructions and use of bandwidth.
 
