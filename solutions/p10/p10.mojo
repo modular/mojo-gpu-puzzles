@@ -41,7 +41,7 @@ def shared_memory_race(
         var local_sum = Scalar[dtype](0.0)
         for r in range(size):
             for c in range(size):
-                local_sum += rebind[Scalar[dtype]](a[r, c])
+                local_sum += a[r, c]
 
         shared_sum[0] = local_sum  # Single write operation
 

@@ -162,9 +162,7 @@ def warp_inclusive_prefix_sum[
 
         # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
         # But it only works within the current warp (WARP_SIZE threads)
-        var scan_result = prefix_sum[exclusive=False](
-            rebind[Scalar[dtype]](current_val)
-        )
+        var scan_result = prefix_sum[exclusive=False](current_val)
 
         output[global_i] = scan_result
 

@@ -145,9 +145,7 @@ def functional_warp_dot_product[
         if idx < size:
             var a_val = a_lt.load[1](Index(idx))
             var b_val = b_lt.load[1](Index(idx))
-            partial_product = rebind[Scalar[dtype]](a_val) * rebind[
-                Scalar[dtype]
-            ](b_val)
+            partial_product = a_val * b_val
         else:
             partial_product = 0.0
 

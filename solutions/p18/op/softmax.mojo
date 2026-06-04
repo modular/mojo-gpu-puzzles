@@ -47,7 +47,7 @@ def softmax_gpu_kernel[
     # do not influence the result (max(min_finite, x) == x for any x).
     var val: Scalar[dtype] = min_finite[dtype]()
     if global_i < input_size:
-        val = rebind[Scalar[dtype]](input[global_i])
+        val = input[global_i]
     shared_max[global_i] = val
 
     barrier()
@@ -69,7 +69,7 @@ def softmax_gpu_kernel[
     # do not influence the result (adding 0.0 does not change the sum).
     var exp_val: Scalar[dtype] = 0.0
     if global_i < input_size:
-        exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+        exp_val = exp(val - block_max)
     shared_sum[global_i] = exp_val
     barrier()
 
@@ -104,11 +104,11 @@ def softmax_cpu_kernel[
     ), "dtype must be a floating-point type"
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):
-        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+        max_val = max(max_val, input[i])
 
     var sum_exp: Scalar[dtype] = 0.0
     for i in range(input_size):
-        var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+        var exp_val = exp(input[i] - max_val)
         output[i] = exp_val
         sum_exp += exp_val
 

@@ -83,7 +83,7 @@ def multi_stage_image_blur_pipeline(
         for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
             sample_idx = blur_idx + offset
             if sample_idx >= 0 and sample_idx < TPB:
-                blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                blur_sum += input_shared[sample_idx]
                 blur_count += 1
 
         if blur_count > 0:
@@ -99,7 +99,7 @@ def multi_stage_image_blur_pipeline(
             for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
                 sample_idx = second_idx + offset
                 if sample_idx >= 0 and sample_idx < TPB:
-                    blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                    blur_sum += input_shared[sample_idx]
                     blur_count += 1
 
             if blur_count > 0:
@@ -200,9 +200,7 @@ def double_buffered_stencil_computation(
                 for offset in range(-1, 2):
                     sample_idx = local_i + offset
                     if sample_idx >= 0 and sample_idx < TPB:
-                        stencil_sum += rebind[Scalar[dtype]](
-                            buffer_A[sample_idx]
-                        )
+                        stencil_sum += buffer_A[sample_idx]
                         stencil_count += 1
 
                 if stencil_count > 0:
@@ -222,9 +220,7 @@ def double_buffered_stencil_computation(
                 for offset in range(-1, 2):
                     sample_idx = local_i + offset
                     if sample_idx >= 0 and sample_idx < TPB:
-                        stencil_sum += rebind[Scalar[dtype]](
-                            buffer_B[sample_idx]
-                        )
+                        stencil_sum += buffer_B[sample_idx]
                         stencil_count += 1
 
                 if stencil_count > 0:

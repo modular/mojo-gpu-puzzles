@@ -81,8 +81,8 @@ def traditional_dot_product[
 
     # Each thread computes partial product
     if global_i < size:
-        var a_val = rebind[Scalar[dtype]](a[global_i])
-        var b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = a[global_i]
+        var b_val = b[global_i]
         shared[local_i] = a_val * b_val
 
     barrier()
