@@ -42,7 +42,7 @@ LLVM 분석은 [기술 분석](#기술-분석-blocksum은-실제로-무엇으로
 
 ## 기존 방식의 복잡성 (Puzzle 12에서)
 
-[Puzzle 12](../puzzle_12/tile_tensor.md)의 복잡한 방식을 떠올려 봅시다. 공유
+[Puzzle 12](../puzzle_12/puzzle_12.md)의 복잡한 방식을 떠올려 봅시다. 공유
 메모리, 배리어, 트리 리덕션이 필요했습니다:
 
 ```mojo

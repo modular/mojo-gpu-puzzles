@@ -42,7 +42,7 @@ programming in Mojo.
 
 ## The traditional complexity (from Puzzle 12)
 
-Recall the complex approach from [Puzzle 12](../puzzle_12/tile_tensor.md) that
+Recall the complex approach from [Puzzle 12](../puzzle_12/puzzle_12.md) that
 required shared memory, barriers, and tree reduction:
 
 ```mojo

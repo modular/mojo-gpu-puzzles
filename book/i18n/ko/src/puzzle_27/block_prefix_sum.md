@@ -147,7 +147,7 @@ if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # 인덱싱을 위해 SIMD를 Int로 변환
 ```
 
-이것은 [Puzzle 12](../puzzle_12/tile_tensor.md)의 경계 검사 패턴과 동일하지만,
+이것은 [Puzzle 12](../puzzle_12/puzzle_12.md)의 경계 검사 패턴과 동일하지만,
 조건이 "대상 구간에 속하는지"로 바뀌었습니다.
 
 ### 6. **최종 개수 계산**
@@ -270,7 +270,7 @@ Bin 7 extracted elements:
 
 ## **단계별 알고리즘 분석:**
 
-### **1단계: 요소 처리 ([Puzzle 12](../puzzle_12/tile_tensor.md) 내적과 유사)**
+### **1단계: 요소 처리 ([Puzzle 12](../puzzle_12/puzzle_12.md) 내적과 유사)**
 
 ```text
 스레드 인덱싱 (익숙한 패턴):
@@ -346,7 +346,7 @@ belongs_to_target=1인 스레드만 기록:
 
 ## **이 고급 알고리즘이 동작하는 이유:**
 
-### **[Puzzle 12](../puzzle_12/tile_tensor.md) (기존 내적)과의 연결:**
+### **[Puzzle 12](../puzzle_12/puzzle_12.md) (기존 내적)과의 연결:**
 
 - **동일한 스레드 인덱싱**: `global_i`와 `local_i` 패턴
 - **동일한 경계 검사**: `if global_i < size` 검증

@@ -14,8 +14,12 @@ it in 1D TileTensor `output`.
 **Note:** _If the size of `a` is greater than the block size, only store the sum
 of each block._
 
-<img src="./media/14-w.gif" alt="Prefix sum visualization" class="light-mode-img">
-<img src="./media/14-b.gif" alt="Prefix sum visualization" class="dark-mode-img">
+<img src="./media/videos/720p30/14.1-w.png" alt="Prefix sum visualization - step 1" class="light-mode-img">
+<img src="./media/videos/720p30/14.1-b.png" alt="Prefix sum visualization - step 1" class="dark-mode-img">
+<img src="./media/videos/720p30/14.2-w.png" alt="Prefix sum visualization - step 2" class="light-mode-img">
+<img src="./media/videos/720p30/14.2-b.png" alt="Prefix sum visualization - step 2" class="dark-mode-img">
+<img src="./media/videos/720p30/14.3-w.png" alt="Prefix sum visualization - step 3" class="light-mode-img">
+<img src="./media/videos/720p30/14.3-b.png" alt="Prefix sum visualization - step 3" class="dark-mode-img">
 
 ## Key concepts
 
