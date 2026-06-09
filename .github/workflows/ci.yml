@@ -51,6 +51,11 @@ jobs:
         run: |
           pixi run format-check
 
+      - name: Check book references
+        shell: bash
+        run: |
+          pixi run check-book-refs
+
       - name: Tests
         shell: bash
         run: |

@@ -59,6 +59,8 @@ format-check = { cmd = "bash -c 'mojo format problems solutions && git diff --ex
 
 tests = { cmd = "bash solutions/run.sh" }
 
+check-book-refs = { cmd = "python3 scripts/check_book_refs.py", description = "Validate book links/images resolve (en + ko trees)" }
+
 # Setup CUDA-GDB by linking system CUDA installation to conda environment
 setup-cuda-gdb = { cmd = "bash scripts/setup-cuda-gdb.sh", description = "Auto-detect and link system CUDA-GDB binaries to conda environment" }
 
