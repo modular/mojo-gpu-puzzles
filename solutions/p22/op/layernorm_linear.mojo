@@ -150,8 +150,8 @@ def layernorm_kernel[
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Apply LayerNorm to this element
@@ -293,8 +293,8 @@ def minimal_fused_kernel[
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Compute all outputs for this sequence position
@@ -397,8 +397,8 @@ def minimal_fused_kernel_backward[
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
@@ -491,8 +491,12 @@ def minimal_fused_kernel_backward[
         h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
-            - (sum_grad_normalized / hidden_dim)
-            - (h_normalized * sum_grad_normalized_times_normalized / hidden_dim)
+            - (sum_grad_normalized / Scalar[dtype](hidden_dim))
+            - (
+                h_normalized
+                * sum_grad_normalized_times_normalized
+                / Scalar[dtype](hidden_dim)
+            )
         )
 
 
@@ -726,13 +730,13 @@ struct LayerNormLinearCustomOp:
                     var sum_val: Scalar[dtype] = 0
                     for h in range(hidden_dim):
                         sum_val += input_tensor[batch, seq, h]
-                    var mean_val = sum_val / hidden_dim
+                    var mean_val = sum_val / Scalar[dtype](hidden_dim)
 
                     var var_sum: Scalar[dtype] = 0
                     for h in range(hidden_dim):
                         var diff = input_tensor[batch, seq, h] - mean_val
                         var_sum += diff * diff
-                    var var_val = var_sum / hidden_dim
+                    var var_val = var_sum / Scalar[dtype](hidden_dim)
                     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
                     # Apply LayerNorm and Linear in one step (truly fused)
@@ -893,13 +897,13 @@ struct LayerNormLinearBackwardCustomOp:
                     var sum_val: Scalar[dtype] = 0
                     for h in range(hidden_dim):
                         sum_val += input_tensor[batch, seq, h]
-                    var mean_val = sum_val / hidden_dim
+                    var mean_val = sum_val / Scalar[dtype](hidden_dim)
 
                     var var_sum: Scalar[dtype] = 0
                     for h in range(hidden_dim):
                         var diff = input_tensor[batch, seq, h] - mean_val
                         var_sum += diff * diff
-                    var var_val = var_sum / hidden_dim
+                    var var_val = var_sum / Scalar[dtype](hidden_dim)
                     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
                     # Gradient w.r.t. linear bias
@@ -979,11 +983,11 @@ struct LayerNormLinearBackwardCustomOp:
                         grad_norm = grad_ln_out * ln_weight_tensor[h]
                         grad_input_tensor[batch, seq, h] = inv_std * (
                             grad_norm
-                            - (sum_grad_normalized / hidden_dim)
+                            - (sum_grad_normalized / Scalar[dtype](hidden_dim))
                             - (
                                 normalized
                                 * sum_grad_normalized_times_normalized
-                                / hidden_dim
+                                / Scalar[dtype](hidden_dim)
                             )
                         )
 
