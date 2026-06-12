@@ -324,8 +324,8 @@ if lane_id() == 0:
 ### 4. **import에서 사용 가능한 함수들**
 
 ```mojo
-from gpu import lane_id
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.gpu import lane_id
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # 함수 내에서:
 my_lane = lane_id()           # 0 ~ WARP_SIZE-1

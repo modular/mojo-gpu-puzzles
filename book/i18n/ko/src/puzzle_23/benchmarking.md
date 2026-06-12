@@ -103,7 +103,7 @@ Benchmarks completed!
 벤치마킹 시스템은 Mojo의 내장 `benchmark` 모듈을 사용합니다:
 
 ```mojo
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 ```
 

@@ -12,7 +12,7 @@ processor.
 **Simple example:**
 
 ```mojo
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 # All 32 threads in the warp execute this simultaneously:
 var my_value = input[my_thread_id]     # Each gets different data
 var warp_total = sum(my_value)         # All contribute to one sum
@@ -55,7 +55,7 @@ var result = a + b # Add 8 pairs simultaneously
 
 ```mojo
 # Thread-based code that becomes vector operations
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 
 var my_data = input[thread_id]         # Each thread gets its element
 var partial = my_data * coefficient    # All threads compute simultaneously
@@ -168,8 +168,8 @@ GPUs are optimized for **throughput**, not latency. SIMT enables:
 Each thread within a warp has a **lane ID** from 0 to `WARP_SIZE-1`:
 
 ```mojo
-from gpu import lane_id
-from gpu.primitives.warp import WARP_SIZE
+from std.gpu import lane_id
+from std.gpu.primitives.warp import WARP_SIZE
 
 # Within a kernel function:
 my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
@@ -191,7 +191,7 @@ barrier()  # Explicit synchronization required
 var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
 
 # 2. Warp approach:
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
 ```
@@ -307,7 +307,7 @@ else:
 ### NVIDIA vs AMD warp sizes
 
 ```mojo
-from gpu.primitives.warp import WARP_SIZE
+from std.gpu.primitives.warp import WARP_SIZE
 
 # NVIDIA GPUs:     WARP_SIZE = 32
 # AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 mode)

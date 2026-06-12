@@ -102,7 +102,7 @@ Benchmarks completed!
 The benchmarking system uses Mojo's built-in `benchmark` module:
 
 ```mojo
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 ```
 

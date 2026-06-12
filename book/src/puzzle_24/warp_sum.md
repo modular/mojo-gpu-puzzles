@@ -328,8 +328,8 @@ functional approach.
 ### 4. **Available functions from imports**
 
 ```mojo
-from gpu import lane_id
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.gpu import lane_id
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1
