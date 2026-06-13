@@ -16,14 +16,44 @@ from std.sys import argv
 from std.testing import assert_equal
 from std.math import floor
 
+comptime SIZE = 128
+comptime TPB = 128
+comptime NUM_BINS = 8
+comptime in_layout = row_major[SIZE]()
+comptime out_layout = row_major[1]()
+comptime dtype = DType.float32
+comptime InLayout = type_of(in_layout)
+comptime OutLayout = type_of(out_layout)
+
+
+# ANCHOR: block_sum_dot_product
+def block_sum_dot_product[
+    tpb: Int
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+
+    # FILL IN (roughly 6 lines)
+
+
+# ANCHOR_END: block_sum_dot_product
+
 
 # ANCHOR: traditional_dot_product
 def traditional_dot_product[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
@@ -58,49 +88,17 @@ def traditional_dot_product[
 
 # ANCHOR_END: traditional_dot_product
 
-# ANCHOR: block_sum_dot_product
-comptime SIZE = 128
-comptime TPB = 128
-comptime NUM_BINS = 8
-comptime in_layout = row_major[SIZE]()
-comptime InLayoutType = type_of(in_layout)
-comptime out_layout = row_major[1]()
-comptime OutLayoutType = type_of(out_layout)
-comptime dtype = DType.float32
+comptime bin_layout = row_major[SIZE]()  # Max SIZE elements per bin
+comptime BinLayout = type_of(bin_layout)
 
-
-def block_sum_dot_product[
-    tpb: Int
-](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    size: Int,
-):
-    """Dot product using block.sum() - convenience function like warp.sum()!
-    Replaces manual shared memory + barriers + tree reduction with one line."""
-
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = thread_idx.x
-
-    # FILL IN (roughly 6 lines)
-
-
-# ANCHOR_END: block_sum_dot_product
 
 # ANCHOR: block_histogram
-comptime bin_layout = row_major[SIZE]()  # Max SIZE elements per bin
-comptime BinLayoutType = type_of(bin_layout)
-
-
 def block_histogram_bin_extract[
     tpb: Int
 ](
-    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    bin_output: TileTensor[mut=True, dtype, BinLayoutType, MutAnyOrigin],
-    count_output: TileTensor[
-        mut=True, DType.int32, OutLayoutType, MutAnyOrigin
-    ],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
+    count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -140,25 +138,24 @@ def block_histogram_bin_extract[
 
 # ANCHOR_END: block_histogram
 
+comptime vector_layout = row_major[SIZE]()  # For full vector output
+comptime VectorLayout = type_of(vector_layout)
+
+
 # ANCHOR: block_normalize
-
-comptime vector_layout = row_major[SIZE]()
-comptime VectorLayoutType = type_of(vector_layout)
-
-
 def block_normalize_vector[
     tpb: Int
 ](
-    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    output_data: TileTensor[mut=True, dtype, VectorLayoutType, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
     This demonstrates the complete block operations workflow:
-    1. Use block.sum() to compute sum of all elements (all → one)
+    1. Use block.sum() to compute sum of all elements (all -> one)
     2. Thread 0 computes mean = sum / size
-    3. Use block.broadcast() to share mean to all threads (one → all)
+    3. Use block.broadcast() to share mean to all threads (one -> all)
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
@@ -218,12 +215,8 @@ def main() raises:
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = TileTensor[
-                mut=False, dtype, InLayoutType, ImmutAnyOrigin
-            ](a, in_layout)
-            b_tensor = TileTensor[
-                mut=False, dtype, InLayoutType, ImmutAnyOrigin
-            ](b_buf, in_layout)
+            a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
+            b_tensor = TileTensor[mut=False, dtype, InLayout](b_buf, in_layout)
             out_tensor = TileTensor(out, out_layout)
 
             # Traditional approach: works perfectly when size == TPB
@@ -233,7 +226,7 @@ def main() raises:
                 a_tensor,
                 b_tensor,
                 SIZE,
-                grid_dim=(1, 1),  # ✅ Single block works when size == TPB
+                grid_dim=(1, 1),
                 block_dim=(TPB, 1),
             )
 
@@ -265,12 +258,8 @@ def main() raises:
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = TileTensor[
-                mut=False, dtype, InLayoutType, ImmutAnyOrigin
-            ](a, in_layout)
-            b_tensor = TileTensor[
-                mut=False, dtype, InLayoutType, ImmutAnyOrigin
-            ](b_buf, in_layout)
+            a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
+            b_tensor = TileTensor[mut=False, dtype, InLayout](b_buf, in_layout)
             out_tensor = TileTensor(out, out_layout)
 
             # Block.sum(): Same result with dramatically simpler code!
@@ -323,9 +312,9 @@ def main() raises:
             print("...")
             print()
 
-            input_tensor = TileTensor[
-                mut=False, dtype, InLayoutType, ImmutAnyOrigin
-            ](input_buf, in_layout)
+            input_tensor = TileTensor[mut=False, dtype, InLayout](
+                input_buf, in_layout
+            )
 
             # Demonstrate histogram for each bin using block.prefix_sum()
             for target_bin in range(NUM_BINS):
@@ -390,7 +379,7 @@ def main() raises:
             input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
             var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-            output_buf.enqueue_fill(0)
+            input_buf.enqueue_fill(0)
 
             # Create test data: values like [1, 2, 3, 4, 5, ..., 8, 1, 2, 3, ...]
             # Mean value will be 4.5, so normalized values will be input[i] / 4.5
@@ -415,9 +404,9 @@ def main() raises:
             print("Mean value:", mean_value)
             print()
 
-            input_tensor = TileTensor[
-                mut=False, dtype, InLayoutType, ImmutAnyOrigin
-            ](input_buf, in_layout)
+            input_tensor = TileTensor[mut=False, dtype, InLayout](
+                input_buf, in_layout
+            )
             var output_tensor = TileTensor(output_buf, vector_layout)
 
             # Execute vector normalization kernel

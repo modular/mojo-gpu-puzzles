@@ -3,17 +3,14 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.sys import argv
-from std.testing import assert_equal
-from std.gpu.host import DeviceContext
-
-# ANCHOR: naive_matmul
 from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
-
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 3
 comptime SIZE = 2
@@ -24,7 +21,10 @@ comptime layout = row_major[SIZE, SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def naive_matmul(
+# ANCHOR: naive_matmul
+def naive_matmul[
+    size: Int
+](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -38,7 +38,9 @@ def naive_matmul(
 
 
 # ANCHOR: single_block_matmul
-def single_block_matmul(
+def single_block_matmul[
+    size: Int
+](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -52,7 +54,7 @@ def single_block_matmul(
 
 # ANCHOR_END: single_block_matmul
 
-# ANCHOR: matmul_tiled
+
 comptime SIZE_TILED = 9
 comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block covers 3x3 elements
 comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
@@ -60,15 +62,18 @@ comptime layout_tiled = row_major[SIZE_TILED, SIZE_TILED]()
 comptime LayoutTiledType = type_of(layout_tiled)
 
 
-def matmul_tiled(
+# ANCHOR: matmul_tiled
+def matmul_tiled[
+    size: Int
+](
     output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    var tiled_row = block_idx.y * TPB + thread_idx.y
-    var tiled_col = block_idx.x * TPB + thread_idx.x
+    var tiled_row = block_idx.y * TPB + local_row
+    var tiled_col = block_idx.x * TPB + local_col
     # FILL ME IN (roughly 20 lines)
 
 
@@ -77,16 +82,10 @@ def matmul_tiled(
 
 def main() raises:
     with DeviceContext() as ctx:
-        if len(argv()) != 2 or argv()[1] not in [
-            "--naive",
-            "--single-block",
-            "--tiled",
-        ]:
-            raise Error(
-                "Expected one argument: '--naive', '--single-block', or"
-                " '--tiled'"
-            )
-        var size = SIZE_TILED if argv()[1] == "--tiled" else SIZE
+        var size = (
+            SIZE_TILED if argv()[1] == "--idiomatic-tiled"
+            or argv()[1] == "--tiled" else SIZE
+        )
         var out = ctx.enqueue_create_buffer[dtype](size * size)
         out.enqueue_fill(0)
         var inp1 = ctx.enqueue_create_buffer[dtype](size * size)
@@ -102,9 +101,11 @@ def main() raises:
                     var val = row * size + col
                     # row major: placing elements row by row
                     inp1_host[row * size + col] = Scalar[dtype](val)
-                    inp2_host[row * size + col] = Scalar[dtype](2.0 * val)
+                    inp2_host[row * size + col] = Scalar[dtype](
+                        2.0 * Float64(val)
+                    )
 
-            # inp1 @ inp2.T
+            # inp1 @ inp2
             for i in range(size):
                 for j in range(size):
                     for k in range(size):
@@ -117,7 +118,8 @@ def main() raises:
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](inp2, layout)
 
         if argv()[1] == "--naive":
-            ctx.enqueue_function[naive_matmul](
+            comptime kernel = naive_matmul[SIZE]
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -125,7 +127,8 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            ctx.enqueue_function[single_block_matmul](
+            comptime kernel = single_block_matmul[SIZE]
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -134,20 +137,26 @@ def main() raises:
             )
         elif argv()[1] == "--tiled":
             # Need to update the layout of the tensors to the tiled layout
-            var out_tensor_tiled = TileTensor(out, layout_tiled)
-            var a_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
+            out_tensor_tiled = TileTensor(out, layout_tiled)
+            a_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
                 inp1, layout_tiled
             )
-            var b_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
+            b_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
                 inp2, layout_tiled
             )
 
-            ctx.enqueue_function[matmul_tiled](
+            comptime kernel = matmul_tiled[SIZE_TILED]
+            ctx.enqueue_function[kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
                 b_tensor_tiled,
                 grid_dim=BLOCKS_PER_GRID_TILED,
                 block_dim=THREADS_PER_BLOCK_TILED,
+            )
+        else:
+            raise Error(
+                "Invalid option. Choose among the available flags: --naive,"
+                " --single-block, --tiled, --idiomatic-tiled"
             )
 
         ctx.synchronize()

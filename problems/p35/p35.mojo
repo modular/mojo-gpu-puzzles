@@ -46,8 +46,7 @@ def scalar_kernel(
     This is the baseline: each thread issues a scalar load and a scalar store.
     """
     var i = block_dim.x * block_idx.x + thread_idx.x
-    # FILL ME IN (1-2 lines): guard `i < size`, then
-    # `output[i] = a[i] * SCALE + BIAS`.
+    # FILL ME IN (1-2 lines): guard `i < size`, then `output[i] = a[i] * SCALE + BIAS`.
 
 
 # ANCHOR_END: scalar_kernel
@@ -61,22 +60,18 @@ def unaligned_kernel(
 ):
     """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
 
-    The data is naturally 16-byte aligned, but tell `load`/`store` only the
-    scalar alignment (`SCALAR_ALIGN` == 4 bytes). Watch what the compiler does
-    with that: it can't prove the access is 16-byte aligned, so it falls back to
-    scalar `ld.global.nc.f32` / `st.global.f32` instead of the vectorized `.v4`
-    form. Correct results, but lost bandwidth — the alignment trap.
+    The data is naturally 16-byte aligned, but `load`/`store` are told only the
+    scalar alignment (`align_of[dtype]()` == 4 bytes). The compiler cannot prove
+    the access is 16-byte aligned, so it falls back to scalar
+    `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
+    `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
     var a_lt = a.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
 
     # Each thread owns one SIMD_WIDTH-wide chunk.
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then
-    #   var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](
-    #       Index(base))
-    #   out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
-    #       Index(base), v * SCALE + BIAS)
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load a SIMD_WIDTH-wide vector with `load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=SCALAR_ALIGN`.
 
 
 # ANCHOR_END: unaligned_kernel
@@ -90,21 +85,17 @@ def aligned_kernel(
 ):
     """Same vectorized kernel, but the access alignment is communicated.
 
-    Use `VEC_ALIGN` (16 bytes for float32x4) so the compiler emits a single
-    vectorized `ld.global.nc.v4.f32` load and `st.global.v4.f32` store per
-    chunk. `aligned_load[w]` is the convenience wrapper that picks this
-    alignment for you. Identical output to the unaligned kernel — only the
-    codegen (and the bandwidth) changes.
+    Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
+    float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
+    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
+    convenience wrapper that picks this alignment for you. Identical output to
+    the unaligned kernel — only the codegen (and the bandwidth) changes.
     """
     var a_lt = a.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
 
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load with
-    # the *correct* alignment and store the result:
-    #   var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
-    #   out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
-    #       Index(base), v * SCALE + BIAS)
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load with the *correct* alignment via `a_lt.aligned_load[width=SIMD_WIDTH](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=VEC_ALIGN`.
 
 
 # ANCHOR_END: aligned_kernel

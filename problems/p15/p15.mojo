@@ -3,16 +3,13 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.testing import assert_equal
-from std.gpu.host import DeviceContext
-
-# ANCHOR: axis_sum
 from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
-
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime BATCH = 4
@@ -21,11 +18,12 @@ comptime BLOCKS_PER_GRID = (1, BATCH)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
 comptime in_layout = row_major[BATCH, SIZE]()
-comptime InLayout = type_of(in_layout)
 comptime out_layout = row_major[BATCH, 1]()
+comptime InLayout = type_of(in_layout)
 comptime OutLayout = type_of(out_layout)
 
 
+# ANCHOR: axis_sum
 def axis_sum(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],

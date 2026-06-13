@@ -267,8 +267,7 @@ def minimal_fused_kernel[
     linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
     linear_bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin],
 ):
-    """Minimal fused kernel - one thread per sequence position to avoid redundancy.
-    """
+    """Minimal fused kernel: one thread per sequence position."""
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
     var batch_idx = block_idx.x
@@ -348,8 +347,7 @@ def minimal_fused_kernel_backward[
     ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
     linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
 ):
-    """Fused backward kernel using atomic operations for safe gradient accumulation.
-    """
+    """Fused backward kernel: atomics for safe gradient accumulation."""
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
     var batch_idx = block_idx.x

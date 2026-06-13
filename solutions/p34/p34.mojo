@@ -144,8 +144,7 @@ def advanced_cluster_patterns[
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
-    """Advanced cluster programming using cluster masks and relaxed synchronization.
-    """
+    """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())

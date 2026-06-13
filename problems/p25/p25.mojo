@@ -7,11 +7,11 @@ from std.gpu import thread_idx, block_idx, block_dim, lane_id
 from std.gpu.host import DeviceContext
 from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import TileTensor
-from layout.tile_layout import row_major
+from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
-# ANCHOR: neighbor_difference
+
 comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
@@ -20,11 +20,12 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
+# ANCHOR: neighbor_difference
 def neighbor_difference[
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -39,19 +40,20 @@ def neighbor_difference[
 
 # ANCHOR_END: neighbor_difference
 
-# ANCHOR: moving_average_3
+# Advanced setup for multi-block patterns
 comptime SIZE_2 = 64
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
 comptime layout_2 = row_major[SIZE_2]()
-comptime LayoutType_2 = type_of(layout_2)
+comptime Layout2Type = type_of(layout_2)
 
 
+# ANCHOR: moving_average_3
 def moving_average_3[
     size: Int
 ](
-    output: TileTensor[mut=True, dtype, LayoutType_2, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, MutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
@@ -72,7 +74,7 @@ def broadcast_shuffle_coordination[
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -81,6 +83,7 @@ def broadcast_shuffle_coordination[
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i < size:
         var scale_factor: output.ElementType = 0.0
 
@@ -95,7 +98,7 @@ def basic_broadcast[
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -103,6 +106,7 @@ def basic_broadcast[
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i < size:
         var broadcast_value: output.ElementType = 0.0
 
@@ -117,7 +121,7 @@ def conditional_broadcast[
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -125,6 +129,7 @@ def conditional_broadcast[
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i < size:
         var decision_value: output.ElementType = 0.0
 
@@ -153,10 +158,12 @@ def test_neighbor_difference() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i * i)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
         comptime kernel = neighbor_difference[SIZE]
         ctx.enqueue_function[kernel](
@@ -168,6 +175,7 @@ def test_neighbor_difference() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results: differences of squares should be odd numbers
@@ -199,10 +207,12 @@ def test_moving_average() raises:
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType_2, ImmutAnyOrigin
-        ](input_buf, layout_2)
-        var output_tensor = TileTensor(output_buf, layout_2)
+        var input_tensor = TileTensor[mut=False, dtype, Layout2Type](
+            input_buf, layout_2
+        )
+        var output_tensor = TileTensor[mut=True, dtype, Layout2Type](
+            output_buf, layout_2
+        )
 
         comptime kernel = moving_average_3[SIZE_2]
         ctx.enqueue_function[kernel](
@@ -214,6 +224,7 @@ def test_moving_average() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results
@@ -267,10 +278,12 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = Scalar[dtype](((i - 4) % 4) * 2 + 1)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
         comptime kernel = broadcast_shuffle_coordination[SIZE]
         ctx.enqueue_function[kernel](
@@ -282,6 +295,7 @@ def test_broadcast_shuffle_coordination() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results
@@ -319,10 +333,12 @@ def test_basic_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
         comptime kernel = basic_broadcast[SIZE]
         ctx.enqueue_function[kernel](
@@ -334,6 +350,7 @@ def test_basic_broadcast() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results
@@ -377,10 +394,12 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
         comptime kernel = conditional_broadcast[SIZE]
         ctx.enqueue_function[kernel](
@@ -392,6 +411,7 @@ def test_conditional_broadcast() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results
@@ -418,7 +438,7 @@ def test_conditional_broadcast() raises:
 
 def main() raises:
     print("WARP_SIZE: ", WARP_SIZE)
-    if len(argv()) < 1 or len(argv()) > 2:
+    if len(argv()) != 2:
         print(
             "Usage: p23.mojo"
             " [--neighbor|--average|--broadcast-basic|--broadcast-conditional|--broadcast-shuffle-coordination]"

@@ -11,10 +11,10 @@ from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv
 from std.testing import assert_equal
 
-# ANCHOR: embedding_kernel_coalesced
 comptime THREADS_PER_BLOCK = 256
 
 
+# ANCHOR: embedding_kernel_coalesced
 def embedding_kernel_coalesced[
     batch_size: Int,
     seq_len: Int,
@@ -26,8 +26,8 @@ def embedding_kernel_coalesced[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=False, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=False, dtype, WeightsLayout, MutAnyOrigin],
+    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
+    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -44,6 +44,10 @@ def embedding_kernel_coalesced[
 
     if global_idx >= total_elements:
         return
+
+    var output_lt = output.to_layout_tensor()
+    var indices_lt = indices.to_layout_tensor()
+    var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq, embed) coordinates
     # FILL IN roughly 4 lines
@@ -70,8 +74,8 @@ def embedding_kernel_2d[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=False, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=False, dtype, WeightsLayout, MutAnyOrigin],
+    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
+    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.
@@ -85,10 +89,16 @@ def embedding_kernel_2d[
     # 2D grid indexing
     var batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
     var embed_idx = block_idx.y * block_dim.y + thread_idx.y
+
     var total_positions = batch_size * seq_len
 
+    # Bounds check
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:
         return
+
+    var output_lt = output.to_layout_tensor()
+    var indices_lt = indices.to_layout_tensor()
+    var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq) coordinates
     # FILL IN 2 lines
@@ -130,9 +140,22 @@ struct EmbeddingCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContext,
     ) raises:
-        var output_tensor = output.to_layout_tensor()
-        var indices_tensor = indices.to_layout_tensor()
-        var weights_tensor = weights.to_layout_tensor()
+        comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
+        comptime OutLayout = type_of(out_layout_val)
+        comptime indices_layout_val = row_major[batch_size, seq_len]()
+        comptime IndicesLayout = type_of(indices_layout_val)
+        comptime weights_layout_val = row_major[vocab_size, embed_dim]()
+        comptime WeightsLayout = type_of(weights_layout_val)
+
+        var output_tensor = TileTensor[
+            mut=True, output.dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var indices_tensor = TileTensor[
+            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
+        ](indices.unsafe_ptr(), indices_layout_val)
+        var weights_tensor = TileTensor[
+            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
+        ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx
@@ -141,7 +164,7 @@ struct EmbeddingCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    output_tensor.ptr,
+                    output.unsafe_ptr(),
                     batch_size * seq_len * embed_dim,
                     owning=False,
                 ),
@@ -158,6 +181,9 @@ struct EmbeddingCustomOp:
                 seq_len,
                 vocab_size,
                 embed_dim,
+                OutLayout,
+                IndicesLayout,
+                WeightsLayout,
                 output.dtype,
             ]
             var compiled_kernel = gpu_ctx.compile_function[kernel]()
@@ -205,9 +231,22 @@ struct Embedding2DCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContext,
     ) raises:
-        var output_tensor = output.to_layout_tensor()
-        var indices_tensor = indices.to_layout_tensor()
-        var weights_tensor = weights.to_layout_tensor()
+        comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
+        comptime OutLayout = type_of(out_layout_val)
+        comptime indices_layout_val = row_major[batch_size, seq_len]()
+        comptime IndicesLayout = type_of(indices_layout_val)
+        comptime weights_layout_val = row_major[vocab_size, embed_dim]()
+        comptime WeightsLayout = type_of(weights_layout_val)
+
+        var output_tensor = TileTensor[
+            mut=True, output.dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var indices_tensor = TileTensor[
+            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
+        ](indices.unsafe_ptr(), indices_layout_val)
+        var weights_tensor = TileTensor[
+            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
+        ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx
@@ -216,7 +255,7 @@ struct Embedding2DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    output_tensor.ptr,
+                    output.unsafe_ptr(),
                     batch_size * seq_len * embed_dim,
                     owning=False,
                 ),
@@ -236,8 +275,12 @@ struct Embedding2DCustomOp:
                 seq_len,
                 vocab_size,
                 embed_dim,
+                OutLayout,
+                IndicesLayout,
+                WeightsLayout,
                 output.dtype,
             ]
+
             var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(

@@ -56,6 +56,16 @@ jobs:
         run: |
           pixi run check-book-refs
 
+      - name: Check problem skeletons are in sync with solutions
+        shell: bash
+        run: |
+          pixi run check-skeletons
+
+      - name: Compile problem skeletons
+        shell: bash
+        run: |
+          pixi run compile-problems
+
       - name: Tests
         shell: bash
         run: |

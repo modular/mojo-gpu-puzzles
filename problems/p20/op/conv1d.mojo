@@ -10,6 +10,7 @@ from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
+from std.utils import Index
 from std.sys import argv
 from std.testing import assert_equal
 
@@ -27,11 +28,14 @@ def conv1d_kernel[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    kernel: TileTensor[mut=False, dtype, ConvLayout, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
+    kernel: TileTensor[mut=True, dtype, ConvLayout, MutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
+    var input_lt = input.to_layout_tensor()
+    var kernel_lt = kernel.to_layout_tensor()
+    var output_lt = output.to_layout_tensor()
     # first: need to account for padding
     var shared_a = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -40,32 +44,32 @@ def conv1d_kernel[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[conv_size]())
     if global_i < input_size:
-        shared_a[local_i] = input[global_i]
+        shared_a[local_i] = rebind[Scalar[dtype]](input_lt[global_i])
 
     # second: load elements needed for convolution at block boundary
     if local_i < conv_size - 1:
         # indices from next block
         var next_idx = global_i + TPB
         if next_idx < input_size:
-            shared_a[TPB + local_i] = input[next_idx]
+            shared_a[TPB + local_i] = rebind[Scalar[dtype]](input_lt[next_idx])
         else:
             # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
             # which is an undefined behavior
             shared_a[TPB + local_i] = 0
 
     if local_i < conv_size:
-        shared_b[local_i] = kernel[local_i]
+        shared_b[local_i] = rebind[Scalar[dtype]](kernel_lt[local_i])
 
     barrier()
 
     if global_i < input_size:
-        var local_sum: output.ElementType = 0
+        var local_sum: Scalar[dtype] = 0
 
         comptime for j in range(conv_size):
             if local_i + j < TPB + conv_size - 1:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
-        output[global_i] = local_sum
+        output_lt.store[1](Index(global_i), local_sum)
 
 
 # ANCHOR_END: conv1d_kernel
@@ -93,9 +97,20 @@ struct Conv1DCustomOp:
         # the context is needed for some GPU calls
         ctx: DeviceContext,
     ) raises:
-        var out_tensor = output.to_layout_tensor()
-        var input_tensor = input.to_layout_tensor()
-        var kernel_tensor = kernel.to_layout_tensor()
+        comptime out_layout_val = row_major[input_size]()
+        comptime OutLayout = type_of(out_layout_val)
+        comptime conv_layout_val = row_major[conv_size]()
+        comptime ConvLayout = type_of(conv_layout_val)
+
+        var out_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+            output.unsafe_ptr(), out_layout_val
+        )
+        var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+            input.unsafe_ptr(), out_layout_val
+        )
+        var kernel_tensor = TileTensor[
+            mut=True, dtype, ConvLayout, MutAnyOrigin
+        ](kernel.unsafe_ptr(), conv_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx
@@ -103,13 +118,15 @@ struct Conv1DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    out_tensor.ptr,
+                    output.unsafe_ptr(),
                     input_size,
                     owning=False,
                 ),
                 0,
             )
-            comptime kernel = conv1d_kernel[input_size, conv_size]
+            comptime kernel = conv1d_kernel[
+                input_size, conv_size, OutLayout, OutLayout, ConvLayout
+            ]
             gpu_ctx.enqueue_function[kernel](
                 out_tensor,
                 input_tensor,

@@ -61,6 +61,9 @@ tests = { cmd = "bash solutions/run.sh" }
 
 check-book-refs = { cmd = "python3 scripts/check_book_refs.py", description = "Validate book links/images resolve (en + ko trees)" }
 
+check-skeletons = { cmd = "python3 scripts/check_skeletons.py", description = "Verify each problem skeleton matches its solution outside the fill-in regions" }
+compile-problems = { cmd = "bash scripts/compile_problems.sh", description = "Compile every problem skeleton so a stale starter file fails CI" }
+
 # Setup CUDA-GDB by linking system CUDA installation to conda environment
 setup-cuda-gdb = { cmd = "bash scripts/setup-cuda-gdb.sh", description = "Auto-detect and link system CUDA-GDB binaries to conda environment" }
 

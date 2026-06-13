@@ -183,6 +183,26 @@ Please feel free to:
 2. Create your feature branch
 3. Submit a pull request
 
+### Keeping problems and solutions in sync
+
+Each `problems/pNN/` file is the same as its `solutions/pNN/` counterpart
+**except** that the student fill-in regions are blanked out with `# FILL ME IN`
+hints (and an optional `...` placeholder so an empty body still compiles), and
+the `# ANCHOR:` markers drop the `_solution` suffix the solution uses. Solving a
+puzzle should therefore only ever *add* lines.
+
+When you change a solution (for example, migrating to a new API), update the
+matching problem skeleton the same way. Two checks guard this (both run in CI):
+
+```bash
+pixi run check-skeletons    # problem == solution outside the fill-in regions
+pixi run compile-problems   # every unfilled skeleton still compiles
+```
+
+(`problems/p10` is intentionally exempt — it is the sanitizer puzzle, whose
+skeleton ships deliberately buggy kernels for you to catch with `memcheck` /
+`racecheck`.)
+
 ## Community
 
 <p align="center">

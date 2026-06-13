@@ -6,18 +6,17 @@
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.host.compile import get_gpu_target
-from layout import TileTensor
+from layout import TileTensor, LayoutTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
+from std.utils import Index
 from std.utils.coord import Coord
-from std.utils import IndexList
 from std.math import log2
 from std.algorithm.functional import elementwise, vectorize
 from std.sys import simd_width_of, argv, align_of
 from std.testing import assert_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
-# ANCHOR: elementwise_add
 comptime SIZE = 1024
 comptime rank = 1
 comptime layout = row_major[SIZE]()
@@ -26,6 +25,7 @@ comptime dtype = DType.float32
 comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 
 
+# ANCHOR: elementwise_add
 def elementwise_add[
     LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
@@ -39,8 +39,7 @@ def elementwise_add[
     def add[
         simd_width: Int, alignment: Int = align_of[dtype]()
     ](indices: Coord) capturing -> None:
-        var idx = indices[0]
-        print("idx:", idx)
+        var idx = Int(indices[0].value())
         # FILL IN (2 to 4 lines)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
@@ -72,10 +71,10 @@ def tiled_elementwise_add[
         simd_width: Int, alignment: Int = align_of[dtype]()
     ](indices: Coord) capturing -> None:
         var tile_id = Int(indices[0].value())
-        print("tile_id:", tile_id)
-        var output_tile = output.tile[tile_size](tile_id)
-        var a_tile = a.tile[tile_size](tile_id)
-        var b_tile = b.tile[tile_size](tile_id)
+
+        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 
         # FILL IN (6 lines at most)
 
@@ -110,10 +109,10 @@ def manual_vectorized_tiled_elementwise_add[
         num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
     ](indices: Coord) capturing -> None:
         var tile_id = Int(indices[0].value())
-        print("tile_id:", tile_id)
-        var output_tile = output.tile[chunk_size](tile_id)
-        var a_tile = a.tile[chunk_size](tile_id)
-        var b_tile = b.tile[chunk_size](tile_id)
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # FILL IN (7 lines at most)
 
@@ -152,16 +151,10 @@ def vectorize_within_tiles_elementwise_add[
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
-        print(
-            "tile_id:",
-            tile_id,
-            "tile_start:",
-            tile_start,
-            "tile_end:",
-            tile_end,
-            "actual_tile_size:",
-            actual_tile_size,
-        )
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # FILL IN (9 lines at most)
 

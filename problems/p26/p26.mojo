@@ -11,7 +11,7 @@ from layout.tile_layout import row_major
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
-# ANCHOR: butterfly_pair_swap
+
 comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
@@ -20,6 +20,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
+# ANCHOR: butterfly_pair_swap_solution
 def butterfly_pair_swap[
     size: Int
 ](
@@ -37,7 +38,7 @@ def butterfly_pair_swap[
     # FILL ME IN (4 lines)
 
 
-# ANCHOR_END: butterfly_pair_swap
+# ANCHOR_END: butterfly_pair_swap_solution
 
 
 # ANCHOR: butterfly_parallel_max
@@ -49,10 +50,9 @@ def butterfly_parallel_max[
 ):
     """
     Parallel maximum reduction using butterfly pattern.
-    Uses shuffle_xor with decreasing offsets starting from WARP_SIZE/2 down to 1.
+    Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
     Each step reduces the active range by half until all threads have the maximum value.
-    This implements an efficient O(log n) parallel reduction algorithm that works
-    for any WARP_SIZE (32, 64, etc.).
+    This implements an efficient O(log n) parallel reduction algorithm.
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -62,19 +62,19 @@ def butterfly_parallel_max[
 # ANCHOR_END: butterfly_parallel_max
 
 
-# ANCHOR: butterfly_conditional_max
 comptime SIZE_2 = 64
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
 comptime layout_2 = row_major[SIZE_2]()
-comptime LayoutType_2 = type_of(layout_2)
+comptime Layout2Type = type_of(layout_2)
 
 
+# ANCHOR: butterfly_conditional_max
 def butterfly_conditional_max[
     size: Int
 ](
-    output: TileTensor[mut=True, dtype, LayoutType_2, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
 ):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
@@ -102,8 +102,7 @@ def warp_inclusive_prefix_sum[
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
-    Inclusive prefix sum using warp primitive:
-    Each thread gets sum of all elements up to and including its position.
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 12's complex shared memory + barrier approach.
 
     Puzzle 12 approach:
@@ -169,15 +168,15 @@ def test_butterfly_pair_swap() raises:
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
         var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = butterfly_pair_swap[SIZE]
@@ -224,9 +223,9 @@ def test_butterfly_parallel_max() raises:
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = butterfly_parallel_max[SIZE]
@@ -268,9 +267,9 @@ def test_butterfly_conditional_max() raises:
                 else:
                     input_host[i] = Scalar[dtype](i % 10)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType_2, ImmutAnyOrigin
-        ](input_buf, layout_2)
+        var input_tensor = TileTensor[mut=False, dtype, Layout2Type](
+            input_buf, layout_2
+        )
         var output_tensor = TileTensor(output_buf, layout_2)
 
         comptime kernel = butterfly_conditional_max[SIZE_2]
@@ -326,9 +325,9 @@ def test_warp_inclusive_prefix_sum() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = warp_inclusive_prefix_sum[SIZE]
@@ -341,6 +340,7 @@ def test_warp_inclusive_prefix_sum() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected inclusive prefix sum: [1, 3, 6, 10, 15, 21, 28, 36, ...]
@@ -390,9 +390,9 @@ def test_warp_partition() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](test_values[i % len(test_values)])
 
-        var input_tensor = TileTensor[
-            mut=False, dtype, LayoutType, ImmutAnyOrigin
-        ](input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = warp_partition[SIZE]
@@ -406,6 +406,7 @@ def test_warp_partition() raises:
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results: elements < 5 on left, >= 5 on right
@@ -453,7 +454,7 @@ def test_warp_partition() raises:
 
 def main() raises:
     print("WARP_SIZE: ", WARP_SIZE)
-    if len(argv()) < 2:
+    if len(argv()) != 2:
         print(
             "Usage: p24.mojo"
             " [--pair-swap|--parallel-max|--conditional-max|--prefix-sum|--partition]"

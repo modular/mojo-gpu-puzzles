@@ -33,7 +33,7 @@ def pooling(
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FIX ME IN (roughly 10 lines)
+    # FILL ME IN (roughly 10 lines)
 
 
 # ANCHOR_END: pooling
