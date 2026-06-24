@@ -37,6 +37,11 @@ Our GPU implementation uses parallel reduction for both finding the maximum
 value and computing the sum of exponentials, making it highly efficient for
 large vectors.
 
+> **Scope:** This puzzle runs in a single block (grid is \\(1 \times 1\\)). Both
+> reductions use shared memory and `barrier()` within that one block — there is
+> no cross-block communication here, which is why the vector fits in a single
+> block's threads.
+
 ## Key concepts
 
 - Parallel reduction for efficient maximum and sum calculations

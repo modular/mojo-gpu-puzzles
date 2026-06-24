@@ -35,6 +35,10 @@ programming in Mojo.
 - Grid configuration: `(1, 1)` blocks per grid
 - Layout: `row_major[SIZE]()` (1D row-major)
 
+> **Scope:** This puzzle works within a single warp (`SIZE = WARP_SIZE`). The
+> reduction happens across lanes of one warp via `warp.sum()`; there is no
+> cross-warp or cross-block reduction here.
+
 ## The traditional complexity (from Puzzle 12)
 
 Recall the complex approach from
@@ -54,6 +58,12 @@ memory, barriers, and tree reduction:
 
 This works, but it's verbose, error-prone, and requires deep understanding of
 GPU synchronization.
+
+> **Note:** This is intentionally a *different* approach from the
+> [Puzzle 12 solution](../../../solutions/p12/p12.mojo). Puzzle 12 uses shared
+> memory, `barrier()`, and a tree reduction; this puzzle deliberately replaces
+> all of that with a single `warp.sum()`. The code below won't match the P12
+> solution line-for-line — that contrast is the point.
 
 **Test the traditional approach:**
 <div class="code-tabs" data-tab-group="package-manager">
