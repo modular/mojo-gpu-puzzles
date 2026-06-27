@@ -141,20 +141,20 @@ workflows.
 > sudo apt update && sudo apt install wslu
 > ```
 
-> **Jetson Orin Users**: The nightly Mojo build requires NVIDIA driver >= 580
-> (CUDA >= 13.0), but the Jetson Orin ships driver 540.x (CUDA 12.6) provided
-> by NVIDIA's JetPack SDK. Set `MODULAR_NVPTX_COMPILER_PATH` to your system
-> `ptxas` as a workaround:
+> **Older NVIDIA driver workaround**: Mojo and MAX require NVIDIA driver ≥
+> 580 (CUDA ≥ 13.0). Systems still on older drivers (for example, the Jetson
+> Orin shipped with JetPack SDK on driver 540.x / CUDA 12.6) can hit a
+> driver-version error at runtime. Point Mojo at the system `ptxas` to work
+> around it:
 >
 > ```bash
-> export MODULAR_NVPTX_COMPILER_PATH=/usr/local/cuda-12.6/bin/ptxas
+> export MODULAR_NVPTX_COMPILER_PATH=/usr/local/cuda/bin/ptxas
 > ```
 >
-> To make this permanent, add it to your `~/.bashrc`:
->
-> ```bash
-> echo 'export MODULAR_NVPTX_COMPILER_PATH=/usr/local/cuda-12.6/bin/ptxas' >> ~/.bashrc
-> ```
+> The exact path can vary — see the
+> [Mojo system requirements](https://mojolang.org/docs/requirements/#nvidia-gpus)
+> for the canonical CUDA toolchain locations on each platform. Add the export
+> to your `~/.bashrc` (or equivalent shell rc) to make it persistent.
 
 ```bash
 # Build and serve the book
