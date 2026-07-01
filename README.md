@@ -152,7 +152,7 @@ workflows.
 > ```
 >
 > The exact path can vary — see the
-> [Mojo system requirements](https://mojolang.org/docs/requirements/#nvidia-gpus)
+> [system requirements](https://mojolang.org/docs/requirements/#nvidia-gpus)
 > for the canonical CUDA toolchain locations on each platform. Add the export
 > to your `~/.bashrc` (or equivalent shell rc) to make it persistent.
 
