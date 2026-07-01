@@ -141,6 +141,21 @@ workflows.
 > sudo apt update && sudo apt install wslu
 > ```
 
+> **Older NVIDIA driver workaround**: Mojo and MAX require NVIDIA driver ≥
+> 580 (CUDA ≥ 13.0). Systems still on older drivers (for example, the Jetson
+> Orin shipped with JetPack SDK on driver 540.x / CUDA 12.6) can hit a
+> driver-version error at runtime. Point Mojo at the system `ptxas` to work
+> around it:
+>
+> ```bash
+> export MODULAR_NVPTX_COMPILER_PATH=/usr/local/cuda/bin/ptxas
+> ```
+>
+> The exact path can vary — see the
+> [system requirements](https://mojolang.org/docs/requirements/#nvidia-gpus)
+> for the canonical CUDA toolchain locations on each platform. Add the export
+> to your `~/.bashrc` (or equivalent shell rc) to make it persistent.
+
 ```bash
 # Build and serve the book
 pixi run book
