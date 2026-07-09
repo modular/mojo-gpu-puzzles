@@ -211,7 +211,7 @@ def block_normalize_vector[
     # This completes the block operations trilogy demonstration
     var broadcasted_mean = block.broadcast[
         dtype=DType.float32, width=1, block_size=tpb
-    ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
+    ](val=SIMD[DType.float32, 1](mean_value), src_thread=0)
 
     # Step 5: Each thread normalizes by the mean
     if global_i < size:
