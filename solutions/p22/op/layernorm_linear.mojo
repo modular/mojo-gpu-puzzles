@@ -10,7 +10,7 @@ from std.atomic import Atomic
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-import compiler
+import extensibility
 
 from std.gpu.host import DeviceContext
 
@@ -499,7 +499,7 @@ def minimal_fused_kernel_backward[
 # ANCHOR_END: minimal_fused_backward_kernel_solution
 
 
-@compiler.register("layernorm_linear")
+@extensibility.register("layernorm_linear")
 struct LayerNormLinearCustomOp:
     @staticmethod
     def execute[
@@ -755,7 +755,7 @@ struct LayerNormLinearCustomOp:
 
 
 # ANCHOR: layernorm_linear_backward_custom_op
-@compiler.register("layernorm_linear_backward")
+@extensibility.register("layernorm_linear_backward")
 struct LayerNormLinearBackwardCustomOp:
     @staticmethod
     def execute[

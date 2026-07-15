@@ -118,12 +118,12 @@ def softmax_cpu_kernel[
 
 # ANCHOR_END: softmax_cpu_kernel_solution
 
-import compiler
+import extensibility
 
 from extensibility import InputTensor, OutputTensor
 
 
-@compiler.register("softmax")
+@extensibility.register("softmax")
 struct SoftmaxCustomOp:
     @staticmethod
     def execute[

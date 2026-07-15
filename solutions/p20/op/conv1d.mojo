@@ -71,14 +71,14 @@ def conv1d_kernel[
         output_lt.store[1](Index(global_i), local_sum)
 
 
-import compiler
+import extensibility
 
 from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 
 
-@compiler.register("conv1d")
+@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[

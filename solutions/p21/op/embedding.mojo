@@ -127,14 +127,14 @@ def embedding_kernel_2d[
 # ANCHOR_END: embedding_kernel_2d_solution
 
 # ANCHOR: embedding_custom_op_solution
-import compiler
+import extensibility
 
 from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 
 
-@compiler.register("embedding")
+@extensibility.register("embedding")
 struct EmbeddingCustomOp:
     @staticmethod
     def execute[
@@ -229,7 +229,7 @@ struct EmbeddingCustomOp:
 
 
 # ANCHOR: embedding_2d_custom_op_solution
-@compiler.register("embedding_2d")
+@extensibility.register("embedding_2d")
 struct Embedding2DCustomOp:
     @staticmethod
     def execute[

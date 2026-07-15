@@ -49,7 +49,7 @@ def conv_1d(
         input_value, kernel_value = graph.inputs
 
         # The output shape is the same as the input for our 1D convolution implementation
-        # Note: the name must match the name used in `@compiler.register("conv1d")` in op/conv1d.mojo
+        # Note: the name must match the name used in `@extensibility.register("conv1d")` in op/conv1d.mojo
         output = ops.custom(
             name="conv1d",
             device=DeviceRef.from_device(device),

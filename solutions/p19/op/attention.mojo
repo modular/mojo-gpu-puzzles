@@ -13,7 +13,7 @@ from layout.tile_tensor import stack_allocation
 from std.math import exp
 from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
-import compiler
+import extensibility
 
 from extensibility import InputTensor, OutputTensor
 
@@ -289,7 +289,7 @@ def attention_cpu_kernel[
         output_lt[dim] = rebind[Scalar[dtype]](weighted_sum)
 
 
-@compiler.register("attention")
+@extensibility.register("attention")
 struct AttentionCustomOp:
     @staticmethod
     def execute[

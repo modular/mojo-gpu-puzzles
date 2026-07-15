@@ -31,7 +31,7 @@ The 1D convolution kernel we'll be working with is already implemented:
 The key aspects of this puzzle include:
 
 1. **Custom op registration**: Understanding how to expose Mojo functions to
-   Python via the `@compiler.register` decorator
+   Python via the `@extensibility.register` decorator
 2. **Packaging custom ops**: Learning how to package Mojo code for use with MAX
    Graph
 3. **Python integration**: Calling custom operations from Python through MAX
@@ -166,9 +166,9 @@ Let's break down how this works in the larger context:
      [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/max/api/python/graph/ops#custom)
 
 3. **Custom op registration**:
-   - The `@compiler.register("conv1d")` decorator exposes our operation to MAX
+   - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
      Graph. See
-     [@compiler.register](https://docs.modular.com/mojo/manual/decorators/compiler-register/)
+     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
    - The `execute` method parameters define the interface (inputs, outputs,
      context)
    - Input/output tensors are converted to TileTensors for use in our kernel
@@ -185,7 +185,7 @@ Let's break down how this works in the larger context:
 1. **Custom Op Structure**:
 
    ```mojo
-   @compiler.register("conv1d")
+   @extensibility.register("conv1d")
    struct Conv1DCustomOp:
        @staticmethod
        def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
@@ -241,11 +241,11 @@ functions to create efficient, type-safe, accelerated operations.
 
 ### Custom op registration
 
-The core of creating a custom operation is the `@compiler.register` decorator
+The core of creating a custom operation is the `@extensibility.register` decorator
 and the associated structure:
 
 ```mojo
-@compiler.register("conv1d")
+@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
@@ -302,7 +302,7 @@ with Graph(
 
     # Use our custom operation by name
     output = ops.custom(
-        name="conv1d",  # Must match the name in @compiler.register
+        name="conv1d",  # Must match the name in @extensibility.register
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={

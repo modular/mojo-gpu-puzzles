@@ -32,7 +32,7 @@
 
 이 퍼즐의 핵심 요소는 다음과 같습니다:
 
-1. **커스텀 op 등록**: `@compiler.register` 데코레이터를 통해 Mojo 함수를
+1. **커스텀 op 등록**: `@extensibility.register` 데코레이터를 통해 Mojo 함수를
    파이썬에 노출하는 방법 이해하기
 2. **커스텀 op 패키징**: Mojo 코드를 MAX 그래프에서 사용할 수 있도록 패키징하는
    방법 익히기
@@ -164,8 +164,8 @@ Verification passed: Custom kernel results match NumPy calculation
      커스텀 연산 호출
 
 3. **커스텀 op 등록**:
-   - `@compiler.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출.
-     [@compiler.register](https://docs.modular.com/mojo/manual/decorators/compiler-register/)
+   - `@extensibility.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출.
+     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
      참고
    - `execute` 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의
    - 입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환
@@ -182,7 +182,7 @@ Verification passed: Custom kernel results match NumPy calculation
 1. **커스텀 Op 구조체**:
 
    ```mojo
-   @compiler.register("conv1d")
+   @extensibility.register("conv1d")
    struct Conv1DCustomOp:
        @staticmethod
        def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
@@ -238,10 +238,10 @@ Verification passed: Custom kernel results match NumPy calculation
 
 ### 커스텀 op 등록
 
-커스텀 연산을 만드는 핵심은 `@compiler.register` 데코레이터와 관련 구조체입니다:
+커스텀 연산을 만드는 핵심은 `@extensibility.register` 데코레이터와 관련 구조체입니다:
 
 ```mojo
-@compiler.register("conv1d")
+@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
@@ -297,7 +297,7 @@ with Graph(
 
     # 이름으로 커스텀 연산 사용
     output = ops.custom(
-        name="conv1d",  # @compiler.register의 이름과 일치해야 함
+        name="conv1d",  # @extensibility.register의 이름과 일치해야 함
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={
