@@ -249,7 +249,7 @@ actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:  # 경계 검사
         # SIMD 연산 코드
@@ -348,7 +348,7 @@ actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:
         # 자동 SIMD 최적화

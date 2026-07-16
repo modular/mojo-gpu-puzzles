@@ -253,7 +253,7 @@ for i in range(actual_tile_size):
     out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
 
 # After: same logic, but the body operates on a SIMD vector of `width`
-def vectorized_add[width: Int](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
+def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
     global_idx = tile_start + i
     if global_idx + width <= size:                       # bounds check
         a_vec = a_lt.aligned_load[width](Index(global_idx))
@@ -280,7 +280,7 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
@@ -380,7 +380,7 @@ actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:
         # Automatic SIMD optimization
