@@ -11,6 +11,13 @@ book/book
 book/html
 book/html-*
 
+# Downloaded offline-build assets (fetched on demand, see
+# scripts/fetch_offline_assets.sh); not checked into version control. The
+# directory itself must still exist for the default (online) build — mdbook's
+# extra-files fails hard on a missing path — so keep .gitkeep tracked.
+book/theme/vendor-cache/*
+!book/theme/vendor-cache/.gitkeep
+
 book/src/puzzle_*/media/images/
 book/src/puzzle_*/media/texts/
 book/src/puzzle_*/media/Tex/
