@@ -52,12 +52,12 @@
 
 ```mojo
 # 리덕션 연산
-from gpu.primitives.warp import sum, max
+from std.gpu.primitives.warp import sum, max
 var total = sum(partial_values)
 var maximum = max(partial_values)
 
 # 통신 패턴
-from gpu.primitives.warp import shuffle_idx, prefix_sum
+from std.gpu.primitives.warp import shuffle_idx, prefix_sum
 var broadcast = shuffle_idx(my_value, 0)
 var running_sum = prefix_sum(my_value)
 ```

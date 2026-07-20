@@ -391,7 +391,7 @@ Mathematical proof of correctness:
 Algorithm produces provably correct mathematical result.
 ```
 
-### **Connection to [Puzzle 12](../puzzle_12/tile_tensor.md) (foundational patterns):**
+### **Connection to [Puzzle 12](../puzzle_12/puzzle_12.md) (foundational patterns):**
 
 - **Thread coordination evolution**: Same `global_i`, `local_i` patterns but
   with block primitives
@@ -483,7 +483,7 @@ Mean normalization is the perfect educational example of this fundamental patter
 
 **Complete block operations progression:**
 
-1. **Manual coordination** ([Puzzle 12](../puzzle_12/tile_tensor.md)):
+1. **Manual coordination** ([Puzzle 12](../puzzle_12/puzzle_12.md)):
    Understand parallel fundamentals
 2. **Warp primitives** ([Puzzle 24](../puzzle_24/warp_sum.md)): Learn
    hardware-accelerated patterns

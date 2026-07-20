@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # block.prefix_sum()과 병렬 히스토그램 구간 분류
 
@@ -104,7 +104,7 @@ local_i = thread_idx.x
 
 ```mojo
 my_value = input_data[global_i][0]  # 내적에서처럼 SIMD 추출
-bin_number = Int(floor(my_value * num_bins))
+bin_number = Int(floor(my_value * Float32(num_bins)))
 ```
 
 **경계 사례 처리**: 정확히 1.0인 값은 구간 `NUM_BINS`에 들어가지만, 실제 구간은
@@ -147,7 +147,7 @@ if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # 인덱싱을 위해 SIMD를 Int로 변환
 ```
 
-이것은 [Puzzle 12](../puzzle_12/tile_tensor.md)의 경계 검사 패턴과 동일하지만,
+이것은 [Puzzle 12](../puzzle_12/puzzle_12.md)의 경계 검사 패턴과 동일하지만,
 조건이 "대상 구간에 속하는지"로 바뀌었습니다.
 
 ### 6. **최종 개수 계산**
@@ -156,7 +156,7 @@ if belongs_to_target == 1:
 
 ```mojo
 if local_i == tpb - 1:  # 블록의 마지막 스레드
-    total_count = offset[0] + belongs_to_target  # 포함 = 비포함 + 자신의 기여분
+    total_count = offset[0] + Int32(belongs_to_target)  # 포함 = 비포함 + 자신의 기여분
     count_output[0] = total_count
 ```
 
@@ -270,7 +270,7 @@ Bin 7 extracted elements:
 
 ## **단계별 알고리즘 분석:**
 
-### **1단계: 요소 처리 ([Puzzle 12](../puzzle_12/tile_tensor.md) 내적과 유사)**
+### **1단계: 요소 처리 ([Puzzle 12](../puzzle_12/puzzle_12.md) 내적과 유사)**
 
 ```text
 스레드 인덱싱 (익숙한 패턴):
@@ -340,13 +340,13 @@ belongs_to_target=1인 스레드만 기록:
 ```text
 마지막 스레드가 총 개수를 계산 (스레드 0이 아님!):
   if local_i == tpb - 1:  // 이 경우 스레드 127
-      total = write_offset[0] + belongs_to_target  // 포함 합 공식
+      total = write_offset[0] + Int32(belongs_to_target)  // 포함 합 공식
       count_output[0] = total
 ```
 
 ## **이 고급 알고리즘이 동작하는 이유:**
 
-### **[Puzzle 12](../puzzle_12/tile_tensor.md) (기존 내적)과의 연결:**
+### **[Puzzle 12](../puzzle_12/puzzle_12.md) (기존 내적)과의 연결:**
 
 - **동일한 스레드 인덱싱**: `global_i`와 `local_i` 패턴
 - **동일한 경계 검사**: `if global_i < size` 검증

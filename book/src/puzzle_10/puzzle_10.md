@@ -161,7 +161,7 @@ But like any good detective, you'll learn to:
   `compute-sanitizer`
 - **Prior puzzles**: Familiarity with
   [Puzzle 4](../puzzle_04/introduction_tile_tensor.md) and
-  [Puzzle 8](../puzzle_08/tile_tensor.md) are recommended
+  [Puzzle 8](../puzzle_08/puzzle_08.md) are recommended
 
 **What you'll gain**:
 

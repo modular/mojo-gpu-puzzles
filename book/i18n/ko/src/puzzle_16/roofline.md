@@ -72,7 +72,8 @@ Architecture](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvid
 아래 애니메이션은 이 퍼즐의 구현들이 A100의 루프라인 모델에 어떻게 대응하는지
 보여줍니다:
 
-![루프라인 모델 시각화](/puzzle_16/media/videos/720p30/roofline_model_viz.gif)
+<img src="/puzzle_16/media/roofline-w.png" alt="루프라인 모델 시각화" class="light-mode-img">
+<img src="/puzzle_16/media/roofline-b.png" alt="루프라인 모델 시각화" class="dark-mode-img">
 
 이 시각화는 이 퍼즐에서 거치게 될 최적화 과정을 보여줍니다:
 

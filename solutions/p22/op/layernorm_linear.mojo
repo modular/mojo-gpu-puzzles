@@ -10,9 +10,11 @@ from std.atomic import Atomic
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-import compiler
-from std.runtime.asyncrt import DeviceContextPtr
-from tensor import InputTensor, OutputTensor
+import extensibility
+
+from std.gpu.host import DeviceContext
+
+from extensibility import InputTensor, OutputTensor
 from std.utils import StaticTuple
 
 comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
@@ -148,8 +150,8 @@ def layernorm_kernel[
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Apply LayerNorm to this element
@@ -265,8 +267,7 @@ def minimal_fused_kernel[
     linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
     linear_bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin],
 ):
-    """Minimal fused kernel - one thread per sequence position to avoid redundancy.
-    """
+    """Minimal fused kernel: one thread per sequence position."""
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
     var batch_idx = block_idx.x
@@ -291,8 +292,8 @@ def minimal_fused_kernel[
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Compute all outputs for this sequence position
@@ -346,8 +347,7 @@ def minimal_fused_kernel_backward[
     ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
     linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
 ):
-    """Fused backward kernel using atomic operations for safe gradient accumulation.
-    """
+    """Fused backward kernel: atomics for safe gradient accumulation."""
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
     var batch_idx = block_idx.x
@@ -371,17 +371,15 @@ def minimal_fused_kernel_backward[
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).init_pointee_copy(0)
-            (grad_ln_bias.ptr + h).init_pointee_copy(0)
+            (grad_ln_weight.ptr + h).unsafe_write(0)
+            (grad_ln_bias.ptr + h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).init_pointee_copy(0)
+            (grad_bias.ptr + out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
-                    0
-                )
+                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -395,8 +393,8 @@ def minimal_fused_kernel_backward[
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
@@ -489,15 +487,19 @@ def minimal_fused_kernel_backward[
         h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
-            - (sum_grad_normalized / hidden_dim)
-            - (h_normalized * sum_grad_normalized_times_normalized / hidden_dim)
+            - (sum_grad_normalized / Scalar[dtype](hidden_dim))
+            - (
+                h_normalized
+                * sum_grad_normalized_times_normalized
+                / Scalar[dtype](hidden_dim)
+            )
         )
 
 
 # ANCHOR_END: minimal_fused_backward_kernel_solution
 
 
-@compiler.register("layernorm_linear")
+@extensibility.register("layernorm_linear")
 struct LayerNormLinearCustomOp:
     @staticmethod
     def execute[
@@ -515,7 +517,7 @@ struct LayerNormLinearCustomOp:
         ln_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
         linear_weight: InputTensor[dtype=dtype, rank=2, static_spec=_],
         linear_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
         comptime ln_params_layout_val = row_major[hidden_dim]()
@@ -550,7 +552,7 @@ struct LayerNormLinearCustomOp:
         ](linear_bias.unsafe_ptr(), bias_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # ANCHOR: layernorm_linear_custom_op
             comptime if algorithm == "fused":
@@ -566,7 +568,7 @@ struct LayerNormLinearCustomOp:
                     WeightLayout,
                     BiasLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel, kernel](
+                gpu_ctx.enqueue_function[kernel](
                     output_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -595,7 +597,7 @@ struct LayerNormLinearCustomOp:
                     InputLayout,
                     LnParamsLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel, kernel](
+                gpu_ctx.enqueue_function[kernel](
                     normalized_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -652,7 +654,7 @@ struct LayerNormLinearCustomOp:
                     TransposedWeightLayout,
                     WeightLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel2, kernel2](
+                gpu_ctx.enqueue_function[kernel2](
                     transposed_weight_tensor,
                     linear_weight_tensor,
                     grid_dim=(transpose_blocks_x, transpose_blocks_y),
@@ -681,7 +683,7 @@ struct LayerNormLinearCustomOp:
                     FlatNormalizedLayout,
                     TransposedWeightLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel3, kernel3](
+                gpu_ctx.enqueue_function[kernel3](
                     flat_matmul,
                     flat_normalized,
                     transposed_weight_tensor,
@@ -706,7 +708,7 @@ struct LayerNormLinearCustomOp:
                     ReshapedMatmulLayout,
                     BiasLayout,
                 ]
-                gpu_ctx.enqueue_function[kernel4, kernel4](
+                gpu_ctx.enqueue_function[kernel4](
                     output_tensor,
                     reshaped_matmul,
                     linear_bias_tensor,
@@ -723,16 +725,14 @@ struct LayerNormLinearCustomOp:
                     # LayerNorm
                     var sum_val: Scalar[dtype] = 0
                     for h in range(hidden_dim):
-                        sum_val += rebind[Scalar[dtype]](
-                            input_tensor[batch, seq, h]
-                        )
-                    var mean_val = sum_val / hidden_dim
+                        sum_val += input_tensor[batch, seq, h]
+                    var mean_val = sum_val / Scalar[dtype](hidden_dim)
 
                     var var_sum: Scalar[dtype] = 0
                     for h in range(hidden_dim):
                         var diff = input_tensor[batch, seq, h] - mean_val
-                        var_sum += rebind[Scalar[dtype]](diff * diff)
-                    var var_val = var_sum / hidden_dim
+                        var_sum += diff * diff
+                    var var_val = var_sum / Scalar[dtype](hidden_dim)
                     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
                     # Apply LayerNorm and Linear in one step (truly fused)
@@ -745,9 +745,7 @@ struct LayerNormLinearCustomOp:
                             ) * inv_std * ln_weight_tensor[h] + ln_bias_tensor[
                                 h
                             ]
-                            acc += rebind[Scalar[dtype]](
-                                normalized * linear_weight_tensor[out_idx, h]
-                            )
+                            acc += normalized * linear_weight_tensor[out_idx, h]
                         output_tensor[batch, seq, out_idx] = (
                             acc + linear_bias_tensor[out_idx]
                         )
@@ -757,7 +755,7 @@ struct LayerNormLinearCustomOp:
 
 
 # ANCHOR: layernorm_linear_backward_custom_op
-@compiler.register("layernorm_linear_backward")
+@extensibility.register("layernorm_linear_backward")
 struct LayerNormLinearBackwardCustomOp:
     @staticmethod
     def execute[
@@ -778,7 +776,7 @@ struct LayerNormLinearBackwardCustomOp:
         ln_weight: InputTensor[dtype=dtype, rank=1, static_spec=_],
         ln_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
         linear_weight: InputTensor[dtype=dtype, rank=2, static_spec=_],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
         comptime ln_params_layout_val = row_major[hidden_dim]()
@@ -835,7 +833,7 @@ struct LayerNormLinearBackwardCustomOp:
         ](linear_weight.unsafe_ptr(), weight_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Launch backward kernel
             comptime kernel = minimal_fused_kernel_backward[
@@ -853,7 +851,7 @@ struct LayerNormLinearBackwardCustomOp:
                 LnParamsLayout,
                 WeightLayout,
             ]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 grad_input_tensor,
                 grad_ln_weight_tensor,
                 grad_ln_bias_tensor,
@@ -894,16 +892,14 @@ struct LayerNormLinearBackwardCustomOp:
                     # Recompute forward pass statistics
                     var sum_val: Scalar[dtype] = 0
                     for h in range(hidden_dim):
-                        sum_val += rebind[Scalar[dtype]](
-                            input_tensor[batch, seq, h]
-                        )
-                    var mean_val = sum_val / hidden_dim
+                        sum_val += input_tensor[batch, seq, h]
+                    var mean_val = sum_val / Scalar[dtype](hidden_dim)
 
                     var var_sum: Scalar[dtype] = 0
                     for h in range(hidden_dim):
                         var diff = input_tensor[batch, seq, h] - mean_val
-                        var_sum += rebind[Scalar[dtype]](diff * diff)
-                    var var_val = var_sum / hidden_dim
+                        var_sum += diff * diff
+                    var var_val = var_sum / Scalar[dtype](hidden_dim)
                     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
                     # Gradient w.r.t. linear bias
@@ -916,9 +912,7 @@ struct LayerNormLinearBackwardCustomOp:
                     # Gradient w.r.t. linear weight
                     for out_idx in range(output_dim):
                         for h in range(hidden_dim):
-                            input_val = rebind[Scalar[dtype]](
-                                input_tensor[batch, seq, h]
-                            )
+                            input_val = input_tensor[batch, seq, h]
                             normalized = (input_val - mean_val) * inv_std
                             var ln_output_val = (
                                 normalized * ln_weight_tensor[h]
@@ -932,60 +926,52 @@ struct LayerNormLinearBackwardCustomOp:
 
                     # Gradient w.r.t. LayerNorm parameters
                     for h in range(hidden_dim):
-                        input_val = rebind[Scalar[dtype]](
-                            input_tensor[batch, seq, h]
-                        )
+                        input_val = input_tensor[batch, seq, h]
                         normalized = (input_val - mean_val) * inv_std
 
                         var grad_ln_out: Scalar[dtype] = 0
                         for out_idx in range(output_dim):
-                            grad_ln_out = grad_ln_out + rebind[Scalar[dtype]](
+                            grad_ln_out = grad_ln_out + (
                                 grad_output_tensor[batch, seq, out_idx]
                                 * linear_weight_tensor[out_idx, h]
                             )
 
-                        grad_ln_weight_tensor[h] = grad_ln_weight_tensor[
-                            h
-                        ] + rebind[Scalar[dtype]](grad_ln_out * normalized)
-                        grad_ln_bias_tensor[h] = grad_ln_bias_tensor[
-                            h
-                        ] + rebind[Scalar[dtype]](grad_ln_out)
+                        grad_ln_weight_tensor[h] = (
+                            grad_ln_weight_tensor[h] + grad_ln_out * normalized
+                        )
+                        grad_ln_bias_tensor[h] = (
+                            grad_ln_bias_tensor[h] + grad_ln_out
+                        )
 
                     # Gradient w.r.t. input (LayerNorm backward)
                     var sum_grad_normalized: Scalar[dtype] = 0
                     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
                     for h in range(hidden_dim):
-                        input_val = rebind[Scalar[dtype]](
-                            input_tensor[batch, seq, h]
-                        )
+                        input_val = input_tensor[batch, seq, h]
                         normalized = (input_val - mean_val) * inv_std
 
                         var grad_ln_out: Scalar[dtype] = 0
                         for out_idx in range(output_dim):
-                            grad_ln_out = grad_ln_out + rebind[Scalar[dtype]](
+                            grad_ln_out = grad_ln_out + (
                                 grad_output_tensor[batch, seq, out_idx]
                                 * linear_weight_tensor[out_idx, h]
                             )
 
                         grad_norm = grad_ln_out * ln_weight_tensor[h]
-                        sum_grad_normalized = sum_grad_normalized + rebind[
-                            Scalar[dtype]
-                        ](grad_norm)
+                        sum_grad_normalized = sum_grad_normalized + grad_norm
                         sum_grad_normalized_times_normalized = (
                             sum_grad_normalized_times_normalized
-                            + rebind[Scalar[dtype]](grad_norm * normalized)
+                            + grad_norm * normalized
                         )
 
                     for h in range(hidden_dim):
-                        input_val = rebind[Scalar[dtype]](
-                            input_tensor[batch, seq, h]
-                        )
+                        input_val = input_tensor[batch, seq, h]
                         normalized = (input_val - mean_val) * inv_std
 
                         var grad_ln_out: Scalar[dtype] = 0
                         for out_idx in range(output_dim):
-                            grad_ln_out = grad_ln_out + rebind[Scalar[dtype]](
+                            grad_ln_out = grad_ln_out + (
                                 grad_output_tensor[batch, seq, out_idx]
                                 * linear_weight_tensor[out_idx, h]
                             )
@@ -993,11 +979,11 @@ struct LayerNormLinearBackwardCustomOp:
                         grad_norm = grad_ln_out * ln_weight_tensor[h]
                         grad_input_tensor[batch, seq, h] = inv_std * (
                             grad_norm
-                            - (sum_grad_normalized / hidden_dim)
+                            - (sum_grad_normalized / Scalar[dtype](hidden_dim))
                             - (
                                 normalized
                                 * sum_grad_normalized_times_normalized
-                                / hidden_dim
+                                / Scalar[dtype](hidden_dim)
                             )
                         )
 

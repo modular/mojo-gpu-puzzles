@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 8726393ce8f2ba4d52d2ceec6352706da1f1806a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 7: 2D 블록
 

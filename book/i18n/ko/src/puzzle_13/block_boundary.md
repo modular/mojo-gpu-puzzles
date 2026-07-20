@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 29894ca396ed4e90fc447bf66b8e2a216576d8a8 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # 블록 경계 버전
 

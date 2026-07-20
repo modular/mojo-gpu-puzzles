@@ -9,7 +9,8 @@ from std.gpu.host.compile import get_gpu_target
 from layout import TileTensor, LayoutTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-from std.utils import Index, IndexList
+from std.utils import Index
+from std.utils.coord import Coord
 from std.math import log2
 from std.algorithm.functional import elementwise, vectorize
 from std.sys import simd_width_of, argv, align_of
@@ -36,9 +37,9 @@ def elementwise_add[
     @parameter
     @always_inline
     def add[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -> None:
-        var idx = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -> None:
+        var idx = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -77,9 +78,9 @@ def tiled_elementwise_add[
     @parameter
     @always_inline
     def process_tiles[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -> None:
-        var tile_id = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -> None:
+        var tile_id = Int(indices[0].value())
 
         var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
         var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
@@ -119,9 +120,9 @@ def manual_vectorized_tiled_elementwise_add[
     @parameter
     @always_inline
     def process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -> None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -> None:
+        var tile_id = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -164,9 +165,9 @@ def vectorize_within_tiles_elementwise_add[
     @parameter
     @always_inline
     def process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -> None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -> None:
+        var tile_id = Int(indices[0].value())
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
@@ -177,7 +178,7 @@ def vectorize_within_tiles_elementwise_add[
 
         def vectorized_add[
             width: Int
-        ](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
+        ](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width <= size:
                 var a_vec = a_lt.aligned_load[width](Index(global_idx))

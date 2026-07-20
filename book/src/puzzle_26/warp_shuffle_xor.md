@@ -38,6 +38,11 @@ This transforms complex parallel algorithms into elegant butterfly communication
 patterns, enabling efficient tree reductions and sorting networks without
 explicit coordination.
 
+> **Scope:** `shuffle_xor()` exchanges data *within a single warp*. Every
+> reduction and butterfly here is per-warp; the results are global only because
+> each section runs a single warp over the data. There is no cross-warp or
+> cross-block communication.
+
 ## 1. Basic butterfly pair swap
 
 ### Configuration
@@ -388,6 +393,7 @@ Result: All lanes have global maximum = 7
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -401,6 +407,13 @@ pixi run p26 --parallel-max
 
 ```bash
 pixi run -e amd p26 --parallel-max
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p26 --parallel-max
 ```
 
   </div>
@@ -595,6 +608,7 @@ This puzzle uses multiple blocks. Consider how this affects the reduction scope.
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -608,6 +622,13 @@ pixi run p26 --conditional-max
 
 ```bash
 pixi run -e amd p26 --conditional-max
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p26 --conditional-max
 ```
 
   </div>

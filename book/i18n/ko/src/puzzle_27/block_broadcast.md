@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # block.broadcast()와 벡터 정규화
 
@@ -390,7 +390,7 @@ block.broadcast() 실행 후:
 알고리즘이 증명 가능하게 올바른 수학적 결과를 생성합니다.
 ```
 
-### **[Puzzle 12](../puzzle_12/tile_tensor.md) (기초 패턴)과의 연결:**
+### **[Puzzle 12](../puzzle_12/puzzle_12.md) (기초 패턴)과의 연결:**
 
 - **스레드 조율의 진화**: 동일한 `global_i`, `local_i` 패턴이지만 블록 기본 요소
   사용
@@ -476,7 +476,7 @@ block.broadcast() 실행 후:
 
 **완전한 블록 연산 진행:**
 
-1. **수동 조율** ([Puzzle 12](../puzzle_12/tile_tensor.md)): 병렬 기초 이해
+1. **수동 조율** ([Puzzle 12](../puzzle_12/puzzle_12.md)): 병렬 기초 이해
 2. **워프 기본 요소** ([Puzzle 24](../puzzle_24/warp_sum.md)): 하드웨어 가속
    패턴 학습
 3. **블록 리덕션** ([`block.sum()`](./block_sum.md)): 전체→하나 통신 학습

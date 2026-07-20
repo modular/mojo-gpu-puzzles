@@ -13,6 +13,7 @@ from layout import TileTensor, LayoutTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.utils import Index, IndexList
+from std.utils.coord import Coord
 from std.sys import argv, simd_width_of, align_of
 from std.testing import assert_equal
 from std.random import random_float64
@@ -117,6 +118,7 @@ def simple_warp_dot_product[
 def functional_warp_dot_product[
     InLayoutT: TensorLayout,
     OutLayoutT: TensorLayout,
+    //,
     dtype: DType,
     simd_width: Int,
     rank: Int,
@@ -130,9 +132,9 @@ def functional_warp_dot_product[
     @parameter
     @always_inline
     def compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -> None:
-        var idx = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -> None:
+        var idx = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -143,9 +145,7 @@ def functional_warp_dot_product[
         if idx < size:
             var a_val = a_lt.load[1](Index(idx))
             var b_val = b_lt.load[1](Index(idx))
-            partial_product = rebind[Scalar[dtype]](a_val) * rebind[
-                Scalar[dtype]
-            ](b_val)
+            partial_product = a_val * b_val
         else:
             partial_product = 0.0
 
@@ -247,7 +247,7 @@ def benchmark_simple_warp_parameterized[
         comptime kernel = simple_warp_dot_product[
             BenchInLayout, BenchOutLayout, test_size
         ]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -302,9 +302,9 @@ def benchmark_functional_warp_parameterized[
     @parameter
     @always_inline
     def functional_warp_workflow(ctx: DeviceContext) raises:
-        functional_warp_dot_product[
-            BenchInLayout, BenchOutLayout, dtype, SIMD_WIDTH, 1, test_size
-        ](out_tensor, a_tensor, b_tensor, ctx)
+        functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
+            out_tensor, a_tensor, b_tensor, ctx
+        )
 
     bencher.iter_custom[functional_warp_workflow](bench_ctx)
     check_result[dtype, n_warps](out, expected)
@@ -357,10 +357,7 @@ def benchmark_traditional_parameterized[
         ctx.enqueue_function[
             traditional_dot_product_p12_style[
                 BenchInLayout, BenchOutLayout, test_size
-            ],
-            traditional_dot_product_p12_style[
-                BenchInLayout, BenchOutLayout, test_size
-            ],
+            ]
         ](
             out_tensor,
             a_tensor,
@@ -414,10 +411,7 @@ def main() raises:
                 ctx.enqueue_function[
                     traditional_dot_product_p12_style[
                         InLayout, MainOutLayout, SIZE
-                    ],
-                    traditional_dot_product_p12_style[
-                        InLayout, MainOutLayout, SIZE
-                    ],
+                    ]
                 ](
                     out_tensor,
                     a_tensor,
@@ -427,8 +421,7 @@ def main() raises:
                 )
             elif argv()[1] == "--kernel":
                 ctx.enqueue_function[
-                    simple_warp_dot_product[InLayout, MainOutLayout, SIZE],
-                    simple_warp_dot_product[InLayout, MainOutLayout, SIZE],
+                    simple_warp_dot_product[InLayout, MainOutLayout, SIZE]
                 ](
                     out_tensor,
                     a_tensor,
@@ -437,9 +430,9 @@ def main() raises:
                     block_dim=THREADS_PER_BLOCK,
                 )
             elif argv()[1] == "--functional":
-                functional_warp_dot_product[
-                    InLayout, MainOutLayout, dtype, SIMD_WIDTH, 1, SIZE
-                ](out_tensor, a_tensor, b_tensor, ctx)
+                functional_warp_dot_product[dtype, SIMD_WIDTH, 1, SIZE](
+                    out_tensor, a_tensor, b_tensor, ctx
+                )
             expected_output[dtype, n_warps](expected, a, b)
             check_result[dtype, n_warps, True](out, expected)
             print("Puzzle 24 complete ✅")
@@ -540,7 +533,7 @@ def main() raises:
             "   GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)"
         )
         print("   - 1,...,256 x WARP_SIZE: Grid size too small to benchmark")
-        print("   - 2048 x WARP_SIZE: Warp primative benefits emerge")
+        print("   - 2048 x WARP_SIZE: Warp primitive benefits emerge")
         print("   - 16384 x WARP_SIZE: Large scale (512K-1M elements)")
         print("   - 65536 x WARP_SIZE: Massive scale (2M-4M elements)")
         print("   - Note: AMD GPUs process 2 x elements per warp vs NVIDIA!")

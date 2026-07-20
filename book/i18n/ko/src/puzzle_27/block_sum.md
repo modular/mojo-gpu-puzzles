@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # block.sum()의 핵심 - 블록 레벨 내적
 
@@ -42,7 +42,7 @@ LLVM 분석은 [기술 분석](#기술-분석-blocksum은-실제로-무엇으로
 
 ## 기존 방식의 복잡성 (Puzzle 12에서)
 
-[Puzzle 12](../puzzle_12/tile_tensor.md)의 복잡한 방식을 떠올려 봅시다. 공유
+[Puzzle 12](../puzzle_12/puzzle_12.md)의 복잡한 방식을 떠올려 봅시다. 공유
 메모리, 배리어, 트리 리덕션이 필요했습니다:
 
 ```mojo

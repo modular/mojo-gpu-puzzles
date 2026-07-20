@@ -6,7 +6,7 @@ modern GPU programming abstracts low-level details while preserving high
 performance.
 
 **Key insight:** _The
-[elementwise](https://docs.modular.com/mojo/std/algorithm/functional/elementwise/)
+[elementwise](https://mojolang.org/docs/std/algorithm/functional/elementwise/)
 function automatically handles thread management, SIMD vectorization, and memory
 coalescing for you._
 
@@ -26,12 +26,23 @@ The mathematical operation is simple element-wise addition:
 The implementation covers fundamental patterns applicable to all GPU functional
 programming in Mojo.
 
+**Where to start:** You begin from the `elementwise` template in the problem file
+— there is no manual shared memory or thread-index math here. The key shift from
+earlier puzzles is that each invocation of your nested function processes a whole
+SIMD vector, not a single element. That's why you load and store with
+`aligned_load[simd_width]` / `store[simd_width]` (vectorized) instead of indexing
+one scalar at a time.
+
 ## Configuration
 
 - Vector size: `SIZE = 1024`
 - Data type: `DType.float32`
 - SIMD width: Target-dependent (determined by GPU architecture and data type)
 - Layout: `row_major[SIZE]()` (1D row-major)
+
+> **Scope:** This is a single-kernel, per-element operation. The `elementwise`
+> abstraction handles thread, block, and grid configuration for you — there is no
+> cross-thread or cross-block communication to reason about here.
 
 ## Code to complete
 
@@ -53,7 +64,9 @@ The `elementwise` function expects a nested function with this exact signature:
 ```mojo
 @parameter
 @always_inline
-def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def your_function[
+    simd_width: Int, alignment: Int = align_of[dtype]()
+](indices: Coord) capturing -> None:
     # Your implementation here
 ```
 
@@ -65,13 +78,13 @@ def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturin
   kernels
 - `capturing`: Allows access to variables from the outer scope (the input/output
   tensors)
-- `IndexList[rank]`: Provides multi-dimensional indexing (rank=1 for vectors,
-  rank=2 for matrices)
+- `Coord`: Carries the per-dimension indices for the current SIMD chunk; use
+  `indices[0]` for 1D operations
 
 ### 2. **Index extraction and SIMD processing**
 
 ```mojo
-idx = indices[0]  # Extract linear index for 1D operations
+idx = Int(indices[0].value())  # Extract linear index for 1D operations
 ```
 
 This `idx` represents the **starting position** for a SIMD vector, not a single
@@ -239,25 +252,27 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 ```mojo
 @parameter
 @always_inline
-def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def add[
+    simd_width: Int, alignment: Int = align_of[dtype]()
+](indices: Coord) capturing -> None:
 ```
 
 **Parameter Analysis:**
 
 - **`@parameter`**: This decorator provides **compile-time specialization**. The
-  function is generated separately for each unique `simd_width` and `rank`,
-  allowing aggressive optimization.
+  function is generated separately for each unique `simd_width`, allowing
+  aggressive optimization.
 - **`@always_inline`**: Critical for GPU performance - eliminates function call
   overhead by embedding the code directly into the kernel.
 - **`capturing`**: Enables **lexical scoping** - the inner function can access
   variables from the outer scope without explicit parameter passing.
-- **`IndexList[rank]`**: Provides **dimension-agnostic indexing** - the same
-  pattern works for 1D vectors, 2D matrices, 3D tensors, etc.
+- **`Coord`**: Carries the per-dimension indices for the SIMD chunk being
+  processed; `indices[0]` is the linear start position for 1D operations.
 
 ### 3. **SIMD execution model deep dive**
 
 ```mojo
-idx = indices[0]                                  # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+idx = Int(indices[0].value())                     # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
 a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
 b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
 ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)

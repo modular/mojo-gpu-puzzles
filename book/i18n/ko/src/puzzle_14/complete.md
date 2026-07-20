@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # 완성 버전
 
@@ -380,10 +380,10 @@ Block 1 처리: [8, 9, 10, 11, 12, 13, 14] (유효 원소 7개)
 
 ```mojo
 # 1단계: 로컬 누적 합
-ctx.enqueue_function[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
+ctx.enqueue_function[prefix_sum_local_phase[...]](...)
 
 # 2단계: 블록 합계 더하기 (자동으로 1단계 완료를 대기)
-ctx.enqueue_function[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
+ctx.enqueue_function[prefix_sum_block_sum_phase[...]](...)
 ```
 
 **핵심 통찰**: Mojo의 `DeviceContext`는 단일 실행 스트림(NVIDIA GPU에서는 CUDA

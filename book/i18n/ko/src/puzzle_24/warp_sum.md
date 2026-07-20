@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # warp.sum()의 핵심 - 워프 레벨 내적
 
@@ -324,8 +324,8 @@ if lane_id() == 0:
 ### 4. **import에서 사용 가능한 함수들**
 
 ```mojo
-from gpu import lane_id
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.gpu import lane_id
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # 함수 내에서:
 my_lane = lane_id()           # 0 ~ WARP_SIZE-1
@@ -508,7 +508,7 @@ Benchmarks completed!
 WARP OPERATIONS PERFORMANCE ANALYSIS:
    GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
    - 1,...,256 x WARP_SIZE: Grid size too small to benchmark
-   - 2048 x WARP_SIZE: Warp primative benefits emerge
+   - 2048 x WARP_SIZE: Warp primitive benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
 

@@ -13,7 +13,7 @@
 **간단한 예시:**
 
 ```mojo
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 # 워프 내 32개 스레드가 동시에 실행:
 var my_value = input[my_thread_id]     # 각 스레드가 서로 다른 데이터를 가져옴
 var warp_total = sum(my_value)         # 모든 스레드가 하나의 합계에 기여
@@ -56,7 +56,7 @@ var result = a + b # 8쌍을 동시에 덧셈
 
 ```mojo
 # 스레드 기반 코드가 벡터 연산으로 변환됩니다
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 
 var my_data = input[thread_id]         # 각 스레드가 자기 요소를 가져옴
 var partial = my_data * coefficient    # 모든 스레드가 동시에 계산
@@ -169,8 +169,8 @@ GPU는 지연 시간이 아닌 **처리량**에 최적화되어 있습니다. SI
 워프 내 각 스레드는 0부터 `WARP_SIZE-1`까지의 **레인 ID**를 갖습니다:
 
 ```mojo
-from gpu import lane_id
-from gpu.primitives.warp import WARP_SIZE
+from std.gpu import lane_id
+from std.gpu.primitives.warp import WARP_SIZE
 
 # 커널 함수 내에서:
 my_lane = lane_id()  # 0-31 (NVIDIA/RDNA) 또는 0-63 (CDNA) 반환
@@ -192,7 +192,7 @@ barrier()  # 명시적 동기화 필요
 var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # 합산 리덕션
 
 # 2. 워프 방식:
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # 암시적 동기화!
 ```
@@ -306,7 +306,7 @@ else:
 ### NVIDIA vs AMD 워프 크기
 
 ```mojo
-from gpu.primitives.warp import WARP_SIZE
+from std.gpu.primitives.warp import WARP_SIZE
 
 # NVIDIA GPUs:     WARP_SIZE = 32
 # AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 모드)

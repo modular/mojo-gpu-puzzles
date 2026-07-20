@@ -64,7 +64,7 @@ def main() raises:
         var a_tensor = TileTensor[mut=False, dtype, ALayout](a, a_layout)
         var b_tensor = TileTensor[mut=False, dtype, BLayout](b, b_layout)
 
-        ctx.enqueue_function[broadcast_add, broadcast_add](
+        ctx.enqueue_function[broadcast_add](
             out_tensor,
             a_tensor,
             b_tensor,

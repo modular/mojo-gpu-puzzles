@@ -38,12 +38,12 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             # row-major
-            for i in range(SIZE):
-                for j in range(SIZE):
-                    a_host[i * SIZE + j] = Scalar[dtype](i * SIZE + j)
-                    expected[i * SIZE + j] = a_host[i * SIZE + j] + 10
+            for y in range(SIZE):
+                for x in range(SIZE):
+                    a_host[y * SIZE + x] = Scalar[dtype](y * SIZE + x)
+                    expected[y * SIZE + x] = a_host[y * SIZE + x] + 10
 
-        ctx.enqueue_function[add_10_2d, add_10_2d](
+        ctx.enqueue_function[add_10_2d](
             out,
             a,
             SIZE,
@@ -56,7 +56,7 @@ def main() raises:
         with out.map_to_host() as out_host:
             print("out:", out_host)
             print("expected:", expected)
-            for i in range(SIZE):
-                for j in range(SIZE):
-                    assert_equal(out_host[i * SIZE + j], expected[i * SIZE + j])
+            for y in range(SIZE):
+                for x in range(SIZE):
+                    assert_equal(out_host[y * SIZE + x], expected[y * SIZE + x])
             print("Puzzle 04 complete ✅")

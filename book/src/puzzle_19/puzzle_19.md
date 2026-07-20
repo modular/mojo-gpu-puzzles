@@ -31,6 +31,11 @@ The computation involves three main steps:
 3. **Weighted Sum**: Combine value vectors using attention weights to produce
    the final output
 
+> **Scope:** This puzzle composes existing kernels (transpose, tiled matmul,
+> softmax) into one attention op for a single query vector. Cross-block
+> coordination lives inside each reused kernel — your focus is the transpose
+> kernel and the host-side orchestration that connects the pieces.
+
 ## Understanding attention: a step-by-step breakdown
 
 Think of attention as a **smart lookup mechanism**. Given a query (what you're
@@ -71,15 +76,22 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 
 **Key insight**: We reshape the query vector \\(Q\\) from shape \\((16,)\\) to
 \\((1,16)\\) so we can use matrix multiplication instead of manual dot products.
-This allows us to leverage the highly optimized tiled matmul kernel from Puzzle
-18!
+This allows us to leverage the highly optimized
+[tiled matmul kernel from Puzzle 16](../puzzle_16/tiled.md)!
+
+In Mojo, you reshape a `LayoutTensor` by calling `reshape[new_layout]()` with the
+target layout as a compile-time parameter (for example,
+`q_tensor.reshape[layout_q_2d]()`) rather than copying or mutating data in place.
+You'll see this idiom in the orchestration code below.
 
 Our GPU implementation
-**reuses and combines optimized kernels from previous puzzles**:
+**reuses and combines optimized kernels, mostly from previous puzzles**:
 
 - **[Tiled matrix multiplication from Puzzle 16](../puzzle_16/puzzle_16.md)**
   for efficient \\(Q \cdot K^T\\) and \\(\text{weights} \cdot V\\) operations
-- **Shared memory transpose** for computing \\(K^T\\) efficiently
+- **[Shared memory transpose](#1-implement-the-transpose-kernel)** for computing
+  \\(K^T\\) efficiently — this is the one kernel you implement in this puzzle
+  (see below)
 - **[Parallel softmax from Puzzle 18](../puzzle_18/puzzle_18.md)** for
   numerically stable attention weight computation
 
@@ -88,6 +100,13 @@ Our GPU implementation
 > Rather than writing everything from scratch, we leverage the
 > `matmul_idiomatic_tiled` from Puzzle 16 and `softmax_kernel` from Puzzle 18,
 > showcasing the power of modular GPU kernel design.
+>
+> **Reuse checkpoint**: Before continuing, revisit the kernels you're about to
+> compose — `matmul_idiomatic_tiled` in
+> [Puzzle 16's tiled solution](../puzzle_16/tiled.md) and `softmax_kernel` in
+> [Puzzle 18](../puzzle_18/puzzle_18.md). Treat this puzzle as a
+> composition/refactor exercise: your job is to wire these existing building
+> blocks together (plus the transpose you write here), not to reinvent them.
 
 ## Key concepts
 
@@ -198,6 +217,22 @@ kernel in the Mojo file using shared memory.
 </details>
 
 ### 2. Orchestrate the attention
+
+So far you've written a single kernel. Attention, however, is a *pipeline* of
+kernels: the transpose you just implemented, the tiled matmul from Puzzle 16, the
+softmax from Puzzle 18, and a second matmul. **Orchestration** is the host-side
+code that runs these kernels in sequence and wires the output of each step into
+the input of the next:
+
+```text
+K → transpose → Kᵀ → matmul(Q, Kᵀ) → scores → softmax → weights → matmul(weights, V) → output
+```
+
+The orchestration function below allocates the intermediate buffers (`Kᵀ`,
+`scores`, `weights`), reshapes \\(Q\\) to \\((1, 16)\\) with `reshape[...]()` as
+shown above, and enqueues each kernel launch on the GPU. There's no new kernel
+math here — the work is choosing buffer layouts and calling the existing kernels
+in the right order.
 
 ```mojo
 {{#include ../../../problems/p19/op/attention.mojo:attention_orchestration}}

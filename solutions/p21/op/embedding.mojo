@@ -127,14 +127,14 @@ def embedding_kernel_2d[
 # ANCHOR_END: embedding_kernel_2d_solution
 
 # ANCHOR: embedding_custom_op_solution
-import compiler
-from std.runtime.asyncrt import DeviceContextPtr
-from tensor import InputTensor, OutputTensor
+import extensibility
+
+from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 
 
-@compiler.register("embedding")
+@extensibility.register("embedding")
 struct EmbeddingCustomOp:
     @staticmethod
     def execute[
@@ -153,7 +153,7 @@ struct EmbeddingCustomOp:
         weights: InputTensor[
             dtype=output.dtype, rank=2, static_spec=_
         ],  # [vocab_size, embed_dim]
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
         comptime OutLayout = type_of(out_layout_val)
@@ -173,7 +173,7 @@ struct EmbeddingCustomOp:
         ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -201,7 +201,7 @@ struct EmbeddingCustomOp:
                 WeightsLayout,
                 output.dtype,
             ]
-            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,
@@ -229,7 +229,7 @@ struct EmbeddingCustomOp:
 
 
 # ANCHOR: embedding_2d_custom_op_solution
-@compiler.register("embedding_2d")
+@extensibility.register("embedding_2d")
 struct Embedding2DCustomOp:
     @staticmethod
     def execute[
@@ -248,7 +248,7 @@ struct Embedding2DCustomOp:
         weights: InputTensor[
             dtype=output.dtype, rank=2, static_spec=_
         ],  # [vocab_size, embed_dim]
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
         comptime OutLayout = type_of(out_layout_val)
@@ -268,7 +268,7 @@ struct Embedding2DCustomOp:
         ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -300,7 +300,7 @@ struct Embedding2DCustomOp:
                 output.dtype,
             ]
 
-            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,

@@ -70,7 +70,7 @@ def main() raises:
         var out_tensor = TileTensor(out, layout)
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[pooling, pooling](
+        ctx.enqueue_function[pooling](
             out_tensor,
             a_tensor,
             SIZE,

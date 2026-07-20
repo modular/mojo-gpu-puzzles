@@ -41,7 +41,7 @@ def shared_memory_race(
         var local_sum = Scalar[dtype](0.0)
         for r in range(size):
             for c in range(size):
-                local_sum += rebind[Scalar[dtype]](a[r, c])
+                local_sum += a[r, c]
 
         shared_sum[0] = local_sum  # Single write operation
 
@@ -102,7 +102,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 expected[i] = Scalar[dtype](i + 10)
 
-            ctx.enqueue_function[add_10_2d, add_10_2d](
+            ctx.enqueue_function[add_10_2d](
                 out_tensor,
                 a_tensor,
                 SIZE,
@@ -132,7 +132,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 expected[i] = total_sum
 
-            ctx.enqueue_function[shared_memory_race, shared_memory_race](
+            ctx.enqueue_function[shared_memory_race](
                 out_tensor,
                 a_tensor,
                 SIZE,

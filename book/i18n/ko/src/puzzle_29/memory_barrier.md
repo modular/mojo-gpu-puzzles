@@ -1,6 +1,10 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: d09bc3fbdd4bf6b2a44793f0208b6ba7800ed4c0 -->
 
 # 더블 버퍼링 스텐실 연산
+
+**중요 사항**: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요합니다.
+[`mbarrier` API](https://docs.modular.com/mojo/std/gpu/sync/sync/)는
+NVIDIA 전용입니다.
 
 > **🔬 세밀한 동기화: mbarrier vs barrier()**
 >
@@ -223,12 +227,20 @@ buffer\_B} & \\text{if} i \\bmod 2 = 0 \\\\
 - 각 스레드가 쓰기 연산을 완료한 후
   [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
   호출
-- 버퍼 교체 전 모든 스레드가 완료하도록
+- 그 다음
   [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
-  사용
+  를 폴링 루프로 호출: 이 API는 **비차단** 검사이므로
+  `while not mbarrier_test_wait(...): pass` 안에서 호출해야 모든 스레드가
+  도착할 때까지 실제로 대기할 수 있음
 - 재사용을 위해 반복 간에 배리어 재초기화:
   [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
 - 경쟁 상태를 피하기 위해 스레드 0만 배리어를 재초기화
+- 모든 `mbarrier_init` 호출(초기 설정과 반복마다의 재초기화) 직후에는
+  [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
+  를 삽입해, 어떤 스레드도 `mbarrier_arrive`를 호출하기 전에 모든 스레드가
+  초기화된 배리어를 관찰하도록 보장하세요. 이는
+  [NVIDIA Async Barriers 초기화 패턴](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization)
+  과 일치합니다.
 
 ### **출력 선택**
 
@@ -246,21 +258,13 @@ buffer\_B} & \\text{if} i \\bmod 2 = 0 \\\\
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 
 ```bash
 pixi run p29 --double-buffer
-```
-
-  </div>
-  <div class="tab-content">
-
-```bash
-pixi run -e amd p29 --double-buffer
 ```
 
   </div>
@@ -359,14 +363,23 @@ mbarrier 조정 패턴의 이해:
 
 **핵심 타이밍 순서:**
 
-1. **모든 스레드 쓰기**: 각 스레드가 할당된 버퍼 요소를 업데이트
-2. **완료 알림**: 각 스레드가
+1. **초기화 + 동기화**: 스레드 0이
+   [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
+   를 호출한 다음, 모든 스레드가
+   [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
+   를 실행하여 어떤 스레드도 `mbarrier_arrive`를 호출하기 전에 초기화된
+   상태가 블록 전체에 보이도록 합니다
+   ([NVIDIA Async Barriers 문서](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization)
+   참조)
+2. **모든 스레드 쓰기**: 각 스레드가 할당된 버퍼 요소를 업데이트
+3. **완료 알림**: 각 스레드가
    [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
    호출
-3. **전체 대기**: 모든 스레드가
+4. **전원 도착까지 폴링**: 모든 스레드가
+   `while not mbarrier_test_wait(...): pass` 안에서 회전 —
    [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
-   호출
-4. **진행 안전**: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능
+   는 비차단 검사이므로 단일 호출은 대기가 아닙니다
+5. **진행 안전**: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능
 
 ## **스텐실 연산 메커니즘**
 
@@ -388,7 +401,7 @@ stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
-result[i] = stencil_sum / stencil_count
+result[i] = stencil_sum / Float32(stencil_count)
 ```
 
 ## **버퍼 역할 교대**
@@ -429,13 +442,15 @@ stencil_input = buffer_B[10]  // 미정의 동작!
 buffer_B[local_i] = stencil_result
 
 # 쓰기 완료 알림
-mbarrier_arrive(barrier)
+_ = mbarrier_arrive(barrier)
 
-# 모든 스레드의 쓰기 완료까지 대기
-mbarrier_test_wait(barrier, TPB)
+# 모든 스레드의 쓰기 완료까지 폴링. mbarrier_test_wait는 비차단 호출이므로
+# 단일 호출은 대기가 아니며 반드시 루프에서 실행되어야 합니다.
+while not mbarrier_test_wait(barrier, TPB):
+    pass
 
 # 이제 읽기 안전 - 모든 쓰기 완료 보장
-stencil_input = buffer_B[neighbor_index]  // 항상 올바른 값을 읽음
+stencil_input = buffer_B[neighbor_index]  # 항상 올바른 값을 읽음
 ```
 
 ## **출력 버퍼 선택**

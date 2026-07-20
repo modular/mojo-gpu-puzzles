@@ -31,7 +31,7 @@ The 1D convolution kernel we'll be working with is already implemented:
 The key aspects of this puzzle include:
 
 1. **Custom op registration**: Understanding how to expose Mojo functions to
-   Python via the `@compiler.register` decorator
+   Python via the `@extensibility.register` decorator
 2. **Packaging custom ops**: Learning how to package Mojo code for use with MAX
    Graph
 3. **Python integration**: Calling custom operations from Python through MAX
@@ -166,9 +166,9 @@ Let's break down how this works in the larger context:
      [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/max/api/python/graph/ops#custom)
 
 3. **Custom op registration**:
-   - The `@compiler.register("conv1d")` decorator exposes our operation to MAX
+   - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
      Graph. See
-     [@compiler.register](https://docs.modular.com/mojo/manual/decorators/compiler-register/)
+     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
    - The `execute` method parameters define the interface (inputs, outputs,
      context)
    - Input/output tensors are converted to TileTensors for use in our kernel
@@ -185,14 +185,14 @@ Let's break down how this works in the larger context:
 1. **Custom Op Structure**:
 
    ```mojo
-   @compiler.register("conv1d")
+   @extensibility.register("conv1d")
    struct Conv1DCustomOp:
        @staticmethod
        def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
            output: OutputTensor[rank=1],
            input: InputTensor[dtype = output.dtype, rank = output.rank],
            kernel: InputTensor[dtype = output.dtype, rank = output.rank],
-           ctx: DeviceContextPtr,
+           ctx: DeviceContext,
        ) raises:
            # Implementation
    ```
@@ -219,7 +219,7 @@ Let's break down how this works in the larger context:
    ```mojo
    gpu_ctx = ctx.get_device_context()
    gpu_ctx.enqueue_memset(...)  # Zero output buffer
-   gpu_ctx.enqueue_function[..., ...](...) # Schedule kernel
+   gpu_ctx.enqueue_function[...](...) # Schedule kernel
    ```
 
    - Device context manages GPU resources
@@ -241,18 +241,18 @@ functions to create efficient, type-safe, accelerated operations.
 
 ### Custom op registration
 
-The core of creating a custom operation is the `@compiler.register` decorator
+The core of creating a custom operation is the `@extensibility.register` decorator
 and the associated structure:
 
 ```mojo
-@compiler.register("conv1d")
+@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[type = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # Implementation here
 ```
@@ -264,21 +264,21 @@ Key components of the registration:
 - The **struct** must have an `execute` method with the correct signature
 - **OutputTensor** and **InputTensor** types define the interface for Python
   data
-- **DeviceContextPtr** provides access to the execution environment
+- **DeviceContext** provides access to the execution environment
 
 ### Packaging custom ops
 
 Before the custom operation can be used from Python, it needs to be packaged:
 
 ```bash
-mojo package op -o op.mojopkg
+mojo package op -o op.mojoc
 ```
 
 This command:
 
 1. Compiles the Mojo code into a deployable package
 2. Creates the necessary metadata for MAX Graph to understand the operation
-3. Produces a binary artifact (`op.mojopkg`) that can be loaded by Python
+3. Produces a binary artifact (`op.mojoc`) that can be loaded by Python
 
 The package must be placed in a location where MAX Graph can find it, typically
 in a directory accessible to the Python code.
@@ -302,7 +302,7 @@ with Graph(
 
     # Use our custom operation by name
     output = ops.custom(
-        name="conv1d",  # Must match the name in @compiler.register
+        name="conv1d",  # Must match the name in @extensibility.register
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={

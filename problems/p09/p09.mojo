@@ -49,7 +49,7 @@ def process_sliding_window(
     for offset in range(ITER):
         var idx = Int(thread_id) + offset - 1
         if 0 <= idx < SIZE:
-            var value = rebind[Scalar[dtype]](a[idx])
+            var value = a[idx]
             window_sum += value
 
     output[thread_id] = window_sum
@@ -72,7 +72,7 @@ def collaborative_filter(
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
-        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+        shared_workspace[thread_id] = a[thread_id]
     barrier()
 
     # Phase 2: Collaborative processing
@@ -89,7 +89,7 @@ def collaborative_filter(
     if thread_id < SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+        output[thread_id] = a[thread_id]
 
 
 # ANCHOR_END: third_crash
@@ -116,7 +116,7 @@ def main() raises:
             result_buf.enqueue_fill(0)
 
             # Enqueue function
-            ctx.enqueue_function[add_10, add_10](
+            ctx.enqueue_function[add_10](
                 result_buf,
                 input_buf,
                 grid_dim=BLOCKS_PER_GRID,
@@ -157,9 +157,7 @@ def main() raises:
                 " right]"
             )
 
-            ctx.enqueue_function[
-                process_sliding_window, process_sliding_window
-            ](
+            ctx.enqueue_function[process_sliding_window](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,
@@ -230,7 +228,7 @@ def main() raises:
             print("Each thread cooperates with neighbors for smoothing...")
 
             # This will likely hang due to barrier deadlock
-            ctx.enqueue_function[collaborative_filter, collaborative_filter](
+            ctx.enqueue_function[collaborative_filter](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,
