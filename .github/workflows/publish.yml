@@ -39,6 +39,11 @@ jobs:
           pixi-version: v0.71.0
           cache: false
           post-cleanup: false
+          run-install: false
+
+      - name: Install
+        shell: bash
+        run: pixi install --locked --manifest-path pixi.toml
 
       - name: Build
         shell: bash
