@@ -14762,14 +14762,15 @@ packages:
   size: 18248
   timestamp: 1748342521386
 - conda: https://conda.anaconda.org/nvidia/noarch/cuda-version-12.9-3.conda
-  sha256: d05c0d4e2d1fbf32275db798275b9a8b57e97c0748f4c073ba6c532fe839bb06
-  md5: 40969c18662ba1d35292e70e8545ce90
+  sha256: 94223fe4c0630b58a7a795d14e4139f25a27450d275c1997d6cdac5851f13f1c
+  md5: 1863fd15709af39d8622db22408082a1
   constrains:
   - __cuda >=12
   - cudatoolkit 12.9|12.9.*
   license: LicenseRef-NVIDIA-End-User-License-Agreement
-  size: 17161
-  timestamp: 1748727273518
+  run_exports: {}
+  size: 17050
+  timestamp: 1778186955425
 - conda: https://conda.modular.com/max/linux-64/max-26.4.0-3.12release.conda
   sha256: 710bd1aa27a22f13e02defb0b38debe1a5ded2320f6cf74111e5f79e8ab5058c
   md5: b0a88366853d518a7c27500922c1091d
