@@ -52,7 +52,7 @@ jobs:
           pixi run build-book
 
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@4b09552702d0b65573696410d4707c765da2630b
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
