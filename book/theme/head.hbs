@@ -1,9 +1,20 @@
+<!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+     fixed version). If a resource fails to load (e.g. no network access),
+     each falls back to a locally vendored copy in theme/vendor-cache/
+     (gitignored; populated by `pixi run fetch-offline-assets`, see
+     scripts/fetch_offline_assets.sh) — no build-time step or
+     version-controlled file swap involved. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-    rel="stylesheet">
+<link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'"
+    onerror="this.onerror=null;this.rel='stylesheet';this.href='{{ path_to_root }}theme/vendor-cache/fonts/roboto-mono.css'">
+<noscript><link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
 
-<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+    onerror="var s=document.createElement('script');s.src='{{ path_to_root }}theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
 
 <link rel="stylesheet" href="{{ path_to_root }}theme/css/custom.css">
 <link rel="stylesheet" href="{{ path_to_root }}theme/css/highlight.css">
@@ -19,4 +30,3 @@
 <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
 <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
 <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-<link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">

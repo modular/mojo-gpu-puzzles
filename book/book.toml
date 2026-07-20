@@ -59,7 +59,7 @@ mode = "katex"
 [build]
 build-dir = "html"
 create-missing = true
-extra-files = ["logo", "puzzles_images"]
+extra-files = ["logo", "puzzles_images", "theme/vendor-cache"]
 
 [preprocessor.index]
 index = false
