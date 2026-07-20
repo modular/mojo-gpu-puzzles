@@ -74,8 +74,11 @@ synccheck = { cmd = "bash solutions/sanitizer.sh synccheck", depends-on = ["zero
 initcheck = { cmd = "bash solutions/sanitizer.sh initcheck", depends-on = ["zero-memory-manager"] }
 sanitizers = { cmd = "bash solutions/sanitizer.sh all", depends-on = ["zero-memory-manager"] }
 
-build-book = { cmd = "bash scripts/build_book.sh", description = "Build English + all translated mdbook languages" }
-book = { cmd = "bash scripts/serve_book.sh", description = "Serve mdbook with live reload for all languages" }
+build-book = { cmd = "bash scripts/build_book.sh", description = "Build English + all translated mdbook languages (fonts/lottie-player fall back to a local copy if there's no network access and `fetch-offline-assets`/`--offline` has been run)" }
+book = { cmd = "bash scripts/serve_book.sh", description = "Serve mdbook with live reload for all languages (fonts/lottie-player fall back to a local copy if there's no network access and `fetch-offline-assets`/`--offline` has been run)" }
+build-book-offline = { cmd = "bash scripts/build_book.sh --offline", description = "Build the book, pre-fetching the CDN fallback assets so it's ready to browse with no network access right away" }
+book-offline = { cmd = "bash scripts/serve_book.sh --offline", description = "Serve the book, pre-fetching the CDN fallback assets so it's ready to browse with no network access right away" }
+fetch-offline-assets = { cmd = "bash scripts/fetch_offline_assets.sh", description = "Pre-fetch the CDN fallback assets (fonts, lottie-player) into book/theme/vendor-cache/" }
 clean = { cmd = "cd book && mdbook clean && rm -rf html-*", description = "Remove all book build artifacts" }
 
 p01 = "mojo problems/p01/p01.mojo"

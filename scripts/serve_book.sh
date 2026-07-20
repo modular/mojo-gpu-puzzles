@@ -12,11 +12,19 @@
 # - Symlinks book/html/{lang} -> ../html-{lang} bridge the outputs.
 #
 # Usage: pixi run book
+#        pixi run book --offline   # also pre-fetch the runtime fallback assets,
+#                                   # so the book is ready to browse with no
+#                                   # network access right away
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BOOK_DIR="$(cd "$SCRIPT_DIR/../book" && pwd)"
+
+OFFLINE_MODE=false
+for arg in "$@"; do
+    [[ "$arg" == "--offline" ]] && OFFLINE_MODE=true
+done
 
 # Discover translation languages from book/i18n/*/book.toml
 LANGS=()
@@ -41,7 +49,9 @@ ensure_symlinks() {
 }
 
 # Build both (translations to separate directories)
-bash "$SCRIPT_DIR/build_book.sh" --serve
+BUILD_ARGS=(--serve)
+$OFFLINE_MODE && BUILD_ARGS+=(--offline)
+bash "$SCRIPT_DIR/build_book.sh" "${BUILD_ARGS[@]}"
 ensure_symlinks
 
 # Background: translation watchers + symlink restorer
