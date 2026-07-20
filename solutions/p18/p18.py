@@ -37,7 +37,7 @@ def softmax(
         input_value = graph.inputs[0]
 
         # The output shape is the same as the input for softmax
-        # Note: the name must match the name used in `@compiler.register("softmax")` in op/softmax.mojo
+        # Note: the name must match the name used in `@extensibility.register("softmax")` in op/softmax.mojo
         output = ops.custom(
             name="softmax",
             values=[input_value],

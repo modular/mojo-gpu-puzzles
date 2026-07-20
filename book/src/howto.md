@@ -47,7 +47,7 @@ puzzles. After setup, you can verify your GPU compatibility using the
 
 ### Windows WSL2 for Linux with NVIDIA
 
-To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Unbuntu
+To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Ubuntu
 please follow the
 [NVIDIA CUDA on WLS Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
 

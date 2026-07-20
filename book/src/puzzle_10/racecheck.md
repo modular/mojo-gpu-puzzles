@@ -135,7 +135,7 @@ bugs.
 
 ## Challenge
 
-Equiped with these tools, fix the kernel failing kernel.
+Equipped with these tools, fix the kernel failing kernel.
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -324,7 +324,7 @@ race conditions, using only thread at position (0,0) for accumulation is
 **not optimal** for GPU performance - we're essentially doing serial computation
 on a massively parallel device.
 
-**Coming up in [Puzzle 11: Pooling](../../puzzle_11/puzzle_11.md)**: You'll
+**Coming up in [Puzzle 11: Pooling](../puzzle_11/puzzle_11.md)**: You'll
 learn efficient parallel reduction algorithms that leverage **all threads** for
 high-performance summation operations while maintaining race-free execution.
 This puzzle teaches the foundation of **correctness first** - once you

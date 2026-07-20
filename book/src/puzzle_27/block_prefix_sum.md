@@ -148,7 +148,7 @@ if belongs_to_target == 1:
 ```
 
 This is just like the bounds checking pattern from
-[Puzzle 12](../puzzle_12/tile_tensor.md), but now the condition is "belongs to
+[Puzzle 12](../puzzle_12/puzzle_12.md), but now the condition is "belongs to
 target bin."
 
 ### 6. **Final count computation**
@@ -271,7 +271,7 @@ patterns by building on concepts from previous puzzles:
 
 ## **Step-by-step algorithm walkthrough:**
 
-### **Phase 1: Element processing (like [Puzzle 12](../puzzle_12/tile_tensor.md) dot product)**
+### **Phase 1: Element processing (like [Puzzle 12](../puzzle_12/puzzle_12.md) dot product)**
 
 ```text
 Thread indexing (familiar pattern):
@@ -347,7 +347,7 @@ Last thread computes total (not thread 0!):
 
 ## **Why this advanced algorithm works:**
 
-### **Connection to [Puzzle 12](../puzzle_12/tile_tensor.md) (Traditional dot product):**
+### **Connection to [Puzzle 12](../puzzle_12/puzzle_12.md) (Traditional dot product):**
 
 - **Same thread indexing**: `global_i` and `local_i` patterns
 - **Same bounds checking**: `if global_i < size` validation

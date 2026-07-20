@@ -50,7 +50,7 @@ def main() raises:
 
         var a_tensor = TileTensor(a, layout)
 
-        ctx.enqueue_function[add_10_2d, add_10_2d](
+        ctx.enqueue_function[add_10_2d](
             out_tensor,
             a_tensor,
             SIZE,

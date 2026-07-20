@@ -3,17 +3,15 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.testing import assert_equal
-from std.gpu.host import DeviceContext
-
-# ANCHOR: dot_product
 from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
+from std.testing import assert_equal
 
-
+# ANCHOR: dot_product
 comptime TPB = 8
 comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
@@ -56,7 +54,7 @@ def main() raises:
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        ctx.enqueue_function[dot_product, dot_product](
+        ctx.enqueue_function[dot_product](
             out_tensor,
             a_tensor,
             b_tensor,

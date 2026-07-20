@@ -81,8 +81,8 @@ def traditional_dot_product[
 
     # Each thread computes partial product
     if global_i < size:
-        var a_val = rebind[Scalar[dtype]](a[global_i])
-        var b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = a[global_i]
+        var b_val = b[global_i]
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -211,7 +211,7 @@ def block_normalize_vector[
     # This completes the block operations trilogy demonstration
     var broadcasted_mean = block.broadcast[
         dtype=DType.float32, width=1, block_size=tpb
-    ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
+    ](val=SIMD[DType.float32, 1](mean_value), src_thread=0)
 
     # Step 5: Each thread normalizes by the mean
     if global_i < size:
@@ -256,7 +256,7 @@ def main() raises:
 
             # Traditional approach: works perfectly when size == TPB
             comptime kernel = traditional_dot_product[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -299,7 +299,7 @@ def main() raises:
 
             # Block.sum(): Same result with dramatically simpler code!
             comptime kernel = block_sum_dot_product[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -374,7 +374,7 @@ def main() raises:
 
                 # Execute histogram kernel for this specific bin
                 comptime kernel = block_histogram_bin_extract[TPB]
-                ctx.enqueue_function[kernel, kernel](
+                ctx.enqueue_function[kernel](
                     input_tensor,
                     bin_tensor,
                     count_tensor,
@@ -446,7 +446,7 @@ def main() raises:
 
             # Execute vector normalization kernel
             comptime kernel = block_normalize_vector[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 input_tensor,
                 output_tensor,
                 SIZE,

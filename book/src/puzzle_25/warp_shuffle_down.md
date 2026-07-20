@@ -37,6 +37,11 @@ This transforms complex neighbor access patterns into simple warp-level
 operations, enabling efficient stencil computations without explicit memory
 indexing.
 
+> **Scope:** `shuffle_down()` only moves data *within a warp*. In the multi-block
+> section below, each block's warp handles its own boundary lanes independently —
+> there is no cross-warp or cross-block data exchange. Lanes at the top of a warp
+> simply have no neighbor to read from, which is why boundary handling matters.
+
 ## 1. Basic neighbor difference
 
 ### Configuration
@@ -393,6 +398,7 @@ boundary lanes of each block.
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -406,6 +412,13 @@ pixi run p25 --average
 
 ```bash
 pixi run -e amd p25 --average
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p25 --average
 ```
 
   </div>

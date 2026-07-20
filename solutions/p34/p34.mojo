@@ -144,8 +144,7 @@ def advanced_cluster_patterns[
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
-    """Advanced cluster programming using cluster masks and relaxed synchronization.
-    """
+    """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
@@ -224,7 +223,7 @@ def main() raises:
             )
 
             comptime kernel = cluster_coordination_basics[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,
@@ -290,7 +289,7 @@ def main() raises:
             )
 
             comptime kernel = cluster_collective_operations[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 temp_tensor,
@@ -338,7 +337,7 @@ def main() raises:
             )
 
             comptime kernel = advanced_cluster_patterns[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,

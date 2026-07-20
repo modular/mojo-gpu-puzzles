@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 17: 1D 합성곱 Op
 
@@ -32,7 +32,7 @@
 
 이 퍼즐의 핵심 요소는 다음과 같습니다:
 
-1. **커스텀 op 등록**: `@compiler.register` 데코레이터를 통해 Mojo 함수를
+1. **커스텀 op 등록**: `@extensibility.register` 데코레이터를 통해 Mojo 함수를
    파이썬에 노출하는 방법 이해하기
 2. **커스텀 op 패키징**: Mojo 코드를 MAX 그래프에서 사용할 수 있도록 패키징하는
    방법 익히기
@@ -164,8 +164,8 @@ Verification passed: Custom kernel results match NumPy calculation
      커스텀 연산 호출
 
 3. **커스텀 op 등록**:
-   - `@compiler.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출.
-     [@compiler.register](https://docs.modular.com/mojo/manual/decorators/compiler-register/)
+   - `@extensibility.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출.
+     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
      참고
    - `execute` 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의
    - 입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환
@@ -182,14 +182,14 @@ Verification passed: Custom kernel results match NumPy calculation
 1. **커스텀 Op 구조체**:
 
    ```mojo
-   @compiler.register("conv1d")
+   @extensibility.register("conv1d")
    struct Conv1DCustomOp:
        @staticmethod
        def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
            output: OutputTensor[rank=1],
            input: InputTensor[dtype = output.dtype, rank = output.rank],
            kernel: InputTensor[dtype = output.dtype, rank = output.rank],
-           ctx: DeviceContextPtr,
+           ctx: DeviceContext,
        ) raises:
            # 구현
    ```
@@ -216,7 +216,7 @@ Verification passed: Custom kernel results match NumPy calculation
    ```mojo
    gpu_ctx = ctx.get_device_context()
    gpu_ctx.enqueue_memset(...)  # 출력 버퍼 초기화
-   gpu_ctx.enqueue_function[..., ...](...) # 커널 예약
+   gpu_ctx.enqueue_function[...](...) # 커널 예약
    ```
 
    - 디바이스 컨텍스트가 GPU 리소스를 관리
@@ -238,17 +238,17 @@ Verification passed: Custom kernel results match NumPy calculation
 
 ### 커스텀 op 등록
 
-커스텀 연산을 만드는 핵심은 `@compiler.register` 데코레이터와 관련 구조체입니다:
+커스텀 연산을 만드는 핵심은 `@extensibility.register` 데코레이터와 관련 구조체입니다:
 
 ```mojo
-@compiler.register("conv1d")
+@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[type = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # 구현
 ```
@@ -259,21 +259,21 @@ struct Conv1DCustomOp:
   때 사용하는 이름
 - **구조체**에는 올바른 시그니처를 가진 `execute` 메서드가 있어야 함
 - **OutputTensor**와 **InputTensor** 타입이 파이썬 데이터와의 인터페이스를 정의
-- **DeviceContextPtr**이 실행 환경에 대한 접근을 제공
+- **DeviceContext**가 실행 환경에 대한 접근을 제공
 
 ### 커스텀 op 패키징
 
 커스텀 연산을 파이썬에서 사용하려면 먼저 패키징해야 합니다:
 
 ```bash
-mojo package op -o op.mojopkg
+mojo package op -o op.mojoc
 ```
 
 이 명령은:
 
 1. Mojo 코드를 배포 가능한 패키지로 컴파일
 2. MAX 그래프가 연산을 이해하는 데 필요한 메타데이터 생성
-3. 파이썬에서 로드할 수 있는 바이너리 아티팩트(`op.mojopkg`)를 생성
+3. 파이썬에서 로드할 수 있는 바이너리 아티팩트(`op.mojoc`)를 생성
 
 패키지는 MAX 그래프가 찾을 수 있는 위치에 배치해야 하며, 보통 파이썬 코드에서
 접근 가능한 디렉토리에 둡니다.
@@ -297,7 +297,7 @@ with Graph(
 
     # 이름으로 커스텀 연산 사용
     output = ops.custom(
-        name="conv1d",  # @compiler.register의 이름과 일치해야 함
+        name="conv1d",  # @extensibility.register의 이름과 일치해야 함
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={

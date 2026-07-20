@@ -35,6 +35,10 @@ programming in Mojo.
 - Grid configuration: `(1, 1)` blocks per grid
 - Layout: `row_major[SIZE]()` (1D row-major)
 
+> **Scope:** This puzzle works within a single warp (`SIZE = WARP_SIZE`). The
+> reduction happens across lanes of one warp via `warp.sum()`; there is no
+> cross-warp or cross-block reduction here.
+
 ## The traditional complexity (from Puzzle 12)
 
 Recall the complex approach from
@@ -54,6 +58,12 @@ memory, barriers, and tree reduction:
 
 This works, but it's verbose, error-prone, and requires deep understanding of
 GPU synchronization.
+
+> **Note:** This is intentionally a *different* approach from the
+> [Puzzle 12 solution](../../../solutions/p12/p12.mojo). Puzzle 12 uses shared
+> memory, `barrier()`, and a tree reduction; this puzzle deliberately replaces
+> all of that with a single `warp.sum()`. The code below won't match the P12
+> solution line-for-line — that contrast is the point.
 
 **Test the traditional approach:**
 <div class="code-tabs" data-tab-group="package-manager">
@@ -328,8 +338,8 @@ functional approach.
 ### 4. **Available functions from imports**
 
 ```mojo
-from gpu import lane_id
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.gpu import lane_id
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1
@@ -512,7 +522,7 @@ Benchmarks completed!
 WARP OPERATIONS PERFORMANCE ANALYSIS:
    GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
    - 1,...,256 x WARP_SIZE: Grid size too small to benchmark
-   - 2048 x WARP_SIZE: Warp primative benefits emerge
+   - 2048 x WARP_SIZE: Warp primitive benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
 

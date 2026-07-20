@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 7a8e8be1635ae0615b896ce069f6c241d562343a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 33: 텐서 코어 연산
 

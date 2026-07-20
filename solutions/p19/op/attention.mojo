@@ -13,9 +13,9 @@ from layout.tile_tensor import stack_allocation
 from std.math import exp
 from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
-import compiler
-from std.runtime.asyncrt import DeviceContextPtr
-from tensor import InputTensor, OutputTensor
+import extensibility
+
+from extensibility import InputTensor, OutputTensor
 
 comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 comptime D = 16  # This must be equal to D in p19.py
@@ -289,7 +289,7 @@ def attention_cpu_kernel[
         output_lt[dim] = rebind[Scalar[dtype]](weighted_sum)
 
 
-@compiler.register("attention")
+@extensibility.register("attention")
 struct AttentionCustomOp:
     @staticmethod
     def execute[
@@ -308,7 +308,7 @@ struct AttentionCustomOp:
         v: InputTensor[
             dtype=dtype, rank=2, static_spec=_
         ],  # Value matrix (seq_len, d)
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # Define layouts
         comptime layout_q = row_major[d]()
@@ -337,8 +337,6 @@ struct AttentionCustomOp:
         )
 
         comptime if target == "gpu":
-            var gpu_ctx = rebind[DeviceContext](ctx[])
-
             # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
             comptime layout_q_2d = row_major[1, d]()
@@ -384,10 +382,10 @@ struct AttentionCustomOp:
             ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
-            var k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var k_t_buf = ctx.enqueue_create_buffer[dtype](
                 seq_len * d
             )  # K^T as (d, seq_len)
-            var scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var scores_weights_buf = ctx.enqueue_create_buffer[dtype](
                 seq_len
             )  # Reused for scores and weights
 
@@ -402,7 +400,7 @@ struct AttentionCustomOp:
             comptime kernel = transpose_kernel[
                 seq_len, d, KTLayout, KLayout, dtype
             ]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -422,7 +420,7 @@ struct AttentionCustomOp:
                 KTLayout,
                 dtype,
             ]
-            gpu_ctx.enqueue_function[kernel2, kernel2](
+            ctx.enqueue_function[kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -443,7 +441,7 @@ struct AttentionCustomOp:
             var weights_in = TileTensor[
                 mut=True, dtype, ScoresLayout, MutAnyOrigin
             ](scores_weights_buf, layout_scores)
-            gpu_ctx.enqueue_function[kernel3, kernel3](
+            ctx.enqueue_function[kernel3](
                 weights_out,
                 weights_in,
                 grid_dim=softmax_blocks_per_grid,
@@ -465,7 +463,7 @@ struct AttentionCustomOp:
                 VLayout,
                 dtype,
             ]
-            gpu_ctx.enqueue_function[kernel4, kernel4](
+            ctx.enqueue_function[kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,

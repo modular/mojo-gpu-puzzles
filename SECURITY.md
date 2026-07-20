@@ -15,5 +15,5 @@ Please collect the following information related to your issue:
 - Details of the environment you are using
 
 Once you have these details please visit
-https://www.modular.com/company/report-issue and submit the security issue. At
+<https://www.modular.com/company/report-issue> and submit the security issue. At
 this time we cannot provide a personal response to each report.

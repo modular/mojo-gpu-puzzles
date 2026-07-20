@@ -59,6 +59,11 @@ format-check = { cmd = "bash -c 'mojo format problems solutions && git diff --ex
 
 tests = { cmd = "bash solutions/run.sh" }
 
+check-book-refs = { cmd = "python3 scripts/check_book_refs.py", description = "Validate book links/images resolve (en + ko trees)" }
+
+check-skeletons = { cmd = "python3 scripts/check_skeletons.py", description = "Verify each problem skeleton matches its solution outside the fill-in regions" }
+compile-problems = { cmd = "bash scripts/compile_problems.sh", description = "Compile every problem skeleton so a stale starter file fails CI" }
+
 # Setup CUDA-GDB by linking system CUDA installation to conda environment
 setup-cuda-gdb = { cmd = "bash scripts/setup-cuda-gdb.sh", description = "Auto-detect and link system CUDA-GDB binaries to conda environment" }
 
@@ -123,13 +128,13 @@ p16 = "mojo problems/p16/p16.mojo"
 viz16 = "cd book/src/puzzle_16 && python puzzle_16_viz.py"
 rooflineviz = "cd book/src/puzzle_16 && python roofline_viz.py"
 
-p17 = "mojo package problems/p17/op -o problems/p17/op.mojopkg && python problems/p17/p17.py"
+p17 = "mojo package problems/p17/op -o problems/p17/op.mojoc && python problems/p17/p17.py"
 
-p18-package = "mojo package problems/p18/op -o problems/p18/op.mojopkg"
+p18-package = "mojo package problems/p18/op -o problems/p18/op.mojoc"
 p18-test-kernels = { cmd = "mojo run -I problems/p18 problems/p18/test/test_softmax.mojo", depends-on = ["p18-package"] }
 p18 = { cmd = "python problems/p18/p18.py", depends-on = ["p18-package"] }
 
-p19 = "mojo package problems/p19/op -o problems/p19/op.mojopkg && python problems/p19/p19.py"
+p19 = "mojo package problems/p19/op -o problems/p19/op.mojoc && python problems/p19/p19.py"
 
 p20 = "python problems/p20/p20.py"
 
@@ -160,6 +165,8 @@ p32 = "mojo problems/p32/p32.mojo"
 p33 = "mojo problems/p33/p33.mojo"
 
 p34 = "mojo problems/p34/p34.mojo"
+
+p35 = "mojo problems/p35/p35.mojo"
 
 # GPU information and profiling utilities
 gpu-info = { cmd = "python3 scripts/gpu_specs.py --summary", description = "Get concise GPU information (cross-platform)" }

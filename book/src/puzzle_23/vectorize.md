@@ -4,7 +4,7 @@
 
 This puzzle explores **advanced vectorization techniques** using manual
 vectorization and
-[vectorize](https://docs.modular.com/mojo/std/algorithm/functional/vectorize/)
+[vectorize](https://mojolang.org/docs/std/algorithm/backend/vectorize/vectorize/)
 that give you precise control over SIMD operations within GPU kernels. You'll
 implement two different approaches to vectorized computation:
 
@@ -41,6 +41,10 @@ But with sophisticated vectorization strategies for maximum performance.
 - Data type: `DType.float32`
 - SIMD width: GPU-dependent
 - Layout: `row_major[SIZE]()` (1D row-major)
+
+> **Scope:** Both approaches operate within a single tile at a time; bounds
+> checking is per-tile and there is no cross-tile or cross-block communication.
+> The focus is SIMD control inside a tile, not coordination across them.
 
 ## 1. Manual vectorization approach
 
@@ -235,6 +239,32 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 <div class="solution-tips">
 
+### 0. **From scalar to vectorized**
+
+Start by writing the addition as a plain scalar loop over a tile, then convert it
+to `vectorize`. The transformation is mechanical: replace the per-element loop
+body with a SIMD load/add/store, and hand the loop to `vectorize`, which calls
+your body in `width`-sized steps and processes the leftover remainder for you.
+
+```mojo
+# Before: scalar loop over the tile (one element at a time)
+for i in range(actual_tile_size):
+    global_idx = tile_start + i
+    out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
+
+# After: same logic, but the body operates on a SIMD vector of `width`
+def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+    global_idx = tile_start + i
+    if global_idx + width <= size:                       # bounds check
+        a_vec = a_lt.aligned_load[width](Index(global_idx))
+        b_vec = b_lt.aligned_load[width](Index(global_idx))
+        out_lt.store[width](Index(global_idx), a_vec + b_vec)
+
+vectorize[simd_width](actual_tile_size, vectorized_add)  # drives the loop + remainder
+```
+
+The remaining tips break this down piece by piece.
+
 ### 1. **Tile boundary calculation**
 
 ```mojo
@@ -250,7 +280,7 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
@@ -350,7 +380,7 @@ actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:
         # Automatic SIMD optimization

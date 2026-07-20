@@ -35,8 +35,8 @@ Implement a kernel that computes a 1D convolution between vector `a` and vector
 **Note:** _You need to handle the general case. You only need 2 global reads and
 1 global write per thread._
 
-<img src="./media/13-w.gif" alt="1D convolution visualization" class="light-mode-img">
-<img src="./media/13-b.gif" alt="1D convolution visualization" class="dark-mode-img">
+<img src="./media/13-w.png" alt="1D convolution visualization" class="light-mode-img">
+<img src="./media/13-b.png" alt="1D convolution visualization" class="dark-mode-img">
 
 For those new to convolution, think of it as a weighted sliding window
 operation. At each position, we multiply the kernel values with the

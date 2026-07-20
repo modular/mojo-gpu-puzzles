@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 24: 워프 기초
 

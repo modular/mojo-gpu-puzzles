@@ -48,8 +48,9 @@ the results.
 
 Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
-> 📬 [Subscribe to updates](https://www.modular.com/company/talk-to-us) to get
-> notified when new puzzles are released!
+> 📬
+> [Subscribe to updates](https://docs.modular.com/max/get-started/#stay-in-touch)
+> to get notified when new puzzles are released!
 
 ## Why Mojo🔥
 
@@ -83,48 +84,47 @@ examples.
 
 3. Install a package manager to run the Mojo🔥 programs:
 
-### **Option 1 (Highly recommended)**
-
-   [pixi](https://pixi.sh/latest/#installation)
+### Option 1: [pixi](https://pixi.sh/latest/#installation) (Highly recommended)
 
    `pixi` is the **recommended option** for this project because:
-   - Easy access to Modular's MAX/Mojo packages
-   - Handles GPU dependencies
-   - Full conda + PyPI ecosystem support
 
-    **Note: A few puzzles only work with `pixi`.**
+- Easy access to Modular's MAX/Mojo packages
+- Handles GPU dependencies
+- Full conda + PyPI ecosystem support
 
-    **Install:**
+   **Note: A few puzzles only work with `pixi`.**
 
-     ```bash
-    curl -fsSL https://pixi.sh/install.sh | sh
-     ```
+   **Install:**
 
-    **Update:**
+   ```bash
+   curl -fsSL https://pixi.sh/install.sh | sh
+   ```
 
-     ```bash
-    pixi self-update
-     ```
+   **Update:**
+
+   ```bash
+   pixi self-update
+   ```
 
 ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
-    **Install:**
+   **Install:**
 
-    ```bash
-    curl -fsSL https://astral.sh/uv/install.sh | sh
-    ```
+   ```bash
+   curl -fsSL https://astral.sh/uv/install.sh | sh
+   ```
 
-    **Update:**
+   **Update:**
 
-    ```bash
-    uv self update
-    ```
+   ```bash
+   uv self update
+   ```
 
-    **Create a virtual environment:**
+   **Create a virtual environment:**
 
-    ```bash
-    uv venv && source .venv/bin/activate
-    ```
+   ```bash
+   uv venv && source .venv/bin/activate
+   ```
 
 4. Start solving puzzles!
 
@@ -140,6 +140,21 @@ workflows.
 > ```bash
 > sudo apt update && sudo apt install wslu
 > ```
+
+> **Older NVIDIA driver workaround**: Mojo and MAX require NVIDIA driver ≥
+> 580 (CUDA ≥ 13.0). Systems still on older drivers (for example, the Jetson
+> Orin shipped with JetPack SDK on driver 540.x / CUDA 12.6) can hit a
+> driver-version error at runtime. Point Mojo at the system `ptxas` to work
+> around it:
+>
+> ```bash
+> export MODULAR_NVPTX_COMPILER_PATH=/usr/local/cuda/bin/ptxas
+> ```
+>
+> The exact path can vary — see the
+> [system requirements](https://mojolang.org/docs/requirements/#nvidia-gpus)
+> for the canonical CUDA toolchain locations on each platform. Add the export
+> to your `~/.bashrc` (or equivalent shell rc) to make it persistent.
 
 ```bash
 # Build and serve the book
@@ -182,6 +197,26 @@ Please feel free to:
 1. Fork the repository
 2. Create your feature branch
 3. Submit a pull request
+
+### Keeping problems and solutions in sync
+
+Each `problems/pNN/` file is the same as its `solutions/pNN/` counterpart
+**except** that the student fill-in regions are blanked out with `# FILL ME IN`
+hints (and an optional `...` placeholder so an empty body still compiles), and
+the `# ANCHOR:` markers drop the `_solution` suffix the solution uses. Solving a
+puzzle should therefore only ever *add* lines.
+
+When you change a solution (for example, migrating to a new API), update the
+matching problem skeleton the same way. Two checks guard this (both run in CI):
+
+```bash
+pixi run check-skeletons    # problem == solution outside the fill-in regions
+pixi run compile-problems   # every unfilled skeleton still compiles
+```
+
+(`problems/p10` is intentionally exempt — it is the sanitizer puzzle, whose
+skeleton ships deliberately buggy kernels for you to catch with `memcheck` /
+`racecheck`.)
 
 ## Community
 

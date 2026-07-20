@@ -37,6 +37,11 @@ Our GPU implementation uses parallel reduction for both finding the maximum
 value and computing the sum of exponentials, making it highly efficient for
 large vectors.
 
+> **Scope:** This puzzle runs in a single block (grid is \\(1 \times 1\\)). Both
+> reductions use shared memory and `barrier()` within that one block — there is
+> no cross-block communication here, which is why the vector fits in a single
+> block's threads.
+
 ## Key concepts
 
 - Parallel reduction for efficient maximum and sum calculations
@@ -494,7 +499,7 @@ simpler than the GPU version since it doesn't need to handle shared memory or
 thread synchronization, but it's also less efficient for large inputs.
 
 Both implementations are registered with MAX Graph's custom operation system
-through the `@compiler.register("softmax")` decorator, allowing seamless
+through the `@extensibility.register("softmax")` decorator, allowing seamless
 execution on either device type based on availability.
 </div>
 
@@ -552,7 +557,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    ```
 
    This sets up our custom operation with:
-   - Name matching the `@compiler.register("softmax")` in our Mojo code
+   - Name matching the `@extensibility.register("softmax")` in our Mojo code
    - Input values passed as a list
    - Output type definition matching the input shape and type
    - Parameters required by our kernel, including the target device, vector size

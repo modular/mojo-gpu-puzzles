@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 13: 1D 합성곱
 
@@ -35,8 +35,8 @@
 **참고:** _일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다._
 
-<img src="/puzzle_13/media/13-w.gif" alt="1D 합성곱 시각화" class="light-mode-img">
-<img src="/puzzle_13/media/13-b.gif" alt="1D 합성곱 시각화" class="dark-mode-img">
+<img src="/puzzle_13/media/13-w.png" alt="1D 합성곱 시각화" class="light-mode-img">
+<img src="/puzzle_13/media/13-b.png" alt="1D 합성곱 시각화" class="dark-mode-img">
 
 합성곱이 처음이라면, 가중치가 적용된 슬라이딩 윈도우 연산이라고 생각하면 됩니다.
 각 위치에서 커널 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는

@@ -29,8 +29,7 @@ sequential execution, GPU debugging requires you to:
   constant memory
 - **Handle coordination failures**: Race conditions, barrier deadlocks, memory
   access violations
-- **Debug optimized code**: JIT compilation, variable optimization, limited
-  symbol information
+- **Debug optimized code**: variable optimization, limited symbol information
 - **Use specialized tools**: CUDA-GDB for kernel inspection, thread navigation,
   parallel state analysis
 
@@ -74,7 +73,7 @@ debugging concepts to advanced parallel coordination failures:
 **Foundation building** - Learn the tools and workflow
 
 - Set up your debugging environment with `pixi` and CUDA-GDB
-- Learn the four debugging approaches: JIT vs binary, CPU vs GPU
+- Learn the four debugging approaches: source vs binary, CPU vs GPU
 - Learn essential CUDA-GDB commands for GPU kernel inspection
 - Practice with hands-on examples using familiar code from previous puzzles
 - Understand when to use each debugging approach

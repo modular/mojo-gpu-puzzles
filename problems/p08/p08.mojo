@@ -21,7 +21,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def add_10_shared(
+def add_10_shared_tile_tensor(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
@@ -37,6 +37,10 @@ def add_10_shared(
     if global_i < size:
         shared[local_i] = a[global_i]
 
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     # FILL ME IN (roughly 2 lines)
@@ -55,7 +59,7 @@ def main() raises:
         var out_tensor = TileTensor(out, layout)
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[add_10_shared, add_10_shared](
+        ctx.enqueue_function[add_10_shared_tile_tensor](
             out_tensor,
             a_tensor,
             SIZE,

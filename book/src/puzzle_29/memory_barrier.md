@@ -1,5 +1,9 @@
 # Double-Buffered Stencil Computation
 
+**Important note**: This puzzle requires NVIDIA GPU hardware. The
+[`mbarrier` APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) are
+NVIDIA-only.
+
 > **🔬 Fine-Grained Synchronization: mbarrier vs barrier()**
 >
 > This puzzle introduces **explicit memory barrier APIs** that provide
@@ -232,12 +236,19 @@ when memory operations complete, essential for complex memory access patterns.
 - Call
   [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
   after each thread completes its write operations
-- Use
-  [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
-  to ensure all threads finish before buffer swap
+- Follow it with a polling loop on
+  [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait):
+  the API is a **non-blocking** check, so call it inside
+  `while not mbarrier_test_wait(...): pass` to actually wait for every thread
+  to arrive before the buffer swap
 - Reinitialize barriers between iterations for reuse:
   [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
 - Only thread 0 should reinitialize barriers to avoid race conditions
+- Insert a [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
+  after each `mbarrier_init` call (initial setup and per-iteration reinit) so
+  every thread observes the initialized barrier before any thread calls
+  `mbarrier_arrive`. This matches the
+  [NVIDIA Async Barriers initialization pattern](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization)
 
 ### **Output selection**
 
@@ -255,21 +266,13 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 
 ```bash
 pixi run p29 --double-buffer
-```
-
-  </div>
-  <div class="tab-content">
-
-```bash
-pixi run -e amd p29 --double-buffer
 ```
 
   </div>
@@ -380,12 +383,21 @@ Understanding the mbarrier coordination pattern:
 
 **Critical timing sequence:**
 
-1. **All threads write**: Each thread updates its assigned buffer element
-2. **Signal completion**: Each thread calls
+1. **Init + sync**: Thread 0 calls
+   [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init),
+   then every thread executes a
+   [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) so
+   the initialized state is visible block-wide before any
+   `mbarrier_arrive` call (see the
+   [NVIDIA Async Barriers docs](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization))
+2. **All threads write**: Each thread updates its assigned buffer element
+3. **Signal completion**: Each thread calls
    [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
-3. **Wait for all**: All threads call
+4. **Poll until all arrived**: Every thread spins in
+   `while not mbarrier_test_wait(...): pass` —
    [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
-4. **Safe to proceed**: Now safe to swap buffer roles for next iteration
+   is a non-blocking check, so a single call is not a wait
+5. **Safe to proceed**: Now safe to swap buffer roles for next iteration
 
 ## **Stencil operation mechanics**
 
@@ -448,13 +460,15 @@ stencil_input = buffer_B[10]  // Undefined behavior!
 buffer_B[local_i] = stencil_result
 
 # Signal write completion
-mbarrier_arrive(barrier)
+_ = mbarrier_arrive(barrier)
 
-# Wait for ALL threads to complete writes
-mbarrier_test_wait(barrier, TPB)
+# Poll until ALL threads have completed writes. mbarrier_test_wait is
+# non-blocking, so a single call is NOT a wait — it must run in a loop.
+while not mbarrier_test_wait(barrier, TPB):
+    pass
 
 # Now safe to read - all writes guaranteed complete
-stencil_input = buffer_B[neighbor_index]  // Always sees correct values
+stencil_input = buffer_B[neighbor_index]  # Always sees correct values
 ```
 
 ## **Output buffer selection**

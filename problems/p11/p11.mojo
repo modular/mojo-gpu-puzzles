@@ -33,7 +33,7 @@ def pooling(
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FIX ME IN (roughly 10 lines)
+    # FILL ME IN (roughly 10 lines)
 
 
 # ANCHOR_END: pooling
@@ -53,7 +53,7 @@ def main() raises:
         var out_tensor = TileTensor(out, layout)
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[pooling, pooling](
+        ctx.enqueue_function[pooling](
             out_tensor,
             a_tensor,
             SIZE,

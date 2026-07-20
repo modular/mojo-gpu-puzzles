@@ -35,20 +35,21 @@ def prefix_sum_simple(
 
 # ANCHOR_END: prefix_sum_simple
 
-# ANCHOR: prefix_sum_complete
 comptime SIZE_2 = 15
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (TPB, 1)
 comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
 comptime layout_2 = row_major[SIZE_2]()
-comptime Layout2Type = type_of(layout_2)
 comptime extended_layout = row_major[EXTENDED_SIZE]()
-comptime ExtendedLayoutType = type_of(extended_layout)
+comptime Layout2Type = type_of(layout_2)
+comptime ExtendedLayout = type_of(extended_layout)
+
+# ANCHOR: prefix_sum_complete
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
 def prefix_sum_local_phase(
-    output: TileTensor[mut=True, dtype, ExtendedLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
     size: Int,
 ):
@@ -59,7 +60,7 @@ def prefix_sum_local_phase(
 
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase(
-    output: TileTensor[mut=True, dtype, ExtendedLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -71,16 +72,7 @@ def prefix_sum_block_sum_phase(
 
 def main() raises:
     with DeviceContext() as ctx:
-        if len(argv()) != 2 or argv()[1] not in [
-            "--simple",
-            "--complete",
-        ]:
-            raise Error(
-                "Expected one command-line argument: '--simple' or '--complete'"
-            )
-
         var use_simple = argv()[1] == "--simple"
-
         var size = SIZE if use_simple else SIZE_2
         var num_blocks = (size + TPB - 1) // TPB
 
@@ -101,7 +93,7 @@ def main() raises:
             a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
             out_tensor = TileTensor(out, layout)
 
-            ctx.enqueue_function[prefix_sum_simple, prefix_sum_simple](
+            ctx.enqueue_function[prefix_sum_simple](
                 out_tensor,
                 a_tensor,
                 size,
@@ -116,9 +108,7 @@ def main() raises:
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase, prefix_sum_local_phase
-            ](
+            ctx.enqueue_function[prefix_sum_local_phase](
                 out_tensor,
                 a_tensor,
                 size,
@@ -126,13 +116,8 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK_2,
             )
 
-            # Note: kernel2 starts when kernel1 is finished due to Mojo's DeviceContext using a single execution stream
-            # No explicit ctx.synchronize() needed in this case.
-
             # Phase 2: Add block sums
-            ctx.enqueue_function[
-                prefix_sum_block_sum_phase, prefix_sum_block_sum_phase
-            ](
+            ctx.enqueue_function[prefix_sum_block_sum_phase](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,
