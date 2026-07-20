@@ -209,6 +209,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation">Double-Buffered Stencil Computation</a></h1>
+<p><strong>Important note</strong>: This puzzle requires NVIDIA GPU hardware. The
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> APIs</a> are
+NVIDIA-only.</p>
 <blockquote>
 <p><strong>🔬 Fine-Grained Synchronization: mbarrier vs barrier()</strong></p>
 <p>This puzzle introduces <strong>explicit memory barrier APIs</strong> that provide
@@ -381,15 +384,9 @@ writing</li>
 <li><strong>Completion barrier</strong>: Ensure all writes finish before block termination</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">
-# Double-buffered stencil configuration
-comptime STENCIL_ITERATIONS = 3
-comptime BUFFER_COUNT = 2
-
-
-def double_buffered_stencil_computation(
+<pre><code class="language-mojo">def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -426,13 +423,19 @@ def double_buffered_stencil_computation(
         mbarrier_init(iter_barrier.ptr, TPB)
         mbarrier_init(final_barrier.ptr, TPB)
 
+    # Per NVIDIA's async-barrier docs, mbarrier objects must be visible to all
+    # threads before any thread calls mbarrier_arrive on them.
+    barrier()
+
     # Initialize buffer_A with input data
 
     # FILL ME IN (roughly 4 lines)
 
-    # Wait for buffer_A initialization
+    # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
+    # poll, so spin until it reports completion.
     _ = mbarrier_arrive(init_barrier.ptr)
-    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+        pass
 
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
@@ -448,13 +451,19 @@ def double_buffered_stencil_computation(
             # FILL ME IN (roughly 12 lines)
             ...
 
-        # Memory barrier: wait for all writes before buffer swap
+        # Memory barrier: wait for all writes before buffer swap. test_wait is
+        # non-blocking, so poll until every thread has arrived.
         _ = mbarrier_arrive(iter_barrier.ptr)
-        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+            pass
 
         # Reinitialize barrier for next iteration
         if local_i == 0:
             mbarrier_init(iter_barrier.ptr, TPB)
+
+        # Make the reinitialized barrier visible before the next iteration's
+        # mbarrier_arrive.
+        barrier()
 
     # Write final results from active buffer
     if local_i &lt; TPB and global_i &lt; size:
@@ -465,13 +474,14 @@ def double_buffered_stencil_computation(
             # Odd iterations end in buffer_B
             output[global_i] = buffer_B[local_i]
 
-    # Final barrier
+    # Final barrier — poll until every thread has arrived.
     _ = mbarrier_arrive(final_barrier.ptr)
-    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+        pass
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -501,12 +511,19 @@ assignments</li>
 <li>Call
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 after each thread completes its write operations</li>
-<li>Use
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
-to ensure all threads finish before buffer swap</li>
+<li>Follow it with a polling loop on
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>:
+the API is a <strong>non-blocking</strong> check, so call it inside
+<code>while not mbarrier_test_wait(...): pass</code> to actually wait for every thread
+to arrive before the buffer swap</li>
 <li>Reinitialize barriers between iterations for reuse:
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
 <li>Only thread 0 should reinitialize barriers to avoid race conditions</li>
+<li>Insert a <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+after each <code>mbarrier_init</code> call (initial setup and per-iteration reinit) so
+every thread observes the initialized barrier before any thread calls
+<code>mbarrier_arrive</code>. This matches the
+<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers initialization pattern</a></li>
 </ul>
 <h3 id="output-selection"><a class="header" href="#output-selection"><strong>Output selection</strong></a></h3>
 <ul>
@@ -521,16 +538,11 @@ to ensure all threads finish before buffer swap</li>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p29 --double-buffer
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p29 --double-buffer
 </code></pre>
   </div>
   <div class="tab-content">
@@ -595,15 +607,21 @@ GPU output sample: 1.0 1.0 1.0
         mbarrier_init(iter_barrier.ptr, TPB)
         mbarrier_init(final_barrier.ptr, TPB)
 
+    # Per NVIDIA's async-barrier docs, mbarrier objects must be visible to all
+    # threads before any thread calls mbarrier_arrive on them.
+    barrier()
+
     # Initialize buffer_A with input data
     if local_i &lt; TPB and global_i &lt; size:
         buffer_A[local_i] = input[global_i]
     else:
         buffer_A[local_i] = 0.0
 
-    # Wait for buffer_A initialization
+    # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
+    # poll, so spin until it reports completion.
     _ = mbarrier_arrive(init_barrier.ptr)
-    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+        pass
 
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
@@ -617,9 +635,7 @@ GPU output sample: 1.0 1.0 1.0
                 for offset in range(-1, 2):
                     sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                        stencil_sum += rebind[Scalar[dtype]](
-                            buffer_A[sample_idx]
-                        )
+                        stencil_sum += buffer_A[sample_idx]
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
@@ -639,9 +655,7 @@ GPU output sample: 1.0 1.0 1.0
                 for offset in range(-1, 2):
                     sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                        stencil_sum += rebind[Scalar[dtype]](
-                            buffer_B[sample_idx]
-                        )
+                        stencil_sum += buffer_B[sample_idx]
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
@@ -651,13 +665,19 @@ GPU output sample: 1.0 1.0 1.0
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
-        # Memory barrier: wait for all writes before buffer swap
+        # Memory barrier: wait for all writes before buffer swap. test_wait is
+        # non-blocking, so poll until every thread has arrived.
         _ = mbarrier_arrive(iter_barrier.ptr)
-        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+            pass
 
         # Reinitialize barrier for next iteration
         if local_i == 0:
             mbarrier_init(iter_barrier.ptr, TPB)
+
+        # Make the reinitialized barrier visible before the next iteration's
+        # mbarrier_arrive.
+        barrier()
 
     # Write final results from active buffer
     if local_i &lt; TPB and global_i &lt; size:
@@ -668,9 +688,10 @@ GPU output sample: 1.0 1.0 1.0
             # Odd iterations end in buffer_B
             output[global_i] = buffer_B[local_i]
 
-    # Final barrier
+    # Final barrier — poll until every thread has arrived.
     _ = mbarrier_arrive(final_barrier.ptr)
-    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+        pass
 
 
 </code></pre>
@@ -737,11 +758,20 @@ Block until all threads signal completion</li>
 </ul>
 <p><strong>Critical timing sequence:</strong></p>
 <ol>
+<li><strong>Init + sync</strong>: Thread 0 calls
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>,
+then every thread executes a
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> so
+the initialized state is visible block-wide before any
+<code>mbarrier_arrive</code> call (see the
+<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers docs</a>)</li>
 <li><strong>All threads write</strong>: Each thread updates its assigned buffer element</li>
 <li><strong>Signal completion</strong>: Each thread calls
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
-<li><strong>Wait for all</strong>: All threads call
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a></li>
+<li><strong>Poll until all arrived</strong>: Every thread spins in
+<code>while not mbarrier_test_wait(...): pass</code> —
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
+is a non-blocking check, so a single call is not a wait</li>
 <li><strong>Safe to proceed</strong>: Now safe to swap buffer roles for next iteration</li>
 </ol>
 <h2 id="stencil-operation-mechanics"><a class="header" href="#stencil-operation-mechanics"><strong>Stencil operation mechanics</strong></a></h2>
@@ -788,13 +818,15 @@ stencil_input = buffer_B[10]  // Undefined behavior!
 buffer_B[local_i] = stencil_result
 
 # Signal write completion
-mbarrier_arrive(barrier)
+_ = mbarrier_arrive(barrier)
 
-# Wait for ALL threads to complete writes
-mbarrier_test_wait(barrier, TPB)
+# Poll until ALL threads have completed writes. mbarrier_test_wait is
+# non-blocking, so a single call is NOT a wait — it must run in a loop.
+while not mbarrier_test_wait(barrier, TPB):
+    pass
 
 # Now safe to read - all writes guaranteed complete
-stencil_input = buffer_B[neighbor_index]  // Always sees correct values
+stencil_input = buffer_B[neighbor_index]  # Always sees correct values
 </code></pre>
 <h2 id="output-buffer-selection"><a class="header" href="#output-buffer-selection"><strong>Output buffer selection</strong></a></h2>
 <p>Final result location depends on iteration parity:</p>

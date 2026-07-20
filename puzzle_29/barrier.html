@@ -209,6 +209,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination">Multi-Stage Pipeline Coordination</a></h1>
+<p><strong>Important note</strong>: Puzzle 29 is currently NVIDIA-only — the
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> APIs</a> used in
+the <a href="memory_barrier.html">companion stencil puzzle</a> require NVIDIA hardware,
+and the <code>pixi</code> task pulls them into the same compilation unit.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Implement a kernel that processes an image through a coordinated 3-stage
 pipeline where different thread groups handle specialized processing stages,
@@ -336,24 +340,9 @@ block)</p>
 </li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">
-comptime TPB = 256  # Threads per block for pipeline stages
-comptime SIZE = 1024  # Image size (1D for simplicity)
-comptime BLOCKS_PER_GRID = (4, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
-comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
-
-# Multi-stage processing configuration
-comptime STAGE1_THREADS = TPB // 2
-comptime STAGE2_THREADS = TPB // 2
-comptime BLUR_RADIUS = 2
-
-
-def multi_stage_image_blur_pipeline(
+<pre><code class="language-mojo">def multi_stage_image_blur_pipeline(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -394,7 +383,7 @@ def multi_stage_image_blur_pipeline(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -439,16 +428,11 @@ execute</li>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p29 --multi-stage
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p29 --multi-stage
 </code></pre>
   </div>
   <div class="tab-content">
@@ -525,7 +509,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
         for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
             sample_idx = blur_idx + offset
             if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                blur_sum += input_shared[sample_idx]
                 blur_count += 1
 
         if blur_count &gt; 0:
@@ -541,7 +525,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
             for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
                 sample_idx = second_idx + offset
                 if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                    blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                    blur_sum += input_shared[sample_idx]
                     blur_count += 1
 
             if blur_count &gt; 0:

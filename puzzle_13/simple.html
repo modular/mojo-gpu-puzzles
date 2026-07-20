@@ -237,21 +237,7 @@ while maintaining correct boundary conditions.</p>
 <li><strong>Thread sync</strong>: Coordination before computation</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">comptime TPB = 8
-comptime SIZE = 6
-comptime CONV = 3
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
-comptime in_layout = row_major[SIZE]()
-comptime InLayout = type_of(in_layout)
-comptime out_layout = row_major[SIZE]()
-comptime OutLayout = type_of(out_layout)
-comptime conv_layout = row_major[CONV]()
-comptime ConvLayout = type_of(conv_layout)
-
-
-def conv_1d_simple(
+<pre><code class="language-mojo">def conv_1d_simple(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
@@ -262,7 +248,7 @@ def conv_1d_simple(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

@@ -322,8 +322,7 @@ elements plus itself.</p>
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
-    Inclusive prefix sum using warp primitive:
-    Each thread gets sum of all elements up to and including its position.
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 12's complex shared memory + barrier approach.
 
     Puzzle 12 approach:
@@ -347,7 +346,7 @@ elements plus itself.</p>
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -449,9 +448,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 
         # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
         # But it only works within the current warp (WARP_SIZE threads)
-        var scan_result = prefix_sum[exclusive=False](
-            rebind[Scalar[dtype]](current_val)
-        )
+        var scan_result = prefix_sum[exclusive=False](current_val)
 
         output[global_i] = scan_result
 

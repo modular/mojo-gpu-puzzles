@@ -1,0 +1,479 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔧 Aligned Load &amp; Store - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="aligned-load--store"><a class="header" href="#aligned-load--store">Aligned Load &amp; Store</a></h1>
+<h2 id="the-exercise"><a class="header" href="#the-exercise">The exercise</a></h2>
+<p>You’ll implement three kernels that compute the same memory-bound map,
+<code>out[i] = a[i] * 2 + 1</code>, over a 1M-element <code>float32</code> buffer. They differ only in
+how they touch memory:</p>
+<ol>
+<li><code>scalar_kernel</code>: one element per thread with no vectorization. This is the baseline.</li>
+<li><code>unaligned_kernel</code>: vectorized by <code>SIMD_WIDTH</code>, but the access alignment
+is <em>under-stated</em> (scalar alignment), so the compiler emits scalar loads.</li>
+<li><code>aligned_kernel</code>: the same vectorized kernel, with the alignment
+communicated, so the compiler emits a single vectorized load/store per chunk.</li>
+</ol>
+<p>All three produce identical output. The point of the puzzle is everything that
+happens <em>after</em> you confirm that.</p>
+<pre><code class="language-mojo">def scalar_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    """One element per thread. No vectorization, so alignment is irrelevant.
+
+    This is the baseline: each thread issues a scalar load and a scalar store.
+    """
+    var i = block_dim.x * block_idx.x + thread_idx.x
+    # FILL ME IN (1-2 lines): guard `i &lt; size`, then `output[i] = a[i] * SCALE + BIAS`.
+
+
+</code></pre>
+<pre><code class="language-mojo">def unaligned_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
+
+    The data is naturally 16-byte aligned, but `load`/`store` are told only the
+    scalar alignment (`align_of[dtype]()` == 4 bytes). The compiler cannot prove
+    the access is 16-byte aligned, so it falls back to scalar
+    `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
+    `.v4` form. The alignment trap: correct results, but lost bandwidth.
+    """
+    var a_lt = a.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
+
+    # Each thread owns one SIMD_WIDTH-wide chunk.
+    var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH &lt;= size`, then load a SIMD_WIDTH-wide vector with `load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=SCALAR_ALIGN`.
+
+
+</code></pre>
+<pre><code class="language-mojo">def aligned_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    """Same vectorized kernel, but the access alignment is communicated.
+
+    Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
+    float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
+    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
+    convenience wrapper that picks this alignment for you. Identical output to
+    the unaligned kernel — only the codegen (and the bandwidth) changes.
+    """
+    var a_lt = a.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
+
+    var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH &lt;= size`, then load with the *correct* alignment via `a_lt.aligned_load[width=SIMD_WIDTH](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=VEC_ALIGN`.
+
+
+</code></pre>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p35/p35.mojo" class="filename">View full file: problems/p35/p35.mojo</a></p>
+<h2 id="key-api"><a class="header" href="#key-api">Key API</a></h2>
+<p>The file defines two alignment constants up front:</p>
+<pre><code class="language-mojo">comptime VEC_ALIGN = align_of[SIMD[dtype, SIMD_WIDTH]]()   # 16 bytes for float32x4
+comptime SCALAR_ALIGN = align_of[dtype]()                  # 4 bytes
+</code></pre>
+<p>The vectorized kernels use <code>LayoutTensor</code>’s <code>load</code> and <code>store</code>, whose alignment
+you set explicitly:</p>
+<pre><code class="language-mojo"># Under-stated: compiler can't prove 16-byte alignment -&gt; scalar codegen
+var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))
+out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](Index(base), v * SCALE + BIAS)
+
+# Aligned: 16-byte alignment -&gt; ld.global.nc.v4 / st.global.v4
+var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))   # == load[..., load_alignment=VEC_ALIGN]
+out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](Index(base), v * SCALE + BIAS)
+</code></pre>
+<p><code>aligned_load[w]</code> is the convenience wrapper: it picks
+<code>align_of[SIMD[dtype, w]]()</code> for you. <code>aligned_store</code> exists too; here we pass
+<code>store_alignment=VEC_ALIGN</code> explicitly so the contrast with the unaligned kernel
+is a single changed value.</p>
+<h2 id="running-it"><a class="header" href="#running-it">Running it</a></h2>
+<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --simple
+pixi run mojo solutions/p35/p35.mojo --unaligned
+pixi run mojo solutions/p35/p35.mojo --aligned
+</code></pre>
+<p>Each prints <code>&lt;variant&gt; kernel: passed</code>, confirming all three are correct. The
+performance difference is the subject of the
+<a href="./benchmark_and_profile.html">next section</a>.</p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ul>
+<li>The data is already aligned. You are not moving the pointer or padding the
+buffer. Device allocations come back aligned, and each thread’s <code>base</code> is a
+multiple of <code>SIMD_WIDTH</code>, so every access is on a 16-byte boundary. The only
+thing that changes between the unaligned and aligned kernels is the alignment
+<em>value you pass</em> to <code>load</code>/<code>store</code>.</li>
+<li>Guard the tail: each vectorized thread handles <code>SIMD_WIDTH</code> elements, so
+guard with <code>if base + SIMD_WIDTH &lt;= size:</code> to avoid reading past the end.</li>
+<li><code>aligned_load[w]</code> is the same as
+<code>load[w, load_alignment=align_of[SIMD[dtype, w]]()]</code>. Use whichever reads
+more clearly.</li>
+<li>Don’t expect a wall-clock gap on a tiny input or on a non-NVIDIA GPU. The
+codegen difference instead shows up in NSight Compute’s instruction/sector metrics.
+We’ll cover this in the next section.</li>
+</ul>
+</div>
+</details>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary><strong>Complete solution</strong></summary>
+<p>The three kernels are identical in result and differ only in how they touch
+memory.</p>
+<pre><code class="language-mojo">def scalar_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    """One element per thread. No vectorization, so alignment is irrelevant.
+
+    This is the baseline: each thread issues a scalar load and a scalar store.
+    """
+    var i = block_dim.x * block_idx.x + thread_idx.x
+    if i &lt; size:
+        output[i] = a[i] * SCALE + BIAS
+
+
+</code></pre>
+<pre><code class="language-mojo">def unaligned_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
+
+    The data is naturally 16-byte aligned, but `load`/`store` are told only the
+    scalar alignment (`align_of[dtype]()` == 4 bytes). The compiler cannot prove
+    the access is 16-byte aligned, so it falls back to scalar
+    `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
+    `.v4` form. The alignment trap: correct results, but lost bandwidth.
+    """
+    var a_lt = a.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
+
+    # Each thread owns one SIMD_WIDTH-wide chunk.
+    var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
+    if base + SIMD_WIDTH &lt;= size:
+        var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](
+            Index(base)
+        )
+        out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
+            Index(base), v * SCALE + BIAS
+        )
+
+
+</code></pre>
+<pre><code class="language-mojo">def aligned_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    """Same vectorized kernel, but the access alignment is communicated.
+
+    Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
+    float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
+    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
+    convenience wrapper that picks this alignment for you. Identical output to
+    the unaligned kernel — only the codegen (and the bandwidth) changes.
+    """
+    var a_lt = a.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
+
+    var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
+    if base + SIMD_WIDTH &lt;= size:
+        # `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`.
+        var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
+        out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
+            Index(base), v * SCALE + BIAS
+        )
+
+
+</code></pre>
+<p><strong>What separates them:</strong></p>
+<ul>
+<li>The scalar kernel issues one scalar load and one scalar store per thread.
+Alignment is irrelevant because there is no vector to align.</li>
+<li>The unaligned kernel asks for a <code>SIMD_WIDTH</code>-wide load but declares only
+<code>SCALAR_ALIGN</code> (4 bytes). The compiler cannot prove the 16-byte alignment a
+<code>.v4</code> instruction requires, so it lowers the vector access to a sequence of
+scalar <code>ld.global.nc.f32</code> / <code>st.global.f32</code> instructions. Correct, but it
+issues <code>SIMD_WIDTH</code>× the memory instructions of the aligned kernel.</li>
+<li>The aligned kernel passes <code>VEC_ALIGN</code> (16 bytes). Now the compiler emits a
+single <code>ld.global.nc.v4.f32</code> load and <code>st.global.v4.f32</code> store per chunk,
+one quarter of the memory instructions for the same work.</li>
+</ul>
+<p>The takeaway: state the alignment explicitly. The data was aligned in
+all three kernels; only the aligned kernel informed the compiler, and only the
+aligned kernel got the vectorized instruction. The
+<a href="./benchmark_and_profile.html">benchmark and profile section</a> demonstrates this in numbers.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_35/alignment_basics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_35/benchmark_and_profile.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_35/alignment_basics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_35/benchmark_and_profile.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+
+
+    </div>
+    </body>
+</html>

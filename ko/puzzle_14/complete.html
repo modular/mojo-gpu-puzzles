@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="완성-버전"><a class="header" href="#완성-버전">완성 버전</a></h1>
 <p>1D TileTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D TileTensor <code>output</code>에
 저장하는 커널을 구현하세요.</p>
@@ -240,19 +240,11 @@
 블록의 원소에 더함</li>
 </ol>
 <p>메인 함수가 이 커널들 사이에 필요한 호스트 측 동기화를 처리합니다.</p>
-<pre><code class="language-mojo">comptime SIZE_2 = 15
-comptime BLOCKS_PER_GRID_2 = (2, 1)
-comptime THREADS_PER_BLOCK_2 = (TPB, 1)
-comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-comptime layout_2 = row_major[SIZE_2]()
-comptime Layout2Type = type_of(layout_2)
-comptime extended_layout = row_major[EXTENDED_SIZE]()
-comptime ExtendedLayoutType = type_of(extended_layout)
-
+<pre><code class="language-mojo">
 
 # Kernel 1: Compute local prefix sums and store block sums in out
 def prefix_sum_local_phase(
-    output: TileTensor[mut=True, dtype, ExtendedLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
     size: Int,
 ):
@@ -263,7 +255,7 @@ def prefix_sum_local_phase(
 
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase(
-    output: TileTensor[mut=True, dtype, ExtendedLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -271,16 +263,14 @@ def prefix_sum_block_sum_phase(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a></p>
 <p>이 퍼즐의 핵심은
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>가 블록
 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는
 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 커널을
 큐에 넣어야 합니다:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase, prefix_sum_local_phase
-            ](
+            ctx.enqueue_function[prefix_sum_local_phase](
                 out_tensor,
                 a_tensor,
                 size,
@@ -289,9 +279,7 @@ def prefix_sum_block_sum_phase(
             )
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[
-                prefix_sum_block_sum_phase, prefix_sum_block_sum_phase
-            ](
+            ctx.enqueue_function[prefix_sum_block_sum_phase](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -611,10 +599,10 @@ shared[7] = 22 + 6 = 28
 <h2 id="호스트-디바이스-동기화-실제로-필요한-시점"><a class="header" href="#호스트-디바이스-동기화-실제로-필요한-시점">호스트-디바이스 동기화: 실제로 필요한 시점</a></h2>
 <p>두 커널 단계는 <strong>명시적 동기화 없이</strong> 순차적으로 실행됩니다:</p>
 <pre><code class="language-mojo"># 1단계: 로컬 누적 합
-ctx.enqueue_function[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
+ctx.enqueue_function[prefix_sum_local_phase[...]](...)
 
 # 2단계: 블록 합계 더하기 (자동으로 1단계 완료를 대기)
-ctx.enqueue_function[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
+ctx.enqueue_function[prefix_sum_block_sum_phase[...]](...)
 </code></pre>
 <p><strong>핵심 통찰</strong>: Mojo의 <code>DeviceContext</code>는 단일 실행 스트림(NVIDIA GPU에서는 CUDA
 스트림, AMD ROCm GPU에서는 HIP 스트림)을 사용하므로, 큐에 넣은 커널이 정확히

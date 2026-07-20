@@ -229,19 +229,7 @@
 <li><strong>Synchronization</strong>: Proper thread coordination</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">comptime SIZE_2 = 15
-comptime CONV_2 = 4
-comptime BLOCKS_PER_GRID_2 = (2, 1)
-comptime THREADS_PER_BLOCK_2 = (TPB, 1)
-comptime in_2_layout = row_major[SIZE_2]()
-comptime In2Layout = type_of(in_2_layout)
-comptime out_2_layout = row_major[SIZE_2]()
-comptime Out2Layout = type_of(out_2_layout)
-comptime conv_2_layout = row_major[CONV_2]()
-comptime Conv2Layout = type_of(conv_2_layout)
-
-
-def conv_1d_block_boundary(
+<pre><code class="language-mojo">def conv_1d_block_boundary(
     output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
@@ -252,7 +240,7 @@ def conv_1d_block_boundary(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

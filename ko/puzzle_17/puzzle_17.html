@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-17-1d-합성곱-op"><a class="header" href="#puzzle-17-1d-합성곱-op">Puzzle 17: 1D 합성곱 Op</a></h1>
 <blockquote>
 <h2 id="max-그래프로-파이썬-연동하기"><a class="header" href="#max-그래프로-파이썬-연동하기">MAX 그래프로 파이썬 연동하기</a></h2>
@@ -243,11 +243,15 @@ def conv1d_kernel[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    kernel: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
+    kernel: TileTensor[mut=True, dtype, ConvLayout, MutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
+    # Convert generic TileTensors to LayoutTensor for indexing (flat_rank proof required)
+    var input_lt = input.to_layout_tensor()
+    var kernel_lt = kernel.to_layout_tensor()
+    var output_lt = output.to_layout_tensor()
     # first: need to account for padding
     var shared_a = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -256,36 +260,38 @@ def conv1d_kernel[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[conv_size]())
     if global_i &lt; input_size:
-        shared_a[local_i] = input[global_i]
+        shared_a[local_i] = rebind[Scalar[dtype]](input_lt[global_i])
 
     # second: load elements needed for convolution at block boundary
     if local_i &lt; conv_size - 1:
         # indices from next block
         var next_idx = global_i + TPB
         if next_idx &lt; input_size:
-            shared_a[TPB + local_i] = input[next_idx]
+            shared_a[TPB + local_i] = rebind[Scalar[dtype]](input_lt[next_idx])
         else:
+            # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
+            # which is an undefined behavior
             shared_a[TPB + local_i] = 0
 
     if local_i &lt; conv_size:
-        shared_b[local_i] = kernel[local_i]
+        shared_b[local_i] = rebind[Scalar[dtype]](kernel_lt[local_i])
 
     barrier()
 
     if global_i &lt; input_size:
-        var local_sum: output.ElementType = 0
+        var local_sum: Scalar[dtype] = 0
 
         comptime for j in range(conv_size):
             if local_i + j &lt; TPB + conv_size - 1:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
-        output[global_i] = local_sum
+        output_lt.store[1](Index(global_i), local_sum)
 
 
 </code></pre>
 <p>이 퍼즐의 핵심 요소는 다음과 같습니다:</p>
 <ol>
-<li><strong>커스텀 op 등록</strong>: <code>@compiler.register</code> 데코레이터를 통해 Mojo 함수를
+<li><strong>커스텀 op 등록</strong>: <code>@extensibility.register</code> 데코레이터를 통해 Mojo 함수를
 파이썬에 노출하는 방법 이해하기</li>
 <li><strong>커스텀 op 패키징</strong>: Mojo 코드를 MAX 그래프에서 사용할 수 있도록 패키징하는
 방법 익히기</li>
@@ -305,14 +311,14 @@ def conv1d_kernel[
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <p>이 퍼즐을 완성하려면 <code>conv1d.mojo</code>에서 <code>conv1d_kernel</code>을 호출하는 한 줄만 채우면
 됩니다:</p>
-<pre><code class="language-mojo">import compiler
-from std.runtime.asyncrt import DeviceContextPtr
-from tensor import InputTensor, OutputTensor
+<pre><code class="language-mojo">import extensibility
+
+from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 
 
-@compiler.register("conv1d")
+@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[
@@ -322,23 +328,34 @@ struct Conv1DCustomOp:
         conv_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1, static_spec=_],
-        input: InputTensor[rank=output.rank, static_spec=_],
-        kernel: InputTensor[rank=output.rank, static_spec=_],
+        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         # the context is needed for some GPU calls
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
-        var output_tensor = output.to_layout_tensor()
-        var input_tensor = input.to_layout_tensor()
-        var kernel_tensor = kernel.to_layout_tensor()
+        comptime out_layout_val = row_major[input_size]()
+        comptime OutLayout = type_of(out_layout_val)
+        comptime conv_layout_val = row_major[conv_size]()
+        comptime ConvLayout = type_of(conv_layout_val)
+
+        var output_tensor = TileTensor[
+            mut=True, dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+            input.unsafe_ptr(), out_layout_val
+        )
+        var kernel_tensor = TileTensor[
+            mut=True, dtype, ConvLayout, MutAnyOrigin
+        ](kernel.unsafe_ptr(), conv_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](
                     gpu_ctx,
-                    output_tensor.ptr,
+                    output.unsafe_ptr(),
                     input_size,
                     owning=False,
                 ),
@@ -355,7 +372,7 @@ struct Conv1DCustomOp:
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/op/conv1d.mojo" class="filename">전체 파일 보기: problems/p17/op/conv1d.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p17/op/conv1d.mojo" class="filename">전체 파일 보기: problems/p17/op/conv1d.mojo</a></p>
 <p>다음 명령으로 퍼즐을 실행할 수 있습니다:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -402,7 +419,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
                 input_size, conv_size, OutLayout, OutLayout, ConvLayout
             ]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 kernel_tensor,
@@ -425,7 +442,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <h3 id="파이썬-mojo-통합-흐름"><a class="header" href="#파이썬-mojo-통합-흐름">파이썬-Mojo 통합 흐름</a></h3>
 <ol>
 <li>
-<p><strong>파이썬 쪽 (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py"
+<p><strong>파이썬 쪽 (<a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p17/p17.py"
 class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>입력과 커널용 NumPy 배열 생성</li>
@@ -450,8 +467,8 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <li>
 <p><strong>커스텀 op 등록</strong>:</p>
 <ul>
-<li><code>@compiler.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출.
-<a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a>
+<li><code>@extensibility.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출.
+<a href="https://docs.modular.com/mojo/manual/decorators/extensibility-register/">@extensibility.register</a>
 참고</li>
 <li><code>execute</code> 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의</li>
 <li>입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환</li>
@@ -472,14 +489,14 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ol>
 <li>
 <p><strong>커스텀 Op 구조체</strong>:</p>
-<pre><code class="language-mojo">@compiler.register("conv1d")
+<pre><code class="language-mojo">@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[dtype = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # 구현
 </code></pre>
@@ -506,7 +523,7 @@ kernel_tensor = kernel.to_layout_tensor()
 <p><strong>Device Context 사용</strong>:</p>
 <pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
 gpu_ctx.enqueue_memset(...)  # 출력 버퍼 초기화
-gpu_ctx.enqueue_function[..., ...](...) # 커널 예약
+gpu_ctx.enqueue_function[...](...) # 커널 예약
 </code></pre>
 <ul>
 <li>디바이스 컨텍스트가 GPU 리소스를 관리</li>
@@ -528,15 +545,15 @@ gpu_ctx.enqueue_function[..., ...](...) # 커널 예약
 </ul>
 </blockquote>
 <h3 id="커스텀-op-등록"><a class="header" href="#커스텀-op-등록">커스텀 op 등록</a></h3>
-<p>커스텀 연산을 만드는 핵심은 <code>@compiler.register</code> 데코레이터와 관련 구조체입니다:</p>
-<pre><code class="language-mojo">@compiler.register("conv1d")
+<p>커스텀 연산을 만드는 핵심은 <code>@extensibility.register</code> 데코레이터와 관련 구조체입니다:</p>
+<pre><code class="language-mojo">@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[type = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         # 구현
 </code></pre>
@@ -546,17 +563,17 @@ struct Conv1DCustomOp:
 때 사용하는 이름</li>
 <li><strong>구조체</strong>에는 올바른 시그니처를 가진 <code>execute</code> 메서드가 있어야 함</li>
 <li><strong>OutputTensor</strong>와 <strong>InputTensor</strong> 타입이 파이썬 데이터와의 인터페이스를 정의</li>
-<li><strong>DeviceContextPtr</strong>이 실행 환경에 대한 접근을 제공</li>
+<li><strong>DeviceContext</strong>가 실행 환경에 대한 접근을 제공</li>
 </ul>
 <h3 id="커스텀-op-패키징"><a class="header" href="#커스텀-op-패키징">커스텀 op 패키징</a></h3>
 <p>커스텀 연산을 파이썬에서 사용하려면 먼저 패키징해야 합니다:</p>
-<pre><code class="language-bash">mojo package op -o op.mojopkg
+<pre><code class="language-bash">mojo package op -o op.mojoc
 </code></pre>
 <p>이 명령은:</p>
 <ol>
 <li>Mojo 코드를 배포 가능한 패키지로 컴파일</li>
 <li>MAX 그래프가 연산을 이해하는 데 필요한 메타데이터 생성</li>
-<li>파이썬에서 로드할 수 있는 바이너리 아티팩트(<code>op.mojopkg</code>)를 생성</li>
+<li>파이썬에서 로드할 수 있는 바이너리 아티팩트(<code>op.mojoc</code>)를 생성</li>
 </ol>
 <p>패키지는 MAX 그래프가 찾을 수 있는 위치에 배치해야 하며, 보통 파이썬 코드에서
 접근 가능한 디렉토리에 둡니다.</p>
@@ -576,7 +593,7 @@ with Graph(
 
     # 이름으로 커스텀 연산 사용
     output = ops.custom(
-        name="conv1d",  # @compiler.register의 이름과 일치해야 함
+        name="conv1d",  # @extensibility.register의 이름과 일치해야 함
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={

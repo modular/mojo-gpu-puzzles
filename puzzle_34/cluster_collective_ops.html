@@ -268,9 +268,9 @@ ensures all partial results are ready</li>
 <pre><code class="language-mojo">def cluster_collective_operations[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    temp_storage: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -281,7 +281,7 @@ ensures all partial results are ready</li>
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-18-소프트맥스-op"><a class="header" href="#puzzle-18-소프트맥스-op">Puzzle 18: 소프트맥스 Op</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>이 퍼즐에서는 소프트맥스 함수를 커스텀 MAX 그래프 연산으로 구현합니다.
@@ -279,41 +279,21 @@
 <p>이 퍼즐을 완성하려면 Mojo 파일에서 GPU와 CPU 커널을 모두 구현하고, 파이썬
 코드에서 그래프 정의를 완성해야 합니다.</p>
 <h3 id="1-softmaxmojo에서-gpu-커널-구현하기"><a class="header" href="#1-softmaxmojo에서-gpu-커널-구현하기">1. <code>softmax.mojo</code>에서 GPU 커널 구현하기</a></h3>
-<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from std.gpu.memory import AddressSpace
-from layout import TileTensor
-from layout.tile_layout import row_major
-from layout.tile_tensor import stack_allocation
-from std.math import exp
-from std.bit import log2_ceil
-from std.utils.numerics import max_finite, min_finite
-
-
-comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
-comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
-comptime GRID_DIM_X = 1
-# Tree-based reduction require the number of threads to be the next power of two &gt;= SIZE for correctness.
-comptime BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)
-
-
-def softmax_gpu_kernel[
+<pre><code class="language-mojo">def softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     # FILL IN (roughly 31 lines)
-    ...
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">전체 파일 보기: problems/p18/op/softmax.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p18/op/softmax.mojo" class="filename">전체 파일 보기: problems/p18/op/softmax.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -334,17 +314,16 @@ def softmax_gpu_kernel[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     # FILL IN (roughly 10 lines)
-    ...
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">전체 파일 보기: problems/p18/op/softmax.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p18/op/softmax.mojo" class="filename">전체 파일 보기: problems/p18/op/softmax.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -386,7 +365,7 @@ import numpy as np
 from max.driver import CPU, Accelerator, Buffer, Device
 from max.dtype import DType
 from max.engine import InferenceSession
-from max.graph import DeviceRef, Graph, TensorType
+from max.graph import DeviceRef, Graph, TensorType, ops  # noqa: F401
 from numpy.typing import NDArray
 from scipy.special import softmax as scipy_softmax
 
@@ -415,7 +394,7 @@ def softmax(
         pass
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">전체 파일 보기: problems/p18/p18.py</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p18/p18.py" class="filename">전체 파일 보기: problems/p18/p18.py</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -506,7 +485,7 @@ Sum of all probabilities on GPU: 1.0
     # do not influence the result (max(min_finite, x) == x for any x).
     var val: Scalar[dtype] = min_finite[dtype]()
     if global_i &lt; input_size:
-        val = rebind[Scalar[dtype]](input[global_i])
+        val = input[global_i]
     shared_max[global_i] = val
 
     barrier()
@@ -528,7 +507,7 @@ Sum of all probabilities on GPU: 1.0
     # do not influence the result (adding 0.0 does not change the sum).
     var exp_val: Scalar[dtype] = 0.0
     if global_i &lt; input_size:
-        exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+        exp_val = exp(val - block_max)
     shared_sum[global_i] = exp_val
     barrier()
 
@@ -692,11 +671,11 @@ n)\)</li>
     ), "dtype must be a floating-point type"
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):
-        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+        max_val = max(max_val, input[i])
 
     var sum_exp: Scalar[dtype] = 0.0
     for i in range(input_size):
-        var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+        var exp_val = exp(input[i] - max_val)
         output[i] = exp_val
         sum_exp += exp_val
 
@@ -743,7 +722,7 @@ for i in range(input_size):
 <p>CPU 구현은 동일한 수치 안정성 기법(최댓값 차감)을 사용하되, 병렬이 아닌 순차적
 연산으로 처리합니다. 공유 메모리나 스레드 동기화를 다룰 필요가 없어 GPU 버전보다
 단순하지만, 대규모 입력에서는 효율이 떨어집니다.</p>
-<p>두 구현 모두 <code>@compiler.register("softmax")</code> 데코레이터를 통해 MAX 그래프의
+<p>두 구현 모두 <code>@extensibility.register("softmax")</code> 데코레이터를 통해 MAX 그래프의
 커스텀 연산 시스템에 등록되므로, 가용 여부에 따라 어느 디바이스에서든 매끄럽게
 실행됩니다.</p>
 </div>
@@ -762,7 +741,7 @@ for i in range(input_size):
         input_value = graph.inputs[0]
 
         # The output shape is the same as the input for softmax
-        # Note: the name must match the name used in `@compiler.register("softmax")` in op/softmax.mojo
+        # Note: the name must match the name used in `@extensibility.register("softmax")` in op/softmax.mojo
         output = ops.custom(
             name="softmax",
             values=[input_value],
@@ -829,7 +808,7 @@ for i in range(input_size):
 </code></pre>
 <p>커스텀 연산을 다음과 같이 설정합니다:</p>
 <ul>
-<li>Mojo 코드의 <code>@compiler.register("softmax")</code>와 일치하는 이름</li>
+<li>Mojo 코드의 <code>@extensibility.register("softmax")</code>와 일치하는 이름</li>
 <li>리스트로 전달되는 입력 값</li>
 <li>입력 shape과 타입에 맞는 출력 타입 정의</li>
 <li>대상 디바이스, 벡터 크기, 데이터 타입을 포함한 커널 필수 파라미터</li>

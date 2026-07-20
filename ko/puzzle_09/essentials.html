@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: a6f8350359da1569bc39e376bc26580246e61653 -->
+                        <!-- i18n-source-commit: da0038838288ad5b074c8af85622d9d3adfca0a1 -->
 <h1 id="-mojo-gpu-디버깅의-핵심"><a class="header" href="#-mojo-gpu-디버깅의-핵심">📚 Mojo GPU 디버깅의 핵심</a></h1>
 <p>GPU 디버깅의 세계에 오신 것을 환영합니다! Puzzle 1-8을 통해 GPU 프로그래밍
 개념을 배웠으니, 이제 모든 GPU 프로그래머에게 가장 중요한 기술을 배울 준비가
@@ -291,10 +291,10 @@ error: use of undeclared identifier 'my_variable'
 있으며, 적절한 것을 고르면 시간을 절약할 수 있습니다:</p>
 <h3 id="네-가지-디버깅-조합"><a class="header" href="#네-가지-디버깅-조합">네 가지 디버깅 조합</a></h3>
 <p><strong>빠른 참조:</strong></p>
-<pre><code class="language-bash"># 1. JIT + LLDB: 소스에서 직접 CPU 호스트 코드 디버깅
+<pre><code class="language-bash"># 1. 소스 + LLDB: 소스에서 직접 CPU 호스트 코드 디버깅
 pixi run mojo debug your_gpu_program.mojo
 
-# 2. JIT + CUDA-GDB: 소스에서 직접 GPU 커널 디버깅
+# 2. 소스 + CUDA-GDB: 소스에서 직접 GPU 커널 디버깅
 pixi run mojo debug --cuda-gdb --break-on-launch your_gpu_program.mojo
 
 # 3. 바이너리 + LLDB: 미리 컴파일된 바이너리에서 CPU 호스트 코드 디버깅
@@ -307,11 +307,12 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 <h3 id="각-접근법을-언제-사용할까"><a class="header" href="#각-접근법을-언제-사용할까">각 접근법을 언제 사용할까</a></h3>
 <p><strong>학습과 빠른 실험용:</strong></p>
 <ul>
-<li><strong>JIT 디버깅</strong> 사용 - 빌드 단계가 필요 없어 더 빠르게 반복 가능</li>
+<li><strong>소스 디버깅</strong> 사용 - 별도 빌드 단계가 필요 없어 더 빠르게 반복 가능</li>
 </ul>
 <p><strong>본격적인 디버깅 세션용:</strong></p>
 <ul>
-<li><strong>바이너리 디버깅</strong> 사용 - 더 예측 가능하고 깔끔한 디버거 출력</li>
+<li><strong>바이너리 디버깅</strong> 사용 - 더 예측 가능하고 깔끔한 디버거 출력, 빌드
+플래그를 완전히 제어 가능 (<code>-O0 -g</code>로 로컬 변수 보존)</li>
 </ul>
 <p><strong>CPU 측 문제용</strong> (버퍼 할당, 호스트 메모리, 프로그램 로직):</p>
 <ul>
@@ -321,8 +322,8 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 <ul>
 <li><strong>CUDA-GDB 모드</strong> 사용 - 개별 GPU 스레드를 검사하는 유일한 방법</li>
 </ul>
-<p>장점은 다양하게 조합해서 사용할 수 있다는 점입니다. JIT + LLDB로 설정 코드를
-디버깅한 다음, JIT + CUDA-GDB로 전환해서 실제 커널을 디버깅할 수 있습니다.</p>
+<p>장점은 다양하게 조합해서 사용할 수 있다는 점입니다. 소스 + LLDB로 설정 코드를
+디버깅한 다음, 소스 + CUDA-GDB로 전환해서 실제 커널을 디버깅할 수 있습니다.</p>
 <hr />
 <h2 id="cuda-gdb로-gpu-커널-디버깅-이해하기"><a class="header" href="#cuda-gdb로-gpu-커널-디버깅-이해하기">CUDA-GDB로 GPU 커널 디버깅 이해하기</a></h2>
 <p>이제 GPU 커널 디버깅입니다 - 디버깅 도구 모음에서 가장 강력하면서도 복잡한
@@ -484,14 +485,16 @@ CUDA-GDB 바이너리를 자동 감지하고 conda 환경에 링크하여 전체
 실제 디버거 출력을 보고, 매일 사용할 필수 디버깅 명령어를 배우게 됩니다.</p>
 <h3 id="디버깅-접근법-학습-경로"><a class="header" href="#디버깅-접근법-학습-경로">디버깅 접근법 학습 경로</a></h3>
 <p>Puzzle 01을 예제로 <a href="#%EB%84%A4-%EA%B0%80%EC%A7%80-%EB%94%94%EB%B2%84%EA%B9%85-%EC%A1%B0%ED%95%A9">네 가지 디버깅 조합</a>을 탐색합니다.
-<strong>학습 경로</strong>: JIT + LLDB(가장 쉬움)로 시작해서 CUDA-GDB(가장 강력함)로
+<strong>학습 경로</strong>: 소스 + LLDB(가장 쉬움)로 시작해서 CUDA-GDB(가장 강력함)로
 진행합니다.</p>
 <p><strong>⚠️ GPU 디버깅 시 중요사항</strong>:</p>
 <ul>
 <li><code>--break-on-launch</code> 플래그는 CUDA-GDB 접근법에서 <strong>필수</strong></li>
-<li><strong>미리 컴파일된 바이너리</strong> (접근법 3 &amp; 4)는 디버깅을 위해 <code>i</code> 같은 로컬 변수를
-보존</li>
-<li><strong>JIT 컴파일</strong> (접근법 1 &amp; 2)은 대부분의 로컬 변수를 최적화로 제거</li>
+<li><strong>미리 컴파일된 바이너리</strong> (접근법 3 &amp; 4)는 <code>-O0 -g</code>로 빌드되어 최적화가
+비활성화되고 디버그 심볼이 포함됩니다 — 그래서 <code>i</code> 같은 로컬 변수가
+검사를 위해 보존됩니다</li>
+<li><strong>소스에서 디버깅</strong> (접근법 1 &amp; 2)은 기본 플래그로 컴파일되므로, 대부분의
+로컬 변수가 최적화로 제거됩니다</li>
 <li>본격적인 GPU 디버깅에는 <strong>접근법 4</strong> (바이너리 + CUDA-GDB) 사용</li>
 </ul>
 <h2 id="튜토리얼-step-1-lldb로-cpu-디버깅"><a class="header" href="#튜토리얼-step-1-lldb로-cpu-디버깅">튜토리얼 Step 1: LLDB로 CPU 디버깅</a></h2>
@@ -500,7 +503,7 @@ CUDA-GDB 바이너리를 자동 감지하고 conda 환경에 링크하여 전체
 <p><strong>미션</strong>: Puzzle 01의 CPU 측 설정 코드를 디버깅하여 Mojo가 GPU 메모리를
 초기화하고 커널을 실행하는 방법을 파악합니다.</p>
 <h3 id="디버거-실행"><a class="header" href="#디버거-실행">디버거 실행</a></h3>
-<p>JIT 컴파일로 LLDB 디버거를 시작합니다:</p>
+<p>소스에서 직접 LLDB 디버거를 시작합니다:</p>
 <pre><code class="language-bash"># 한 단계로 p01.mojo를 컴파일하고 디버깅
 pixi run mojo debug solutions/p01/p01.mojo
 </code></pre>
@@ -513,80 +516,57 @@ pixi run mojo debug solutions/p01/p01.mojo
 <pre><code class="language-bash">(lldb) br set -n main
 </code></pre>
 <p>출력:</p>
-<pre><code class="language-text">Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
+<pre><code class="language-text">Breakpoint 1: no locations (pending).
+WARNING: Unable to resolve breakpoint to any actual locations.
 </code></pre>
-<p>디버거가 main 함수를 찾았고 거기서 실행을 일시 정지합니다.</p>
+<p>이것은 예상되는 동작입니다. <code>mojo debug your_program.mojo</code>로 실행하면 디버그
+세션이 시작될 때 프로그램이 컴파일되므로, 브레이크포인트를 설정하는 시점에는
+모듈이 아직 디버거에 로드되지 않았습니다. LLDB는 브레이크포인트를 보류 상태로
+등록하며 아직 구체적인 명령어 주소에 바인딩할 수 없습니다. 실행이 시작되고
+모듈이 로드되면 LLDB가 자동으로 브레이크포인트를 해결합니다.</p>
 <p><strong>Step 2: 프로그램 시작</strong></p>
 <pre><code class="language-bash">(lldb) run
 </code></pre>
 <p>출력:</p>
 <pre><code class="language-text">Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
-Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = breakpoint 1.1
-    frame #0: 0x0000555557d2b530 mojo`main
-mojo`main:
--&gt;  0x555557d2b530 &lt;+0&gt;: pushq  %rbp
-    0x555557d2b531 &lt;+1&gt;: movq   %rsp, %rbp
-    ...
-</code></pre>
-<p>프로그램이 브레이크포인트에서 멈췄습니다. 현재 <strong>어셈블리 코드</strong>를 보고 있는데
-이는 정상입니다 - 디버거가 고수준 Mojo 소스에 도달하기 전에 저수준 머신 코드에서
-시작합니다.</p>
-<p><strong>Step 3: 시작 과정 탐색</strong></p>
-<pre><code class="language-bash"># 명령어 하나를 단계별 실행 시도
-(lldb) next
-</code></pre>
-<p>출력:</p>
-<pre><code class="language-text">Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = instruction step over
-    frame #0: 0x0000555557d2b531 mojo`main + 1
-mojo`main:
--&gt;  0x555557d2b531 &lt;+1&gt;: movq   %rsp, %rbp
-    0x555557d2b534 &lt;+4&gt;: pushq  %r15
-    ...
-</code></pre>
-<p>어셈블리를 단계별로 실행하는 것은 지루할 수 있습니다. 더 관련 있는 부분으로
-진행합시다.</p>
-<p><strong>Step 4: Mojo 소스 코드에 도달하기 위해 계속</strong></p>
-<pre><code class="language-bash"># 시작 어셈블리를 건너뛰어 실제 코드로 이동
-(lldb) continue
-</code></pre>
-<p>출력:</p>
-<pre><code class="language-text">Process 186951 resuming
 Process 186951 stopped and restarted: thread 1 received signal: SIGCHLD
 2 locations added to breakpoint 1
 Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = breakpoint 1.3
-    frame #0: 0x00007fff5c01e841 JIT(0x7fff5c075000)`stdlib::builtin::_startup::__mojo_main_prototype(argc=([0] = 1), argv=0x00007fffffffa858) at _startup.mojo:95:4
+* thread #1, name = 'mojo', stop reason = breakpoint 1.2
+    frame #0: 0x00007fff5c01e841 JIT(0x7fff5c075000)`std::builtin::_startup::__mojo_main_prototype(argc=1, argv=0x00007fffffffa858) at _startup.mojo:119:5
 </code></pre>
-<p>Mojo의 런타임이 초기화 중입니다. <code>_startup.mojo</code>는 Mojo의 내부 시작 코드를
-나타냅니다. <code>SIGCHLD</code> 시그널은 정상입니다 - Mojo가 내부 프로세스를 관리하는
-방식입니다.</p>
-<p><strong>Step 5: 실제 코드로 계속</strong></p>
-<pre><code class="language-bash"># 한 번 더 continue해서 p01.mojo 코드에 도달!
+<p>프로그램이 시작되면 보류 중이던 브레이크포인트가 <strong>2개의 위치</strong>로 해결됩니다 —
+하나는 <code>_startup.mojo</code>(Mojo의 내부 시작 래퍼)에, 다른 하나는 여러분의
+<code>p01.mojo</code>의 <code>main</code>에 위치합니다. LLDB는 첫 번째 히트인 시작 래퍼에서 멈춥니다.
+<code>SIGCHLD</code> 시그널은 정상입니다 — Mojo가 내부 프로세스를 관리하는 방식입니다.</p>
+<p><strong>Step 3: 실제 코드로 계속</strong></p>
+<pre><code class="language-bash"># p01.mojo 코드에 도달하기 위해 continue
 (lldb) continue
 </code></pre>
 <p>출력:</p>
 <pre><code class="language-text">Process 186951 resuming
 Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = breakpoint 1.2
-    frame #0: 0x00007fff5c014040 JIT(0x7fff5c075000)`p01::main(__error__=&lt;unavailable&gt;) at p01.mojo:24:23
-   21
-   22
-   23   def main():
--&gt; 24       with DeviceContext() as ctx:
-   25           out = ctx.enqueue_create_buffer[dtype](SIZE)
-   26           out.enqueue_fill(0)
-   27           a = ctx.enqueue_create_buffer[dtype](SIZE)
+* thread #1, name = 'mojo', stop reason = breakpoint 1.1
+    frame #0: 0x00007fff5c014040 JIT(0x7fff5c075000)`p01::main() at p01.mojo:30:23
+   27
+   28
+   29   def main() raises:
+-&gt; 30       with DeviceContext() as ctx:
+   31           var out = ctx.enqueue_create_buffer[dtype](SIZE)
+   32           out.enqueue_fill(0)
+   33           var a = ctx.enqueue_create_buffer[dtype](SIZE)
 </code></pre>
 <p>이제 실제 Mojo 소스 코드를 볼 수 있습니다. 주목할 점:</p>
 <ul>
-<li>p01.mojo 파일의 <strong>21-27번 줄</strong></li>
-<li><strong>현재 줄 24</strong>: <code>with DeviceContext() as ctx:</code></li>
-<li><strong>JIT 컴파일</strong>: <code>JIT(0x7fff5c075000)</code>은 Mojo가 코드를 즉석에서 컴파일했음을
-나타냄</li>
+<li>p01.mojo 파일의 <strong>27-33번 줄</strong></li>
+<li><strong>현재 줄 30</strong>: <code>with DeviceContext() as ctx:</code></li>
+<li><strong>인프로세스 실행</strong>: <code>JIT(0x7fff5c075000)</code> 접두사는 실행 중인 프로세스에
+로드된 코드 영역에 대한 LLDB의 라벨입니다. <code>mojo debug your_program.mojo</code>로
+실행하면, 컴파일된 프로그램이 디스크에 실행 파일을 쓰지 않고 인프로세스에서
+실행됩니다 — 그래서 이 경로가 먼저 바이너리를 빌드하는 것보다 시작이 빠르고,
+<code>your_program_debug</code> 파일이 생성되지 않습니다</li>
 </ul>
-<p><strong>Step 6: 프로그램 완료</strong></p>
+<p><strong>Step 4: 프로그램 완료</strong></p>
 <pre><code class="language-bash"># 프로그램을 완료까지 실행
 (lldb) continue
 </code></pre>
@@ -601,11 +581,11 @@ Process 186951 exited with status = 0 (0x00000000)
 있었는지 살펴보겠습니다:</p>
 <p><strong>거쳐온 디버깅 여정:</strong></p>
 <ol>
-<li><strong>어셈블리로 시작</strong> - 저수준 디버깅에서는 정상적인 현상이며, 디버거가 머신
-수준에서 어떻게 작동하는지 보여줌</li>
-<li><strong>Mojo 시작 과정 탐색</strong> - Mojo에 내부 초기화 코드가 있음을 학습</li>
-<li><strong>소스 코드 도달</strong> - 구문 강조가 된 실제 p01.mojo 21-27번 줄 확인</li>
-<li><strong>JIT 컴파일 관찰</strong> - Mojo가 코드를 즉석에서 컴파일하는 것을 관찰</li>
+<li><strong>Mojo 시작 과정 탐색</strong> - Mojo에 내부 초기화 코드가 있음을 학습 (브레이크
+포인트가 두 위치로 해결되어 먼저 <code>_startup.mojo</code>에서 멈췄습니다)</li>
+<li><strong>소스 코드 도달</strong> - 구문 강조가 된 실제 p01.mojo 27-33번 줄 확인</li>
+<li><strong>인프로세스 실행 관찰</strong> - <code>mojo debug your_program.mojo</code>가 프로그램을
+컴파일하고 디스크에 실행 파일을 쓰지 않고 바로 실행하는 것을 관찰</li>
 <li><strong>성공적인 실행 확인</strong> - 프로그램이 예상된 출력을 생성함을 확인</li>
 </ol>
 <p><strong>LLDB 디버깅이 제공하는 것:</strong></p>
@@ -634,7 +614,7 @@ Process 186951 exited with status = 0 (0x00000000)
 <p><strong>핵심 통찰</strong>: LLDB는 <strong>호스트 측 디버깅</strong>에 완벽합니다 - GPU 실행 전후에
 CPU에서 일어나는 모든 것. 실제 GPU 커널 디버깅에는 다음 접근법이 필요합니다…</p>
 <h2 id="튜토리얼-step-2-바이너리-디버깅"><a class="header" href="#튜토리얼-step-2-바이너리-디버깅">튜토리얼 Step 2: 바이너리 디버깅</a></h2>
-<p>JIT 디버깅을 배웠으니 이제 프로덕션 환경에서 사용하는 <strong>전문적인 접근법</strong>을
+<p>소스 디버깅을 배웠으니 이제 프로덕션 환경에서 사용하는 <strong>전문적인 접근법</strong>을
 탐색합시다.</p>
 <p><strong>시나리오</strong>: 여러 파일이 있는 복잡한 애플리케이션을 디버깅하거나 같은
 프로그램을 반복적으로 디버깅해야 합니다. 먼저 바이너리를 빌드하면 더 많은 제어와
@@ -656,19 +636,19 @@ pixi run mojo debug solutions/p01/p01_debug
 </code></pre>
 <h3 id="무엇이-다른가-그리고-더-나은가"><a class="header" href="#무엇이-다른가-그리고-더-나은가">무엇이 다른가 (그리고 더 나은가)</a></h3>
 <p><strong>시작 비교:</strong></p>
-<div class="table-wrapper"><table><thead><tr><th>JIT 디버깅</th><th>바이너리 디버깅</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>소스 디버깅</th><th>바이너리 디버깅</th></tr></thead><tbody>
 <tr><td>한 단계로 컴파일 + 디버깅</td><td>한 번 빌드, 여러 번 디버깅</td></tr>
 <tr><td>느린 시작 (컴파일 오버헤드)</td><td>빠른 시작</td></tr>
 <tr><td>컴파일 메시지가 디버그 출력과 섞임</td><td>깔끔한 디버거 출력</td></tr>
-<tr><td>디버깅 중 생성되는 디버그 심볼</td><td>고정된 디버그 심볼</td></tr>
+<tr><td>기본 빌드 플래그</td><td>명시적 <code>-O0 -g</code> 빌드 플래그</td></tr>
 </tbody></table>
 </div>
 <p><strong>같은 LLDB 명령어</strong>(<code>br set -n main</code>, <code>run</code>, <code>continue</code>)를 실행하면 다음과 같은
 차이를 느낄 수 있습니다:</p>
 <ul>
 <li><strong>빠른 시작</strong> - 컴파일 지연 없음</li>
-<li><strong>깔끔한 출력</strong> - JIT 컴파일 메시지 없음</li>
-<li><strong>더 예측 가능</strong> - 디버그 심볼이 실행 간에 변하지 않음</li>
+<li><strong>깔끔한 출력</strong> - 컴파일 메시지가 섞이지 않음</li>
+<li><strong>더 예측 가능</strong> - 빌드 플래그가 명시적이고 실행 간에 재사용됨</li>
 <li><strong>전문적인 워크플로우</strong> - 프로덕션 디버깅이 이렇게 작동함</li>
 </ul>
 <hr />
@@ -704,10 +684,10 @@ GPU에서 실행됩니다. LLDB는 GPU의 병렬 실행 환경에 접근할 수 
 <pre><code class="language-bash"># 이미 실행했는지 확인 (한 번이면 충분)
 pixi run setup-cuda-gdb
 
-# JIT + CUDA-GDB 사용 (위의 접근법 2)
+# 소스 + CUDA-GDB 사용 (위의 접근법 2)
 pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
 </code></pre>
-<p>학습과 빠른 반복에 적합한 <strong>JIT + CUDA-GDB 접근법</strong>을 사용합니다.</p>
+<p>학습과 빠른 반복에 적합한 <strong>소스 + CUDA-GDB 접근법</strong>을 사용합니다.</p>
 <p><strong>Step 2: 실행하고 GPU 커널 진입 시 자동 정지</strong></p>
 <p>CUDA-GDB 프롬프트는 이렇게 보입니다: <code>(cuda-gdb)</code>. 프로그램을 시작합니다:</p>
 <pre><code class="language-gdb"># 프로그램 실행 - GPU 커널이 실행될 때 자동으로 정지
@@ -794,7 +774,7 @@ Kernel 0
 (cuda-gdb) print a
 </code></pre>
 <p>출력:</p>
-<pre><code class="language-text">$5 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+<pre><code class="language-text">$5 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <p><strong>Step 5: 병렬 스레드 간 이동</strong></p>
 <pre><code class="language-gdb"># 다른 스레드로 전환해서 실행 확인
@@ -938,12 +918,12 @@ Kernel 0
 (cuda-gdb) print a               # 입력 배열 GPU 포인터
 </code></pre>
 <p>출력:</p>
-<pre><code class="language-text">$9 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+<pre><code class="language-text">$9 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <pre><code class="language-gdb">(cuda-gdb) print output          # 출력 배열 GPU 포인터
 </code></pre>
 <p>출력:</p>
-<pre><code class="language-text">$10 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
+<pre><code class="language-text">$10 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000000
 </code></pre>
 <pre><code class="language-gdb"># 로컬 변수를 사용해 메모리 접근 패턴 확인:
 (cuda-gdb) print a[i]            # 각 스레드가 'i'를 사용해 자신의 요소에 접근
@@ -1107,7 +1087,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <ul>
 <li>✅ LLDB로 <strong>CPU 호스트 디버깅</strong> - 장치 설정, 메모리 할당, 프로그램 흐름 디버깅</li>
 <li>✅ CUDA-GDB로 <strong>GPU 커널 디버깅</strong> - 병렬 스레드, GPU 메모리, 경쟁 상태 디버깅</li>
-<li>✅ <strong>JIT vs 바이너리 디버깅</strong> - 상황에 맞는 접근법 선택</li>
+<li>✅ <strong>소스 vs 바이너리 디버깅</strong> - 상황에 맞는 접근법 선택</li>
 <li>✅ pixi로 <strong>환경 관리</strong> - 일관되고 신뢰할 수 있는 디버깅 설정 보장</li>
 </ul>
 <p><strong>실제 병렬 프로그래밍 통찰</strong>:</p>
@@ -1123,8 +1103,8 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <ul>
 <li><strong>실제 코드 디버깅</strong>: 실제 GPU 실행으로 Puzzle 01의 <code>add_10</code> 커널을
 디버깅했습니다</li>
-<li><strong>실제 디버거 출력 확인</strong>: LLDB 어셈블리, CUDA-GDB 스레드 상태, 메모리 주소를
-직접 확인했습니다</li>
+<li><strong>실제 디버거 출력 확인</strong>: JIT 라벨이 붙은 프레임에서 LLDB 소스 정지,
+CUDA-GDB 스레드 상태, 메모리 주소를 직접 확인했습니다</li>
 <li><strong>전문 도구 사용</strong>: 프로덕션 GPU 개발에서 사용하는 것과 동일한 CUDA-GDB를
 사용했습니다</li>
 <li><strong>실제 시나리오 해결</strong>: 범위 초과 접근, 경쟁 상태, 커널 실행 실패 문제를

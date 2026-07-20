@@ -261,7 +261,7 @@ synchronization failures</li>
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
-        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+        shared_workspace[thread_id] = a[thread_id]
     barrier()
 
     # Phase 2: Collaborative processing
@@ -278,7 +278,7 @@ synchronization failures</li>
     if thread_id &lt; SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+        output[thread_id] = a[thread_id]
 
 
 </code></pre>

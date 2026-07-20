@@ -321,6 +321,7 @@ x} \] 여기서:</p>
     InputLayout: TensorLayout,
     LnParamsLayout: TensorLayout,
     WeightLayout: TensorLayout,
+    dtype: DType = DType.float32,
 ](
     grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
     grad_ln_weight: TileTensor[
@@ -329,14 +330,13 @@ x} \] 여기서:</p>
     grad_ln_bias: TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin],
     grad_weight: TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin],
     grad_bias: TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin],
-    grad_output: TileTensor[mut=False, dtype, GradOutputLayout, ImmutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin],
-    ln_weight: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
-    ln_bias: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
-    linear_weight: TileTensor[mut=False, dtype, WeightLayout, ImmutAnyOrigin],
+    grad_output: TileTensor[mut=True, dtype, GradOutputLayout, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
+    ln_weight: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
+    ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
+    linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
 ):
-    """Fused backward kernel using atomic operations for safe gradient accumulation.
-    """
+    """Fused backward kernel: atomics for safe gradient accumulation."""
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
     var batch_idx = block_idx.x
@@ -345,21 +345,30 @@ x} \] 여기서:</p>
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
 
+    var grad_input_lt = grad_input.to_layout_tensor()
+    var grad_ln_weight_lt = grad_ln_weight.to_layout_tensor()
+    var grad_ln_bias_lt = grad_ln_bias.to_layout_tensor()
+    var grad_weight_lt = grad_weight.to_layout_tensor()
+    var grad_bias_lt = grad_bias.to_layout_tensor()
+    var grad_output_lt = grad_output.to_layout_tensor()
+    var input_lt = input.to_layout_tensor()
+    var ln_weight_lt = ln_weight.to_layout_tensor()
+    var ln_bias_lt = ln_bias.to_layout_tensor()
+    var linear_weight_lt = linear_weight.to_layout_tensor()
+
     # Initialize gradient tensors to zero (block 0,0 only to avoid UB with atomic ops)
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).init_pointee_copy(0)
-            (grad_ln_bias.ptr + h).init_pointee_copy(0)
+            (grad_ln_weight.ptr + h).unsafe_write(0)
+            (grad_ln_bias.ptr + h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).init_pointee_copy(0)
+            (grad_bias.ptr + out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
-                    0
-                )
+                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -375,7 +384,6 @@ x} \] 여기서:</p>
     # FILL IN roughly 4 lines
 
     # Step 3: Atomically accumulate gradients w.r.t. linear weight
-    # Make sure to use the correct atomic operation to avoid race conditions
 
     # FILL IN roughly 10 lines
 
@@ -385,7 +393,6 @@ x} \] 여기서:</p>
 
     # Step 5: Compute gradients w.r.t. input (LayerNorm backward)
     # Compute sum terms needed for LayerNorm backward
-    # Make sure to use the correct atomic operation to avoid race conditions
 
     # FILL IN roughly 12 lines
 
@@ -549,8 +556,7 @@ BACKWARD PASS Test Completed!
     ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
     linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
 ):
-    """Fused backward kernel using atomic operations for safe gradient accumulation.
-    """
+    """Fused backward kernel: atomics for safe gradient accumulation."""
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
     var batch_idx = block_idx.x
@@ -574,17 +580,15 @@ BACKWARD PASS Test Completed!
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).init_pointee_copy(0)
-            (grad_ln_bias.ptr + h).init_pointee_copy(0)
+            (grad_ln_weight.ptr + h).unsafe_write(0)
+            (grad_ln_bias.ptr + h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).init_pointee_copy(0)
+            (grad_bias.ptr + out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
-                    0
-                )
+                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -598,8 +602,8 @@ BACKWARD PASS Test Completed!
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    var mean_val = sum_val / hidden_dim
-    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var mean_val = sum_val / Scalar[dtype](hidden_dim)
+    var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
@@ -692,8 +696,12 @@ BACKWARD PASS Test Completed!
         h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
-            - (sum_grad_normalized / hidden_dim)
-            - (h_normalized * sum_grad_normalized_times_normalized / hidden_dim)
+            - (sum_grad_normalized / Scalar[dtype](hidden_dim))
+            - (
+                h_normalized
+                * sum_grad_normalized_times_normalized
+                / Scalar[dtype](hidden_dim)
+            )
         )
 
 

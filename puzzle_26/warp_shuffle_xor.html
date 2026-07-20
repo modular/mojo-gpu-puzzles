@@ -243,6 +243,12 @@ on <a href="https://en.wikipedia.org/wiki/Exclusive_or">XOR</a> patterns: \[\Lar
 <p>This transforms complex parallel algorithms into elegant butterfly communication
 patterns, enabling efficient tree reductions and sorting networks without
 explicit coordination.</p>
+<blockquote>
+<p><strong>Scope:</strong> <code>shuffle_xor()</code> exchanges data <em>within a single warp</em>. Every
+reduction and butterfly here is per-warp; the results are global only because
+each section runs a single warp over the data. There is no cross-warp or
+cross-block communication.</p>
+</blockquote>
 <h2 id="1-basic-butterfly-pair-swap"><a class="header" href="#1-basic-butterfly-pair-swap">1. Basic butterfly pair swap</a></h2>
 <h3 id="configuration"><a class="header" href="#configuration">Configuration</a></h3>
 <ul>
@@ -292,9 +298,25 @@ pattern: \[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
 <p>This transforms input data <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code> into pairs
 <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>, where each pair <code>(i, i+1)</code> swaps values through
 XOR communication.</p>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">def butterfly_pair_swap[
+    size: Int
+](
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+):
+    """
+    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
+    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
+    Uses shuffle_xor(val, 1) to swap values within each pair.
+    This is the foundation of butterfly network communication patterns.
+    """
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # FILL ME IN (4 lines)
+
+
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -478,10 +500,9 @@ maximum. This works for any <code>WARP_SIZE</code> (32, 64, etc.).</p>
 ):
     """
     Parallel maximum reduction using butterfly pattern.
-    Uses shuffle_xor with decreasing offsets starting from WARP_SIZE/2 down to 1.
+    Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
     Each step reduces the active range by half until all threads have the maximum value.
-    This implements an efficient O(log n) parallel reduction algorithm that works
-    for any WARP_SIZE (32, 64, etc.).
+    This implements an efficient O(log n) parallel reduction algorithm.
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -558,6 +579,7 @@ Result: All lanes have global maximum = 7
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -566,6 +588,10 @@ Result: All lanes have global maximum = 7
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p26 --parallel-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p26 --parallel-max
 </code></pre>
   </div>
   <div class="tab-content">
@@ -699,18 +725,11 @@ minimum, then conditionally output based on lane parity: \[\Large
 through the butterfly tree, then conditionally output based on lane ID parity.
 This demonstrates how butterfly patterns can be extended for complex multi-value
 reductions.</p>
-<pre><code class="language-mojo">comptime SIZE_2 = 64
-comptime BLOCKS_PER_GRID_2 = (2, 1)
-comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-comptime layout_2 = row_major[SIZE_2]()
-comptime LayoutType_2 = type_of(layout_2)
-
-
-def butterfly_conditional_max[
+<pre><code class="language-mojo">def butterfly_conditional_max[
     size: Int
 ](
-    output: TileTensor[mut=True, dtype, LayoutType_2, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
 ):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
@@ -773,6 +792,7 @@ same butterfly communication pattern.</p>
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -781,6 +801,10 @@ same butterfly communication pattern.</p>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p26 --conditional-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p26 --conditional-max
 </code></pre>
   </div>
   <div class="tab-content">

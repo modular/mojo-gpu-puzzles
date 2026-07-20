@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="warpshuffle_down-일대일-통신"><a class="header" href="#warpshuffle_down-일대일-통신"><code>warp.shuffle_down()</code> 일대일 통신</a></h1>
 <p>워프 레벨 이웃 통신에서는 <code>shuffle_down()</code>을 사용하여 워프 내 인접 레인의
 데이터에 접근할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적
@@ -284,19 +284,11 @@ if lane &lt; WARP_SIZE - 1:
 <p>입력 데이터 <code>[0, 1, 4, 9, 16, 25, ...]</code> (제곱수: <code>i * i</code>)를 차분값
 <code>[1, 3, 5, 7, 9, ...]</code> (홀수)로 변환하여, 이차 함수의 이산 도함수를 효과적으로
 계산합니다.</p>
-<pre><code class="language-mojo">comptime SIZE = WARP_SIZE
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
-comptime dtype = DType.float32
-comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
-
-
-def neighbor_difference[
+<pre><code class="language-mojo">def neighbor_difference[
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -310,7 +302,7 @@ def neighbor_difference[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">전체 파일 보기: problems/p25/p25.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p25/p25.mojo" class="filename">전체 파일 보기: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -506,18 +498,11 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 </ul>
 <p>이는 <code>shuffle_down()</code>이 워프 범위 내에서 자동 경계 처리와 함께 효율적인 스텐실
 연산을 가능하게 하는 방법을 보여줍니다.</p>
-<pre><code class="language-mojo">comptime SIZE_2 = 64
-comptime BLOCKS_PER_GRID_2 = (2, 1)
-comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-comptime layout_2 = row_major[SIZE_2]()
-comptime LayoutType_2 = type_of(layout_2)
-
-
-def moving_average_3[
+<pre><code class="language-mojo">def moving_average_3[
     size: Int
 ](
-    output: TileTensor[mut=True, dtype, LayoutType_2, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, MutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3

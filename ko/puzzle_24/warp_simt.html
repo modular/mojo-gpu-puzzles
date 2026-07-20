@@ -216,7 +216,7 @@
 <strong>동일한 명령을 동시에 실행</strong>하는 그룹입니다. 각 스레드가 벡터 프로세서의 “레인”
 역할을 하는 <strong>동기화된 벡터 유닛</strong>이라고 생각하면 됩니다.</p>
 <p><strong>간단한 예시:</strong></p>
-<pre><code class="language-mojo">from gpu.primitives.warp import sum
+<pre><code class="language-mojo">from std.gpu.primitives.warp import sum
 # 워프 내 32개 스레드가 동시에 실행:
 var my_value = input[my_thread_id]     # 각 스레드가 서로 다른 데이터를 가져옴
 var warp_total = sum(my_value)         # 모든 스레드가 하나의 합계에 기여
@@ -247,7 +247,7 @@ var result = a + b # 8쌍을 동시에 덧셈
 </code></pre>
 <p><strong>GPU SIMT 방식 (Mojo):</strong></p>
 <pre><code class="language-mojo"># 스레드 기반 코드가 벡터 연산으로 변환됩니다
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 
 var my_data = input[thread_id]         # 각 스레드가 자기 요소를 가져옴
 var partial = my_data * coefficient    # 모든 스레드가 동시에 계산
@@ -331,8 +331,8 @@ var broadcasted = shuffle_idx(my_value, 0)
 <h2 id="워프-실행-메커니즘"><a class="header" href="#워프-실행-메커니즘">워프 실행 메커니즘</a></h2>
 <h3 id="레인-번호와-식별"><a class="header" href="#레인-번호와-식별">레인 번호와 식별</a></h3>
 <p>워프 내 각 스레드는 0부터 <code>WARP_SIZE-1</code>까지의 <strong>레인 ID</strong>를 갖습니다:</p>
-<pre><code class="language-mojo">from gpu import lane_id
-from gpu.primitives.warp import WARP_SIZE
+<pre><code class="language-mojo">from std.gpu import lane_id
+from std.gpu.primitives.warp import WARP_SIZE
 
 # 커널 함수 내에서:
 my_lane = lane_id()  # 0-31 (NVIDIA/RDNA) 또는 0-63 (CDNA) 반환
@@ -349,7 +349,7 @@ barrier()  # 명시적 동기화 필요
 var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # 합산 리덕션
 
 # 2. 워프 방식:
-from gpu.primitives.warp import sum
+from std.gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # 암시적 동기화!
 </code></pre>
@@ -431,7 +431,7 @@ else:
 <p><em>성능: 워프 효율이 사실상 무너짐</em></p>
 <h2 id="크로스-아키텍처-호환성"><a class="header" href="#크로스-아키텍처-호환성">크로스 아키텍처 호환성</a></h2>
 <h3 id="nvidia-vs-amd-워프-크기"><a class="header" href="#nvidia-vs-amd-워프-크기">NVIDIA vs AMD 워프 크기</a></h3>
-<pre><code class="language-mojo">from gpu.primitives.warp import WARP_SIZE
+<pre><code class="language-mojo">from std.gpu.primitives.warp import WARP_SIZE
 
 # NVIDIA GPUs:     WARP_SIZE = 32
 # AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 모드)

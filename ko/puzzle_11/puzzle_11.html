@@ -208,13 +208,13 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
+                        <!-- i18n-source-commit: aed4a8442a1f84c61f13efd9a44b2ef240f22f1d -->
 <h1 id="puzzle-11-풀링"><a class="header" href="#puzzle-11-풀링">Puzzle 11: 풀링</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>1D TileTensor <code>a</code>에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor
 <code>output</code>에 저장하는 커널을 구현하세요.</p>
-<p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기
-1회만 필요합니다.</em></p>
+<p><strong>풀링(pooling)</strong> 은 일정 영역의 값들을 하나의 요약 값(예: 합, 최댓값, 평균)으로 압축하는 연산입니다. <strong>슬라이딩 윈도우(sliding window)</strong> 는 입력 위로 고정 크기의 윈도우를 한 칸씩 옮겨 가며 이 압축을 반복 적용해, 윈도우 위치마다 출력값을 하나씩 만들어냅니다. 여기서는 윈도우 폭이 3이고 요약 함수가 합이므로, 각 출력 원소는 현재 원소와 그 앞 두 원소의 합이 됩니다(사용 가능한 원소가 3개보다 적은 경계 지점에서는 특수 케이스로 처리).</p>
+<p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기 1회만 필요합니다.</em></p>
 <img src="/puzzle_11/media/11-w.png" alt="Pooling 시각화" class="light-mode-img">
 <img src="/puzzle_11/media/11-b.png" alt="Pooling 시각화" class="dark-mode-img">
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
@@ -266,11 +266,11 @@ def pooling(
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FIX ME IN (roughly 10 lines)
+    # FILL ME IN (roughly 10 lines)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">전체 파일 보기: problems/p11/p11.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p11/p11.mojo" class="filename">전체 파일 보기: problems/p11/p11.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -406,8 +406,26 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </li>
 </ul>
 </li>
-<li>
-<p><strong>메모리 접근 패턴</strong></p>
+</ol>
+<blockquote>
+<p><strong>단일 블록 전제:</strong> 이 퍼즐이 <code>BLOCKS_PER_GRID = (1, 1)</code>과 <code>SIZE == TPB = 8</code>로 구성되어 있어서
+모든 스레드가 같은 블록에 속하고 <code>global_i == local_i</code>가 보장되기 때문에 이 솔루션이 올바르게
+동작합니다. 이 제약에서는 <code>global_i &gt; 1</code>일 때마다 <code>local_i &gt;= 2</code>이므로
+<code>shared[local_i - 2]</code>와 <code>shared[local_i - 1]</code>이 언제나 유효합니다.</p>
+<p><strong>다중 블록</strong> 커널에서는 0번 블록 이후의 각 블록에서 첫 두 스레드가 <code>global_i &gt; 1</code>인데도
+<code>local_i = 0</code> 또는 <code>local_i = 1</code>이 되어 공유 메모리 범위 초과 읽기가 발생합니다. 다중 블록
+풀링에서 안정적으로 동작하는 패턴은 <code>local_i</code>로 가드를 걸고, 헤일로(halo) 원소에 대해서는
+전역 읽기로 대체하는 것입니다:</p>
+<pre><code class="language-mojo">if local_i &gt;= 2:
+    output[global_i] = shared[local_i-2] + shared[local_i-1] + shared[local_i]
+elif local_i == 1 and global_i &gt;= 2:
+    output[global_i] = a[global_i-2] + shared[0] + shared[1]
+elif local_i == 0 and global_i &gt;= 2:
+    output[global_i] = a[global_i-2] + a[global_i-1] + shared[0]
+</code></pre>
+</blockquote>
+<ol start="4">
+<li><strong>메모리 접근 패턴</strong>
 <ul>
 <li>스레드마다 공유 텐서로 전역 읽기 1회</li>
 <li>공유 메모리를 통한 효율적인 이웃 접근</li>

@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="elementwise---기본-gpu-함수형-연산"><a class="header" href="#elementwise---기본-gpu-함수형-연산">elementwise - 기본 GPU 함수형 연산</a></h1>
 <p>이 퍼즐은 Mojo의 함수형 <code>elementwise</code> 패턴을 사용하여 벡터 덧셈을 구현합니다. 각
 스레드가 자동으로 여러 SIMD 요소를 처리하며, 현대 GPU 프로그래밍이 어떻게 저수준
@@ -237,15 +237,7 @@
 <li>레이아웃: <code>row_major[SIZE]()</code> (1D 행 우선)</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">comptime SIZE = 1024
-comptime rank = 1
-comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
-comptime dtype = DType.float32
-comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
-
-
-def elementwise_add[
+<pre><code class="language-mojo">def elementwise_add[
     LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
@@ -256,17 +248,16 @@ def elementwise_add[
     @parameter
     @always_inline
     def add[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var idx = indices[0]
-        print("idx:", idx)
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var idx = Int(indices[0].value())
         # FILL IN (2 to 4 lines)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -309,7 +300,7 @@ SIMD 능력에 따라 달라집니다.</p>
 <p>전체 SIMD 벡터에 걸쳐 요소별 덧셈을 병렬로 수행합니다 - 4개의 개별 스칼라
 덧셈보다 훨씬 빠릅니다.</p>
 <h3 id="5-simd-저장"><a class="header" href="#5-simd-저장">5. <strong>SIMD 저장</strong></a></h3>
-<pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # 4개 결과를 한 번에 저장 (GPU 의존적)
+<pre><code class="language-mojo">output.store[simd_width](Index(idx), result)  # 4개 결과를 한 번에 저장 (GPU 의존적)
 </code></pre>
 <p>전체 SIMD 벡터를 한 번의 연산으로 메모리에 다시 기록합니다.</p>
 <h3 id="6-elementwise-함수-호출"><a class="header" href="#6-elementwise-함수-호출">6. <strong>elementwise 함수 호출</strong></a></h3>
@@ -381,9 +372,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     @parameter
     @always_inline
     def add[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var idx = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var idx = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -445,7 +436,7 @@ def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; No
 a_simd = a.aligned_load[simd_width](Index(idx))     # 로드: [a[0:4], a[4:8], a[8:12]...] (로드당 4개 요소)
 b_simd = b.aligned_load[simd_width](Index(idx))     # 로드: [b[0:4], b[4:8], b[8:12]...] (로드당 4개 요소)
 ret = a_simd + b_simd                               # SIMD: 4개 덧셈을 병렬 수행 (GPU 의존적)
-output.store[simd_width](Index(global_start), ret)  # 저장: 4개 결과를 동시 저장 (GPU 의존적)
+output.store[simd_width](Index(idx), ret)  # 저장: 4개 결과를 동시 저장 (GPU 의존적)
 </code></pre>
 <p><strong>실행 계층 구조 시각화:</strong></p>
 <pre><code class="language-text">GPU 아키텍처:

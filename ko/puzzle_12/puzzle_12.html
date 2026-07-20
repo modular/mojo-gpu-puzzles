@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-12-내적"><a class="header" href="#puzzle-12-내적">Puzzle 12: 내적</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 내적을 계산하여 1D TileTensor
@@ -225,6 +225,7 @@
 <img src="/puzzle_12/media/12-w.png" alt="내적 시각화" class="light-mode-img">
 <img src="/puzzle_12/media/12-b.png" alt="내적 시각화" class="dark-mode-img">
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p><strong>병렬 리덕션(parallel reduction)</strong> 은 이항 연산(여기서는 덧셈)을 사용해 \(n\) 개의 값을 하나로 합치는 알고리즘으로, \(O(n)\) 번의 순차 처리 대신 \(O(\log n)\) 단계 만에 끝납니다. 각 단계에서 활성 스레드의 절반이 각자 하나의 값을 다른 값에 더하면서 남은 부분합의 개수를 절반으로 줄입니다. \(\log_2 n\) 단계가 지나면 스레드 0이 최종 합을 가지게 됩니다. 이 트리 모양의 계산은 한 스레드가 부분적으로만 갱신된 값을 읽지 않도록 단계 사이에 <code>barrier()</code>를 둬야 합니다.</p>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
 <li><a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>,
@@ -254,14 +255,7 @@
 <li><strong>스레드 조율</strong>: 동일한 동기화 패턴으로 <code>barrier()</code> 사용</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.memory import AddressSpace
-from layout import TileTensor
-from layout.tile_layout import row_major
-from layout.tile_tensor import stack_allocation
-
-
-comptime TPB = 8
+<pre><code class="language-mojo">comptime TPB = 8
 comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
@@ -283,7 +277,7 @@ def dot_product(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">전체 파일 보기: problems/p12/p12.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p12/p12.mojo" class="filename">전체 파일 보기: problems/p12/p12.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">

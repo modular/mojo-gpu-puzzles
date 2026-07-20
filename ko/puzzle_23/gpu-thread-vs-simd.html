@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 23f5ec0530b1cd15f85ce27e39f855a879987d36 -->
+                        <!-- i18n-source-commit: f410b786fbaddb3b268f70d4c684ec0f24f8f618 -->
 <h1 id="-gpu-스레딩-vs-simd---실행-계층-구조-이해하기"><a class="header" href="#-gpu-스레딩-vs-simd---실행-계층-구조-이해하기">🧠 GPU 스레딩 vs SIMD - 실행 계층 구조 이해하기</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p><strong>요소별</strong>, <strong>타일링</strong>, <strong>벡터화</strong> 패턴을 탐구하면서 GPU 연산을 구성하는 다양한
@@ -246,10 +246,10 @@
 <p>각 GPU 스레드는 <strong>SIMD (Single Instruction, Multiple Data)</strong> 연산을 사용하여
 여러 데이터 요소를 동시에 처리할 수 있습니다:</p>
 <pre><code class="language-mojo"># 하나의 GPU 스레드 내부:
-a_simd = a.load[simd_width](idx, 0)      # float 4개를 동시에 로드
-b_simd = b.load[simd_width](idx, 0)      # float 4개를 동시에 로드
+a_simd = a.load[simd_width](Index(idx))      # float 4개를 동시에 로드
+b_simd = b.load[simd_width](Index(idx))      # float 4개를 동시에 로드
 result = a_simd + b_simd                 # 4쌍을 동시에 덧셈
-output.store[simd_width](idx, 0, result) # 결과 4개를 동시에 저장
+output.store[simd_width](Index(idx), result) # 결과 4개를 동시에 저장
 </code></pre>
 <h2 id="패턴-비교와-스레드-작업-매핑"><a class="header" href="#패턴-비교와-스레드-작업-매핑">패턴 비교와 스레드-작업 매핑</a></h2>
 <blockquote>

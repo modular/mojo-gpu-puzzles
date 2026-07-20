@@ -277,12 +277,11 @@ sums within each block</li>
 <pre><code class="language-mojo">def advanced_cluster_patterns[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
-    """Advanced cluster programming using cluster masks and relaxed synchronization.
-    """
+    """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -290,7 +289,7 @@ sums within each block</li>
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -411,8 +410,7 @@ results</li>
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
-    """Advanced cluster programming using cluster masks and relaxed synchronization.
-    """
+    """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
@@ -645,6 +643,9 @@ workloads!</p>
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="../puzzle_35/puzzle_35.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -656,6 +657,9 @@ workloads!</p>
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="../puzzle_35/puzzle_35.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>

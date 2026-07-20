@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="warpshuffle_xor-버터플라이-통신"><a class="header" href="#warpshuffle_xor-버터플라이-통신"><code>warp.shuffle_xor()</code> 버터플라이 통신</a></h1>
 <p>워프 레벨 버터플라이 통신에서는 <code>shuffle_xor()</code>을 사용하여 워프 내에 정교한 트리
 기반 통신 패턴을 구성할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나
@@ -290,9 +290,25 @@ output[global_i] = swapped_val
 <p>입력 데이터 <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code>을 페어
 <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>으로 변환하며, 각 페어 <code>(i, i+1)</code>이 XOR 통신으로
 값을 교환합니다.</p>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">def butterfly_pair_swap[
+    size: Int
+](
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+):
+    """
+    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
+    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
+    Uses shuffle_xor(val, 1) to swap values within each pair.
+    This is the foundation of butterfly network communication patterns.
+    """
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # FILL ME IN (4 lines)
+
+
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -473,10 +489,9 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 ):
     """
     Parallel maximum reduction using butterfly pattern.
-    Uses shuffle_xor with decreasing offsets starting from WARP_SIZE/2 down to 1.
+    Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
     Each step reduces the active range by half until all threads have the maximum value.
-    This implements an efficient O(log n) parallel reduction algorithm that works
-    for any WARP_SIZE (32, 64, etc.).
+    This implements an efficient O(log n) parallel reduction algorithm.
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -615,7 +630,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
     # 버터플라이 리덕션 트리: 모든 WARP_SIZE에 동적으로 대응
     offset = WARP_SIZE // 2
     while offset &gt; 0:
-        max_val = max(max_val, shuffle_xor(max_val, offset))
+        max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
         offset //= 2
 
     output[global_i] = max_val  # 모든 레인이 전역 최댓값을 가짐
@@ -689,18 +704,11 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 <p><strong>이중 리덕션 패턴:</strong> 버터플라이 트리를 통해 최댓값과 최솟값을 동시에 추적한 후,
 레인 ID 홀짝에 따라 조건부로 출력합니다. 이는 버터플라이 패턴이 복잡한 다중 값
 리덕션으로 어떻게 확장되는지를 보여줍니다.</p>
-<pre><code class="language-mojo">comptime SIZE_2 = 64
-comptime BLOCKS_PER_GRID_2 = (2, 1)
-comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-comptime layout_2 = row_major[SIZE_2]()
-comptime LayoutType_2 = type_of(layout_2)
-
-
-def butterfly_conditional_max[
+<pre><code class="language-mojo">def butterfly_conditional_max[
     size: Int
 ](
-    output: TileTensor[mut=True, dtype, LayoutType_2, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
 ):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
@@ -836,10 +844,10 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
     # max와 min 동시 버터플라이 리덕션 (log_2(WARP_SIZE) 단계)
     offset = WARP_SIZE // 2
     while offset &gt; 0:
-        neighbor_val = shuffle_xor(current_val, offset)
+        neighbor_val = shuffle_xor(current_val, UInt32(offset))
         current_val = max(current_val, neighbor_val)    # Max 리덕션
 
-        min_neighbor_val = shuffle_xor(min_val, offset)
+        min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
         min_val = min(min_val, min_neighbor_val)        # Min 리덕션
 
         offset //= 2
@@ -874,10 +882,10 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 <p><strong>동적 알고리즘</strong> (모든 WARP_SIZE에서 동작):</p>
 <pre><code class="language-mojo">offset = WARP_SIZE // 2
 while offset &gt; 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = max(current_val, neighbor_val)
 
-    min_neighbor_val = shuffle_xor(min_val, offset)
+    min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
     min_val = min(min_val, min_neighbor_val)
 
     offset //= 2
@@ -944,7 +952,7 @@ while offset &gt; 0:
 <p><strong>동적 알고리즘 설계:</strong></p>
 <pre><code class="language-mojo">offset = WARP_SIZE // 2
 while offset &gt; 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = operation(current_val, neighbor_val)
     offset //= 2
 </code></pre>

@@ -253,12 +253,12 @@
 <h2 id="코드-예시"><a class="header" href="#코드-예시">코드 예시</a></h2>
 <h3 id="-워프에-적합한-경우"><a class="header" href="#-워프에-적합한-경우">✅ 워프에 적합한 경우</a></h3>
 <pre><code class="language-mojo"># 리덕션 연산
-from gpu.primitives.warp import sum, max
+from std.gpu.primitives.warp import sum, max
 var total = sum(partial_values)
 var maximum = max(partial_values)
 
 # 통신 패턴
-from gpu.primitives.warp import shuffle_idx, prefix_sum
+from std.gpu.primitives.warp import shuffle_idx, prefix_sum
 var broadcast = shuffle_idx(my_value, 0)
 var running_sum = prefix_sum(my_value)
 </code></pre>

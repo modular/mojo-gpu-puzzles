@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="warpbroadcast-일대다-통신"><a class="header" href="#warpbroadcast-일대다-통신"><code>warp.broadcast()</code> 일대다 통신</a></h1>
 <p>워프 레벨 조정에서는 <code>broadcast()</code>를 사용하여 하나의 레인에서 워프 내 다른 모든
 레인으로 데이터를 공유할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나
@@ -297,7 +297,7 @@ result = use_collective_value(collective_value)
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -305,6 +305,7 @@ result = use_collective_value(collective_value)
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i &lt; size:
         var broadcast_value: output.ElementType = 0.0
 
@@ -312,7 +313,7 @@ result = use_collective_value(collective_value)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">전체 파일 보기: problems/p25/p25.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p25/p25.mojo" class="filename">전체 파일 보기: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -498,7 +499,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -506,6 +507,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i &lt; size:
         var decision_value: output.ElementType = 0.0
 
@@ -740,7 +742,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -749,6 +751,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i &lt; size:
         var scale_factor: output.ElementType = 0.0
 

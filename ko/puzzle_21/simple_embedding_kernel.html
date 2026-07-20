@@ -232,10 +232,7 @@
 </ol>
 <h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
 <p>두 임베딩 커널의 빈 부분을 완성해야 합니다:</p>
-<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = 256
-
-
-def embedding_kernel_coalesced[
+<pre><code class="language-mojo">def embedding_kernel_coalesced[
     batch_size: Int,
     seq_len: Int,
     vocab_size: Int,
@@ -246,8 +243,8 @@ def embedding_kernel_coalesced[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=False, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=False, dtype, WeightsLayout, MutAnyOrigin],
+    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
+    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -265,6 +262,10 @@ def embedding_kernel_coalesced[
     if global_idx &gt;= total_elements:
         return
 
+    var output_lt = output.to_layout_tensor()
+    var indices_lt = indices.to_layout_tensor()
+    var weights_lt = weights.to_layout_tensor()
+
     # Convert to (batch, seq, embed) coordinates
     # FILL IN roughly 4 lines
 
@@ -276,7 +277,7 @@ def embedding_kernel_coalesced[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/op/embedding.mojo" class="filename">전체 파일 보기: problems/p21/op/embedding.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p21/op/embedding.mojo" class="filename">전체 파일 보기: problems/p21/op/embedding.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -323,8 +324,8 @@ def embedding_kernel_coalesced[
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=False, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=False, dtype, WeightsLayout, MutAnyOrigin],
+    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
+    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.
@@ -338,10 +339,16 @@ def embedding_kernel_coalesced[
     # 2D grid indexing
     var batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
     var embed_idx = block_idx.y * block_dim.y + thread_idx.y
+
     var total_positions = batch_size * seq_len
 
+    # Bounds check
     if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim:
         return
+
+    var output_lt = output.to_layout_tensor()
+    var indices_lt = indices.to_layout_tensor()
+    var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq) coordinates
     # FILL IN 2 lines
@@ -354,7 +361,7 @@ def embedding_kernel_coalesced[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/op/embedding.mojo" class="filename">전체 파일 보기: problems/p21/op/embedding.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p21/op/embedding.mojo" class="filename">전체 파일 보기: problems/p21/op/embedding.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -377,14 +384,14 @@ def embedding_kernel_coalesced[
 설명한 MAX 커스텀 op과 동일합니다:</p>
 <h3 id="1d-병합-연산"><a class="header" href="#1d-병합-연산">1D 병합 연산</a></h3>
 <p>이 연산은 최적화된 1D 임베딩 커널을 <code>"embedding"</code>으로 등록합니다:</p>
-<pre><code class="language-mojo">import compiler
-from std.runtime.asyncrt import DeviceContextPtr
-from tensor import InputTensor, OutputTensor
+<pre><code class="language-mojo">import extensibility
+
+from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
 from std.gpu.host import DeviceBuffer
 
 
-@compiler.register("embedding")
+@extensibility.register("embedding")
 struct EmbeddingCustomOp:
     @staticmethod
     def execute[
@@ -403,7 +410,7 @@ struct EmbeddingCustomOp:
         weights: InputTensor[
             dtype=output.dtype, rank=2, static_spec=_
         ],  # [vocab_size, embed_dim]
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
         comptime OutLayout = type_of(out_layout_val)
@@ -423,7 +430,7 @@ struct EmbeddingCustomOp:
         ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -451,7 +458,7 @@ struct EmbeddingCustomOp:
                 WeightsLayout,
                 output.dtype,
             ]
-            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,
@@ -487,7 +494,7 @@ struct EmbeddingCustomOp:
 </ul>
 <h3 id="2d-비병합-연산"><a class="header" href="#2d-비병합-연산">2D 비병합 연산</a></h3>
 <p>이 연산은 비교용 2D 임베딩 커널을 <code>"embedding_2d"</code>로 등록합니다:</p>
-<pre><code class="language-mojo">@compiler.register("embedding_2d")
+<pre><code class="language-mojo">@extensibility.register("embedding_2d")
 struct Embedding2DCustomOp:
     @staticmethod
     def execute[
@@ -506,7 +513,7 @@ struct Embedding2DCustomOp:
         weights: InputTensor[
             dtype=output.dtype, rank=2, static_spec=_
         ],  # [vocab_size, embed_dim]
-        ctx: DeviceContextPtr,
+        ctx: DeviceContext,
     ) raises:
         comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
         comptime OutLayout = type_of(out_layout_val)
@@ -526,7 +533,7 @@ struct Embedding2DCustomOp:
         ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
-            var gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -558,7 +565,7 @@ struct Embedding2DCustomOp:
                 output.dtype,
             ]
 
-            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,

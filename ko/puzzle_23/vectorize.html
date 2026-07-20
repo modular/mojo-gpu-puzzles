@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="vectorize---simd-제어"><a class="header" href="#vectorize---simd-제어">vectorize - SIMD 제어</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>이 퍼즐에서는 수동 벡터화와
@@ -265,13 +265,13 @@
     @parameter
     @always_inline
     def process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
-        print("tile_id:", tile_id)
-        var output_tile = output.tile[chunk_size](tile_id)
-        var a_tile = a.tile[chunk_size](tile_id)
-        var b_tile = b.tile[chunk_size](tile_id)
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # FILL IN (7 lines at most)
 
@@ -283,7 +283,7 @@
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -296,8 +296,8 @@
 </code></pre>
 <p>청크 내 각 SIMD 벡터의 정확한 전역 위치를 계산합니다.</p>
 <h3 id="3-텐서-직접-접근"><a class="header" href="#3-텐서-직접-접근">3. <strong>텐서 직접 접근</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)     # 전역 텐서에서 로드
-output.store[simd_width](global_start, 0, ret)  # 전역 텐서에 저장
+<pre><code class="language-mojo">a_vec = a.aligned_load[simd_width](Index(global_start))     # 전역 텐서에서 로드
+output.store[simd_width](Index(global_start), ret)  # 전역 텐서에 저장
 </code></pre>
 <p>참고: 타일 뷰가 아닌 원본 텐서에 접근합니다.</p>
 <h3 id="4-주요-특성"><a class="header" href="#4-주요-특성">4. <strong>주요 특성</strong></a></h3>
@@ -371,9 +371,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     @parameter
     @always_inline
     def process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -466,22 +466,16 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     @parameter
     @always_inline
     def process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
-        print(
-            "tile_id:",
-            tile_id,
-            "tile_start:",
-            tile_start,
-            "tile_end:",
-            tile_end,
-            "actual_tile_size:",
-            actual_tile_size,
-        )
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # FILL IN (9 lines at most)
 
@@ -492,7 +486,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -505,7 +499,7 @@ actual_tile_size = tile_end - tile_start
 <h3 id="2-벡터화-함수-패턴"><a class="header" href="#2-벡터화-함수-패턴">2. <strong>벡터화 함수 패턴</strong></a></h3>
 <pre><code class="language-mojo">def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:  # 경계 검사
         # SIMD 연산 코드
@@ -574,9 +568,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     @parameter
     @always_inline
     def process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
@@ -587,7 +581,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
         def vectorized_add[
             width: Int
-        ](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
+        ](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width &lt;= size:
                 var a_vec = a_lt.aligned_load[width](Index(global_idx))
@@ -622,7 +616,7 @@ actual_tile_size = tile_end - tile_start
 <p><strong>자동 벡터화 메커니즘:</strong></p>
 <pre><code class="language-mojo">def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:
         # 자동 SIMD 최적화

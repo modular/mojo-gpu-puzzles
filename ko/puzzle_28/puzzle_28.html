@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-28-비동기-메모리-연산과-복사-중첩"><a class="header" href="#puzzle-28-비동기-메모리-연산과-복사-중첩">Puzzle 28: 비동기 메모리 연산과 복사 중첩</a></h1>
 <p><strong>GPU 메모리 병목 현상:</strong> 실제 GPU 알고리즘 대부분은 좌절스러운 벽에 부딪힙니다</p>
 <ul>
@@ -425,28 +425,12 @@ async_copy_wait_all()  # 두 연산이 모두 완료될 때만 대기
 <li><strong>중첩 연산:</strong> 입력 전송 중 작은 커널 데이터 로딩</li>
 <li><strong>동기화:</strong> 전송 완료 대기 후 공유 메모리를 사용하여 연산</li>
 </ol>
-<pre><code class="language-mojo">comptime VECTOR_SIZE = 16384
-comptime CONV_TILE_SIZE = 256
-comptime KERNEL_SIZE = 5
-comptime HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
-comptime BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
-comptime BLOCKS_PER_GRID_ASYNC = (
-    VECTOR_SIZE + CONV_TILE_SIZE - 1
-) // CONV_TILE_SIZE
-comptime THREADS_PER_BLOCK_ASYNC = 256
-comptime dtype = DType.float32
-comptime layout_async = row_major[VECTOR_SIZE]()
-comptime LayoutAsyncType = type_of(layout_async)
-comptime kernel_layout = row_major[KERNEL_SIZE]()
-comptime KernelLayoutType = type_of(kernel_layout)
-
-
-def async_copy_overlap_convolution[
+<pre><code class="language-mojo">def async_copy_overlap_convolution[
     dtype: DType
 ](
-    output: TileTensor[mut=True, dtype, LayoutAsyncType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutAsyncType, ImmutAnyOrigin],
-    kernel: TileTensor[mut=False, dtype, KernelLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -455,18 +439,24 @@ def async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[CONV_TILE_SIZE]())
-    var kernel_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[KERNEL_SIZE]())
+    var input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
+    var kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p28/p28.mojo" class="filename">전체 파일 보기: problems/p28/p28.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p28/p28.mojo" class="filename">전체 파일 보기: problems/p28/p28.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">

@@ -289,7 +289,7 @@ Benchmarks completed!
 </code></pre>
 <h2 id="benchmark-configuration"><a class="header" href="#benchmark-configuration">Benchmark configuration</a></h2>
 <p>The benchmarking system uses Mojo’s built-in <code>benchmark</code> module:</p>
-<pre><code class="language-mojo">from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+<pre><code class="language-mojo">from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 </code></pre>
 <ul>

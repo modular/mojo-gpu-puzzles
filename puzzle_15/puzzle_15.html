@@ -241,26 +241,7 @@ Row 2: [12, 13, 14, 15, 16, 17] → Block(0,2)
 Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to Complete</a></h2>
-<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.memory import AddressSpace
-from layout import TileTensor
-from layout.tile_layout import row_major
-from layout.tile_tensor import stack_allocation
-
-
-comptime TPB = 8
-comptime BATCH = 4
-comptime SIZE = 6
-comptime BLOCKS_PER_GRID = (1, BATCH)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
-comptime in_layout = row_major[BATCH, SIZE]()
-comptime InLayout = type_of(in_layout)
-comptime out_layout = row_major[BATCH, 1]()
-comptime OutLayout = type_of(out_layout)
-
-
-def axis_sum(
+<pre><code class="language-mojo">def axis_sum(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
@@ -272,7 +253,7 @@ def axis_sum(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/p15.mojo" class="filename">View full file: problems/p15/p15.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p15/p15.mojo" class="filename">View full file: problems/p15/p15.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

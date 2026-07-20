@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 88f1de7b3de457cc54820fd71512acbcadf073d9 -->
+                        <!-- i18n-source-commit: 4d41a2db5494fdd23a42cb71494e3463d7512c40 -->
 <h1 id="-메모리-위반-탐지"><a class="header" href="#-메모리-위반-탐지">👮🏼‍♂️ 메모리 위반 탐지</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>테스트가 통과하는 것처럼 보여도 GPU 프로그램을 조용히 손상시킬 수 있는 메모리
@@ -234,7 +234,7 @@
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">전체 파일 보기: problems/p10/p10.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p10/p10.mojo" class="filename">전체 파일 보기: problems/p10/p10.mojo</a></p>
 <p>이 프로그램을 일반적으로 실행하면, 모든 것이 정상으로 보입니다:</p>
 <pre><code class="language-bash">pixi run p10 --memory-bug
 </code></pre>
@@ -391,6 +391,14 @@ Running memory bug example (bounds checking issue)...
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 </code></pre>
 <pre><code class="language-txt">========= COMPUTE-SANITIZER
+[...]:WARNING close_multiple.cc:66] close: Bad file descriptor (9)
+[...]:WARNING close_multiple.cc:66] close: Bad file descriptor (9)
+Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
+Stack dump:
+0.      Program arguments: .../.pixi/envs/default/bin/mojo problems/p10/p10.mojo --memory-bug
+ #0 0x... (/.../.pixi/envs/default/bin/mojo+0x...)
+ ...
+[...] intermediate process terminated by signal 11 (Segmentation fault) (core dumped)
 out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -399,6 +407,9 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ========= ERROR SUMMARY: 0 errors
 </code></pre>
 <p><strong>✅ 성공:</strong> 메모리 위반이 탐지되지 않았습니다!</p>
+<blockquote>
+<p><strong>세그폴트 관련 참고</strong>: 위 출력의 크래시 라인(“intermediate process terminated by signal 11”)은 Mojo의 프로세스 초기화와 compute-sanitizer의 주입 라이브러리 사이에 알려진 호환성 문제입니다. 이 메시지는 GPU 커널이 실행되기 <em>전</em>에 나타나며 새니타이저의 분석에는 영향을 주지 않습니다. 자세한 내용은 이 페이지 하단의 참고를 확인하세요.</p>
+</blockquote>
 <h2 id="핵심-학습-포인트"><a class="header" href="#핵심-학습-포인트">핵심 학습 포인트</a></h2>
 <h3 id="수동-경계-검사가-중요한-이유"><a class="header" href="#수동-경계-검사가-중요한-이유">수동 경계 검사가 중요한 이유</a></h3>
 <ol>
@@ -419,9 +430,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h3 id="compute-sanitizer-모범-사례"><a class="header" href="#compute-sanitizer-모범-사례">compute-sanitizer 모범 사례</a></h3>
 <pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 </code></pre>
-<p><strong>참고</strong>: 새니타이저 출력에서 Mojo 런타임 경고를 볼 수 있습니다. 실제 메모리
-위반을 확인하려면 <code>========= Invalid</code>와 <code>========= ERROR SUMMARY</code> 라인에
-집중하세요.</p>
+<p><strong>Mojo + compute-sanitizer 호환성 참고</strong>: 새니타이저 출력 시작 부분에서 크래시를 볼 수 있습니다 — <code>close: Bad file descriptor</code> 같은 라인, 스택 덤프, <code>intermediate process terminated by signal 11 (Segmentation fault)</code> 등이 나타날 수 있습니다. 이는 compute-sanitizer의 주입 라이브러리가 Mojo의 프로세스 초기화와 충돌하는 알려진 문제입니다. 크래시가 발생해도 새니타이저는 GPU 커널 분석을 정상적으로 완료합니다. 언제나 맨 끝의 <code>========= ERROR SUMMARY</code> 라인을 최종 판단 기준으로 삼고, 구체적인 메모리 위반은 <code>========= Invalid</code> 라인에서 확인하세요.</p>
 
                     </main>
 

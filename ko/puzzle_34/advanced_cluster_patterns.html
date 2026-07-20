@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="-고급-클러스터-알고리즘"><a class="header" href="#-고급-클러스터-알고리즘">🧠 고급 클러스터 알고리즘</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>이 마지막 도전에서는 <a href="../puzzle_24/puzzle_24.html">워프 레벨 (Puzzle 24-26)</a>,
@@ -279,12 +279,11 @@
 <pre><code class="language-mojo">def advanced_cluster_patterns[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
-    """Advanced cluster programming using cluster masks and relaxed synchronization.
-    """
+    """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -292,7 +291,7 @@
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -409,8 +408,7 @@ Advanced cluster algorithm results:
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
-    """Advanced cluster programming using cluster masks and relaxed synchronization.
-    """
+    """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())

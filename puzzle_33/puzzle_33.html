@@ -400,8 +400,8 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     # Use block_dim to get actual tile size dynamically
     var tile_size_x = block_dim.x
@@ -414,24 +414,34 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TILE_SIZE, TILE_SIZE]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TILE_SIZE, TILE_SIZE]())
+    var a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TILE_SIZE, TILE_SIZE),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
+    var b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TILE_SIZE, TILE_SIZE),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.ElementType = 0
 
-    comptime load_a_layout = row_major[1, TILE_SIZE]()  # Coalesced loading
-    comptime load_b_layout = row_major[1, TILE_SIZE]()  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx)
-        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x)
+        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](
+            block_idx.y, idx
+        ).to_layout_tensor()
+        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](
+            idx, block_idx.x
+        ).to_layout_tensor()
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -455,7 +465,9 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
                 and local_col &lt; TILE_SIZE
                 and k &lt; TILE_SIZE
             ):
-                acc += a_shared[local_row, k] * b_shared[k, local_col]
+                acc += rebind[Scalar[dtype]](a_shared[local_row, k]) * rebind[
+                    Scalar[dtype]
+                ](b_shared[k, local_col])
 
         barrier()
 
@@ -513,28 +525,11 @@ compute</li>
 2 fragments across (32÷16=2) × 4 fragments down (32÷8=4) = 8 MMA operations per warp per K-tile
 </code></pre>
 <h3 id="step-4-code-to-complete"><a class="header" href="#step-4-code-to-complete">Step 4: Code to complete</a></h3>
-<pre><code class="language-mojo"># Block and warp tiling sizes
-comptime BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
-comptime BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
-comptime BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
-comptime WM = WARP_SIZE  # Warp tile M
-comptime WN = WARP_SIZE  # Warp tile N
-
-# MMA tile sizes for tensor cores
-comptime MMA_M = 16
-comptime MMA_N = 8
-comptime MMA_K = 8
-
-comptime THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
-# grid_dim is (x, y). We want x to sweep N (columns) and y to sweep M (rows)
-comptime BLOCKS_PER_GRID_TENSOR_CORE = (
-    (SIZE + BN - 1) // BN,
-    (SIZE + BM - 1) // BM,
-)
-
-
-def tensor_core_matrix_multiplication[
+<pre><code class="language-mojo">def tensor_core_matrix_multiplication[
     dtype: DType,
+    layout_a: Layout,
+    layout_b: Layout,
+    layout_c: Layout,
     BM: Int,
     BN: Int,
     BK: Int,
@@ -544,13 +539,13 @@ def tensor_core_matrix_multiplication[
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    B: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    C: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
+    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
+    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
-    comptime M = C.dim[0]()
-    comptime N = C.dim[1]()
-    comptime K = A.dim[1]()
+    comptime M = C.shape[0]()
+    comptime N = C.shape[1]()
+    comptime K = A.shape[1]()
 
     var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
@@ -566,23 +561,34 @@ def tensor_core_matrix_multiplication[
     var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    var A_sram_tile = stack_allocation[
-        dtype=A.dtype, address_space=AddressSpace.SHARED
-    ](row_major[BM, BK]())
-    var B_sram_tile = stack_allocation[
-        dtype=B.dtype, address_space=AddressSpace.SHARED
-    ](row_major[BK, BN]())
+    var A_sram_tile = LayoutTensor[
+        A.dtype,
+        Layout.row_major(BM, BK),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
+    var B_sram_tile = LayoutTensor[
+        B.dtype,
+        Layout.row_major(BK, BN),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
-    var C_warp_accum = stack_allocation[
-        dtype=C.dtype, address_space=AddressSpace.GENERIC
-    ](row_major[WM, WN]())
+    var C_warp_accum = LayoutTensor[
+        C.dtype,
+        Layout.row_major(WM, WN),
+        MutAnyOrigin,
+        address_space=AddressSpace.LOCAL,
+    ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
         comptime for i in range(WM):
             comptime for j in range(WN):
                 C_warp_accum[i, j] = 0.0
+
+    # (Removed shared C accumulator to reduce shared usage)
 
     # Sweep across K in BK chunks (single-buffered)
     for k_i in range(K // BK):
@@ -592,12 +598,12 @@ def tensor_core_matrix_multiplication[
         var B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
 
         copy_dram_to_sram_async[
-            thread_layout=row_major[4, 8](),
+            thread_layout=Layout.row_major(4, 8),
             num_threads=256,
             block_dim_count=BLOCK_DIM_COUNT,
         ](A_sram_tile.vectorize[1, 4](), A_dram_tile.vectorize[1, 4]())
         copy_dram_to_sram_async[
-            thread_layout=row_major[4, 8](),
+            thread_layout=Layout.row_major(4, 8),
             num_threads=256,
             block_dim_count=BLOCK_DIM_COUNT,
         ](B_sram_tile.vectorize[1, 4](), B_dram_tile.vectorize[1, 4]())
@@ -626,7 +632,7 @@ def tensor_core_matrix_multiplication[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p33/p33.mojo" class="filename">View full file: problems/p33/p33.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p33/p33.mojo" class="filename">View full file: problems/p33/p33.mojo</a></p>
 <p><strong>Your task</strong>: Complete the missing section (marked with
 <code># FILL IN (roughly 8 lines)</code>) inside the triple nested loops.</p>
 <p><strong>What you need to understand:</strong></p>
@@ -920,10 +926,10 @@ the idiomatic tiled approach.</p>
 pixi shell -e nvidia
 
 # Profile tensor core version
-ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed,smsp__inst_executed_pipe_tensor_op_hmma.sum ./problems/p33p33_profiler --tensor-core
+ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed,smsp__inst_executed_pipe_tensor_op_hmma.sum ./problems/p33/p33_profiler --tensor-core
 
 # Profile tiled version for comparison
-ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed ./problems/p33p33_profiler --tiled
+ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed ./problems/p33/p33_profiler --tiled
 </code></pre>
 <h3 id="key-metrics-to-compare"><a class="header" href="#key-metrics-to-compare">Key metrics to compare</a></h3>
 <p><strong>Performance metrics:</strong></p>

@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 5426b744b3cbf1861feb709814917d33f03bb103 -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="tile---메모리-효율적인-타일링-처리"><a class="header" href="#tile---메모리-효율적인-타일링-처리">tile - 메모리 효율적인 타일링 처리</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p><strong>elementwise</strong> 패턴을 기반으로, 이 퍼즐에서는 <strong>타일링 처리</strong>를 소개합니다.
@@ -264,13 +264,13 @@ def tiled_elementwise_add[
     @parameter
     @always_inline
     def process_tiles[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
-        print("tile_id:", tile_id)
-        var output_tile = output.tile[tile_size](tile_id)
-        var a_tile = a.tile[tile_size](tile_id)
-        var b_tile = b.tile[tile_size](tile_id)
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
+
+        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 
         # FILL IN (6 lines at most)
 
@@ -279,7 +279,7 @@ def tiled_elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -307,10 +307,10 @@ for i in range(tile_size):
 </code></pre>
 <p>이 <code>@parameter</code> 루프는 최적의 성능을 위해 컴파일 타임에 전개됩니다.</p>
 <h3 id="4-타일-요소-내-simd-연산"><a class="header" href="#4-타일-요소-내-simd-연산">4. <strong>타일 요소 내 SIMD 연산</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](i, 0)  # 타일 내 위치 i에서 로드
-b_vec = b_tile.load[simd_width](i, 0)  # 타일 내 위치 i에서 로드
+<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](Index(i))  # 타일 내 위치 i에서 로드
+b_vec = b_tile.load[simd_width](Index(i))  # 타일 내 위치 i에서 로드
 result = a_vec + b_vec                 # SIMD 덧셈 (GPU 의존적 폭)
-out_tile.store[simd_width](i, 0, result)  # 타일 내 위치 i에 저장
+out_tile.store[simd_width](Index(i), result)  # 타일 내 위치 i에 저장
 </code></pre>
 <h3 id="5-스레드-구성의-차이점"><a class="header" href="#5-스레드-구성의-차이점">5. <strong>스레드 구성의 차이점</strong></a></h3>
 <pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
@@ -392,9 +392,9 @@ def tiled_elementwise_add[
     @parameter
     @always_inline
     def process_tiles[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
 
         var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
         var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
@@ -451,10 +451,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← 요소 992-1023
 <h3 id="3-순차-처리-심층-분석"><a class="header" href="#3-순차-처리-심층-분석">3. <strong>순차 처리 심층 분석</strong></a></h3>
 <pre><code class="language-mojo">@parameter
 for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](i, 0)
-    b_vec = b_tile.load[simd_width](i, 0)
+    a_vec = a_tile.load[simd_width](Index(i))
+    b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
-    out_tile.store[simd_width](i, 0, ret)
+    out_tile.store[simd_width](Index(i), ret)
 </code></pre>
 <p><strong>왜 순차 처리인가?</strong></p>
 <ul>

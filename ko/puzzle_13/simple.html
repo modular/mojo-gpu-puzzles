@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 1cd13cbe87682d50679d452938efab4cc79ddb78 -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="단일-블록을-사용한-기본-버전"><a class="header" href="#단일-블록을-사용한-기본-버전">단일 블록을 사용한 기본 버전</a></h1>
 <p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
 <code>output</code>에 저장하는 커널을 구현하세요.</p>
@@ -238,21 +238,7 @@
 <li><strong>스레드 동기화</strong>: 연산 시작 전 스레드 간 조율</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">comptime TPB = 8
-comptime SIZE = 6
-comptime CONV = 3
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
-comptime in_layout = row_major[SIZE]()
-comptime InLayout = type_of(in_layout)
-comptime out_layout = row_major[SIZE]()
-comptime OutLayout = type_of(out_layout)
-comptime conv_layout = row_major[CONV]()
-comptime ConvLayout = type_of(conv_layout)
-
-
-def conv_1d_simple(
+<pre><code class="language-mojo">def conv_1d_simple(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
@@ -263,7 +249,7 @@ def conv_1d_simple(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">전체 파일 보기: problems/p13/p13.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p13/p13.mojo" class="filename">전체 파일 보기: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">

@@ -244,7 +244,9 @@ A[i,j]: Direct access                  a_shared[local_row, local_col]
 B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">def single_block_matmul(
+<pre><code class="language-mojo">def single_block_matmul[
+    size: Int
+](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -257,7 +259,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

@@ -212,7 +212,7 @@
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual
 vectorization and
-<a href="https://docs.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a>
+<a href="https://mojolang.org/docs/std/algorithm/backend/vectorize/vectorize/">vectorize</a>
 that give you precise control over SIMD operations within GPU kernels. You’ll
 implement two different approaches to vectorized computation:</p>
 <ol>
@@ -245,6 +245,11 @@ requirements and complexity levels.</em></p>
 <li>SIMD width: GPU-dependent</li>
 <li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
+<blockquote>
+<p><strong>Scope:</strong> Both approaches operate within a single tile at a time; bounds
+checking is per-tile and there is no cross-tile or cross-block communication.
+The focus is SIMD control inside a tile, not coordination across them.</p>
+</blockquote>
 <h2 id="1-manual-vectorization-approach"><a class="header" href="#1-manual-vectorization-approach">1. Manual vectorization approach</a></h2>
 <h3 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h3>
 <pre><code class="language-mojo">def manual_vectorized_tiled_elementwise_add[
@@ -267,13 +272,13 @@ requirements and complexity levels.</em></p>
     @parameter
     @always_inline
     def process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
-        print("tile_id:", tile_id)
-        var output_tile = output.tile[chunk_size](tile_id)
-        var a_tile = a.tile[chunk_size](tile_id)
-        var b_tile = b.tile[chunk_size](tile_id)
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # FILL IN (7 lines at most)
 
@@ -285,7 +290,7 @@ requirements and complexity levels.</em></p>
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -373,9 +378,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     @parameter
     @always_inline
     def process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -468,22 +473,16 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     @parameter
     @always_inline
     def process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
-        print(
-            "tile_id:",
-            tile_id,
-            "tile_start:",
-            tile_start,
-            "tile_end:",
-            tile_end,
-            "actual_tile_size:",
-            actual_tile_size,
-        )
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # FILL IN (9 lines at most)
 
@@ -494,10 +493,31 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
+<h3 id="0-from-scalar-to-vectorized"><a class="header" href="#0-from-scalar-to-vectorized">0. <strong>From scalar to vectorized</strong></a></h3>
+<p>Start by writing the addition as a plain scalar loop over a tile, then convert it
+to <code>vectorize</code>. The transformation is mechanical: replace the per-element loop
+body with a SIMD load/add/store, and hand the loop to <code>vectorize</code>, which calls
+your body in <code>width</code>-sized steps and processes the leftover remainder for you.</p>
+<pre><code class="language-mojo"># Before: scalar loop over the tile (one element at a time)
+for i in range(actual_tile_size):
+    global_idx = tile_start + i
+    out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
+
+# After: same logic, but the body operates on a SIMD vector of `width`
+def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+    global_idx = tile_start + i
+    if global_idx + width &lt;= size:                       # bounds check
+        a_vec = a_lt.aligned_load[width](Index(global_idx))
+        b_vec = b_lt.aligned_load[width](Index(global_idx))
+        out_lt.store[width](Index(global_idx), a_vec + b_vec)
+
+vectorize[simd_width](actual_tile_size, vectorized_add)  # drives the loop + remainder
+</code></pre>
+<p>The remaining tips break this down piece by piece.</p>
 <h3 id="1-tile-boundary-calculation"><a class="header" href="#1-tile-boundary-calculation">1. <strong>Tile boundary calculation</strong></a></h3>
 <pre><code class="language-mojo">tile_start = tile_id * tile_size
 tile_end = min(tile_start + tile_size, size)
@@ -507,7 +527,7 @@ actual_tile_size = tile_end - tile_start
 <h3 id="2-vectorized-function-pattern"><a class="header" href="#2-vectorized-function-pattern">2. <strong>Vectorized function pattern</strong></a></h3>
 <pre><code class="language-mojo">def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:  # Bounds checking
         # SIMD operations here
@@ -576,9 +596,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     @parameter
     @always_inline
     def process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
@@ -589,7 +609,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
         def vectorized_add[
             width: Int
-        ](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
+        ](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width &lt;= size:
                 var a_vec = a_lt.aligned_load[width](Index(global_idx))
@@ -625,7 +645,7 @@ actual_tile_size = tile_end - tile_start
 <p><strong>Automatic vectorization mechanism:</strong></p>
 <pre><code class="language-mojo">def vectorized_add[
   width: Int
-](i: Int) unified {read tile_start, read a, read b, mut output}:
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:
         # Automatic SIMD optimization

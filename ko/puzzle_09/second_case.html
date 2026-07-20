@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 0b65eaf4dea76e1eb968b4fc2ca14e563df205a2 -->
+                        <!-- i18n-source-commit: d4708811cf72aa9c63e34ecf289f4a5bcc2f37f5 -->
 <h1 id="-탐정-수사-두-번째-사례"><a class="header" href="#-탐정-수사-두-번째-사례">🔍 탐정 수사: 두 번째 사례</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p><a href="./first_case.html">첫 번째 사례에서 익힌 크래시 디버깅 스킬</a>을 바탕으로, 이번에는
@@ -252,7 +252,7 @@
     for offset in range(ITER):
         var idx = Int(thread_id) + offset - 1
         if 0 &lt;= idx &lt; SIZE:
-            var value = rebind[Scalar[dtype]](a[idx])
+            var value = a[idx]
             window_sum += value
 
     output[thread_id] = window_sum
@@ -270,7 +270,7 @@ Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
 stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
 Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
-To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
 /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 </code></pre>
 <h2 id="과제-탐정-수사"><a class="header" href="#과제-탐정-수사">과제: 탐정 수사</a></h2>
@@ -355,17 +355,17 @@ Each position should sum its neighbors: [left + center + right]
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: TileTensor[mut=False, dtype, vector_layout],
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:36
+36          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 </code></pre>
 <h4 id="step-4-메인-로직으로-이동"><a class="header" href="#step-4-메인-로직으로-이동">Step 4: 메인 로직으로 이동</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-29          output: TileTensor[mut=True, dtype, vector_layout],
+35          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
 (cuda-gdb) n
-32          thread_id = thread_idx.x
+38          var thread_id = thread_idx.x
 (cuda-gdb) n
-38          for offset in range(ITER):
+44          for offset in range(ITER):
 </code></pre>
 <h4 id="step-5-변수-접근성-테스트---중요한-발견"><a class="header" href="#step-5-변수-접근성-테스트---중요한-발견">Step 5: 변수 접근성 테스트 - 중요한 발견</a></h4>
 <pre><code class="language-bash">(cuda-gdb) p thread_id
@@ -389,52 +389,50 @@ $3 = {{0}, {1}, {2}, {3}}
 데이터를 검사하는 방법입니다.</p>
 <h3 id="3단계-핵심-반복문-조사"><a class="header" href="#3단계-핵심-반복문-조사">3단계: 핵심 반복문 조사</a></h3>
 <h4 id="step-6-반복문-모니터링-설정"><a class="header" href="#step-6-반복문-모니터링-설정">Step 6: 반복문 모니터링 설정</a></h4>
-<pre><code class="language-bash">(cuda-gdb) b 42
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
+<pre><code class="language-bash">(cuda-gdb) b 45
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 45.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
-42              idx = thread_id + offset - 1
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:45
+45              var idx = Int(thread_id) + offset - 1
 </code></pre>
 <p><strong>🔍 이제 반복문 본문 안에 있습니다. 직접 반복 횟수를 세어봅시다.</strong></p>
 <h4 id="step-7-첫-번째-반복-offset--0"><a class="header" href="#step-7-첫-번째-반복-offset--0">Step 7: 첫 번째 반복 (offset = 0)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-43              if 0 &lt;= idx &lt; SIZE:
+46              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 </code></pre>
-<p><strong>첫 번째 반복 완료</strong>: 반복문이 42번 줄 → 43번 줄 → 41번 줄로 돌아왔습니다.
-반복문이 계속됩니다.</p>
+<p><strong>첫 번째 반복 완료</strong>: 반복문이 45번 줄 → 46번 줄 → 44번 줄로 돌아왔습니다. 반복문이 계속됩니다.</p>
 <h4 id="step-8-두-번째-반복-offset--1"><a class="header" href="#step-8-두-번째-반복-offset--1">Step 8: 두 번째 반복 (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-42              idx = thread_id + offset - 1
+45              var idx = Int(thread_id) + offset - 1
 (cuda-gdb) n
-43              if 0 &lt;= idx &lt; SIZE:
+46              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-44                  value = rebind[Scalar[dtype]](input[idx])
+47                  var value = rebind[Scalar[dtype]](a[idx])
 (cuda-gdb) n
-45                  window_sum += value
+48                  window_sum += value
 (cuda-gdb) n
-43              if 0 &lt;= idx &lt; SIZE:
+46              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 </code></pre>
-<p><strong>두 번째 반복 완료</strong>: 이번에는 if 블록(44-45번 줄)을 통과했습니다.</p>
+<p><strong>두 번째 반복 완료</strong>: 이번에는 if 블록(47-48번 줄)을 통과했습니다.</p>
 <h4 id="step-9-세-번째-반복-테스트"><a class="header" href="#step-9-세-번째-반복-테스트">Step 9: 세 번째 반복 테스트</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-47          output[thread_id] = window_sum
+50          output[thread_id] = window_sum
 </code></pre>
-<p><strong>결정적 발견</strong>: 반복문이 2번만 돌고 종료되었습니다! 42번 줄의 브레이크포인트에
-다시 걸리지 않고 47번 줄로 바로 넘어갔습니다.</p>
+<p><strong>결정적 발견</strong>: 반복문이 2번만 돌고 종료되었습니다! 45번 줄의 브레이크포인트에 다시 걸리지 않고 50번 줄로 바로 넘어갔습니다.</p>
 <p><strong>결론</strong>: 반복문이 정확히 <strong>2번</strong> 돌고 종료되었습니다.</p>
 <h4 id="step-10-커널-실행-완료와-컨텍스트-손실"><a class="header" href="#step-10-커널-실행-완료와-컨텍스트-손실">Step 10: 커널 실행 완료와 컨텍스트 손실</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-31      fn process_sliding_window(
+34      def process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -455,12 +453,10 @@ No symbol "offset" in current context.
 </ol>
 <p>각 스레드가 계산해야 할 것:</p>
 <ul>
-<li><strong>스레드 0</strong>: window_sum = input[-1] + input[0] + input[1] = (경계) + 0 + 1 =
-1.0</li>
-<li><strong>스레드 1</strong>: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0</li>
-<li><strong>스레드 2</strong>: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0</li>
-<li><strong>스레드 3</strong>: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (경계) =
-5.0</li>
+<li><strong>스레드 0</strong>: window_sum = a[-1] + a[0] + a[1] = (경계) + 0 + 1 = 1.0</li>
+<li><strong>스레드 1</strong>: window_sum = a[0] + a[1] + a[2] = 0 + 1 + 2 = 3.0</li>
+<li><strong>스레드 2</strong>: window_sum = a[1] + a[2] + a[3] = 1 + 2 + 3 = 6.0</li>
+<li><strong>스레드 3</strong>: window_sum = a[2] + a[3] + a[4] = 2 + 3 + (경계) = 5.0</li>
 </ul>
 <h4 id="step-12-스레드-0의-실제-실행-추적"><a class="header" href="#step-12-스레드-0의-실제-실행-추적">Step 12: 스레드 0의 실제 실행 추적</a></h4>
 <p>2번만 반복할 경우 (offset = 0, 1):</p>
@@ -474,13 +470,13 @@ No symbol "offset" in current context.
 <ul>
 <li><code>idx = thread_id + offset - 1 = 0 + 1 - 1 = 0</code></li>
 <li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 0 &lt; 4:</code> → <strong>True</strong></li>
-<li><code>window_sum += input[0]</code> → <code>window_sum += 0</code></li>
+<li><code>window_sum += a[0]</code> → <code>window_sum += 0</code></li>
 </ul>
 <p><strong>누락된 반복 3 (offset = 2)</strong>:</p>
 <ul>
 <li><code>idx = thread_id + offset - 1 = 0 + 2 - 1 = 1</code></li>
 <li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 1 &lt; 4:</code> → <strong>True</strong></li>
-<li><code>window_sum += input[1]</code> → <code>window_sum += 1</code> ← <strong>이 연산이 실행되지 않음</strong></li>
+<li><code>window_sum += a[1]</code> → <code>window_sum += 1</code> ← <strong>이 연산이 실행되지 않음</strong></li>
 </ul>
 <p><strong>결과</strong>: 스레드 0은 <code>window_sum = 0 + 1 = 1</code> 대신 <code>window_sum = 0</code>을 얻습니다</p>
 <h3 id="5단계-버그-확인"><a class="header" href="#5단계-버그-확인">5단계: 버그 확인</a></h3>

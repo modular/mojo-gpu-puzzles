@@ -31,6 +31,6 @@ def main() raises:
     a.enqueue_fill(0)
     tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function[kernel, kernel](tensor, grid_dim=1, block_dim=1)
+    ctx.enqueue_function[kernel](tensor, grid_dim=1, block_dim=1)
 
     ctx.synchronize()

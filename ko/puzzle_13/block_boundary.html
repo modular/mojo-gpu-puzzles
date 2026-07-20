@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 29894ca396ed4e90fc447bf66b8e2a216576d8a8 -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="블록-경계-버전"><a class="header" href="#블록-경계-버전">블록 경계 버전</a></h1>
 <p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
 <code>output</code>에 저장하는 커널을 구현하세요.</p>
@@ -230,19 +230,7 @@
 <li><strong>동기화</strong>: 적절한 스레드 간 조율</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">comptime SIZE_2 = 15
-comptime CONV_2 = 4
-comptime BLOCKS_PER_GRID_2 = (2, 1)
-comptime THREADS_PER_BLOCK_2 = (TPB, 1)
-comptime in_2_layout = row_major[SIZE_2]()
-comptime In2Layout = type_of(in_2_layout)
-comptime out_2_layout = row_major[SIZE_2]()
-comptime Out2Layout = type_of(out_2_layout)
-comptime conv_2_layout = row_major[CONV_2]()
-comptime Conv2Layout = type_of(conv_2_layout)
-
-
-def conv_1d_block_boundary(
+<pre><code class="language-mojo">def conv_1d_block_boundary(
     output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
@@ -253,7 +241,7 @@ def conv_1d_block_boundary(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">전체 파일 보기: problems/p13/p13.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p13/p13.mojo" class="filename">전체 파일 보기: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">

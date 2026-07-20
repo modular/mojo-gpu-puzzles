@@ -245,7 +245,7 @@ programming in Mojo.</p>
 <li>Warps per block: <code>128 / WARP_SIZE</code> (4 warps on NVIDIA, 2 or 4 warps on AMD)</li>
 </ul>
 <h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
-<p>Recall the complex approach from <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> that
+<p>Recall the complex approach from <a href="../puzzle_12/puzzle_12.html">Puzzle 12</a> that
 required shared memory, barriers, and tree reduction:</p>
 <pre><code class="language-mojo">def traditional_dot_product[
     tpb: Int
@@ -266,8 +266,8 @@ required shared memory, barriers, and tree reduction:</p>
 
     # Each thread computes partial product
     if global_i &lt; size:
-        var a_val = rebind[Scalar[dtype]](a[global_i])
-        var b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = a[global_i]
+        var b_val = b[global_i]
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -369,22 +369,12 @@ the complex shared memory + barriers approach to coordinate between warps.</p>
 <h3 id="blocksum-approach"><a class="header" href="#blocksum-approach"><code>block.sum()</code> approach</a></h3>
 <p>Transform the complex traditional approach into a simple block kernel using
 <code>block.sum()</code>:</p>
-<pre><code class="language-mojo">comptime SIZE = 128
-comptime TPB = 128
-comptime NUM_BINS = 8
-comptime in_layout = row_major[SIZE]()
-comptime InLayoutType = type_of(in_layout)
-comptime out_layout = row_major[1]()
-comptime OutLayoutType = type_of(out_layout)
-comptime dtype = DType.float32
-
-
-def block_sum_dot_product[
+<pre><code class="language-mojo">def block_sum_dot_product[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -397,7 +387,7 @@ def block_sum_dot_product[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>

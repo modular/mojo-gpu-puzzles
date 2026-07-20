@@ -260,7 +260,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def add_10_shared(
+def add_10_shared_tile_tensor(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
@@ -276,13 +276,17 @@ def add_10_shared(
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     # FILL ME IN (roughly 2 lines)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p08/p08.mojo" class="filename">View full file: problems/p08/p08.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p08/p08.mojo" class="filename">View full file: problems/p08/p08.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

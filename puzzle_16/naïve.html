@@ -236,23 +236,9 @@ and compute dot products in parallel.</p>
 <li>Output: <code>row_major[SIZE, SIZE]()</code></li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.memory import AddressSpace
-from layout import TileTensor
-from layout.tile_layout import row_major
-from layout.tile_tensor import stack_allocation
-
-
-comptime TPB = 3
-comptime SIZE = 2
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, TPB)
-comptime dtype = DType.float32
-comptime layout = row_major[SIZE, SIZE]()
-comptime LayoutType = type_of(layout)
-
-
-def naive_matmul(
+<pre><code class="language-mojo">def naive_matmul[
+    size: Int
+](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -263,7 +249,7 @@ def naive_matmul(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

@@ -210,6 +210,11 @@
                     <main>
                         <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
 <h1 id="다단계-파이프라인-조정"><a class="header" href="#다단계-파이프라인-조정">다단계 파이프라인 조정</a></h1>
+<p><strong>중요 사항</strong>: 퍼즐 29는 현재 NVIDIA 전용입니다.
+<a href="memory_barrier.html">동반 스텐실 퍼즐</a>에서 사용되는
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a> 는
+NVIDIA 하드웨어가 필요하며, <code>pixi</code> 작업이 이를 동일한 컴파일 단위로
+가져옵니다.</p>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>조율된 3단계 파이프라인을 통해 이미지를 처리하는 커널을 구현합니다. 서로 다른
 스레드 그룹이 특화된 처리 단계를 담당하고, 명시적 배리어로 동기화됩니다.</p>
@@ -325,24 +330,9 @@
 </li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">
-comptime TPB = 256  # Threads per block for pipeline stages
-comptime SIZE = 1024  # Image size (1D for simplicity)
-comptime BLOCKS_PER_GRID = (4, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
-comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
-
-# Multi-stage processing configuration
-comptime STAGE1_THREADS = TPB // 2
-comptime STAGE2_THREADS = TPB // 2
-comptime BLUR_RADIUS = 2
-
-
-def multi_stage_image_blur_pipeline(
+<pre><code class="language-mojo">def multi_stage_image_blur_pipeline(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -383,7 +373,7 @@ def multi_stage_image_blur_pipeline(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -427,16 +417,11 @@ def multi_stage_image_blur_pipeline(
 <p>솔루션을 테스트하려면 터미널에서 다음 명령을 실행합니다:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p29 --multi-stage
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p29 --multi-stage
 </code></pre>
   </div>
   <div class="tab-content">
@@ -513,7 +498,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
         for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
             sample_idx = blur_idx + offset
             if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                blur_sum += input_shared[sample_idx]
                 blur_count += 1
 
         if blur_count &gt; 0:
@@ -529,7 +514,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
             for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
                 sample_idx = second_idx + offset
                 if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                    blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                    blur_sum += input_shared[sample_idx]
                     blur_count += 1
 
             if blur_count &gt; 0:

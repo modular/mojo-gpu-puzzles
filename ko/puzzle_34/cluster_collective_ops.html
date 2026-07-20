@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="-클러스터-전체-집합-연산"><a class="header" href="#-클러스터-전체-집합-연산">☸️ 클러스터 전체 집합 연산</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는
@@ -265,9 +265,9 @@
 <pre><code class="language-mojo">def cluster_collective_operations[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    temp_storage: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -278,7 +278,7 @@
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">

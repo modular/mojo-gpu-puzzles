@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blocksum의-핵심---블록-레벨-내적"><a class="header" href="#blocksum의-핵심---블록-레벨-내적">block.sum()의 핵심 - 블록 레벨 내적</a></h1>
 <p><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>에서 살펴본 내적을 블록 레벨
 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> 연산으로
@@ -244,7 +244,7 @@ LLVM 분석은 <a href="#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC%84%9D-blocksum%EC%9D%80
 <li>블록당 워프 수: <code>128 / WARP_SIZE</code> (NVIDIA에서 4개, AMD에서 2개 또는 4개)</li>
 </ul>
 <h2 id="기존-방식의-복잡성-puzzle-12에서"><a class="header" href="#기존-방식의-복잡성-puzzle-12에서">기존 방식의 복잡성 (Puzzle 12에서)</a></h2>
-<p><a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>의 복잡한 방식을 떠올려 봅시다. 공유
+<p><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>의 복잡한 방식을 떠올려 봅시다. 공유
 메모리, 배리어, 트리 리덕션이 필요했습니다:</p>
 <pre><code class="language-mojo">def traditional_dot_product[
     tpb: Int
@@ -265,8 +265,8 @@ LLVM 분석은 <a href="#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC%84%9D-blocksum%EC%9D%80
 
     # Each thread computes partial product
     if global_i &lt; size:
-        var a_val = rebind[Scalar[dtype]](a[global_i])
-        var b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = a[global_i]
+        var b_val = b[global_i]
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -366,22 +366,12 @@ LLVM 분석은 <a href="#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC%84%9D-blocksum%EC%9D%80
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <h3 id="blocksum-방식"><a class="header" href="#blocksum-방식"><code>block.sum()</code> 방식</a></h3>
 <p>복잡한 기존 방식을 <code>block.sum()</code>을 사용하는 간단한 블록 커널로 변환합니다:</p>
-<pre><code class="language-mojo">comptime SIZE = 128
-comptime TPB = 128
-comptime NUM_BINS = 8
-comptime in_layout = row_major[SIZE]()
-comptime InLayoutType = type_of(in_layout)
-comptime out_layout = row_major[1]()
-comptime OutLayoutType = type_of(out_layout)
-comptime dtype = DType.float32
-
-
-def block_sum_dot_product[
+<pre><code class="language-mojo">def block_sum_dot_product[
     tpb: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -394,7 +384,7 @@ def block_sum_dot_product[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>

@@ -298,7 +298,7 @@ computation, but all lanes can use the result in their individual operations?</p
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -306,6 +306,7 @@ computation, but all lanes can use the result in their individual operations?</p
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i &lt; size:
         var broadcast_value: output.ElementType = 0.0
 
@@ -313,7 +314,7 @@ computation, but all lanes can use the result in their individual operations?</p
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -503,7 +504,7 @@ conditional transformations across all lanes?</p>
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -511,6 +512,7 @@ conditional transformations across all lanes?</p>
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i &lt; size:
         var decision_value: output.ElementType = 0.0
 
@@ -754,7 +756,7 @@ data?</p>
     size: Int
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -763,6 +765,7 @@ data?</p>
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
+
     if global_i &lt; size:
         var scale_factor: output.ElementType = 0.0
 

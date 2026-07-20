@@ -267,7 +267,7 @@ tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 </code></pre>
 <p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides from the
-<a href="https://docs.modular.com/mojo/manual/">Mojo manual</a></p>
+<a href="https://docs.modular.com/mojo/manual/">Mojo manual</a>:</p>
 <ul>
 <li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
 <li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
@@ -308,7 +308,7 @@ def main() raises:
     a.enqueue_fill(0)
     tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function[kernel, kernel](tensor, grid_dim=1, block_dim=1)
+    ctx.enqueue_function[kernel](tensor, grid_dim=1, block_dim=1)
 
     ctx.synchronize()
 </code></pre>

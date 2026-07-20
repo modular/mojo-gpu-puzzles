@@ -239,31 +239,28 @@ programming in Mojo.</p>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
 <li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
+<blockquote>
+<p><strong>Scope:</strong> This puzzle works within a single warp (<code>SIZE = WARP_SIZE</code>). The
+reduction happens across lanes of one warp via <code>warp.sum()</code>; there is no
+cross-warp or cross-block reduction here.</p>
+</blockquote>
 <h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
 <p>Recall the complex approach from
 <a href="../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a> that required shared
 memory, barriers, and tree reduction:</p>
-<pre><code class="language-mojo">comptime SIZE = WARP_SIZE
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
-comptime dtype = DType.float32
-comptime SIMD_WIDTH = simd_width_of[dtype]()
-comptime in_layout = row_major[SIZE]()
-comptime InLayoutType = type_of(in_layout)
-comptime out_layout = row_major[1]()
-comptime OutLayoutType = type_of(out_layout)
-
-
-def traditional_dot_product_p12_style[
-    size: Int
+<pre><code class="language-mojo">def traditional_dot_product_p12_style[
+    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
+    var a_lt = a.to_layout_tensor()
+    var b_lt = b.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[WARP_SIZE]())
@@ -271,7 +268,9 @@ def traditional_dot_product_p12_style[
     var local_i = thread_idx.x
 
     if global_i &lt; size:
-        shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
+        shared[local_i] = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+            Scalar[dtype]
+        ](b_lt[global_i])
     else:
         shared[local_i] = 0.0
 
@@ -285,7 +284,7 @@ def traditional_dot_product_p12_style[
         stride //= 2
 
     if local_i == 0:
-        output[global_i // WARP_SIZE] = shared[0]
+        out_lt.store[1](Index(global_i // WARP_SIZE), shared[0])
 
 
 </code></pre>
@@ -298,6 +297,13 @@ def traditional_dot_product_p12_style[
 </ul>
 <p>This works, but it’s verbose, error-prone, and requires deep understanding of
 GPU synchronization.</p>
+<blockquote>
+<p><strong>Note:</strong> This is intentionally a <em>different</em> approach from the
+<a href="../../../solutions/p12/p12.mojo">Puzzle 12 solution</a>. Puzzle 12 uses shared
+memory, <code>barrier()</code>, and a tree reduction; this puzzle deliberately replaces
+all of that with a single <code>warp.sum()</code>. The code below won’t match the P12
+solution line-for-line — that contrast is the point.</p>
+</blockquote>
 <p><strong>Test the traditional approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -328,18 +334,21 @@ GPU synchronization.</p>
 <p>Transform the complex traditional approach into a simple warp kernel using
 <code>warp_sum()</code>:</p>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    size: Int
+    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
 ):
+    var a_lt = a.to_layout_tensor()
+    var b_lt = b.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -482,23 +491,29 @@ computed their <code>partial_product</code></li>
 <p>Now implement the same warp dot product using Mojo’s functional programming
 patterns:</p>
 <pre><code class="language-mojo">def functional_warp_dot_product[
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
+    //,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
     @always_inline
     def compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var idx = indices[0]
-        print("idx:", idx)
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var idx = Int(indices[0].value())
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
         # FILL IN (10 lines at most)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
@@ -548,8 +563,8 @@ if lane_id() == 0:
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in
 functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
-<pre><code class="language-mojo">from gpu import lane_id
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+<pre><code class="language-mojo">from std.gpu import lane_id
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1
@@ -589,6 +604,7 @@ expected: 10416.0
 <pre><code class="language-mojo">def functional_warp_dot_product[
     InLayoutT: TensorLayout,
     OutLayoutT: TensorLayout,
+    //,
     dtype: DType,
     simd_width: Int,
     rank: Int,
@@ -602,9 +618,9 @@ expected: 10416.0
     @parameter
     @always_inline
     def compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var idx = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var idx = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
@@ -615,9 +631,7 @@ expected: 10416.0
         if idx &lt; size:
             var a_val = a_lt.load[1](Index(idx))
             var b_val = b_lt.load[1](Index(idx))
-            partial_product = rebind[Scalar[dtype]](a_val) * rebind[
-                Scalar[dtype]
-            ](b_val)
+            partial_product = a_val * b_val
         else:
             partial_product = 0.0
 
@@ -744,7 +758,7 @@ Benchmarks completed!
 WARP OPERATIONS PERFORMANCE ANALYSIS:
    GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
    - 1,...,256 x WARP_SIZE: Grid size too small to benchmark
-   - 2048 x WARP_SIZE: Warp primative benefits emerge
+   - 2048 x WARP_SIZE: Warp primitive benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
 

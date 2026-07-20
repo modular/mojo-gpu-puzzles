@@ -208,8 +208,11 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: d09bc3fbdd4bf6b2a44793f0208b6ba7800ed4c0 -->
 <h1 id="더블-버퍼링-스텐실-연산"><a class="header" href="#더블-버퍼링-스텐실-연산">더블 버퍼링 스텐실 연산</a></h1>
+<p><strong>중요 사항</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요합니다.
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
+NVIDIA 전용입니다.</p>
 <blockquote>
 <p><strong>🔬 세밀한 동기화: mbarrier vs barrier()</strong></p>
 <p>이 퍼즐은 이전 퍼즐에서 사용한 기본
@@ -372,15 +375,9 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <li><strong>완료 배리어</strong>: 블록 종료 전 모든 쓰기 완료 보장</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">
-# Double-buffered stencil configuration
-comptime STENCIL_ITERATIONS = 3
-comptime BUFFER_COUNT = 2
-
-
-def double_buffered_stencil_computation(
+<pre><code class="language-mojo">def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -417,13 +414,19 @@ def double_buffered_stencil_computation(
         mbarrier_init(iter_barrier.ptr, TPB)
         mbarrier_init(final_barrier.ptr, TPB)
 
+    # Per NVIDIA's async-barrier docs, mbarrier objects must be visible to all
+    # threads before any thread calls mbarrier_arrive on them.
+    barrier()
+
     # Initialize buffer_A with input data
 
     # FILL ME IN (roughly 4 lines)
 
-    # Wait for buffer_A initialization
+    # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
+    # poll, so spin until it reports completion.
     _ = mbarrier_arrive(init_barrier.ptr)
-    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+        pass
 
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
@@ -439,13 +442,19 @@ def double_buffered_stencil_computation(
             # FILL ME IN (roughly 12 lines)
             ...
 
-        # Memory barrier: wait for all writes before buffer swap
+        # Memory barrier: wait for all writes before buffer swap. test_wait is
+        # non-blocking, so poll until every thread has arrived.
         _ = mbarrier_arrive(iter_barrier.ptr)
-        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+            pass
 
         # Reinitialize barrier for next iteration
         if local_i == 0:
             mbarrier_init(iter_barrier.ptr, TPB)
+
+        # Make the reinitialized barrier visible before the next iteration's
+        # mbarrier_arrive.
+        barrier()
 
     # Write final results from active buffer
     if local_i &lt; TPB and global_i &lt; size:
@@ -456,13 +465,14 @@ def double_buffered_stencil_computation(
             # Odd iterations end in buffer_B
             output[global_i] = buffer_B[local_i]
 
-    # Final barrier
+    # Final barrier — poll until every thread has arrived.
     _ = mbarrier_arrive(final_barrier.ptr)
-    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+        pass
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -491,12 +501,20 @@ def double_buffered_stencil_computation(
 <li>각 스레드가 쓰기 연산을 완료한 후
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 호출</li>
-<li>버퍼 교체 전 모든 스레드가 완료하도록
+<li>그 다음
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
-사용</li>
+를 폴링 루프로 호출: 이 API는 <strong>비차단</strong> 검사이므로
+<code>while not mbarrier_test_wait(...): pass</code> 안에서 호출해야 모든 스레드가
+도착할 때까지 실제로 대기할 수 있음</li>
 <li>재사용을 위해 반복 간에 배리어 재초기화:
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
 <li>경쟁 상태를 피하기 위해 스레드 0만 배리어를 재초기화</li>
+<li>모든 <code>mbarrier_init</code> 호출(초기 설정과 반복마다의 재초기화) 직후에는
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+를 삽입해, 어떤 스레드도 <code>mbarrier_arrive</code>를 호출하기 전에 모든 스레드가
+초기화된 배리어를 관찰하도록 보장하세요. 이는
+<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers 초기화 패턴</a>
+과 일치합니다.</li>
 </ul>
 <h3 id="출력-선택"><a class="header" href="#출력-선택"><strong>출력 선택</strong></a></h3>
 <ul>
@@ -511,16 +529,11 @@ def double_buffered_stencil_computation(
 <p>솔루션을 테스트하려면 터미널에서 다음 명령을 실행합니다:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p29 --double-buffer
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p29 --double-buffer
 </code></pre>
   </div>
   <div class="tab-content">
@@ -585,15 +598,21 @@ GPU output sample: 1.0 1.0 1.0
         mbarrier_init(iter_barrier.ptr, TPB)
         mbarrier_init(final_barrier.ptr, TPB)
 
+    # Per NVIDIA's async-barrier docs, mbarrier objects must be visible to all
+    # threads before any thread calls mbarrier_arrive on them.
+    barrier()
+
     # Initialize buffer_A with input data
     if local_i &lt; TPB and global_i &lt; size:
         buffer_A[local_i] = input[global_i]
     else:
         buffer_A[local_i] = 0.0
 
-    # Wait for buffer_A initialization
+    # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
+    # poll, so spin until it reports completion.
     _ = mbarrier_arrive(init_barrier.ptr)
-    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+        pass
 
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
@@ -607,9 +626,7 @@ GPU output sample: 1.0 1.0 1.0
                 for offset in range(-1, 2):
                     sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                        stencil_sum += rebind[Scalar[dtype]](
-                            buffer_A[sample_idx]
-                        )
+                        stencil_sum += buffer_A[sample_idx]
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
@@ -629,9 +646,7 @@ GPU output sample: 1.0 1.0 1.0
                 for offset in range(-1, 2):
                     sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
-                        stencil_sum += rebind[Scalar[dtype]](
-                            buffer_B[sample_idx]
-                        )
+                        stencil_sum += buffer_B[sample_idx]
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
@@ -641,13 +656,19 @@ GPU output sample: 1.0 1.0 1.0
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
-        # Memory barrier: wait for all writes before buffer swap
+        # Memory barrier: wait for all writes before buffer swap. test_wait is
+        # non-blocking, so poll until every thread has arrived.
         _ = mbarrier_arrive(iter_barrier.ptr)
-        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+            pass
 
         # Reinitialize barrier for next iteration
         if local_i == 0:
             mbarrier_init(iter_barrier.ptr, TPB)
+
+        # Make the reinitialized barrier visible before the next iteration's
+        # mbarrier_arrive.
+        barrier()
 
     # Write final results from active buffer
     if local_i &lt; TPB and global_i &lt; size:
@@ -658,9 +679,10 @@ GPU output sample: 1.0 1.0 1.0
             # Odd iterations end in buffer_B
             output[global_i] = buffer_B[local_i]
 
-    # Final barrier
+    # Final barrier — poll until every thread has arrived.
     _ = mbarrier_arrive(final_barrier.ptr)
-    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+        pass
 
 
 </code></pre>
@@ -716,13 +738,22 @@ GPU output sample: 1.0 1.0 1.0
 </ul>
 <p><strong>핵심 타이밍 순서:</strong></p>
 <ol>
+<li><strong>초기화 + 동기화</strong>: 스레드 0이
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>
+를 호출한 다음, 모든 스레드가
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+를 실행하여 어떤 스레드도 <code>mbarrier_arrive</code>를 호출하기 전에 초기화된
+상태가 블록 전체에 보이도록 합니다
+(<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers 문서</a>
+참조)</li>
 <li><strong>모든 스레드 쓰기</strong>: 각 스레드가 할당된 버퍼 요소를 업데이트</li>
 <li><strong>완료 알림</strong>: 각 스레드가
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 호출</li>
-<li><strong>전체 대기</strong>: 모든 스레드가
+<li><strong>전원 도착까지 폴링</strong>: 모든 스레드가
+<code>while not mbarrier_test_wait(...): pass</code> 안에서 회전 —
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
-호출</li>
+는 비차단 검사이므로 단일 호출은 대기가 아닙니다</li>
 <li><strong>진행 안전</strong>: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능</li>
 </ol>
 <h2 id="스텐실-연산-메커니즘"><a class="header" href="#스텐실-연산-메커니즘"><strong>스텐실 연산 메커니즘</strong></a></h2>
@@ -738,7 +769,7 @@ stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
-result[i] = stencil_sum / stencil_count
+result[i] = stencil_sum / Float32(stencil_count)
 </code></pre>
 <h2 id="버퍼-역할-교대"><a class="header" href="#버퍼-역할-교대"><strong>버퍼 역할 교대</strong></a></h2>
 <p>핑퐁 버퍼 패턴이 데이터 무결성을 보장합니다:</p>
@@ -769,13 +800,15 @@ stencil_input = buffer_B[10]  // 미정의 동작!
 buffer_B[local_i] = stencil_result
 
 # 쓰기 완료 알림
-mbarrier_arrive(barrier)
+_ = mbarrier_arrive(barrier)
 
-# 모든 스레드의 쓰기 완료까지 대기
-mbarrier_test_wait(barrier, TPB)
+# 모든 스레드의 쓰기 완료까지 폴링. mbarrier_test_wait는 비차단 호출이므로
+# 단일 호출은 대기가 아니며 반드시 루프에서 실행되어야 합니다.
+while not mbarrier_test_wait(barrier, TPB):
+    pass
 
 # 이제 읽기 안전 - 모든 쓰기 완료 보장
-stencil_input = buffer_B[neighbor_index]  // 항상 올바른 값을 읽음
+stencil_input = buffer_B[neighbor_index]  # 항상 올바른 값을 읽음
 </code></pre>
 <h2 id="출력-버퍼-선택"><a class="header" href="#출력-버퍼-선택"><strong>출력 버퍼 선택</strong></a></h2>
 <p>최종 결과 위치는 반복 횟수의 홀짝에 따라 결정됩니다:</p>

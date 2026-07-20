@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="warpprefix_sum-하드웨어-최적화-병렬-스캔"><a class="header" href="#warpprefix_sum-하드웨어-최적화-병렬-스캔"><code>warp.prefix_sum()</code> 하드웨어 최적화 병렬 스캔</a></h1>
 <p>워프 레벨 병렬 스캔 연산에서는 <code>prefix_sum()</code>을 사용하여 복잡한 공유 메모리
 알고리즘을 하드웨어 최적화 기본 요소로 대체할 수 있습니다. 이 강력한 연산을 통해
@@ -316,8 +316,7 @@ output[global_i] = scan_result
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
-    Inclusive prefix sum using warp primitive:
-    Each thread gets sum of all elements up to and including its position.
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 12's complex shared memory + barrier approach.
 
     Puzzle 12 approach:
@@ -341,7 +340,7 @@ output[global_i] = scan_result
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -441,9 +440,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 
         # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
         # But it only works within the current warp (WARP_SIZE threads)
-        var scan_result = prefix_sum[exclusive=False](
-            rebind[Scalar[dtype]](current_val)
-        )
+        var scan_result = prefix_sum[exclusive=False](current_val)
 
         output[global_i] = scan_result
 
@@ -720,7 +717,7 @@ pivot: 5.0
     # 워프 전체의 합산을 위한 버터플라이 리덕션: 모든 WARP_SIZE에 동적 대응
     offset = WARP_SIZE // 2
     while offset &gt; 0:
-        warp_left_total += shuffle_xor(warp_left_total, offset)
+        warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
         offset //= 2
 
     # 4단계: 출력 위치에 기록

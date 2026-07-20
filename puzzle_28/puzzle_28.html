@@ -434,28 +434,12 @@ async copy for efficiency: \[\text{output}[i] =
 <li><strong>Overlapped operations:</strong> Load small kernel data while input transfers</li>
 <li><strong>Synchronization:</strong> Wait for transfers, then compute using shared memory</li>
 </ol>
-<pre><code class="language-mojo">comptime VECTOR_SIZE = 16384
-comptime CONV_TILE_SIZE = 256
-comptime KERNEL_SIZE = 5
-comptime HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
-comptime BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
-comptime BLOCKS_PER_GRID_ASYNC = (
-    VECTOR_SIZE + CONV_TILE_SIZE - 1
-) // CONV_TILE_SIZE
-comptime THREADS_PER_BLOCK_ASYNC = 256
-comptime dtype = DType.float32
-comptime layout_async = row_major[VECTOR_SIZE]()
-comptime LayoutAsyncType = type_of(layout_async)
-comptime kernel_layout = row_major[KERNEL_SIZE]()
-comptime KernelLayoutType = type_of(kernel_layout)
-
-
-def async_copy_overlap_convolution[
+<pre><code class="language-mojo">def async_copy_overlap_convolution[
     dtype: DType
 ](
-    output: TileTensor[mut=True, dtype, LayoutAsyncType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutAsyncType, ImmutAnyOrigin],
-    kernel: TileTensor[mut=False, dtype, KernelLayoutType, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -464,18 +448,24 @@ def async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[CONV_TILE_SIZE]())
-    var kernel_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[KERNEL_SIZE]())
+    var input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
+    var kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED,
+    ].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p28/p28.mojo" class="filename">View full file: problems/p28/p28.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p28/p28.mojo" class="filename">View full file: problems/p28/p28.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

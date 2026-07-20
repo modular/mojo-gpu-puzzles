@@ -236,6 +236,12 @@ distribution (weights sum to 1)</li>
 <li><strong>Weighted Sum</strong>: Combine value vectors using attention weights to produce
 the final output</li>
 </ol>
+<blockquote>
+<p><strong>Scope:</strong> This puzzle composes existing kernels (transpose, tiled matmul,
+softmax) into one attention op for a single query vector. Cross-block
+coordination lives inside each reused kernel — your focus is the transpose
+kernel and the host-side orchestration that connects the pieces.</p>
+</blockquote>
 <h2 id="understanding-attention-a-step-by-step-breakdown"><a class="header" href="#understanding-attention-a-step-by-step-breakdown">Understanding attention: a step-by-step breakdown</a></h2>
 <p>Think of attention as a <strong>smart lookup mechanism</strong>. Given a query (what you’re
 looking for), attention finds the most relevant information from a collection of
@@ -281,14 +287,20 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </code></pre>
 <p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to
 \((1,16)\) so we can use matrix multiplication instead of manual dot products.
-This allows us to leverage the highly optimized tiled matmul kernel from Puzzle
-18!</p>
+This allows us to leverage the highly optimized
+<a href="../puzzle_16/tiled.html">tiled matmul kernel from Puzzle 16</a>!</p>
+<p>In Mojo, you reshape a <code>LayoutTensor</code> by calling <code>reshape[new_layout]()</code> with the
+target layout as a compile-time parameter (for example,
+<code>q_tensor.reshape[layout_q_2d]()</code>) rather than copying or mutating data in place.
+You’ll see this idiom in the orchestration code below.</p>
 <p>Our GPU implementation
-<strong>reuses and combines optimized kernels from previous puzzles</strong>:</p>
+<strong>reuses and combines optimized kernels, mostly from previous puzzles</strong>:</p>
 <ul>
 <li><strong><a href="../puzzle_16/puzzle_16.html">Tiled matrix multiplication from Puzzle 16</a></strong>
 for efficient \(Q \cdot K^T\) and \(\text{weights} \cdot V\) operations</li>
-<li><strong>Shared memory transpose</strong> for computing \(K^T\) efficiently</li>
+<li><strong><a href="#1-implement-the-transpose-kernel">Shared memory transpose</a></strong> for computing
+\(K^T\) efficiently — this is the one kernel you implement in this puzzle
+(see below)</li>
 <li><strong><a href="../puzzle_18/puzzle_18.html">Parallel softmax from Puzzle 18</a></strong> for
 numerically stable attention weight computation</li>
 </ul>
@@ -298,6 +310,12 @@ operations by combining proven, optimized kernels from previous puzzles.
 Rather than writing everything from scratch, we leverage the
 <code>matmul_idiomatic_tiled</code> from Puzzle 16 and <code>softmax_kernel</code> from Puzzle 18,
 showcasing the power of modular GPU kernel design.</p>
+<p><strong>Reuse checkpoint</strong>: Before continuing, revisit the kernels you’re about to
+compose — <code>matmul_idiomatic_tiled</code> in
+<a href="../puzzle_16/tiled.html">Puzzle 16’s tiled solution</a> and <code>softmax_kernel</code> in
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. Treat this puzzle as a
+composition/refactor exercise: your job is to wire these existing building
+blocks together (plus the transpose you write here), not to reinvent them.</p>
 </blockquote>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
@@ -365,14 +383,14 @@ kernel in the Mojo file using shared memory.</p>
     dtype: DType = DType.float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    inp: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
     ...
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -424,9 +442,19 @@ coalesced for optimal memory bandwidth utilization</p>
 </div>
 </details>
 <h3 id="2-orchestrate-the-attention"><a class="header" href="#2-orchestrate-the-attention">2. Orchestrate the attention</a></h3>
-<pre><code class="language-mojo">            var gpu_ctx = rebind[DeviceContext](ctx[])
-
-            # Define layouts for matrix multiplication
+<p>So far you’ve written a single kernel. Attention, however, is a <em>pipeline</em> of
+kernels: the transpose you just implemented, the tiled matmul from Puzzle 16, the
+softmax from Puzzle 18, and a second matmul. <strong>Orchestration</strong> is the host-side
+code that runs these kernels in sequence and wires the output of each step into
+the input of the next:</p>
+<pre><code class="language-text">K → transpose → Kᵀ → matmul(Q, Kᵀ) → scores → softmax → weights → matmul(weights, V) → output
+</code></pre>
+<p>The orchestration function below allocates the intermediate buffers (<code>Kᵀ</code>,
+<code>scores</code>, <code>weights</code>), reshapes \(Q\) to \((1, 16)\) with <code>reshape[...]()</code> as
+shown above, and enqueues each kernel launch on the GPU. There’s no new kernel
+math here — the work is choosing buffer layouts and calling the existing kernels
+in the right order.</p>
+<pre><code class="language-mojo">            # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
             comptime layout_q_2d = row_major[1, d]()
             comptime Q2DLayout = type_of(layout_q_2d)
@@ -471,10 +499,10 @@ coalesced for optimal memory bandwidth utilization</p>
             ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
-            var k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var k_t_buf = ctx.enqueue_create_buffer[dtype](
                 seq_len * d
             )  # K^T as (d, seq_len)
-            var scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var scores_weights_buf = ctx.enqueue_create_buffer[dtype](
                 seq_len
             )  # Reused for scores and weights
 
@@ -483,7 +511,7 @@ coalesced for optimal memory bandwidth utilization</p>
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             # FILL ME IN 1 line
 
-            # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)
+            # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
             # FILL ME IN 1 function call
 
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len)
@@ -494,7 +522,7 @@ coalesced for optimal memory bandwidth utilization</p>
             # Step 4: Reshape scores from (1, seq_len) to (seq_len,) for softmax
             # FILL ME IN 1 line
 
-            # Step 5: Apply softmax to get attention weights
+            # Step 5: Apply softmax to get attention weights (in-place)
             # FILL ME IN 1 function call
 
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
@@ -505,7 +533,7 @@ coalesced for optimal memory bandwidth utilization</p>
             # FILL ME IN 2 lines
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
 <h3 id="test-the-kernels"><a class="header" href="#test-the-kernels">Test the kernels</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -717,7 +745,7 @@ and writes remain coalesced while achieving the transpose operation.</p>
             comptime kernel = transpose_kernel[
                 seq_len, d, KTLayout, KLayout, dtype
             ]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -737,7 +765,7 @@ and writes remain coalesced while achieving the transpose operation.</p>
                 KTLayout,
                 dtype,
             ]
-            gpu_ctx.enqueue_function[kernel2, kernel2](
+            ctx.enqueue_function[kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -758,7 +786,7 @@ and writes remain coalesced while achieving the transpose operation.</p>
             var weights_in = TileTensor[
                 mut=True, dtype, ScoresLayout, MutAnyOrigin
             ](scores_weights_buf, layout_scores)
-            gpu_ctx.enqueue_function[kernel3, kernel3](
+            ctx.enqueue_function[kernel3](
                 weights_out,
                 weights_in,
                 grid_dim=softmax_blocks_per_grid,
@@ -780,7 +808,7 @@ and writes remain coalesced while achieving the transpose operation.</p>
                 VLayout,
                 dtype,
             ]
-            gpu_ctx.enqueue_function[kernel4, kernel4](
+            ctx.enqueue_function[kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,

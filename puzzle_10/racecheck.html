@@ -254,7 +254,7 @@ def shared_memory_race(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <pre><code class="language-bash">pixi run p10 --race-condition
 </code></pre>
@@ -338,7 +338,7 @@ synchronization, thread coordination</li>
 operations, data dependencies</li>
 </ul>
 <h2 id="challenge"><a class="header" href="#challenge">Challenge</a></h2>
-<p>Equiped with these tools, fix the kernel failing kernel.</p>
+<p>Equipped with these tools, fix the kernel failing kernel.</p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -424,7 +424,7 @@ def shared_memory_race(
         var local_sum = Scalar[dtype](0.0)
         for r in range(size):
             for c in range(size):
-                local_sum += rebind[Scalar[dtype]](a[r, c])
+                local_sum += a[r, c]
 
         shared_sum[0] = local_sum  # Single write operation
 
@@ -527,7 +527,7 @@ conditions.</p>
 race conditions, using only thread at position (0,0) for accumulation is
 <strong>not optimal</strong> for GPU performance - we’re essentially doing serial computation
 on a massively parallel device.</p>
-<p><strong>Coming up in <a href="../../puzzle_11/puzzle_11.html">Puzzle 11: Pooling</a></strong>: You’ll
+<p><strong>Coming up in <a href="../puzzle_11/puzzle_11.html">Puzzle 11: Pooling</a></strong>: You’ll
 learn efficient parallel reduction algorithms that leverage <strong>all threads</strong> for
 high-performance summation operations while maintaining race-free execution.
 This puzzle teaches the foundation of <strong>correctness first</strong> - once you

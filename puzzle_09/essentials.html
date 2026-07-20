@@ -297,10 +297,10 @@ error: use of undeclared identifier 'my_variable'
 you time:</p>
 <h3 id="the-four-debugging-combinations"><a class="header" href="#the-four-debugging-combinations">The four debugging combinations</a></h3>
 <p><strong>Quick reference:</strong></p>
-<pre><code class="language-bash"># 1. JIT + LLDB: Debug CPU host code directly from source
+<pre><code class="language-bash"># 1. Source + LLDB: Debug CPU host code directly from source
 pixi run mojo debug your_gpu_program.mojo
 
-# 2. JIT + CUDA-GDB: Debug GPU kernels directly from source
+# 2. Source + CUDA-GDB: Debug GPU kernels directly from source
 pixi run mojo debug --cuda-gdb --break-on-launch your_gpu_program.mojo
 
 # 3. Binary + LLDB: Debug CPU host code from pre-compiled binary
@@ -313,11 +313,12 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 <h3 id="when-to-use-each-approach"><a class="header" href="#when-to-use-each-approach">When to use each approach</a></h3>
 <p><strong>For learning and quick experiments:</strong></p>
 <ul>
-<li>Use <strong>JIT debugging</strong> - no build step required, faster iteration</li>
+<li>Use <strong>source debugging</strong> - no separate build step, faster iteration</li>
 </ul>
 <p><strong>For serious debugging sessions:</strong></p>
 <ul>
-<li>Use <strong>binary debugging</strong> - more predictable, cleaner debugger output</li>
+<li>Use <strong>binary debugging</strong> - more predictable, cleaner debugger output, full
+control over build flags (<code>-O0 -g</code> preserves local variables)</li>
 </ul>
 <p><strong>For CPU-side issues</strong> (buffer allocation, host memory, program logic):</p>
 <ul>
@@ -328,8 +329,8 @@ code</li>
 <ul>
 <li>Use <strong>CUDA-GDB mode</strong> - the only way to inspect individual GPU threads</li>
 </ul>
-<p>The beauty is that you can mix and match. Start with JIT + LLDB to debug your
-setup code, then switch to JIT + CUDA-GDB to debug the actual kernel.</p>
+<p>The beauty is that you can mix and match. Start with Source + LLDB to debug
+your setup code, then switch to Source + CUDA-GDB to debug the actual kernel.</p>
 <hr />
 <h2 id="understanding-gpu-kernel-debugging-with-cuda-gdb"><a class="header" href="#understanding-gpu-kernel-debugging-with-cuda-gdb">Understanding GPU kernel debugging with CUDA-GDB</a></h2>
 <p>Next comes GPU kernel debugging - the most powerful (and complex) part of your
@@ -472,14 +473,14 @@ conda environment, enabling full GPU debugging capabilities.</p>
 <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh"><code>scripts/setup-cuda-gdb.sh</code></a>
 for implementation details.</p>
 <p><strong>Special note for WSL users</strong>: Both debug tools we will use in Part II (namely
-cuda-gdb and compute-sanatizer) do support debugging CUDA applications on WSL,
+cuda-gdb and compute-sanitizer) do support debugging CUDA applications on WSL,
 but require you to add the registry key
 <code>HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface</code> and
 set it to <code>(DWORD) 1</code>. More details on supported platforms and their OS specific
 behavior can be found here:
 <a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms">cuda-gdb</a>
 and
-<a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior">compute-sanatizer</a></p>
+<a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior">compute-sanitizer</a></p>
 <hr />
 <h2 id="hands-on-tutorial-your-first-gpu-debugging-session"><a class="header" href="#hands-on-tutorial-your-first-gpu-debugging-session">Hands-on tutorial: Your first GPU debugging session</a></h2>
 <p>Theory is great, but nothing beats hands-on experience. Let’s debug a real
@@ -498,14 +499,16 @@ debugging commands you’ll use daily.</p>
 <h3 id="learning-path-through-the-debugging-approaches"><a class="header" href="#learning-path-through-the-debugging-approaches">Learning path through the debugging approaches</a></h3>
 <p>We’ll explore the
 <a href="#the-four-debugging-combinations">four debugging combinations</a> using Puzzle 01
-as our example. <strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then
-progress to CUDA-GDB (most powerful).</p>
+as our example. <strong>Learning path</strong>: We’ll start with Source + LLDB (easiest),
+then progress to CUDA-GDB (most powerful).</p>
 <p><strong>⚠️ Important for GPU debugging</strong>:</p>
 <ul>
 <li>The <code>--break-on-launch</code> flag is <strong>required</strong> for CUDA-GDB approaches</li>
-<li><strong>Pre-compiled binaries</strong> (Approaches 3 &amp; 4) preserve local variables like <code>i</code>
-for debugging</li>
-<li><strong>JIT compilation</strong> (Approaches 1 &amp; 2) optimizes away most local variables</li>
+<li><strong>Pre-compiled binaries</strong> (Approaches 3 &amp; 4) build with <code>-O0 -g</code>, which
+disables optimizations and includes debug symbols — so local variables
+like <code>i</code> survive for inspection</li>
+<li><strong>Debugging from source</strong> (Approaches 1 &amp; 2) compiles with default flags,
+which typically optimize away most local variables</li>
 <li>For serious GPU debugging, use <strong>Approach 4</strong> (Binary + CUDA-GDB)</li>
 </ul>
 <h2 id="tutorial-step-1-cpu-debugging-with-lldb"><a class="header" href="#tutorial-step-1-cpu-debugging-with-lldb">Tutorial step 1: CPU debugging with LLDB</a></h2>
@@ -515,7 +518,7 @@ function</strong>.</p>
 <p><strong>The mission</strong>: Debug the CPU-side setup code in Puzzle 01 to understand how
 Mojo initializes GPU memory and launches kernels.</p>
 <h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the debugger</a></h3>
-<p>Fire up the LLDB debugger with JIT compilation:</p>
+<p>Fire up the LLDB debugger directly from source:</p>
 <pre><code class="language-bash"># This compiles and debugs p01.mojo in one step
 pixi run mojo debug solutions/p01/p01.mojo
 </code></pre>
@@ -528,91 +531,60 @@ inspect your program’s execution!</p>
 <pre><code class="language-bash">(lldb) br set -n main
 </code></pre>
 <p>Output:</p>
-<pre><code class="language-text">Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
-</code></pre>
-<p>Or it may look like:</p>
 <pre><code class="language-text">Breakpoint 1: no locations (pending).
 WARNING: Unable to resolve breakpoint to any actual locations.
 </code></pre>
-<p>If the breakpoint appears as pending, this is expected. Mojo programs are
-JIT-compiled, which means the debugger may not be able to resolve symbols until
-the program begins execution. In this case the breakpoint is registered, but
-LLDB cannot yet bind it to a concrete instruction address.</p>
-<p>Once execution starts and the module is compiled, LLDB resolves the breakpoint
+<p>This is expected. With <code>mojo debug your_program.mojo</code>, the program is
+compiled when the debug session starts, so the module isn’t yet loaded into
+the debugger when you set the breakpoint. LLDB registers the breakpoint as
+pending and cannot yet bind it to a concrete instruction address. Once
+execution starts and the module is loaded, LLDB resolves the breakpoint
 automatically.</p>
-<p>In either case the breakpoint has been set successfully and execution will pause
-there once the program runs.</p>
 <p><strong>Step 2: Start your program</strong></p>
 <pre><code class="language-bash">(lldb) run
 </code></pre>
 <p>Output:</p>
 <pre><code class="language-text">Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
-Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = breakpoint 1.1
-    frame #0: 0x0000555557d2b530 mojo`main
-mojo`main:
--&gt;  0x555557d2b530 &lt;+0&gt;: pushq  %rbp
-    0x555557d2b531 &lt;+1&gt;: movq   %rsp, %rbp
-    ...
-</code></pre>
-<p>The program has stopped at your breakpoint. You’re currently viewing
-<strong>assembly code</strong>, which is normal - the debugger starts at the low-level
-machine code before reaching your high-level Mojo source.</p>
-<p><strong>Step 3: Navigate through the startup process</strong></p>
-<pre><code class="language-bash"># Try stepping through one instruction
-(lldb) next
-</code></pre>
-<p>Output:</p>
-<pre><code class="language-text">Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = instruction step over
-    frame #0: 0x0000555557d2b531 mojo`main + 1
-mojo`main:
--&gt;  0x555557d2b531 &lt;+1&gt;: movq   %rsp, %rbp
-    0x555557d2b534 &lt;+4&gt;: pushq  %r15
-    ...
-</code></pre>
-<p>Stepping through assembly can be tedious. Let’s proceed to the more relevant
-parts.</p>
-<p><strong>Step 4: Continue to reach your Mojo source code</strong></p>
-<pre><code class="language-bash"># Skip through the startup assembly to get to your actual code
-(lldb) continue
-</code></pre>
-<p>Output:</p>
-<pre><code class="language-text">Process 186951 resuming
 Process 186951 stopped and restarted: thread 1 received signal: SIGCHLD
 2 locations added to breakpoint 1
 Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = breakpoint 1.3
-    frame #0: 0x00007fff5c01e841 JIT(0x7fff5c075000)`stdlib::builtin::_startup::__mojo_main_prototype(argc=([0] = 1), argv=0x00007fffffffa858) at _startup.mojo:95:4
+* thread #1, name = 'mojo', stop reason = breakpoint 1.2
+    frame #0: 0x00007fff5c01e841 JIT(0x7fff5c075000)`std::builtin::_startup::__mojo_main_prototype(argc=1, argv=0x00007fffffffa858) at _startup.mojo:119:5
 </code></pre>
-<p>Mojo’s runtime is initializing. The <code>_startup.mojo</code> indicates Mojo’s internal
-startup code. The <code>SIGCHLD</code> signal is normal - it’s how Mojo manages its
-internal processes.</p>
-<p><strong>Step 5: Continue to your actual code</strong></p>
-<pre><code class="language-bash"># One more continue to reach your p01.mojo code!
+<p>Once the program starts, the pending breakpoint resolves to <strong>2 locations</strong> —
+one in <code>_startup.mojo</code> (Mojo’s internal startup wrapper) and one in your
+<code>p01.mojo</code>’s <code>main</code>. LLDB stops at the first hit, which is the startup
+wrapper. The <code>SIGCHLD</code> signal is normal — it’s how Mojo manages its internal
+processes.</p>
+<p><strong>Step 3: Continue to your actual code</strong></p>
+<pre><code class="language-bash"># Continue to reach your p01.mojo code
 (lldb) continue
 </code></pre>
 <p>Output:</p>
 <pre><code class="language-text">Process 186951 resuming
 Process 186951 stopped
-* thread #1, name = 'mojo', stop reason = breakpoint 1.2
-    frame #0: 0x00007fff5c014040 JIT(0x7fff5c075000)`p01::main(__error__=&lt;unavailable&gt;) at p01.mojo:24:23
-   21
-   22
-   23   def main():
--&gt; 24       with DeviceContext() as ctx:
-   25           out = ctx.enqueue_create_buffer[dtype](SIZE)
-   26           out.enqueue_fill(0)
-   27           a = ctx.enqueue_create_buffer[dtype](SIZE)
+* thread #1, name = 'mojo', stop reason = breakpoint 1.1
+    frame #0: 0x00007fff5c014040 JIT(0x7fff5c075000)`p01::main() at p01.mojo:30:23
+   27
+   28
+   29   def main() raises:
+-&gt; 30       with DeviceContext() as ctx:
+   31           var out = ctx.enqueue_create_buffer[dtype](SIZE)
+   32           out.enqueue_fill(0)
+   33           var a = ctx.enqueue_create_buffer[dtype](SIZE)
 </code></pre>
 <p>You can now view your actual Mojo source code. Notice:</p>
 <ul>
-<li><strong>Line numbers 21-27</strong> from your p01.mojo file</li>
-<li><strong>Current line 24</strong>: <code>with DeviceContext() as ctx:</code></li>
-<li><strong>JIT compilation</strong>: The <code>JIT(0x7fff5c075000)</code> indicates Mojo compiled your
-code just-in-time</li>
+<li><strong>Line numbers 27-33</strong> from your p01.mojo file</li>
+<li><strong>Current line 30</strong>: <code>with DeviceContext() as ctx:</code></li>
+<li><strong>In-process execution</strong>: The <code>JIT(0x7fff5c075000)</code> prefix is LLDB’s label
+for the code region loaded into the running process. With
+<code>mojo debug your_program.mojo</code>, the compiled program runs in-process
+without an executable being written to disk — that’s why this path starts
+faster than building a binary first and why no <code>your_program_debug</code> file
+appears</li>
 </ul>
-<p><strong>Step 6: Let the program complete</strong></p>
+<p><strong>Step 4: Let the program complete</strong></p>
 <pre><code class="language-bash"># Let the program run to completion
 (lldb) continue
 </code></pre>
@@ -627,13 +599,13 @@ Process 186951 exited with status = 0 (0x00000000)
 session. Here’s what happened:</p>
 <p><strong>The debugging journey you took:</strong></p>
 <ol>
-<li><strong>Started with assembly</strong> - Normal for low-level debugging, shows how the
-debugger works at machine level</li>
 <li><strong>Navigated through Mojo startup</strong> - Learned that Mojo has internal
-initialization code</li>
-<li><strong>Reached your source code</strong> - Saw your actual p01.mojo lines 21-27 with
+initialization code (your breakpoint resolved to two locations and
+stopped first in <code>_startup.mojo</code>)</li>
+<li><strong>Reached your source code</strong> - Saw your actual p01.mojo lines 27-33 with
 syntax highlighting</li>
-<li><strong>Watched JIT compilation</strong> - Observed Mojo compiling your code on-the-fly</li>
+<li><strong>Observed in-process execution</strong> - Saw <code>mojo debug your_program.mojo</code>
+compile and run the program directly without writing an executable to disk</li>
 <li><strong>Verified successful execution</strong> - Confirmed your program produces the
 expected output</li>
 </ol>
@@ -667,8 +639,8 @@ synchronization</li>
 happens on your CPU before and after GPU execution. For the actual GPU kernel
 debugging, you need our next approach…</p>
 <h2 id="tutorial-step-2-binary-debugging"><a class="header" href="#tutorial-step-2-binary-debugging">Tutorial step 2: Binary debugging</a></h2>
-<p>You’ve learned JIT debugging - now let’s explore the <strong>professional approach</strong>
-used in production environments.</p>
+<p>You’ve learned source debugging - now let’s explore the <strong>professional
+approach</strong> used in production environments.</p>
 <p><strong>The scenario</strong>: You’re debugging a complex application with multiple files, or
 you need to debug the same program repeatedly. Building a binary first provides
 more control and faster debugging iterations.</p>
@@ -689,19 +661,19 @@ pixi run mojo debug solutions/p01/p01_debug
 </code></pre>
 <h3 id="whats-different-and-better"><a class="header" href="#whats-different-and-better">What’s different (and better)</a></h3>
 <p><strong>Startup comparison:</strong></p>
-<div class="table-wrapper"><table><thead><tr><th>JIT Debugging</th><th>Binary Debugging</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Source debugging</th><th>Binary debugging</th></tr></thead><tbody>
 <tr><td>Compile + debug in one step</td><td>Build once, debug many times</td></tr>
 <tr><td>Slower startup (compilation overhead)</td><td>Faster startup</td></tr>
 <tr><td>Compilation messages mixed with debug output</td><td>Clean debugger output</td></tr>
-<tr><td>Debug symbols generated during debugging</td><td>Fixed debug symbols</td></tr>
+<tr><td>Default build flags</td><td>Explicit <code>-O0 -g</code> build flags</td></tr>
 </tbody></table>
 </div>
 <p><strong>When you run the same LLDB commands</strong> (<code>br set -n main</code>, <code>run</code>, <code>continue</code>),
 you’ll notice:</p>
 <ul>
 <li><strong>Faster startup</strong> - no compilation delay</li>
-<li><strong>Cleaner output</strong> - no JIT compilation messages</li>
-<li><strong>More predictable</strong> - debug symbols don’t change between runs</li>
+<li><strong>Cleaner output</strong> - no compile-time messages mixed in</li>
+<li><strong>More predictable</strong> - build flags are explicit and reused between runs</li>
 <li><strong>Professional workflow</strong> - this is how production debugging works</li>
 </ul>
 <hr />
@@ -739,11 +711,11 @@ Only CUDA-GDB can show you this parallel reality.</p>
 <pre><code class="language-bash"># Make sure you've run this already (once is enough)
 pixi run setup-cuda-gdb
 
-# We'll use JIT + CUDA-GDB (Approach 2 from above)
+# We'll use Source + CUDA-GDB (Approach 2 from above)
 pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
 </code></pre>
-<p>We’ll use the <strong>JIT + CUDA-GDB approach</strong> since it’s perfect for learning and
-quick iterations.</p>
+<p>We’ll use the <strong>Source + CUDA-GDB approach</strong> since it’s perfect for learning
+and quick iterations.</p>
 <p><strong>Step 2: Launch and automatically stop at GPU kernel entry</strong></p>
 <p>The CUDA-GDB prompt looks like: <code>(cuda-gdb)</code>. Start the program:</p>
 <pre><code class="language-gdb"># Run the program - it automatically stops when the GPU kernel launches
@@ -829,7 +801,7 @@ Kernel 0
 (cuda-gdb) print a
 </code></pre>
 <p>Output:</p>
-<pre><code class="language-text">$5 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+<pre><code class="language-text">$5 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <p><strong>Step 5: Navigate between parallel threads</strong></p>
 <pre><code class="language-gdb"># Switch to a different thread to see its execution
@@ -972,12 +944,12 @@ synchronization and shared memory issues.</p>
 (cuda-gdb) print a               # Input array GPU pointer
 </code></pre>
 <p>Output:</p>
-<pre><code class="language-text">$9 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+<pre><code class="language-text">$9 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <pre><code class="language-gdb">(cuda-gdb) print output          # Output array GPU pointer
 </code></pre>
 <p>Output:</p>
-<pre><code class="language-text">$10 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
+<pre><code class="language-text">$10 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000000
 </code></pre>
 <pre><code class="language-gdb"># Verify memory access pattern using local variables:
 (cuda-gdb) print a[i]            # Each thread accesses its own element using 'i'
@@ -1150,7 +1122,7 @@ what you’ve accomplished:</p>
 program flow</li>
 <li>✅ <strong>GPU kernel debugging</strong> with CUDA-GDB - debug parallel threads, GPU
 memory, race conditions</li>
-<li>✅ <strong>JIT vs binary debugging</strong> - choose the right approach for different
+<li>✅ <strong>Source vs binary debugging</strong> - choose the right approach for different
 scenarios</li>
 <li>✅ <strong>Environment management</strong> with pixi - ensure consistent, reliable
 debugging setups</li>
@@ -1168,8 +1140,8 @@ efficiently</li>
 <p>You didn’t just read about GPU debugging - you <strong>experienced it</strong>:</p>
 <ul>
 <li><strong>Debugged real code</strong>: Puzzle 01’s <code>add_10</code> kernel with actual GPU execution</li>
-<li><strong>Saw real debugger output</strong>: LLDB assembly, CUDA-GDB thread states, memory
-addresses</li>
+<li><strong>Saw real debugger output</strong>: LLDB source stops with JIT-labeled frames,
+CUDA-GDB thread states, memory addresses</li>
 <li><strong>Used professional tools</strong>: The same CUDA-GDB used in production GPU
 development</li>
 <li><strong>Solved real scenarios</strong>: Out-of-bounds access, race conditions, kernel

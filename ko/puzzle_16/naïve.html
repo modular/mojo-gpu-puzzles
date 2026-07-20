@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="전역-메모리를-사용한-기본-버전"><a class="header" href="#전역-메모리를-사용한-기본-버전">전역 메모리를 사용한 기본 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>정방 행렬 \(A\)와 \(B\)를 곱하여 결과를 \(\text{output}\)에 저장하는
@@ -237,23 +237,9 @@
 <li>출력: <code>row_major[SIZE, SIZE]()</code></li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.memory import AddressSpace
-from layout import TileTensor
-from layout.tile_layout import row_major
-from layout.tile_tensor import stack_allocation
-
-
-comptime TPB = 3
-comptime SIZE = 2
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, TPB)
-comptime dtype = DType.float32
-comptime layout = row_major[SIZE, SIZE]()
-comptime LayoutType = type_of(layout)
-
-
-def naive_matmul(
+<pre><code class="language-mojo">def naive_matmul[
+    size: Int
+](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -264,7 +250,7 @@ def naive_matmul(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">전체 파일 보기: problems/p16/p16.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p16/p16.mojo" class="filename">전체 파일 보기: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">

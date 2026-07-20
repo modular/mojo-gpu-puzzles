@@ -266,13 +266,13 @@ def tiled_elementwise_add[
     @parameter
     @always_inline
     def process_tiles[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
-        print("tile_id:", tile_id)
-        var output_tile = output.tile[tile_size](tile_id)
-        var a_tile = a.tile[tile_size](tile_id)
-        var b_tile = b.tile[tile_size](tile_id)
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
+
+        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 
         # FILL IN (6 lines at most)
 
@@ -281,7 +281,7 @@ def tiled_elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -393,9 +393,9 @@ def tiled_elementwise_add[
     @parameter
     @always_inline
     def process_tiles[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
-    ](indices: IndexList[rank]) capturing -&gt; None:
-        var tile_id = indices[0]
+        simd_width: Int, alignment: Int = align_of[dtype]()
+    ](indices: Coord) capturing -&gt; None:
+        var tile_id = Int(indices[0].value())
 
         var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
         var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()

@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blockbroadcast와-벡터-정규화"><a class="header" href="#blockbroadcast와-벡터-정규화">block.broadcast()와 벡터 정규화</a></h1>
 <p><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과
 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
@@ -279,24 +279,19 @@ output[global_i] = my_value / mean
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <h3 id="완전한-블록-연산-워크플로우"><a class="header" href="#완전한-블록-연산-워크플로우">완전한 블록 연산 워크플로우</a></h3>
 <p>블록 연산 도구 모음 전체를 사용하여 고급 벡터 평균 정규화를 구현합니다:</p>
-<pre><code class="language-mojo">
-comptime vector_layout = row_major[SIZE]()
-comptime VectorLayoutType = type_of(vector_layout)
-
-
-def block_normalize_vector[
+<pre><code class="language-mojo">def block_normalize_vector[
     tpb: Int
 ](
-    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    output_data: TileTensor[mut=True, dtype, VectorLayoutType, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
     This demonstrates the complete block operations workflow:
-    1. Use block.sum() to compute sum of all elements (all → one)
+    1. Use block.sum() to compute sum of all elements (all -&gt; one)
     2. Thread 0 computes mean = sum / size
-    3. Use block.broadcast() to share mean to all threads (one → all)
+    3. Use block.broadcast() to share mean to all threads (one -&gt; all)
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
@@ -326,7 +321,7 @@ def block_normalize_vector[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a></p>
+<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a></p>
 <details>
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
@@ -479,7 +474,7 @@ Output mean: 1.0
     # This completes the block operations trilogy demonstration
     var broadcasted_mean = block.broadcast[
         dtype=DType.float32, width=1, block_size=tpb
-    ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
+    ](val=SIMD[DType.float32, 1](mean_value), src_thread=0)
 
     # Step 5: Each thread normalizes by the mean
     if global_i &lt; size:
@@ -596,7 +591,7 @@ block.broadcast() 실행 후:
 
 알고리즘이 증명 가능하게 올바른 수학적 결과를 생성합니다.
 </code></pre>
-<h3 id="puzzle-12-기초-패턴과의-연결"><a class="header" href="#puzzle-12-기초-패턴과의-연결"><strong><a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> (기초 패턴)과의 연결:</strong></a></h3>
+<h3 id="puzzle-12-기초-패턴과의-연결"><a class="header" href="#puzzle-12-기초-패턴과의-연결"><strong><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a> (기초 패턴)과의 연결:</strong></a></h3>
 <ul>
 <li><strong>스레드 조율의 진화</strong>: 동일한 <code>global_i</code>, <code>local_i</code> 패턴이지만 블록 기본 요소
 사용</li>
@@ -681,7 +676,7 @@ block.broadcast() 실행 후:
 </details>
 <p><strong>완전한 블록 연산 진행:</strong></p>
 <ol>
-<li><strong>수동 조율</strong> (<a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>): 병렬 기초 이해</li>
+<li><strong>수동 조율</strong> (<a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>): 병렬 기초 이해</li>
 <li><strong>워프 기본 요소</strong> (<a href="../puzzle_24/warp_sum.html">Puzzle 24</a>): 하드웨어 가속
 패턴 학습</li>
 <li><strong>블록 리덕션</strong> (<a href="./block_sum.html"><code>block.sum()</code></a>): 전체→하나 통신 학습</li>
