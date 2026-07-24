@@ -15,7 +15,7 @@ def process_content(content):
         video_id = match.group(1)
         size_class = match.group(2) or ""
         return f"""<div class="video-container {size_class}">
-<iframe src="https://www.youtube.com/embed/{video_id}" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/{video_id}" allowfullscreen></iframe>
 </div>"""
 
     return re.sub(pattern, replace, content)
