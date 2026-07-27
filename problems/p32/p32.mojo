@@ -12,6 +12,7 @@ from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from max.benchmark import bencher_iter_custom
 
 # ANCHOR: no_conflict_kernel
 comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
@@ -137,7 +138,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[kernel_workflow](bench_ctx)
+    bencher_iter_custom[kernel_workflow](b, bench_ctx)
 
 
 @parameter
@@ -174,7 +175,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[kernel_workflow](bench_ctx)
+    bencher_iter_custom[kernel_workflow](b, bench_ctx)
 
 
 def test_no_conflict() raises:

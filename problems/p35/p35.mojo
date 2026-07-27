@@ -12,6 +12,7 @@ from std.utils import Index
 from std.sys import argv, align_of, simd_width_of
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from max.benchmark import bencher_iter_custom
 
 # 1M float32 elements: large enough to be memory-bandwidth bound, so the
 # load/store path is what the benchmark actually measures.
@@ -241,7 +242,7 @@ def benchmark_scalar(mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[workflow](bench_ctx)
+    bencher_iter_custom[workflow](b, bench_ctx)
 
 
 @parameter
@@ -271,7 +272,7 @@ def benchmark_unaligned(mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[workflow](bench_ctx)
+    bencher_iter_custom[workflow](b, bench_ctx)
 
 
 @parameter
@@ -301,7 +302,7 @@ def benchmark_aligned(mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[workflow](bench_ctx)
+    bencher_iter_custom[workflow](b, bench_ctx)
 
 
 def main() raises:
