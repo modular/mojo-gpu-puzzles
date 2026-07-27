@@ -10,6 +10,7 @@ from layout.tile_layout import row_major
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from max.benchmark import bencher_iter_custom
 
 comptime SIZE = 16 * 1024 * 1024  # 16M elements - large enough to show memory patterns
 comptime THREADS_PER_BLOCK = (1024, 1)  # Max CUDA threads per block
@@ -112,7 +113,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[kernel1_workflow](bench_ctx)
+    bencher_iter_custom[kernel1_workflow](b, bench_ctx)
 
 
 @parameter
@@ -151,7 +152,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[kernel2_workflow](bench_ctx)
+    bencher_iter_custom[kernel2_workflow](b, bench_ctx)
 
 
 @parameter
@@ -190,7 +191,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[kernel3_workflow](bench_ctx)
+    bencher_iter_custom[kernel3_workflow](b, bench_ctx)
 
 
 def test_kernel1() raises:

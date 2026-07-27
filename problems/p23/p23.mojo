@@ -16,6 +16,7 @@ from std.algorithm.functional import elementwise, vectorize
 from std.sys import simd_width_of, argv, align_of
 from std.testing import assert_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from max.benchmark import bencher_iter_custom
 
 comptime SIZE = 1024
 comptime rank = 1
@@ -204,7 +205,7 @@ def benchmark_elementwise_parameterized[
             out_tensor, a_tensor, b_tensor, ctx
         )
 
-    b.iter_custom[elementwise_workflow](bench_ctx)
+    bencher_iter_custom[elementwise_workflow](b, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
@@ -246,7 +247,7 @@ def benchmark_tiled_parameterized[
             BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
-    b.iter_custom[tiled_workflow](bench_ctx)
+    bencher_iter_custom[tiled_workflow](b, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
@@ -288,7 +289,7 @@ def benchmark_manual_vectorized_parameterized[
             BenchLayoutType, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
-    b.iter_custom[manual_vectorized_workflow](bench_ctx)
+    bencher_iter_custom[manual_vectorized_workflow](b, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
@@ -330,7 +331,7 @@ def benchmark_vectorized_parameterized[
             BenchLayoutType, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
-    b.iter_custom[vectorized_workflow](bench_ctx)
+    bencher_iter_custom[vectorized_workflow](b, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 

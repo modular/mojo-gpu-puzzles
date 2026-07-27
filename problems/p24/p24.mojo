@@ -28,6 +28,7 @@ from std.benchmark import (
     BenchmarkInfo,
     run,
 )
+from max.benchmark import bencher_iter_custom
 
 comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
@@ -227,7 +228,7 @@ def benchmark_simple_warp_parameterized[
             block_dim=n_threads,
         )
 
-    bencher.iter_custom[traditional_workflow](bench_ctx)
+    bencher_iter_custom[traditional_workflow](bencher, bench_ctx)
     check_result[dtype, n_warps](out, expected)
     keep(out.unsafe_ptr())
     keep(a.unsafe_ptr())
@@ -278,7 +279,7 @@ def benchmark_functional_warp_parameterized[
             out_tensor, a_tensor, b_tensor, ctx
         )
 
-    bencher.iter_custom[functional_warp_workflow](bench_ctx)
+    bencher_iter_custom[functional_warp_workflow](bencher, bench_ctx)
     check_result[dtype, n_warps](out, expected)
     keep(out.unsafe_ptr())
     keep(a.unsafe_ptr())
@@ -338,7 +339,7 @@ def benchmark_traditional_parameterized[
             block_dim=THREADS_PER_BLOCK,
         )
 
-    bencher.iter_custom[traditional_workflow](bench_ctx)
+    bencher_iter_custom[traditional_workflow](bencher, bench_ctx)
     check_result[dtype, n_warps](out, expected)
     keep(out.unsafe_ptr())
     keep(a.unsafe_ptr())

@@ -12,6 +12,7 @@ from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from max.benchmark import bencher_iter_custom
 
 # ANCHOR: minimal_kernel
 comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
@@ -223,7 +224,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[minimal_workflow](bench_ctx)
+    bencher_iter_custom[minimal_workflow](b, bench_ctx)
 
 
 @parameter
@@ -262,7 +263,7 @@ def benchmark_sophisticated_parameterized[
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[sophisticated_workflow](bench_ctx)
+    bencher_iter_custom[sophisticated_workflow](b, bench_ctx)
 
 
 @parameter
@@ -299,7 +300,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    b.iter_custom[balanced_workflow](bench_ctx)
+    bencher_iter_custom[balanced_workflow](b, bench_ctx)
 
 
 def test_minimal() raises:
