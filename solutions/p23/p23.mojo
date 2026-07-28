@@ -12,7 +12,9 @@ from layout.tile_tensor import stack_allocation
 from std.utils import Index
 from std.utils.coord import Coord
 from std.math import log2
-from std.algorithm.functional import elementwise, vectorize
+from std.algorithm.functional import vectorize
+
+from max.algorithm.functional import elementwise
 from std.sys import simd_width_of, argv, align_of
 from std.testing import assert_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
