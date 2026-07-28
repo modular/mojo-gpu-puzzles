@@ -20,7 +20,7 @@
 In [Puzzle 13](../puzzle_13/puzzle_13.md), we implemented a 1D convolution
 kernel that runs efficiently on the GPU. Now we'll take this kernel and
 transform it into a custom operation that can be called directly from Python
-using [MAX Graph](https://docs.modular.com/max/api/python/graph/).
+using [MAX Graph](https://docs.modular.com/api/python/graph/).
 
 The 1D convolution kernel we'll be working with is already implemented:
 
@@ -152,18 +152,18 @@ Let's break down how this works in the larger context:
    - Creates NumPy arrays for input and kernel
    - Calls `conv_1d()` function which wraps our operation in MAX Graph
    - Converts NumPy arrays to
-     [MAX driver](https://docs.modular.com/max/api/python/driver) Buffers with
+     [MAX driver](https://docs.modular.com/api/python/driver) Buffers with
      `Buffer.from_numpy(input).to(device)`
    - Loads the custom operation package with `custom_extensions=[mojo_kernels]`
 
 2. **Graph building**:
    - Defines input and output tensor types with
-     [TensorType](https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType)
+     [TensorType](https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType)
    - Specifies parameters for our operation via `parameters={...}`
    - Creates a computation graph with
-     [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/max/api/python/graph/Graph)
+     [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/api/python/graph/Graph)
    - Calls our operation using
-     [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/max/api/python/graph/ops#custom)
+     [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/api/python/graph/ops#custom)
 
 3. **Custom op registration**:
    - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX

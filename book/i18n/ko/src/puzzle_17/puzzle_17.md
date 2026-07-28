@@ -21,7 +21,7 @@
 
 [Puzzle 13: 1D 합성곱](../puzzle_13/puzzle_13.md)에서 GPU에서 효율적으로
 동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을
-[MAX 그래프](https://docs.modular.com/max/api/python/graph/)를 통해 파이썬에서
+[MAX 그래프](https://docs.modular.com/api/python/graph/)를 통해 파이썬에서
 직접 호출할 수 있는 커스텀 연산으로 변환합니다.
 
 사용할 1D 합성곱 커널은 이미 구현되어 있습니다:
@@ -151,16 +151,16 @@ Verification passed: Custom kernel results match NumPy calculation
    - 입력과 커널용 NumPy 배열 생성
    - MAX 그래프로 연산을 감싸는 `conv_1d()` 함수 호출
    - NumPy 배열을 `Buffer.from_numpy(input).to(device)`로
-     [MAX driver](https://docs.modular.com/max/api/python/driver) Buffer로 변환
+     [MAX driver](https://docs.modular.com/api/python/driver) Buffer로 변환
    - `custom_extensions=[mojo_kernels]`로 커스텀 연산 패키지 로드
 
 2. **그래프 구축**:
-   - [TensorType](https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType)으로
+   - [TensorType](https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType)으로
      입력 및 출력 텐서 타입 정의
    - `parameters={...}`를 통해 연산의 파라미터 지정
-   - [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/max/api/python/graph/Graph)로
+   - [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/api/python/graph/Graph)로
      연산 그래프 생성
-   - [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/max/api/python/graph/ops#custom)로
+   - [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/api/python/graph/ops#custom)로
      커스텀 연산 호출
 
 3. **커스텀 op 등록**:
