@@ -233,8 +233,8 @@ Verification passed: Custom kernel results match NumPy calculation
 
 > 더 자세한 내용은 아래 튜토리얼을 참고하세요:
 >
-> - [Get started with MAX Graph in Python](https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/)
-> - [MAX Graph custom op for GPUs](https://docs.modular.com/max/tutorials/build-custom-ops/)
+> - [Get started with MAX Graph in Python](https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/)
+> - [MAX Graph custom op for GPUs](https://docs.modular.com/tutorials/build-custom-ops/)
 
 ### 커스텀 op 등록
 

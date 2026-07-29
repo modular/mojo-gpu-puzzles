@@ -117,7 +117,7 @@
 - CUDA 툴킷이 설치된 NVIDIA GPU
 - NSight Compute 프로파일링 도구
 - 프로파일링 등의 의존성은 `pixi`로 관리됩니다
-- [호환 가능한 GPU 아키텍처](https://docs.modular.com/max/packages/#gpu-compatibility)
+- [호환 가능한 GPU 아키텍처](https://docs.modular.com/packages/#gpu-compatibility)
 
 ## 최적화의 효과
 

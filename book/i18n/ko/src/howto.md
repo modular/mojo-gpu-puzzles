@@ -26,13 +26,13 @@
 ### 시스템 요구사항
 
 먼저 시스템이
-[시스템 요구사항](https://docs.modular.com/max/packages#system-requirements)을
+[시스템 요구사항](https://docs.modular.com/packages#system-requirements)을
 충족하는지 확인하세요.
 
 ### 지원되는 GPU
 
 퍼즐을 실행하려면
-[지원되는 GPU](https://docs.modular.com/max/faq#gpu-requirements)가 필요합니다.
+[지원되는 GPU](https://docs.modular.com/faq#gpu-requirements)가 필요합니다.
 환경 설정을 마친 뒤 아래 환경 설정의 `gpu-specs` 명령어로 GPU 호환성을 확인할 수
 있습니다.
 
