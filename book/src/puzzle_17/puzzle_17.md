@@ -236,8 +236,8 @@ functions to create efficient, type-safe, accelerated operations.
 
 > Check out the follow tutorials for more details:
 >
-> - [Get started with MAX Graph in Python](https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/)
-> - [MAX Graph custom op for GPUs](https://docs.modular.com/max/tutorials/build-custom-ops/)
+> - [Get started with MAX Graph in Python](https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/)
+> - [MAX Graph custom op for GPUs](https://docs.modular.com/tutorials/build-custom-ops/)
 
 ### Custom op registration
 

@@ -24,7 +24,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://docs.modular.com/max/get-started/#stay-in-touch"
+    <a href="https://docs.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">

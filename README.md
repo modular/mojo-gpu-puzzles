@@ -25,7 +25,7 @@
   <a href="https://docs.modular.com/mojo">
     <img src="https://img.shields.io/badge/Powered%20by-Mojo-FF5F1F" alt="Powered by Mojo">
   </a>
-  <a href="https://docs.modular.com/max/get-started/#stay-in-touch">
+  <a href="https://docs.modular.com/get-started/#stay-in-touch">
     <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
   </a>
   <a href="https://forum.modular.com/c/">
@@ -49,7 +49,7 @@ the results.
 Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
 > 📬
-> [Subscribe to updates](https://docs.modular.com/max/get-started/#stay-in-touch)
+> [Subscribe to updates](https://docs.modular.com/get-started/#stay-in-touch)
 > to get notified when new puzzles are released!
 
 ## Why Mojo🔥
@@ -71,7 +71,7 @@ maintaining systems-level performance:
 ### Prerequisites
 
 You'll need a
-[compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the
+[compatible GPU](https://docs.modular.com/faq#gpu-requirements) to run the
 examples.
 
 1. Visit [puzzles.modular.com](https://puzzles.modular.com)
@@ -221,7 +221,7 @@ skeleton ships deliberately buggy kernels for you to catch with `memcheck` /
 ## Community
 
 <p align="center">
-  <a href="https://docs.modular.com/max/get-started/#stay-in-touch">
+  <a href="https://docs.modular.com/get-started/#stay-in-touch">
     <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
   </a>
   <a href="https://forum.modular.com/c/">

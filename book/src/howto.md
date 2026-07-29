@@ -27,12 +27,12 @@ and solution verification procedures.
 ### System requirements
 
 Make sure your system meets our
-[system requirements](https://docs.modular.com/max/packages#system-requirements).
+[system requirements](https://docs.modular.com/packages#system-requirements).
 
 ### Compatible GPU
 
 You'll need a
-[compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the
+[compatible GPU](https://docs.modular.com/faq#gpu-requirements) to run the
 puzzles. After setup, you can verify your GPU compatibility using the
 `gpu-specs` command (see Quick Start section below).
 

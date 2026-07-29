@@ -130,7 +130,7 @@ optimization, and evidence-based performance improvement.
 - NVIDIA GPU with CUDA toolkit
 - NSight Compute profiling tools
 - The dependencies such as profiling are managed by `pixi`
-- [Compatible GPU architecture](https://docs.modular.com/max/packages/#gpu-compatibility)
+- [Compatible GPU architecture](https://docs.modular.com/packages/#gpu-compatibility)
 
 ## The optimization impact
 
