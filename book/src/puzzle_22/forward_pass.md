@@ -351,15 +351,14 @@ handles one element of the output tensor. Let's break down the key components:
    var sum_val: Scalar[dtype] = 0
    var sq_sum: Scalar[dtype] = 0
 
-   @parameter
-   for h in range(hidden_dim):
+   comptime for h in range(hidden_dim):
        val = input[batch_idx, seq_idx, h]
        sum_val += rebind[Scalar[dtype]](val)
        sq_sum += rebind[Scalar[dtype]](val * val)
    ```
 
    - Compute sum and squared sum in a single pass
-   - Use `@parameter` for compile-time loop unrolling
+   - Use `comptime for` for compile-time loop unrolling
    - Proper type casting with `rebind[Scalar[dtype]]`
    - Calculate mean and variance:
 

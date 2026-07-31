@@ -193,8 +193,7 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 **Processing within one chunk:**
 
 ```mojo
-@parameter
-for i in range(tile_size):  # i = 0, 1, 2, ..., 31
+comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     global_start = tile_id * chunk_size + i * simd_width
     # For tile_id=0: global_start = 0, 4, 8, 12, ..., 124
     # For tile_id=1: global_start = 128, 132, 136, 140, ..., 252

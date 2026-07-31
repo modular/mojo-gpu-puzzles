@@ -63,8 +63,7 @@ def conv_1d_simple(
         # `out.ElementType` is available in TileTensor
         var local_sum: output.ElementType = 0
 
-        # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
-        # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
+        # Note: `comptime for` unrolls the loop at compile time given `CONV` is a compile-time constant
         comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j < SIZE:

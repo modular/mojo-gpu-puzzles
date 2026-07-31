@@ -178,8 +178,7 @@ Matrix B:                           b_shared: (similar layout)
        var acc: output.element_type = 0
 
        # Compile-time unrolled loop for matrix multiplication
-       @parameter
-       for k in range(size):
+       comptime for k in range(size):
            acc += a_shared[local_row, k] * b_shared[k, local_col]
 
        # Write result only for threads within matrix bounds
@@ -197,7 +196,7 @@ Matrix B:                           b_shared: (similar layout)
      - Ensures consistent numeric precision
      - Initialized to zero before accumulation
 
-   - **Loop Optimization**: `@parameter for k in range(size)`
+   - **Loop Optimization**: `comptime for k in range(size)`
      - Unrolls the loop at compile time
      - Enables better instruction scheduling
      - Efficient for small, known matrix sizes

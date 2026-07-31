@@ -177,13 +177,12 @@ Size calculation:
    ```mojo
    if global_i < SIZE_2:
        var local_sum: output.element_type = 0
-       @parameter
-       for j in range(CONV_2):
+       comptime for j in range(CONV_2):
            if global_i + j < SIZE_2:
                local_sum += shared_a[local_i + j] * shared_b[j]
    ```
 
-   - Uses `@parameter` for compile-time loop unrolling
+   - Uses `comptime for` for compile-time loop unrolling
    - Proper type inference with `output.element_type`
    - Semantically correct bounds check: only compute convolution for valid input
      positions

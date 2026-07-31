@@ -295,7 +295,7 @@ The fused backward implementation combines operations efficiently:
    - Proper memory alignment
 
 7. **Implementation details**:
-   - Use of `@parameter` for compile-time constants
+   - Use of `comptime` for compile-time constants
    - Proper handling of tensor dimensions
    - Efficient type casting and conversions
    - Careful management of shared memory

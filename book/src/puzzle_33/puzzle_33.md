@@ -307,12 +307,9 @@ Each 32×32 warp tile contains multiple 16×8 MMA fragments:
 **Understanding the triple nested loops:**
 
 ```mojo
-@parameter
-for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
-    @parameter
-    for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
-        @parameter
-        for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
+comptime for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
+    comptime for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
+        comptime for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
             # YOUR CODE HERE: Process one 16×8×8 MMA fragment
 ```
 

@@ -140,9 +140,8 @@ Matrix A:          Matrix B:                   Output C:
    # Use var for mutable accumulator with tensor's element type
    var acc: output.element_type = 0
 
-   # @parameter for compile-time loop unrolling
-   @parameter
-   for k in range(size):
+   # comptime for compile-time loop unrolling
+   comptime for k in range(size):
        acc += a[row, k] * b[k, col]
    ```
 
@@ -155,8 +154,7 @@ Matrix A:          Matrix B:                   Output C:
    - Initialized to zero before accumulation
 
 2. **Loop pptimization**:
-   - [`@parameter`](https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement)
-     decorator unrolls the loop at compile time
+   - `comptime for` unrolls the loop at compile time
    - Improves performance for small, known matrix sizes
    - Enables better instruction scheduling
 

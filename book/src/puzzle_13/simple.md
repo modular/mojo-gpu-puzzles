@@ -165,8 +165,7 @@ Kernel b:        [0  1  2]
      ```mojo
      if global_i < SIZE:
          var local_sum: output.element_type = 0  # Using var allows type inference
-         @parameter  # Unrolls loop at compile time since CONV is constant
-         for j in range(CONV):
+         comptime for j in range(CONV):  # Unrolls loop at compile time since CONV is constant
              if local_i + j < SIZE:
                  local_sum += shared_a[local_i + j] * shared_b[j]
          output[global_i] = local_sum
@@ -187,7 +186,7 @@ perform any computation, making better use of GPU resources.
 
 2. **Key Implementation Features**:
    - Uses `var` for proper type inference with `output.element_type`
-   - Employs `@parameter` decorator to unroll the convolution loop at compile
+   - Employs `comptime for` to unroll the convolution loop at compile
      time
    - Maintains strict bounds checking for memory safety
    - Leverages TileTensor's type system for better code safety
@@ -206,7 +205,7 @@ perform any computation, making better use of GPU resources.
    - Minimizes global memory access
    - Uses shared memory for fast data access
    - Avoids thread divergence in main computation loop
-   - Loop unrolling through `@parameter` decorator
+   - Loop unrolling through `comptime for`
 
 </div>
 </details>
