@@ -328,7 +328,7 @@ Key performance features:
 
 3. **Computation**:
    - Register-based accumulation i.e. `var acc: output.element_type = 0`
-   - Compile-time loop unrolling via `@parameter`
+   - Compile-time loop unrolling via `comptime for`
 
 This implementation achieves high performance through:
 
@@ -473,8 +473,7 @@ all boundary checks:
 4. **Perfect tiling eliminates boundary checks**
 
    ```mojo
-   @parameter
-   for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
+   comptime for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
    ```
 
    With \\((9 \times 9)\\) matrices and \\((3 \times 3)\\) tiles, every tile is

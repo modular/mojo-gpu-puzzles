@@ -88,12 +88,11 @@ starting at `id × size`.
 Unlike elementwise, you process the tile sequentially:
 
 ```mojo
-@parameter
-for i in range(tile_size):
+comptime for i in range(tile_size):
     # Process element i within the current tile
 ```
 
-This `@parameter` loop unrolls at compile-time for optimal performance.
+This `comptime for` loop unrolls at compile-time for optimal performance.
 
 ### 4. **SIMD operations within tile elements**
 
@@ -248,8 +247,7 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 ### 3. **Sequential processing deep dive**
 
 ```mojo
-@parameter
-for i in range(tile_size):
+comptime for i in range(tile_size):
     a_vec = a_tile.load[simd_width](Index(i))
     b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
@@ -259,7 +257,7 @@ for i in range(tile_size):
 **Why sequential processing?**
 
 - **Cache optimization**: Consecutive memory accesses maximize cache hit rates
-- **Compiler optimization**: `@parameter` loops unroll completely at
+- **Compiler optimization**: `comptime for` loops unroll completely at
   compile-time
 - **Memory bandwidth**: Sequential access aligns with memory controller design
 - **Reduced coordination**: No need to synchronize between SIMD groups

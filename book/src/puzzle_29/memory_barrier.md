@@ -219,7 +219,7 @@ when memory operations complete, essential for complex memory access patterns.
 
 ### **Iteration control**
 
-- Use `@parameter for iteration in range(STENCIL_ITERATIONS)` for compile-time
+- Use `comptime for iteration in range(STENCIL_ITERATIONS)` for compile-time
   unrolling
 - Determine buffer roles using `iteration % 2` to alternate read/write
   assignments
@@ -484,8 +484,7 @@ Final result location depends on iteration parity:
 **Implementation pattern**:
 
 ```mojo
-@parameter
-if STENCIL_ITERATIONS % 2 == 0:
+comptime if STENCIL_ITERATIONS % 2 == 0:
     # Even total iterations end in buffer_A
     output[global_i] = buffer_A[local_i]
 else:
@@ -549,7 +548,7 @@ This double-buffering pattern is fundamental to:
 
 **Iteration management:**
 
-- **Compile-time unrolling**: `@parameter for` enables optimization
+- **Compile-time unrolling**: `comptime for` enables optimization
   opportunities
 - **State tracking**: Buffer role alternation must be deterministic
 - **Boundary handling**: Adaptive stencil operations handle edge cases
