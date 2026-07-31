@@ -5,7 +5,7 @@
 # ===----------------------------------------------------------------------=== #
 from std.memory import UnsafePointer
 from std.gpu import thread_idx, barrier
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major

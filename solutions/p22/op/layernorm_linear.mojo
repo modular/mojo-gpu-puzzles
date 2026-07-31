@@ -12,7 +12,7 @@ from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 import extensibility
 
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 
 from extensibility import InputTensor, OutputTensor
 from std.utils import StaticTuple

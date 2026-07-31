@@ -4,7 +4,7 @@
 #
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, lane_id
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout

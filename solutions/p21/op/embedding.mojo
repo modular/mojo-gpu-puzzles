@@ -5,7 +5,7 @@
 # ===----------------------------------------------------------------------=== #
 from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv
@@ -131,7 +131,7 @@ import extensibility
 
 from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
-from std.gpu.host import DeviceBuffer
+from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("embedding")

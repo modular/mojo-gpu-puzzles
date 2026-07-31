@@ -4,7 +4,7 @@
 #
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.host import DeviceContext, Dim
+from max.gpu.host import DeviceContext, Dim
 from std.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
