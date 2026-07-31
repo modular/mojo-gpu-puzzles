@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # vectorize - SIMD 제어
 
@@ -188,8 +188,7 @@ comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128
 **하나의 청크 내 처리:**
 
 ```mojo
-@parameter
-for i in range(tile_size):  # i = 0, 1, 2, ..., 31
+comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     global_start = tile_id * chunk_size + i * simd_width
     # tile_id=0일 때: global_start = 0, 4, 8, 12, ..., 124
     # tile_id=1일 때: global_start = 128, 132, 136, 140, ..., 252

@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # 공유 메모리 버전
 
@@ -180,8 +180,7 @@ Matrix B:                           b_shared: (비슷한 레이아웃)
        var acc: output.element_type = 0
 
        # 컴파일 타임에 전개되는 행렬 곱셈 루프
-       @parameter
-       for k in range(size):
+       comptime for k in range(size):
            acc += a_shared[local_row, k] * b_shared[k, local_col]
 
        # 행렬 경계 내의 스레드만 결과 기록
@@ -199,7 +198,7 @@ Matrix B:                           b_shared: (비슷한 레이아웃)
      - 일관된 수치 정밀도 보장
      - 누적 전에 0으로 초기화
 
-   - **루프 최적화**: `@parameter for k in range(size)`
+   - **루프 최적화**: `comptime for k in range(size)`
      - 컴파일 타임에 루프 전개
      - 더 나은 명령어 스케줄링 가능
      - 크기가 작고 미리 알려진 행렬에 효과적

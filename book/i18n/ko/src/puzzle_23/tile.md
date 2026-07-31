@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # tile - 메모리 효율적인 타일링 처리
 
@@ -88,12 +88,11 @@ b_tile = b.tile[tile_size](tile_id)
 요소별 방식과 달리, 타일을 순차적으로 처리합니다:
 
 ```mojo
-@parameter
-for i in range(tile_size):
+comptime for i in range(tile_size):
     # 현재 타일 내의 요소 i를 처리
 ```
 
-이 `@parameter` 루프는 최적의 성능을 위해 컴파일 타임에 전개됩니다.
+이 `comptime for` 루프는 최적의 성능을 위해 컴파일 타임에 전개됩니다.
 
 ### 4. **타일 요소 내 SIMD 연산**
 
@@ -247,8 +246,7 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← 요소 992-1023
 ### 3. **순차 처리 심층 분석**
 
 ```mojo
-@parameter
-for i in range(tile_size):
+comptime for i in range(tile_size):
     a_vec = a_tile.load[simd_width](Index(i))
     b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
@@ -258,7 +256,7 @@ for i in range(tile_size):
 **왜 순차 처리인가?**
 
 - **캐시 최적화**: 연속적인 메모리 접근이 캐시 히트율을 극대화
-- **컴파일러 최적화**: `@parameter` 루프가 컴파일 타임에 완전히 전개됨
+- **컴파일러 최적화**: `comptime for` 루프가 컴파일 타임에 완전히 전개됨
 - **메모리 대역폭**: 순차 접근이 메모리 컨트롤러 설계에 부합
 - **조정 비용 감소**: SIMD 그룹 간 동기화가 불필요
 

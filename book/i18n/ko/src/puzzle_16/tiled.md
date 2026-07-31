@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # 타일링 버전
 
@@ -324,7 +324,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 3. **연산**:
    - 레지스터 기반 누적, 즉 `var acc: output.element_type = 0`
-   - `@parameter`를 통한 컴파일 타임 루프 전개
+   - `comptime for`를 통한 컴파일 타임 루프 전개
 
 이 구현은 다음을 통해 높은 성능을 달성합니다:
 
@@ -462,8 +462,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 4. **완벽한 타일링으로 경계 검사 불필요**
 
    ```mojo
-   @parameter
-   for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
+   comptime for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
    ```
 
    \\((9 \times 9)\\) 행렬과 \\((3 \times 3)\\) 타일에서는 모든 타일이 정확히 꽉

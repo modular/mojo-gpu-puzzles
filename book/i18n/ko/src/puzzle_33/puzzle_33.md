@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # Puzzle 33: 텐서 코어 연산
 
@@ -300,12 +300,9 @@ Each 32×32 warp tile contains multiple 16×8 MMA fragments:
 **세 겹 중첩 루프 이해하기:**
 
 ```mojo
-@parameter
-for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
-    @parameter
-    for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
-        @parameter
-        for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
+comptime for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
+    comptime for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
+        comptime for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
             # YOUR CODE HERE: Process one 16×8×8 MMA fragment
 ```
 

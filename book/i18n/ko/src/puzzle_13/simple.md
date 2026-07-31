@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # 단일 블록을 사용한 기본 버전
 
@@ -166,8 +166,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
      ```mojo
      if global_i < SIZE:
          var local_sum: output.element_type = 0  # var로 타입 추론 활용
-         @parameter  # CONV가 상수이므로 컴파일 타임에 루프 전개
-         for j in range(CONV):
+         comptime for j in range(CONV):  # CONV가 상수이므로 컴파일 타임에 루프 전개
              if local_i + j < SIZE:
                  local_sum += shared_a[local_i + j] * shared_b[j]
          output[global_i] = local_sum
@@ -186,7 +185,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
 2. **주요 구현 특징**:
    - `var`와 `output.element_type`으로 적절한 타입 추론
-   - `@parameter` 데코레이터로 합성곱 루프를 컴파일 타임에 전개
+   - `comptime for`로 합성곱 루프를 컴파일 타임에 전개
    - 엄격한 경계 검사로 메모리 안전성 확보
    - TileTensor의 타입 시스템으로 코드 안전성 향상
 
@@ -204,7 +203,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
    - 전역 메모리 접근 최소화
    - 공유 메모리로 빠른 데이터 접근
    - 메인 연산 루프에서 스레드 분기 회피
-   - `@parameter` 데코레이터를 통한 루프 전개
+   - `comptime for`를 통한 루프 전개
 
 </div>
 </details>

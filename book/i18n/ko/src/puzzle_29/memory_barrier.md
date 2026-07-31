@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: d09bc3fbdd4bf6b2a44793f0208b6ba7800ed4c0 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # 더블 버퍼링 스텐실 연산
 
@@ -212,7 +212,7 @@ buffer\_B} & \\text{if} i \\bmod 2 = 0 \\\\
 ### **반복 제어**
 
 - 컴파일 타임 루프 전개를 위해
-  `@parameter for iteration in range(STENCIL_ITERATIONS)` 사용
+  `comptime for iteration in range(STENCIL_ITERATIONS)` 사용
 - `iteration % 2`를 사용하여 읽기/쓰기 할당을 교대하면서 버퍼 역할 결정
 - 이웃 검사를 통해 유효한 범위 내에서만 스텐실 연산 적용
 
@@ -466,8 +466,7 @@ stencil_input = buffer_B[neighbor_index]  # 항상 올바른 값을 읽음
 **구현 패턴**:
 
 ```mojo
-@parameter
-if STENCIL_ITERATIONS % 2 == 0:
+comptime if STENCIL_ITERATIONS % 2 == 0:
     # 짝수 총 반복 횟수는 buffer_A에서 종료
     output[global_i] = buffer_A[local_i]
 else:
@@ -527,7 +526,7 @@ else:
 
 **반복 관리:**
 
-- **컴파일 타임 루프 전개**: `@parameter for`가 최적화 기회를 제공
+- **컴파일 타임 루프 전개**: `comptime for`가 최적화 기회를 제공
 - **상태 추적**: 버퍼 역할 교대가 결정적이어야 함
 - **경계 처리**: 적응적 스텐실 연산이 엣지 케이스를 매끄럽게 처리
 
