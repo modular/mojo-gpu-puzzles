@@ -22,7 +22,7 @@ def add_10_blocks(
 ):
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
-        output[i] = a[i] + 10.0
+        output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 
 # ANCHOR_END: add_10_blocks_solution
