@@ -9,7 +9,7 @@ from std.gpu.sync import (
     mbarrier_arrive,
     mbarrier_test_wait,
 )
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major

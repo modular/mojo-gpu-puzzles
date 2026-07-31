@@ -4,7 +4,7 @@
 #
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
@@ -80,7 +80,7 @@ import extensibility
 
 from extensibility import InputTensor, OutputTensor
 from std.memory import UnsafePointer
-from std.gpu.host import DeviceBuffer
+from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("conv1d")
