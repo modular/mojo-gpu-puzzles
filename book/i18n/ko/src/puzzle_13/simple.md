@@ -1,9 +1,9 @@
-<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
+<!-- i18n-source-commit: f1ede433f4a483e4078e50fe24ed566a15ad90e6 -->
 
 # 단일 블록을 사용한 기본 버전
 
-1D TileTensor `a`와 1D TileTensor `b`의 1D 합성곱을 계산하여 1D TileTensor
-`output`에 저장하는 커널을 구현하세요.
+입력 1D TileTensor `a`와 필터 1D TileTensor `b`의 1D 합성곱을 계산하여 1D
+TileTensor `output`에 저장하는 GPU 커널을 구현하세요.
 
 **참고:** _일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다._
@@ -22,15 +22,15 @@
 ## 구성
 
 - 입력 배열 크기: `SIZE = 6`
-- 커널 크기: `CONV = 3`
+- 필터 크기: `CONV = 3`
 - 블록당 스레드 수: `TPB = 8`
 - 블록 수: 1
 - 공유 메모리: `SIZE`와 `CONV` 크기의 배열 2개
 
 참고:
 
-- **데이터 로딩**: 각 스레드가 입력 배열과 커널에서 원소를 하나씩 로드
-- **메모리 패턴**: 입력 배열과 합성곱 커널을 저장하는 공유 배열
+- **데이터 로딩**: 각 스레드가 입력 배열과 필터에서 원소를 하나씩 로드
+- **메모리 패턴**: 입력 배열과 필터를 저장하는 공유 배열
 - **스레드 동기화**: 연산 시작 전 스레드 간 조율
 
 ## 완성할 코드
@@ -48,7 +48,7 @@
 
 1. `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())`으로
    공유 메모리 할당
-2. 입력을 `shared_a[local_i]`에, 커널을 `shared_b[local_i]`에 로드
+2. 입력을 `shared_a[local_i]`에, 필터를 `shared_b[local_i]`에 로드
 3. 데이터 로드 후 `barrier()` 호출
 4. 경계 안에서 곱을 합산: `if local_i + j < SIZE`
 5. `global_i < SIZE`일 때만 결과 기록
@@ -122,7 +122,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
 ```txt
 입력 배열 a:       [0  1  2  3  4  5]
-커널 b:          [0  1  2]
+필터 b:          [0  1  2]
 ```
 
 ### 연산 과정
@@ -131,7 +131,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
    ```txt
    shared_a: [0  1  2  3  4  5]  // 입력 배열
-   shared_b: [0  1  2]           // 합성곱 커널
+   shared_b: [0  1  2]           // 필터
    ```
 
 2. 각 위치 i에 대한 **합성곱 연산**:
@@ -190,7 +190,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
    - TileTensor의 타입 시스템으로 코드 안전성 향상
 
 3. **메모리 관리**:
-   - 입력 배열과 커널 모두 공유 메모리 사용
+   - 입력 배열과 필터 모두 공유 메모리 사용
    - 스레드당 전역 메모리에서 1회 로드
    - 로드한 데이터의 효율적 재사용
 
