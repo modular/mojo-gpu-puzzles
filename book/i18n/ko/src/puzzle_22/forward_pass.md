@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # ⚛️ 퓨전 vs 언퓨전 커널
 
@@ -345,15 +345,14 @@ UNFUSED Algorithm Test Completed!
    var sum_val: Scalar[dtype] = 0
    var sq_sum: Scalar[dtype] = 0
 
-   @parameter
-   for h in range(hidden_dim):
+   comptime for h in range(hidden_dim):
        val = input[batch_idx, seq_idx, h]
        sum_val += rebind[Scalar[dtype]](val)
        sq_sum += rebind[Scalar[dtype]](val * val)
    ```
 
    - 한 번의 패스로 합계와 제곱합을 동시에 계산합니다
-   - 컴파일 타임 루프 전개를 위해 `@parameter`를 사용합니다
+   - 컴파일 타임 루프 전개를 위해 `comptime for`를 사용합니다
    - `rebind[Scalar[dtype]]`로 적절한 타입 캐스팅을 수행합니다
    - 평균과 분산을 계산합니다:
 

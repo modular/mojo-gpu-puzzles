@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # 블록 경계 버전
 
@@ -177,13 +177,12 @@ Block 1 공유 메모리:  [8 9 10 11 12 13 14 0|0 0 0]  // 두 번째 블록. �
    ```mojo
    if global_i < SIZE_2:
        var local_sum: output.element_type = 0
-       @parameter
-       for j in range(CONV_2):
+       comptime for j in range(CONV_2):
            if global_i + j < SIZE_2:
                local_sum += shared_a[local_i + j] * shared_b[j]
    ```
 
-   - `@parameter`로 컴파일 타임 루프 전개
+   - `comptime for`로 컴파일 타임 루프 전개
    - `output.element_type`으로 적절한 타입 추론
    - 의미적으로 올바른 경계 검사: 유효한 입력 위치에서만 합성곱 계산
 

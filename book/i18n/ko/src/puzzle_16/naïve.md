@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 
 # 전역 메모리를 사용한 기본 버전
 
@@ -142,9 +142,8 @@ Matrix A:          Matrix B:                   Output C:
    # var로 가변 누적 변수를 선언하고 텐서의 원소 타입을 사용
    var acc: output.element_type = 0
 
-   # @parameter로 컴파일 타임 루프 전개
-   @parameter
-   for k in range(size):
+   # comptime for로 컴파일 타임 루프 전개
+   comptime for k in range(size):
        acc += a[row, k] * b[k, col]
    ```
 
@@ -156,8 +155,7 @@ Matrix A:          Matrix B:                   Output C:
    - 누적 연산 전에 0으로 초기화
 
 2. **루프 최적화**:
-   - [`@parameter`](https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement)
-     데코레이터로 컴파일 타임에 루프 전개
+   - `comptime for`로 컴파일 타임에 루프 전개
    - 크기가 작고 미리 알려진 행렬에서 성능 향상
    - 더 나은 명령어 스케줄링 가능
 
