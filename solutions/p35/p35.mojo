@@ -5,7 +5,7 @@
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
-from std.gpu.host.compile import get_gpu_target
+from max.gpu.host.compile import get_gpu_target
 from layout import TileTensor
 from layout.tile_layout import row_major
 from std.utils import Index
