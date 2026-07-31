@@ -162,7 +162,7 @@ debugging toolkit.
 
 When you use `--cuda-gdb`, Mojo integrates with NVIDIA's
 [CUDA-GDB debugger](https://docs.nvidia.com/cuda/cuda-gdb/index.html). This
-isn't just another debugger - it's specifically designed for the parallel,
+isn't just another debugger: it's specifically designed for the parallel,
 multi-threaded world of GPU computing.
 
 ### What makes CUDA-GDB special
