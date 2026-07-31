@@ -27,13 +27,14 @@ comptime LayoutType = type_of(layout)
 def no_conflict_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Perfect shared memory access - no bank conflicts.
 
     Each thread accesses a different bank: thread_idx.x maps to bank thread_idx.x % 32.
     This achieves optimal shared memory bandwidth utilization.
     """
+    var size = Int(size_dev)
 
     # Shared memory buffer - each thread loads one element
     var shared_buf = stack_allocation[
@@ -65,13 +66,14 @@ def no_conflict_kernel(
 def two_way_conflict_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
     Threads 0,16 -> Bank 0, Threads 1,17 -> Bank 1, etc.
     Each bank serves 2 threads, doubling access time.
     """
+    var size = Int(size_dev)
 
     # Sized to 2*TPB so stride-2 writes don't alias (threads i and i+TPB/2).
     var shared_buf = stack_allocation[
@@ -130,7 +132,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -167,7 +169,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -199,7 +201,7 @@ def test_no_conflict() raises:
         ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -233,7 +235,7 @@ def test_two_way_conflict() raises:
         ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

@@ -26,8 +26,9 @@ def broadcast_add(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -65,7 +66,7 @@ def main() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

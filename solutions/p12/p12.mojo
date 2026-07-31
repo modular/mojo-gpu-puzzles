@@ -27,8 +27,9 @@ def dot_product(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
@@ -81,7 +82,7 @@ def main() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

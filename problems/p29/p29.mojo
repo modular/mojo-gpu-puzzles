@@ -36,7 +36,7 @@ comptime BLUR_RADIUS = 2
 def multi_stage_image_blur_pipeline(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
 
@@ -53,6 +53,7 @@ def multi_stage_image_blur_pipeline(
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -87,7 +88,7 @@ comptime BUFFER_COUNT = 2
 def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
 
@@ -114,6 +115,7 @@ def double_buffered_stencil_computation(
         dtype=DType.uint64, address_space=AddressSpace.SHARED
     ](row_major[1]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -205,7 +207,7 @@ def test_multi_stage_pipeline() raises:
         ctx.enqueue_function[kernel](
             out_tensor,
             inp_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -267,7 +269,7 @@ def test_double_buffered_stencil() raises:
         ctx.enqueue_function[kernel](
             out_tensor,
             inp_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

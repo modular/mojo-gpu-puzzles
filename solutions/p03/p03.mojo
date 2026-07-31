@@ -18,8 +18,9 @@ comptime dtype = DType.float32
 def add_10_guard(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = thread_idx.x
     if i < size:
         output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
@@ -41,7 +42,7 @@ def main() raises:
         ctx.enqueue_function[add_10_guard](
             out,
             a,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

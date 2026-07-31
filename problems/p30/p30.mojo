@@ -28,8 +28,9 @@ def kernel1(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
         output[i] = a[i] + b[i]
@@ -43,8 +44,9 @@ def kernel2(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
 
@@ -62,8 +64,9 @@ def kernel3(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
 
@@ -105,7 +108,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -144,7 +147,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -183,7 +186,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -220,7 +223,7 @@ def test_kernel1() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -263,7 +266,7 @@ def test_kernel2() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -309,7 +312,7 @@ def test_kernel3() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
