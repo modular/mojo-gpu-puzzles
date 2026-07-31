@@ -1,7 +1,8 @@
 # Block Boundary Version
 
-Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and
-1D TileTensor `b` and stores it in 1D TileTensor `output`.
+Implement a GPU kernel that computes a 1D convolution between input 1D
+TileTensor `a` and filter 1D TileTensor `b`, storing the result in 1D
+TileTensor `output`.
 
 **Note:** _You need to handle the general case. You only need 2 global reads and
 1 global write per thread._
@@ -9,7 +10,7 @@ Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and
 ## Configuration
 
 - Input array size: `SIZE_2 = 15` elements
-- Kernel size: `CONV_2 = 4` elements
+- Filter size: `CONV_2 = 4` elements
 - Threads per block: `TPB = 8`
 - Number of blocks: 2
 - Shared memory: `TPB + CONV_2 - 1` elements for input
@@ -39,7 +40,7 @@ Notes:
    for shared memory
 2. Load main data: `shared_a[local_i] = a[global_i]`
 3. Load boundary: `if local_i < CONV_2 - 1` handle next block data
-4. Load kernel: `shared_b[local_i] = b[local_i]`
+4. Load filter: `shared_b[local_i] = b[local_i]`
 5. Sum within input bounds: `if global_i + j < SIZE_2`
 
 </div>
@@ -113,7 +114,7 @@ shared memory. Here's a detailed analysis:
 Test Configuration:
 - Full array size: SIZE_2 = 15 elements
 - Grid: 2 blocks × 8 threads
-- Convolution kernel: CONV_2 = 4 elements
+- Filter size: CONV_2 = 4 elements
 
 Block 0 shared memory:  [0 1 2 3 4 5 6 7|8 9 10]  // TPB(8) + (CONV_2-1)(3) padding
 Block 1 shared memory:  [8 9 10 11 12 13 14 0|0 0 0]  // Second block. data(7) + padding to fill grid(1) + (CONV_2-1)(3) padding
@@ -162,7 +163,7 @@ Size calculation:
    - Maintains memory coalescing for main data load
    - Explicitly zeroes out-of-bounds elements to avoid undefined behavior
 
-3. **Kernel Loading**:
+3. **Filter Loading**:
 
    ```mojo
    if local_i < b_size:
@@ -170,7 +171,7 @@ Size calculation:
    ```
 
    - Single load per thread
-   - Bounded by kernel size
+   - Bounded by filter size
 
 4. **Convolution Computation**:
 
