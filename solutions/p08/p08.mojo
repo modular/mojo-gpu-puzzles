@@ -26,7 +26,9 @@ def add_10_shared_tile_tensor(
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
-    # Allocate shared memory using stack_allocation
+    # Allocate shared memory. Unlike most kernel variables, which are private to
+    # each thread, shared memory (`AddressSpace.SHARED`) is scoped per-block.
+    # So, each thread in a block can use the same "scratchpad" to store data.
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
