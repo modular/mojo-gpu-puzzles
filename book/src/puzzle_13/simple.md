@@ -1,7 +1,8 @@
 # Simple Case with Single Block
 
-Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and
-1D TileTensor `b` and stores it in 1D TileTensor `output`.
+Implement a GPU kernel that computes a 1D convolution between input 1D
+TileTensor `a` and filter 1D TileTensor `b`, storing the result in 1D
+TileTensor `output`.
 
 **Note:** _You need to handle the general case. You only need 2 global reads and
 1 global write per thread._
@@ -20,15 +21,15 @@ while maintaining correct boundary conditions.
 ## Configuration
 
 - Input array size: `SIZE = 6` elements
-- Kernel size: `CONV = 3` elements
+- Filter size: `CONV = 3` elements
 - Threads per block: `TPB = 8`
 - Number of blocks: 1
 - Shared memory: Two arrays of size `SIZE` and `CONV`
 
 Notes:
 
-- **Data loading**: Each thread loads one element from input and kernel
-- **Memory pattern**: Shared arrays for input and convolution kernel
+- **Data loading**: Each thread loads one element from input and filter
+- **Memory pattern**: Shared arrays for input and filter
 - **Thread sync**: Coordination before computation
 
 ## Code to complete
@@ -47,7 +48,7 @@ Notes:
 1. Use
    `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())`
    for shared memory allocation
-2. Load input to `shared_a[local_i]` and kernel to `shared_b[local_i]`
+2. Load input to `shared_a[local_i]` and filter to `shared_b[local_i]`
 3. Call `barrier()` after loading
 4. Sum products within bounds: `if local_i + j < SIZE`
 5. Write result if `global_i < SIZE`
@@ -121,7 +122,7 @@ access to overlapping elements. Here's a detailed breakdown:
 
 ```txt
 Input array a:   [0  1  2  3  4  5]
-Kernel b:        [0  1  2]
+Filter b:        [0  1  2]
 ```
 
 ### Computation steps
@@ -130,7 +131,7 @@ Kernel b:        [0  1  2]
 
    ```txt
    shared_a: [0  1  2  3  4  5]  // Input array
-   shared_b: [0  1  2]           // Convolution kernel
+   shared_b: [0  1  2]           // Filter
    ```
 
 2. **Convolution Process** for each position i:
@@ -192,7 +193,7 @@ perform any computation, making better use of GPU resources.
    - Leverages TileTensor's type system for better code safety
 
 3. **Memory Management**:
-   - Uses shared memory for both input array and kernel
+   - Uses shared memory for both input array and filter
    - Single load per thread from global memory
    - Efficient reuse of loaded data
 

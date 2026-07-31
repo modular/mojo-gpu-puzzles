@@ -27,10 +27,11 @@
 In signal processing and image analysis, convolution is a fundamental operation
 that combines two sequences to produce a third sequence. This puzzle challenges
 you to implement a 1D convolution on the GPU, where each output element is
-computed by sliding a kernel over an input array.
+computed by sliding a filter over an input array.
 
-Implement a kernel that computes a 1D convolution between vector `a` and vector
-`b` and stores it in `output` using the `TileTensor` abstraction.
+Implement a GPU kernel that computes a 1D convolution between input vector `a`
+and filter vector `b`, storing the result in `output` using the `TileTensor`
+abstraction.
 
 **Note:** _You need to handle the general case. You only need 2 global reads and
 1 global write per thread._
@@ -39,7 +40,7 @@ Implement a kernel that computes a 1D convolution between vector `a` and vector
 <img src="./media/13-b.png" alt="1D convolution visualization" class="dark-mode-img">
 
 For those new to convolution, think of it as a weighted sliding window
-operation. At each position, we multiply the kernel values with the
+operation. At each position, we multiply the filter values with the
 corresponding input values and sum the results. In mathematical notation, this
 is often written as:
 
