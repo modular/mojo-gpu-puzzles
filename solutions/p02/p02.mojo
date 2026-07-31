@@ -21,7 +21,7 @@ def add(
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
-    output[i] = a[i] + b[i]
+    output[unsafe_offset=i] = a[unsafe_offset=i] + b[unsafe_offset=i]
 
 
 # ANCHOR_END: add_solution

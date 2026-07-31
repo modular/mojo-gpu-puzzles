@@ -20,7 +20,7 @@ def add_10(
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
-    output[i] = a[i] + 10.0
+    output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 
 # ANCHOR_END: add_10_solution
