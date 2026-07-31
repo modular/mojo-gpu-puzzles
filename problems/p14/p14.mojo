@@ -26,8 +26,9 @@ comptime LayoutType = type_of(layout)
 def prefix_sum_simple(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
@@ -51,8 +52,9 @@ comptime ExtendedLayout = type_of(extended_layout)
 def prefix_sum_local_phase(
     output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 20 lines)
@@ -61,8 +63,9 @@ def prefix_sum_local_phase(
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase(
     output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -96,7 +99,7 @@ def main() raises:
             ctx.enqueue_function[prefix_sum_simple](
                 out_tensor,
                 a_tensor,
-                size,
+                Int32(size),
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )
@@ -111,7 +114,7 @@ def main() raises:
             ctx.enqueue_function[prefix_sum_local_phase](
                 out_tensor,
                 a_tensor,
-                size,
+                Int32(size),
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
@@ -119,7 +122,7 @@ def main() raises:
             # Phase 2: Add block sums
             ctx.enqueue_function[prefix_sum_block_sum_phase](
                 out_tensor,
-                size,
+                Int32(size),
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )

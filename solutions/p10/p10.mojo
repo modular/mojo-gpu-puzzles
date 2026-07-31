@@ -25,9 +25,10 @@ comptime LayoutType = type_of(layout)
 def shared_memory_race(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
 
@@ -59,8 +60,9 @@ def shared_memory_race(
 def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     if row < size and col < size:
@@ -105,7 +107,7 @@ def main() raises:
             ctx.enqueue_function[add_10_2d](
                 out_tensor,
                 a_tensor,
-                SIZE,
+                Int32(SIZE),
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )
@@ -135,7 +137,7 @@ def main() raises:
             ctx.enqueue_function[shared_memory_race](
                 out_tensor,
                 a_tensor,
-                SIZE,
+                Int32(SIZE),
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )

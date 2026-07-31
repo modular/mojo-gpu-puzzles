@@ -28,9 +28,10 @@ def minimal_kernel(
     y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
-    size: Int,
+    size_dev: Int32,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
@@ -46,10 +47,11 @@ def sophisticated_kernel(
     y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
-    size: Int,
+    size_dev: Int32,
 ):
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
+    var size = Int(size_dev)
     # Maximum shared memory allocation (close to 48KB limit)
     var shared_cache = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -140,10 +142,11 @@ def balanced_kernel(
     y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
-    size: Int,
+    size_dev: Int32,
 ):
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
+    var size = Int(size_dev)
     # Reasonable shared memory usage for effective caching (16KB)
     var shared_cache = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -216,7 +219,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
             y_tensor,
             x_tensor,
             ALPHA,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -255,7 +258,7 @@ def benchmark_sophisticated_parameterized[
             y_tensor,
             x_tensor,
             ALPHA,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -292,7 +295,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
             y_tensor,
             x_tensor,
             ALPHA,
-            test_size,
+            Int32(test_size),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -327,7 +330,7 @@ def test_minimal() raises:
             y_tensor,
             x_tensor,
             ALPHA,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -370,7 +373,7 @@ def test_sophisticated() raises:
             y_tensor,
             x_tensor,
             ALPHA,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -414,7 +417,7 @@ def test_balanced() raises:
             y_tensor,
             x_tensor,
             ALPHA,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

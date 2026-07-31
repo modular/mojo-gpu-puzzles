@@ -40,12 +40,13 @@ comptime SCALAR_ALIGN = align_of[dtype]()
 def scalar_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """One element per thread. No vectorization, so alignment is irrelevant.
 
     This is the baseline: each thread issues a scalar load and a scalar store.
     """
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
         output[i] = a[i] * SCALE + BIAS
@@ -58,7 +59,7 @@ def scalar_kernel(
 def unaligned_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
 
@@ -68,6 +69,7 @@ def unaligned_kernel(
     `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
     `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
+    var size = Int(size_dev)
     var a_lt = a.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
 
@@ -89,7 +91,7 @@ def unaligned_kernel(
 def aligned_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Same vectorized kernel, but the access alignment is communicated.
 
@@ -99,6 +101,7 @@ def aligned_kernel(
     convenience wrapper that picks this alignment for you. Identical output to
     the unaligned kernel — only the codegen (and the bandwidth) changes.
     """
+    var size = Int(size_dev)
     var a_lt = a.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
 
@@ -148,7 +151,7 @@ def test_scalar() raises:
         ctx.enqueue_function[scalar_kernel](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=(scalar_blocks(SIZE), 1),
             block_dim=(TPB, 1),
         )
@@ -179,7 +182,7 @@ def test_unaligned() raises:
         ctx.enqueue_function[unaligned_kernel](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=(vector_blocks(SIZE), 1),
             block_dim=(TPB, 1),
         )
@@ -210,7 +213,7 @@ def test_aligned() raises:
         ctx.enqueue_function[aligned_kernel](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=(vector_blocks(SIZE), 1),
             block_dim=(TPB, 1),
         )
@@ -246,7 +249,7 @@ def benchmark_scalar(mut b: Bencher) raises:
         ctx.enqueue_function[scalar_kernel](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=(scalar_blocks(SIZE), 1),
             block_dim=(TPB, 1),
         )
@@ -276,7 +279,7 @@ def benchmark_unaligned(mut b: Bencher) raises:
         ctx.enqueue_function[unaligned_kernel](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=(vector_blocks(SIZE), 1),
             block_dim=(TPB, 1),
         )
@@ -306,7 +309,7 @@ def benchmark_aligned(mut b: Bencher) raises:
         ctx.enqueue_function[aligned_kernel](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=(vector_blocks(SIZE), 1),
             block_dim=(TPB, 1),
         )

@@ -37,9 +37,10 @@ def cluster_coordination_basics[
 ](
     output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -87,7 +88,7 @@ def cluster_collective_operations[
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -105,7 +106,7 @@ def advanced_cluster_patterns[
 ](
     output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -148,7 +149,7 @@ def main() raises:
             ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
-                SIZE,
+                Int32(SIZE),
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
                 cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
@@ -215,7 +216,7 @@ def main() raises:
                 output_tensor,
                 input_tensor,
                 temp_tensor,
-                SIZE,
+                Int32(SIZE),
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
                 cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
@@ -262,7 +263,7 @@ def main() raises:
             ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
-                SIZE,
+                Int32(SIZE),
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
                 cluster_dim=Dim(CLUSTER_SIZE, 1, 1),

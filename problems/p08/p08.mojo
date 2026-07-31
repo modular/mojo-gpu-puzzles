@@ -24,8 +24,9 @@ comptime LayoutType = type_of(layout)
 def add_10_shared_tile_tensor(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     # Allocate shared memory. Unlike most kernel variables, which are private to
     # each thread, shared memory (`AddressSpace.SHARED`) is scoped per-block.
     # So, each thread in a block can use the same "scratchpad" to store data.
@@ -64,7 +65,7 @@ def main() raises:
         ctx.enqueue_function[add_10_shared_tile_tensor](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

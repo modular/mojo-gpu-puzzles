@@ -24,8 +24,9 @@ comptime LayoutType = type_of(layout)
 def pooling(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     # Allocate shared memory using stack_allocation
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -56,7 +57,7 @@ def main() raises:
         ctx.enqueue_function[pooling](
             out_tensor,
             a_tensor,
-            SIZE,
+            Int32(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
