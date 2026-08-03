@@ -115,7 +115,6 @@ def embedding_kernel_2d[
 import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from std.memory import UnsafePointer
 from max.gpu.host import DeviceBuffer
 
 

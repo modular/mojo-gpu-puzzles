@@ -7,7 +7,7 @@
 > 지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께
 > 살펴보았습니다:
 >
-> 1. [UnsafePointer](https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/)를 사용한 포인터 직접 조작 방식의 raw 메모리 관리
+> 1. [Pointer](https://docs.modular.com/mojo/std/memory/pointer/Pointer/)를 사용한 포인터 직접 조작 방식의 raw 메모리 관리
 > 2. 강력한 `address_space` 파라미터로 메모리를 할당하는, 보다 구조화된 [TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/)
 >
 > 이 퍼즐부터는 `TileTensor`로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을

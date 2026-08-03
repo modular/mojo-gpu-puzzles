@@ -3,7 +3,6 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.memory import UnsafePointer
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.memory import AddressSpace

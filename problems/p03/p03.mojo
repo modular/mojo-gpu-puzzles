@@ -3,7 +3,7 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.memory import UnsafePointer
+from std.memory import Pointer
 from std.gpu import thread_idx
 from max.gpu.host import DeviceContext
 from std.testing import assert_equal
@@ -16,8 +16,8 @@ comptime dtype = DType.float32
 
 
 def add_10_guard(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
     size_dev: Int32,
 ):
     var size = Int(size_dev)
