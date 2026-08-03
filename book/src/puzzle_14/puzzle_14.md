@@ -14,13 +14,6 @@ it in 1D TileTensor `output`.
 **Note:** _If the size of `a` is greater than the block size, only store the sum
 of each block._
 
-<img src="./media/videos/720p30/14.1-w.png" alt="Prefix sum visualization - step 1" class="light-mode-img">
-<img src="./media/videos/720p30/14.1-b.png" alt="Prefix sum visualization - step 1" class="dark-mode-img">
-<img src="./media/videos/720p30/14.2-w.png" alt="Prefix sum visualization - step 2" class="light-mode-img">
-<img src="./media/videos/720p30/14.2-b.png" alt="Prefix sum visualization - step 2" class="dark-mode-img">
-<img src="./media/videos/720p30/14.3-w.png" alt="Prefix sum visualization - step 3" class="light-mode-img">
-<img src="./media/videos/720p30/14.3-b.png" alt="Prefix sum visualization - step 3" class="dark-mode-img">
-
 ## Key concepts
 
 In this puzzle, you'll learn about:
@@ -48,6 +41,24 @@ produces: \\[[x_0, x_0+x_1, x_0+x_1+x_2, ..., \sum_{i=0}^n x_i] \\]
 While a sequential algorithm would need \\(O(n)\\) steps, our parallel approach
 will use a clever two-phase algorithm that completes in \\(O(\log n)\\) steps!
 Here's a visualization of this process:
+
+<div class="step-animation">
+  <div class="step-frame">
+    <img src="./media/videos/720p30/14.1-w.png" alt="Prefix sum visualization - step 1" class="light-mode-img">
+    <img src="./media/videos/720p30/14.1-b.png" alt="Prefix sum visualization - step 1" class="dark-mode-img">
+    <span class="step-label">Step 1 of 3</span>
+  </div>
+  <div class="step-frame">
+    <img src="./media/videos/720p30/14.2-w.png" alt="Prefix sum visualization - step 2" class="light-mode-img">
+    <img src="./media/videos/720p30/14.2-b.png" alt="Prefix sum visualization - step 2" class="dark-mode-img">
+    <span class="step-label">Step 2 of 3</span>
+  </div>
+  <div class="step-frame">
+    <img src="./media/videos/720p30/14.3-w.png" alt="Prefix sum visualization - step 3" class="light-mode-img">
+    <img src="./media/videos/720p30/14.3-b.png" alt="Prefix sum visualization - step 3" class="dark-mode-img">
+    <span class="step-label">Step 3 of 3</span>
+  </div>
+</div>
 
 This puzzle is split into two parts to help you learn the concept:
 
