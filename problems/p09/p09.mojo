@@ -3,7 +3,7 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.memory import UnsafePointer
+from std.memory import Pointer
 from std.gpu import thread_idx, barrier
 from max.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
@@ -25,8 +25,8 @@ comptime ITER = 2
 
 # ANCHOR: first_crash
 def add_10(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
     output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0

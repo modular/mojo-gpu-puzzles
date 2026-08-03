@@ -5,7 +5,7 @@
 > So far in our GPU puzzle journey, we've been exploring two parallel approaches
 > to GPU memory management:
 >
-> 1. Raw memory management with direct pointer manipulation using [UnsafePointer](https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/)
+> 1. Raw memory management with direct pointer manipulation using [Pointer](https://docs.modular.com/mojo/std/memory/pointer/Pointer/)
 > 2. The more structured [TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/) with its powerful address_space parameter for memory allocation
 >
 > Starting from this puzzle, we're transitioning exclusively to using

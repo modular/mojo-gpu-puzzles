@@ -3,7 +3,7 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.memory import UnsafePointer
+from std.memory import Pointer
 from std.gpu import thread_idx
 from max.gpu.host import DeviceContext
 from std.testing import assert_equal
@@ -16,8 +16,8 @@ comptime dtype = DType.float32
 
 
 def add_10(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
     # FILL ME IN (roughly 1 line)
