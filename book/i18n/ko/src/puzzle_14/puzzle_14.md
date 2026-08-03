@@ -15,12 +15,23 @@
 
 **참고:** _`a`의 크기가 블록 크기보다 큰 경우, 각 블록의 합계만 저장합니다._
 
-<img src="/puzzle_14/media/videos/720p30/14.1-w.png" alt="누적 합 시각화 - 1단계" class="light-mode-img">
-<img src="/puzzle_14/media/videos/720p30/14.1-b.png" alt="누적 합 시각화 - 1단계" class="dark-mode-img">
-<img src="/puzzle_14/media/videos/720p30/14.2-w.png" alt="누적 합 시각화 - 2단계" class="light-mode-img">
-<img src="/puzzle_14/media/videos/720p30/14.2-b.png" alt="누적 합 시각화 - 2단계" class="dark-mode-img">
-<img src="/puzzle_14/media/videos/720p30/14.3-w.png" alt="누적 합 시각화 - 3단계" class="light-mode-img">
-<img src="/puzzle_14/media/videos/720p30/14.3-b.png" alt="누적 합 시각화 - 3단계" class="dark-mode-img">
+<div class="step-animation">
+  <div class="step-frame">
+    <img src="/puzzle_14/media/videos/720p30/14.1-w.png" alt="누적 합 시각화 - 1단계" class="light-mode-img">
+    <img src="/puzzle_14/media/videos/720p30/14.1-b.png" alt="누적 합 시각화 - 1단계" class="dark-mode-img">
+    <span class="step-label">1 / 3 단계</span>
+  </div>
+  <div class="step-frame">
+    <img src="/puzzle_14/media/videos/720p30/14.2-w.png" alt="누적 합 시각화 - 2단계" class="light-mode-img">
+    <img src="/puzzle_14/media/videos/720p30/14.2-b.png" alt="누적 합 시각화 - 2단계" class="dark-mode-img">
+    <span class="step-label">2 / 3 단계</span>
+  </div>
+  <div class="step-frame">
+    <img src="/puzzle_14/media/videos/720p30/14.3-w.png" alt="누적 합 시각화 - 3단계" class="light-mode-img">
+    <img src="/puzzle_14/media/videos/720p30/14.3-b.png" alt="누적 합 시각화 - 3단계" class="dark-mode-img">
+    <span class="step-label">3 / 3 단계</span>
+  </div>
+</div>
 
 ## 핵심 개념
 
