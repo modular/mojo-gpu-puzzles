@@ -398,6 +398,7 @@ def main() raises:
             )
             ctx.synchronize()
 
+            var tc_success: Bool
             with out_tensor_core.map_to_host() as tc_host:
                 print(
                     "Sample tensor core results:",
@@ -468,6 +469,7 @@ def main() raises:
             )
             ctx.synchronize()
 
+            var tiled_success: Bool
             with out_tiled.map_to_host() as tiled_host:
                 print(
                     "Sample tiled results:",
