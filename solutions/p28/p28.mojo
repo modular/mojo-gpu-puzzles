@@ -5,7 +5,7 @@
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from max.gpu.host import DeviceContext
-from std.gpu.memory import async_copy_wait_all, AddressSpace
+from max.gpu.memory import async_copy_wait_all
 from layout import Layout, LayoutTensor, TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation

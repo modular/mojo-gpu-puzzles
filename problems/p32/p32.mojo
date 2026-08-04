@@ -5,7 +5,6 @@
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from max.gpu.host import DeviceContext
-from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation

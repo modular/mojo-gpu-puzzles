@@ -7,7 +7,6 @@ from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
-from std.gpu.memory import AddressSpace
 from max.algorithm.functional import elementwise
 from layout import TileTensor, LayoutTensor
 from layout.tile_layout import row_major, TensorLayout

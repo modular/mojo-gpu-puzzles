@@ -5,7 +5,6 @@
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from max.gpu.host import DeviceContext
-from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
@@ -142,7 +141,7 @@ def matmul_tiled[
 # ANCHOR_END: matmul_tiled_solution
 
 # ANCHOR: matmul_idiomatic_tiled_solution
-from std.gpu.memory import async_copy_wait_all
+from max.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 from layout import Layout as IntTupleLayout
 
