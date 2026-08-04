@@ -231,7 +231,7 @@ def tensor_core_matrix_multiplication[
                         var B_mma_tile = B_warp_tile.tile[MMA_K, MMA_N](
                             mma_k, mma_n
                         )
-                        C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
+                        var C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
                             mma_m, mma_n
                         )
 
@@ -349,9 +349,9 @@ def main() raises:
             print("\n=== Running Idiomatic Tiled Matrix Multiplication ===")
 
             # Create separate buffer for tiled result
-            out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+            var out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = TileTensor(out_tiled, layout)
+            var out_tiled_layout = TileTensor(out_tiled, layout)
 
             # Run idiomatic tiled version with proper 2D block configuration
             comptime kernel = matmul_idiomatic_tiled[SIZE]
@@ -455,9 +455,9 @@ def main() raises:
 
             # Test 2: Idiomatic Tiled vs CPU
             print("\n--- Test 2: Idiomatic Tiled vs CPU Reference ---")
-            out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+            var out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = TileTensor(out_tiled, layout)
+            var out_tiled_layout = TileTensor(out_tiled, layout)
 
             comptime kernel2 = matmul_idiomatic_tiled[SIZE]
             ctx.enqueue_function[kernel2](

@@ -128,19 +128,19 @@ def main() raises:
             print("Testing Multi-Block Coordination")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            var output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
             output_buf.enqueue_fill(0)
 
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
                     input_host[i] = Scalar[dtype](i % 10) * 0.1
 
-            input_tensor = TileTensor[mut=False, dtype, InLayout](
+            var input_tensor = TileTensor[mut=False, dtype, InLayout](
                 input_buf, in_layout
             )
-            output_tensor = TileTensor[mut=True, dtype, ClusterLayout](
+            var output_tensor = TileTensor[mut=True, dtype, ClusterLayout](
                 output_buf, cluster_layout
             )
 
@@ -185,9 +185,9 @@ def main() raises:
             print("Testing Cluster-Wide Reduction")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](1)
+            var output_buf = ctx.enqueue_create_buffer[dtype](1)
             output_buf.enqueue_fill(0)
             var temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
             temp_buf.enqueue_fill(0)
@@ -200,7 +200,7 @@ def main() raises:
 
             print("Expected sum:", expected_sum)
 
-            input_tensor = TileTensor[mut=False, dtype, InLayout](
+            var input_tensor = TileTensor[mut=False, dtype, InLayout](
                 input_buf, in_layout
             )
             var output_tensor = TileTensor[mut=True, dtype, OutLayout](
@@ -224,7 +224,7 @@ def main() raises:
             ctx.synchronize()
 
             with output_buf.map_to_host() as result_host:
-                result = result_host[0]
+                var result = result_host[0]
                 print("Cluster reduction result:", result)
                 print("Expected:", expected_sum)
                 print("Error:", abs(result - expected_sum))
@@ -240,9 +240,9 @@ def main() raises:
             print("Testing Advanced Cluster Algorithms")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            var output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
             output_buf.enqueue_fill(0)
 
             with input_buf.map_to_host() as input_host:
@@ -251,10 +251,10 @@ def main() raises:
                         Scalar[dtype](i % 50) * 0.02
                     )  # Pattern for testing
 
-            input_tensor = TileTensor[mut=False, dtype, InLayout](
+            var input_tensor = TileTensor[mut=False, dtype, InLayout](
                 input_buf, in_layout
             )
-            output_tensor = TileTensor[mut=True, dtype, ClusterLayout](
+            var output_tensor = TileTensor[mut=True, dtype, ClusterLayout](
                 output_buf, cluster_layout
             )
 

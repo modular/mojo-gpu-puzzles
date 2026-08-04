@@ -202,11 +202,11 @@ def main() raises:
 
     with DeviceContext() as ctx:
         if argv()[1] == "--traditional-dot-product":
-            out = ctx.enqueue_create_buffer[dtype](1)
+            var out = ctx.enqueue_create_buffer[dtype](1)
             out.enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
-            b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             b_buf.enqueue_fill(0)
 
             var expected: Scalar[dtype] = 0.0
@@ -220,9 +220,11 @@ def main() raises:
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
-            b_tensor = TileTensor[mut=False, dtype, InLayout](b_buf, in_layout)
-            out_tensor = TileTensor(out, out_layout)
+            var a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
+            var b_tensor = TileTensor[mut=False, dtype, InLayout](
+                b_buf, in_layout
+            )
+            var out_tensor = TileTensor(out, out_layout)
 
             # Traditional approach: works perfectly when size == TPB
             comptime kernel = traditional_dot_product[TPB]
@@ -238,18 +240,18 @@ def main() raises:
             ctx.synchronize()
 
             with out.map_to_host() as result_host:
-                result = result_host[0]
+                var result = result_host[0]
                 print("Traditional result:", result)
                 assert_equal(result, expected)
                 print("Puzzle 27 complete ✅")
                 print("Complex: shared memory + barriers + tree reduction")
 
         elif argv()[1] == "--block-sum-dot-product":
-            out = ctx.enqueue_create_buffer[dtype](1)
+            var out = ctx.enqueue_create_buffer[dtype](1)
             out.enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
-            b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             b_buf.enqueue_fill(0)
 
             var expected: Scalar[dtype] = 0.0
@@ -263,9 +265,11 @@ def main() raises:
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
-            b_tensor = TileTensor[mut=False, dtype, InLayout](b_buf, in_layout)
-            out_tensor = TileTensor(out, out_layout)
+            var a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
+            var b_tensor = TileTensor[mut=False, dtype, InLayout](
+                b_buf, in_layout
+            )
+            var out_tensor = TileTensor(out, out_layout)
 
             # Block.sum(): Same result with dramatically simpler code!
             comptime kernel = block_sum_dot_product[TPB]
@@ -281,7 +285,7 @@ def main() raises:
             ctx.synchronize()
 
             with out.map_to_host() as result_host:
-                result = result_host[0]
+                var result = result_host[0]
                 print("Block.sum result:", result)
                 assert_equal(result, expected)
                 print("Puzzle 27 complete ✅")
@@ -299,7 +303,7 @@ def main() raises:
             print()
 
             # Create input data with known distribution across bins
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
 
             # Create test data: values distributed across 8 bins [0.0, 1.0)
@@ -317,7 +321,7 @@ def main() raises:
             print("...")
             print()
 
-            input_tensor = TileTensor[mut=False, dtype, InLayout](
+            var input_tensor = TileTensor[mut=False, dtype, InLayout](
                 input_buf, in_layout
             )
 
@@ -382,7 +386,7 @@ def main() raises:
             print()
 
             # Create input data with known values for easy verification
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
             var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
@@ -393,7 +397,7 @@ def main() raises:
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
                     # Create values cycling 1-8, mean will be 4.5
-                    value = Scalar[dtype](
+                    var value = Scalar[dtype](
                         (i % 8) + 1
                     )  # Values 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, ...
                     input_host[i] = value
@@ -410,7 +414,7 @@ def main() raises:
             print("Mean value:", mean_value)
             print()
 
-            input_tensor = TileTensor[mut=False, dtype, InLayout](
+            var input_tensor = TileTensor[mut=False, dtype, InLayout](
                 input_buf, in_layout
             )
             var output_tensor = TileTensor(output_buf, vector_layout)

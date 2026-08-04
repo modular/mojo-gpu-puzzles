@@ -136,11 +136,11 @@ def main() raises:
             )
         elif argv()[1] == "--tiled":
             # Need to update the layout of the tensors to the tiled layout
-            out_tensor_tiled = TileTensor(out, layout_tiled)
-            a_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
+            var out_tensor_tiled = TileTensor(out, layout_tiled)
+            var a_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
                 inp1, layout_tiled
             )
-            b_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
+            var b_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
                 inp2, layout_tiled
             )
 
