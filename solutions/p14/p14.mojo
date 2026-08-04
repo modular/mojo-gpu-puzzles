@@ -176,8 +176,8 @@ def main() raises:
                 a_host[i] = Scalar[dtype](i)
 
         if use_simple:
-            a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
-            out_tensor = TileTensor(out, layout)
+            var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+            var out_tensor = TileTensor(out, layout)
 
             ctx.enqueue_function[prefix_sum_simple](
                 out_tensor,
