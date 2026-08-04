@@ -422,8 +422,8 @@ def minimal_fused_kernel_backward[
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
     comptime for h in range(hidden_dim):
-        input_val = input_lt[batch_idx, seq_idx, h]
-        normalized = (input_val - mean_val) * inv_std
+        var input_val = input_lt[batch_idx, seq_idx, h]
+        var normalized = (input_val - mean_val) * inv_std
 
         # Compute gradient w.r.t. LayerNorm output for this h
         var grad_ln_out: Scalar[dtype] = 0
@@ -450,8 +450,8 @@ def minimal_fused_kernel_backward[
     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        h_input_val = input_lt[batch_idx, seq_idx, h]
-        h_normalized = (h_input_val - mean_val) * inv_std
+        var h_input_val = input_lt[batch_idx, seq_idx, h]
+        var h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
@@ -461,7 +461,7 @@ def minimal_fused_kernel_backward[
                 * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        var h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         sum_grad_normalized = sum_grad_normalized + rebind[Scalar[dtype]](
             h_grad_norm
         )
@@ -472,8 +472,8 @@ def minimal_fused_kernel_backward[
 
     # Compute actual input gradients (no race conditions here - each thread writes to different positions)
     comptime for h in range(hidden_dim):
-        h_input_val = input_lt[batch_idx, seq_idx, h]
-        h_normalized = (h_input_val - mean_val) * inv_std
+        var h_input_val = input_lt[batch_idx, seq_idx, h]
+        var h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
@@ -483,7 +483,7 @@ def minimal_fused_kernel_backward[
                 * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        var h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
             - (sum_grad_normalized / Scalar[dtype](hidden_dim))
@@ -911,8 +911,8 @@ struct LayerNormLinearBackwardCustomOp:
                     # Gradient w.r.t. linear weight
                     for out_idx in range(output_dim):
                         for h in range(hidden_dim):
-                            input_val = input_tensor[batch, seq, h]
-                            normalized = (input_val - mean_val) * inv_std
+                            var input_val = input_tensor[batch, seq, h]
+                            var normalized = (input_val - mean_val) * inv_std
                             var ln_output_val = (
                                 normalized * ln_weight_tensor[h]
                                 + ln_bias_tensor[h]
@@ -925,8 +925,8 @@ struct LayerNormLinearBackwardCustomOp:
 
                     # Gradient w.r.t. LayerNorm parameters
                     for h in range(hidden_dim):
-                        input_val = input_tensor[batch, seq, h]
-                        normalized = (input_val - mean_val) * inv_std
+                        var input_val = input_tensor[batch, seq, h]
+                        var normalized = (input_val - mean_val) * inv_std
 
                         var grad_ln_out: Scalar[dtype] = 0
                         for out_idx in range(output_dim):
@@ -947,8 +947,8 @@ struct LayerNormLinearBackwardCustomOp:
                     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
                     for h in range(hidden_dim):
-                        input_val = input_tensor[batch, seq, h]
-                        normalized = (input_val - mean_val) * inv_std
+                        var input_val = input_tensor[batch, seq, h]
+                        var normalized = (input_val - mean_val) * inv_std
 
                         var grad_ln_out: Scalar[dtype] = 0
                         for out_idx in range(output_dim):
@@ -957,7 +957,7 @@ struct LayerNormLinearBackwardCustomOp:
                                 * linear_weight_tensor[out_idx, h]
                             )
 
-                        grad_norm = grad_ln_out * ln_weight_tensor[h]
+                        var grad_norm = grad_ln_out * ln_weight_tensor[h]
                         sum_grad_normalized = sum_grad_normalized + grad_norm
                         sum_grad_normalized_times_normalized = (
                             sum_grad_normalized_times_normalized
@@ -965,8 +965,8 @@ struct LayerNormLinearBackwardCustomOp:
                         )
 
                     for h in range(hidden_dim):
-                        input_val = input_tensor[batch, seq, h]
-                        normalized = (input_val - mean_val) * inv_std
+                        var input_val = input_tensor[batch, seq, h]
+                        var normalized = (input_val - mean_val) * inv_std
 
                         var grad_ln_out: Scalar[dtype] = 0
                         for out_idx in range(output_dim):
@@ -975,7 +975,7 @@ struct LayerNormLinearBackwardCustomOp:
                                 * linear_weight_tensor[out_idx, h]
                             )
 
-                        grad_norm = grad_ln_out * ln_weight_tensor[h]
+                        var grad_norm = grad_ln_out * ln_weight_tensor[h]
                         grad_input_tensor[batch, seq, h] = inv_std * (
                             grad_norm
                             - (sum_grad_normalized / Scalar[dtype](hidden_dim))

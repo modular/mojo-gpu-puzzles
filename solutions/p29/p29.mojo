@@ -77,11 +77,11 @@ def multi_stage_image_blur_pipeline(
     if local_i >= STAGE1_THREADS:
         var blur_idx = local_i - STAGE1_THREADS
         var blur_sum: Scalar[dtype] = 0.0
-        blur_count = 0
+        var blur_count = 0
 
         # 5-point blur kernel
         for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
-            sample_idx = blur_idx + offset
+            var sample_idx = blur_idx + offset
             if sample_idx >= 0 and sample_idx < TPB:
                 blur_sum += input_shared[sample_idx]
                 blur_count += 1
@@ -97,7 +97,7 @@ def multi_stage_image_blur_pipeline(
             blur_sum = 0.0
             blur_count = 0
             for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
-                sample_idx = second_idx + offset
+                var sample_idx = second_idx + offset
                 if sample_idx >= 0 and sample_idx < TPB:
                     blur_sum += input_shared[sample_idx]
                     blur_count += 1
@@ -111,7 +111,7 @@ def multi_stage_image_blur_pipeline(
 
     # Stage 3: Final smoothing (all threads)
     if global_i < size:
-        final_value = blur_shared[local_i]
+        var final_value = blur_shared[local_i]
 
         # Neighbor smoothing with 0.6 scaling
         if local_i > 0:
@@ -199,7 +199,7 @@ def double_buffered_stencil_computation(
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    sample_idx = local_i + offset
+                    var sample_idx = local_i + offset
                     if sample_idx >= 0 and sample_idx < TPB:
                         stencil_sum += buffer_A[sample_idx]
                         stencil_count += 1
@@ -219,7 +219,7 @@ def double_buffered_stencil_computation(
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    sample_idx = local_i + offset
+                    var sample_idx = local_i + offset
                     if sample_idx >= 0 and sample_idx < TPB:
                         stencil_sum += buffer_B[sample_idx]
                         stencil_count += 1
