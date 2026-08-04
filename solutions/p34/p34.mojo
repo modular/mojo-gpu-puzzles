@@ -6,7 +6,7 @@
 from std.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, Dim
-from std.gpu.primitives.cluster import (
+from max.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
     cluster_arrive,
