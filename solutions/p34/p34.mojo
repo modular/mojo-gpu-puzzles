@@ -12,7 +12,6 @@ from std.gpu.primitives.cluster import (
     cluster_wait,
     elect_one_sync,
 )
-from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation

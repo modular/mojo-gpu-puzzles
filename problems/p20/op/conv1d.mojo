@@ -6,7 +6,6 @@
 # same as p15/op/conv1d.mojo
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from max.gpu.host import DeviceContext
-from std.gpu.memory import AddressSpace
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation

@@ -5,7 +5,6 @@
 # ===----------------------------------------------------------------------=== #
 from std.math import sqrt
 from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.memory import AddressSpace
 from std.atomic import Atomic
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout

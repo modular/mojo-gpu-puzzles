@@ -9,7 +9,7 @@ from layout import Layout, LayoutTensor, TileTensor
 from layout.tile_layout import row_major
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
-from std.gpu.memory import async_copy_wait_all, AddressSpace
+from max.gpu.memory import async_copy_wait_all
 from std.utils import Index
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
