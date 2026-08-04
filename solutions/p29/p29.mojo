@@ -3,8 +3,9 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.sync import (
+from std.gpu import thread_idx, block_idx, block_dim
+from max.gpu.sync import barrier
+from max.gpu.sync import (
     mbarrier_init,
     mbarrier_arrive,
     mbarrier_test_wait,

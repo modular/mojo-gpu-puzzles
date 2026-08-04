@@ -3,10 +3,11 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim
+from max.gpu.sync import barrier
 from std.atomic import Atomic
 from std.gpu.primitives.warp import WARP_SIZE
-from std.gpu.primitives import block
+from max.gpu.primitives import block
 from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
