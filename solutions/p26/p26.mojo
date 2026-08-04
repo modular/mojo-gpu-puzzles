@@ -355,6 +355,8 @@ def test_butterfly_conditional_max() raises:
         expected_buf.enqueue_fill(0)
 
         # Expected: even lanes get max, odd lanes get min
+        var max_val: Float32
+        var min_val: Float32
         with input_buf.map_to_host() as input_host:
             max_val = input_host[0]
             min_val = input_host[0]

@@ -361,6 +361,7 @@ def main() raises:
 
                 ctx.synchronize()
 
+                var count: Int32
                 # Display results for this bin
                 with bin_count.map_to_host() as count_host:
                     count = count_host[0]
