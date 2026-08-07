@@ -402,7 +402,7 @@ def minimal_fused_kernel_backward[
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
     comptime for out_idx in range(output_dim):
         var grad_bias_ptr = grad_bias.ptr.unsafe_offset(out_idx)
-        _ = Atomic[dtype].fetch_add(
+        _ = Atomic[Scalar[dtype]].fetch_add(
             grad_bias_ptr,
             rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, out_idx]),
         )
@@ -442,10 +442,10 @@ def minimal_fused_kernel_backward[
         # Atomic accumulation of LayerNorm parameter gradients
         var grad_ln_weight_ptr = grad_ln_weight.ptr.unsafe_offset(h)
         var grad_ln_bias_ptr = grad_ln_bias.ptr.unsafe_offset(h)
-        _ = Atomic[dtype].fetch_add(
+        _ = Atomic[Scalar[dtype]].fetch_add(
             grad_ln_weight_ptr, rebind[Scalar[dtype]](grad_ln_out * normalized)
         )
-        _ = Atomic[dtype].fetch_add(
+        _ = Atomic[Scalar[dtype]].fetch_add(
             grad_ln_bias_ptr, rebind[Scalar[dtype]](grad_ln_out)
         )
 
