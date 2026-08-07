@@ -202,6 +202,7 @@ steps:
    - One global read per thread into shared tensor
    - Efficient neighbor access through shared memory
    - TileTensor benefits:
+     - Automatic bounds checking
      - Natural window indexing
      - Layout-aware memory access
      - Type safety throughout

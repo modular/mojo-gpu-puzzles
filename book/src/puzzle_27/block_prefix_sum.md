@@ -1,14 +1,14 @@
 # block.prefix_sum() Parallel Histogram Binning
 
 This puzzle implements parallel histogram binning using block-level
-[block.prefix_sum](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
+[block.prefix_sum](https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum)
 operations for advanced parallel filtering and extraction. Each thread
 determines its element's target bin, then applies `block.prefix_sum()` to
 compute write positions for extracting elements from a specific bin, showing how
 prefix sum enables sophisticated parallel partitioning beyond simple reductions.
 
 **Key insight:** _The
-[block.prefix_sum()](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
+[block.prefix_sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum)
 operation provides parallel filtering and extraction by computing cumulative
 write positions for matching elements across all threads in a block._
 
@@ -60,7 +60,7 @@ for element in data:
 
 ## The advanced approach: `block.prefix_sum()` coordination
 
-Transform the complex parallel partitioning into coordinated extraction.
+Transform the complex parallel partitioning into coordinated extraction:
 
 ## Code to complete
 
@@ -84,8 +84,8 @@ Implement parallel histogram binning using `block.prefix_sum()` for extraction:
 Just like `block_sum_dot_product`, you need these key variables:
 
 ```mojo
-var global_i = block_dim.x * block_idx.x + thread_idx.x
-var local_i = thread_idx.x
+global_i = block_dim.x * block_idx.x + thread_idx.x
+local_i = thread_idx.x
 ```
 
 Your function will have **5 main steps** (about 15-20 lines total):
@@ -101,8 +101,8 @@ Your function will have **5 main steps** (about 15-20 lines total):
 To classify a `Float32` value into bins:
 
 ```mojo
-var my_value = input_data[global_i][0]  # Extract SIMD like in dot product
-var bin_number = Int(floor(my_value * Float32(num_bins)))
+my_value = input_data[global_i][0]  # Extract SIMD like in dot product
+bin_number = Int(floor(my_value * Float32(num_bins)))
 ```
 
 **Edge case handling**: Values exactly 1.0 would go to bin `NUM_BINS`, but you
@@ -128,7 +128,7 @@ positions!
 Following the documentation, the call looks like:
 
 ```mojo
-var offset = block.prefix_sum[
+offset = block.prefix_sum[
     dtype=DType.int32,         # Working with integer predicates
     block_size=tpb,            # Same as block.sum()
     exclusive=True             # Key: gives position BEFORE each thread
@@ -157,7 +157,7 @@ The last thread (not thread 0!) computes the total count:
 
 ```mojo
 if local_i == tpb - 1:  # Last thread in block
-    var total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
+    total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
     count_output[0] = total_count
 ```
 
@@ -305,15 +305,9 @@ For target_bin=0, create extraction mask:
   Thread 1:  belongs_to_target = 1  (bin 0 == target 0)
   Thread 13: belongs_to_target = 0  (bin 1 != target 0)
   Thread 25: belongs_to_target = 0  (bin 2 != target 0)
-  Thread 80: belongs_to_target = 1  (input values wrap: 80 % 80 = 0, so 0.00)
   ...
 
 This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
-                            (threads 0-12 are the leading run of 1s)
-
-The input data is generated as (i % 80) / 100.0, so the values restart at
-thread 80. Threads 80-92 also land in bin 0, which is why the final count is
-26 and not 13.
 ```
 
 ### **Phase 4: Parallel prefix sum (the magic!)**
@@ -321,11 +315,9 @@ thread 80. Threads 80-92 also land in bin 0, which is why the final count is
 ```text
 block.prefix_sum[exclusive=True] on predicates:
 Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
-Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,13,13, ...]
-
-Every thread receives a value, but only threads with belongs_to_target = 1
-use it. Threads 13-79 all carry 13 here, and thread 80 - the next match -
-carries 13 as well, so it writes at position 13.
+Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
+                                                      ^
+                                                 doesn't matter
 
 Key insight: Each thread gets its WRITE POSITION in the output array!
 ```
@@ -339,12 +331,9 @@ Only threads with belongs_to_target=1 write:
   Thread 12: bin_output[12] = 0.12  // Uses write_offset[12] = 12
   Thread 13: (no write)             // belongs_to_target = 0
   Thread 25: (no write)             // belongs_to_target = 0
-  Thread 80: bin_output[13] = 0.00  // Uses write_offset[80] = 13
-  Thread 92: bin_output[25] = 0.12  // Uses write_offset[92] = 25
   ...
 
-Result: [0.00, 0.01, ..., 0.12, 0.00, 0.01, ..., 0.12] // Perfectly packed!
-        (26 elements, no gaps, in thread order)
+Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 ```
 
 ### **Phase 6: Count computation (like block.sum() pattern)**
@@ -354,10 +343,6 @@ Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
       total = write_offset[0] + Int32(belongs_to_target)  // Inclusive sum formula
       count_output[0] = total
-
-For bin 0: thread 127 holds 0.47, which lands in bin 3, so its predicate is 0
-and its exclusive scan value is 26 - giving 26 + 0 = 26, the count printed for
-bin 0.
 ```
 
 ## **Why this advanced algorithm works:**
@@ -393,10 +378,9 @@ bin 0.
 
 ### **vs. Multi-pass algorithms:**
 
-- **Single pass per bin**: Extracting one bin takes one kernel launch, with no
-  separate count pass followed by a scatter pass. The demo loops over the eight
-  bins, so it launches the kernel eight times - once per bin
+- **Single kernel**: Complete histogram extraction in one GPU launch
 - **Full utilization**: All threads work regardless of data distribution
+- **Optimal memory bandwidth**: Pattern optimized for GPU memory hierarchy
 
 This demonstrates how `block.prefix_sum()` enables sophisticated parallel
 algorithms that would be complex or impossible with simpler primitives like
@@ -412,8 +396,7 @@ algorithms that would be complex or impossible with simpler primitives like
 - **Algorithm sophistication**: Advanced parallel partitioning vs sequential
   processing
 - **Memory efficiency**: Coalesced writes vs scattered random access
-- **Synchronization**: `block.prefix_sum()` places the two `barrier()` calls it
-  needs for you, instead of leaving you to place barriers and atomics by hand
+- **Synchronization**: Built-in coordination vs manual barriers and atomics
 - **Scalability**: Works with any block size and bin count
 
 **`block.prefix_sum()` vs `block.sum()`:**

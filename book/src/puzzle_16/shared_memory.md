@@ -144,20 +144,20 @@ Matrix B:                           b_shared: (similar layout)
 
    ```mojo
    # Create 2D shared memory tensors using TileTensor with address_space
-   var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
-   var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
+   a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
+   b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
    ```
 
 2. **Thread Indexing**:
 
    ```mojo
    # Global indices for matrix access
-   var row = block_dim.y * block_idx.y + thread_idx.y
-   var col = block_dim.x * block_idx.x + thread_idx.x
+   row = block_dim.y * block_idx.y + thread_idx.y
+   col = block_dim.x * block_idx.x + thread_idx.x
 
    # Local indices for shared memory
-   var local_row = thread_idx.y
-   var local_col = thread_idx.x
+   local_row = thread_idx.y
+   local_col = thread_idx.x
    ```
 
 3. **Data Loading**:
@@ -167,13 +167,7 @@ Matrix B:                           b_shared: (similar layout)
    if row < size and col < size:
        a_shared[local_row, local_col] = a[row, col]
        b_shared[local_row, local_col] = b[row, col]
-
-   # Every thread reaches this, including the ones the guard skipped
-   barrier()
    ```
-
-   The `barrier()` sits outside the guard on purpose: a barrier that only some
-   threads in the block reach is undefined behavior.
 
 4. **Computation with Shared Memory**:
 
@@ -181,7 +175,7 @@ Matrix B:                           b_shared: (similar layout)
    # Guard ensures we only compute for valid matrix elements
    if row < size and col < size:
        # Initialize accumulator with output tensor's type
-       var acc: output.ElementType = 0
+       var acc: output.element_type = 0
 
        # Compile-time unrolled loop for matrix multiplication
        comptime for k in range(size):
@@ -197,7 +191,7 @@ Matrix B:                           b_shared: (similar layout)
      - Only valid threads perform work
      - Essential because TPB (3×3) > SIZE (2×2)
 
-   - **Accumulator Type**: `var acc: output.ElementType`
+   - **Accumulator Type**: `var acc: output.element_type`
      - Uses output tensor's element type for type safety
      - Ensures consistent numeric precision
      - Initialized to zero before accumulation
@@ -229,13 +223,13 @@ Matrix B:                           b_shared: (similar layout)
 
 1. **TileTensor benefits**:
    - Direct 2D indexing simplifies code
-   - Type safety through `ElementType`
+   - Type safety through `element_type`
    - Efficient memory layout handling
 
 2. **Shared memory allocation**:
    - TileTensor with address_space for structured allocation
    - Row-major layout matching input tensors
-   - Aligned to the element type's natural alignment by default
+   - Proper alignment for efficient access
 
 3. **Synchronization**:
    - `barrier()` ensures shared memory consistency
@@ -256,10 +250,11 @@ Matrix B:                           b_shared: (similar layout)
 
 3. **Computational benefits**:
    - Reduced global memory traffic
-   - Dot-product operands come from on-chip shared memory rather than global
-     memory
+   - Better cache utilization
+   - Improved instruction throughput
 
-This implementation improves on the naive version by:
+This implementation significantly improves performance over the naive version
+by:
 
 - Reducing global memory accesses
 - Enabling data reuse through shared memory

@@ -16,7 +16,7 @@ step-by-step workflows that you can immediately apply to your own projects.
 
 **Note**: The following content focuses on command-line debugging for universal
 IDE compatibility. If you prefer VS Code debugging, refer to the
-[Mojo debugging documentation](https://mojolang.org/docs/tools/debugging/)
+[Mojo debugging documentation](https://docs.modular.com/mojo/tools/debugging)
 for VS Code-specific setup and workflows.
 
 ## Why GPU debugging is different
@@ -38,7 +38,7 @@ This means you need specialized tools that can:
 ## Your debugging toolkit
 
 Mojo's GPU debugging capabilities currently is limited to NVIDIA GPUs. The
-[Mojo debugging documentation](https://mojolang.org/docs/tools/debugging/)
+[Mojo debugging documentation](https://docs.modular.com/mojo/tools/debugging)
 explains that the Mojo package includes:
 
 - **LLDB debugger** with Mojo plugin for CPU-side debugging
@@ -46,7 +46,7 @@ explains that the Mojo package includes:
 - **Command-line interface** via `mojo debug` for universal IDE compatibility
 
 For GPU-specific debugging, the
-[GPU debugging guide](https://max.modular.com/gpu/debugging/)
+[Mojo GPU debugging guide](https://docs.modular.com/mojo/tools/gpu-debugging)
 provides additional technical details.
 
 This architecture provides the best of both worlds: familiar debugging commands
@@ -196,11 +196,11 @@ Back in puzzles 1-8, you wrote code like this:
 
 ```mojo
 # From puzzle 1: Basic thread indexing
-var i = thread_idx.x  # Each thread gets a unique index
+i = thread_idx.x  # Each thread gets a unique index
 
 # From puzzle 7: 2D thread indexing
-var row = thread_idx.y  # 2D grid of threads
-var col = thread_idx.x
+row = thread_idx.y  # 2D grid of threads
+col = thread_idx.x
 ```
 
 With CUDA-GDB, you can **actually see these thread coordinates in action**:
@@ -1349,8 +1349,8 @@ hierarchies, and specialized tools. You now have:
 
 ## Additional resources
 
-- [Mojo debugging documentation](https://mojolang.org/docs/tools/debugging/)
-- [GPU debugging guide](https://max.modular.com/gpu/debugging/)
+- [Mojo Debugging Documentation](https://docs.modular.com/mojo/tools/debugging)
+- [Mojo GPU Debugging Guide](https://docs.modular.com/mojo/tools/gpu-debugging)
 - [NVIDIA CUDA-GDB User Guide](https://docs.nvidia.com/cuda/cuda-gdb/index.html)
 - [CUDA-GDB Command Reference](https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference)
 

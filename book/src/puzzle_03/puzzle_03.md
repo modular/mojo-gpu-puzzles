@@ -38,8 +38,6 @@ Thread 2 (i=2):  if 2 < size:  output[2] = a[2] + 10  ✓ Valid
 Thread 3 (i=3):  if 3 < size:  output[3] = a[3] + 10  ✓ Valid
 Thread 4 (i=4):  if 4 < size:  ❌ Skip (out of bounds)
 Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
-Thread 6 (i=6):  if 6 < size:  ❌ Skip (out of bounds)
-Thread 7 (i=7):  if 7 < size:  ❌ Skip (out of bounds)
 ```
 
 💡 **Note**: Boundary checking becomes increasingly complex with:
@@ -63,7 +61,7 @@ Thread 7 (i=7):  if 7 < size:  ❌ Skip (out of bounds)
 
 1. Store `thread_idx.x` in `i`
 2. Add guard: `if i < size`
-3. Inside guard: `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
+3. Inside guard: `output[i] = a[i] + 10.0`
 
 </div>
 </details>
@@ -141,7 +139,7 @@ This solution:
 </div>
 </details>
 
-## Looking ahead
+### Looking ahead
 
 While simple boundary checks work here, consider these challenges:
 

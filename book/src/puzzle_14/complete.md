@@ -19,7 +19,7 @@ Notes:
   multi-phase approach
 - **Block-level sync**: Within a block, use `barrier()` to synchronize threads
 - **Host-level sync**: Between blocks, Mojo's `DeviceContext` ensures kernel
-  launches are ordered, which means they start in the order they were scheduled
+  launches are ordered, which means they start in the order they where scheduled
   and wait for the previous kernel to finish before starting. You may need to
   use `ctx.synchronize()` to ensure all GPU work is complete before reading
   results back to the host.
@@ -46,7 +46,7 @@ these kernels.
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a>
 
 The key to this puzzle is understanding that
-[barrier](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/) only
+[barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) only
 synchronizes threads within a block, not across blocks. For cross-block
 synchronization, you need to enqueue multiple kernels that run sequentially on
 the device:
@@ -110,7 +110,7 @@ Since blocks can't directly communicate, you need somewhere to store block sums:
 - **Two kernel synchronization**: It must be ensured that the second kernel runs
   only after the first kernel completes.
 
-### 5. Debugging strategy
+### 5. Debugging Strategy
 
 If you encounter issues, try visualizing the intermediate state after the first
 phase:
@@ -172,7 +172,6 @@ uv run poe p14 --complete
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
-Note: we print the extended buffer here, but we only need to print the first `size` elements
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
 ```
@@ -346,13 +345,12 @@ reduction.
 1. **Load values into shared memory**:
 
    ```text
-   shared = [8, 9, 10, 11, 12, 13, 14, 0]
+   shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
    ```
 
-   Note: Thread 7 has no input element to load, since `global_i = 15 >= SIZE_2`,
-   so it writes 0 instead. Leaving `shared[7]` uninitialized would be undefined
-   behavior — the reduction below reads every position on every iteration,
-   including this one.
+   Note: Thread 7 doesn't load anything since `global_i = 15 >= SIZE_2`, leaving
+   `shared[7]` uninitialized. This is safe because Thread 7 won't participate in
+   the final output.
 
 2. **Iterations of parallel reduction** (\\(\log_2(TPB) = 3\\) iterations):
 
@@ -360,7 +358,7 @@ reduction.
    three iterations:
 
    ```text
-   shared = [8, 17, 27, 38, 50, 63, 77, 77]
+   shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
    ```
 
 3. **Write local results back to global memory**:
@@ -372,24 +370,26 @@ reduction.
 4. **Store block sum in auxiliary space** (only last thread in block):
 
    ```text
-   output[16] = shared[7]  // Thread 7 (TPB-1) stores 77
+   output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
    ```
 
-   Note: Even though Thread 7 loads no input element, it still participates in
-   the prefix sum computation within the block, so `shared[7]` accumulates the
-   block total of 77. Block 1 is the last block, so Phase 2 never reads this
-   block sum.
+   Note: Even though Thread 7 doesn't load valid input data, it still
+   participates in the prefix sum computation within the block. The `shared[7]`
+   position gets updated during the parallel reduction iterations, but since it
+   started uninitialized, the final value is unpredictable. However, this
+   doesn't affect correctness because Block 1 is the last block, so this block
+   sum is never used in Phase 2.
 
 After Phase 1, the output buffer contains:
 
 ```text
-[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, 77]
+[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
                                                         ^   ^
                                                 Block sums stored here
 ```
 
-Note: The last block sum (77) is computed but never used, since Block 1 is the
-final block.
+Note: The last block sum (???) is unpredictable since it's based on
+uninitialized memory, but this doesn't affect the final result.
 
 ## Host-device synchronization: When it's actually needed
 
@@ -398,10 +398,10 @@ The two kernel phases execute sequentially
 
 ```mojo
 # Phase 1: Local prefix sums
-ctx.enqueue_function[prefix_sum_local_phase](...)
+ctx.enqueue_function[prefix_sum_local_phase[...]](...)
 
 # Phase 2: Add block sums (automatically waits for Phase 1)
-ctx.enqueue_function[prefix_sum_block_sum_phase](...)
+ctx.enqueue_function[prefix_sum_block_sum_phase[...]](...)
 ```
 
 **Key insight**: Mojo's `DeviceContext` uses a single execution stream (CUDA
@@ -454,7 +454,7 @@ block, kernel ordering comes from Mojo's single-stream execution model, while
 **Local phase synchronization pattern**: Each iteration within a block follows a
 strict read → sync → write pattern:
 
-1. `var current_val: output.ElementType = 0` - Initialize local variable
+1. `var current_val: out.element_type = 0` - Initialize local variable
 2. `current_val = shared[local_i - offset]` - Read phase (if conditions met)
 3. `barrier()` - Explicit synchronization to prevent race conditions
 4. `shared[local_i] += current_val` - Write phase (if conditions met)
@@ -465,9 +465,10 @@ synchronization:
 
 - **Intra-block**: `barrier()` synchronizes threads within each block during
   local prefix sum computation
-- **Inter-block**: `DeviceContext` launches enqueued kernels sequentially, so
-  Phase 1 completes before Phase 2 begins. `ctx.synchronize()` then enforces
-  host-device synchronization before the results are read back.
+- **Inter-block**: The `DeviceContext` context manager that launches enqueued
+  kernels sequentially to ensure Phase 1 completes before Phase 2 begins. To
+  explicitly enforce host-device synchronization before reading results,
+  `ctx.synchronize()` is used.
 
 **Race condition prevention**: The explicit read-write separation in the local
 phase prevents the race condition that would occur if threads simultaneously
@@ -475,9 +476,8 @@ read from and write to the same shared memory locations during parallel
 reduction.
 
 1. **Work efficiency**: This implementation has \\(O(n \log n)\\) work
-   complexity, while the sequential algorithm is \\(O(n)\\). Trading extra
-   total work for a shorter critical path is the classic bargain of parallel
-   scans.
+   complexity, while the sequential algorithm is \\(O(n)\\). This is a classic
+   space-time tradeoff in parallel algorithms.
 
 2. **Memory overhead**: The extra space for block sums is minimal (just one
    element per block).
@@ -486,6 +486,5 @@ This two-kernel approach is a fundamental pattern in GPU programming for
 algorithms that require cross-block communication. The same strategy can be
 applied to other parallel algorithms like radix sort, histogram calculation, and
 reduction operations.
-
 </div>
 </details>

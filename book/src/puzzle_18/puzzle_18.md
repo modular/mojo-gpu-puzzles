@@ -62,8 +62,7 @@ Layout configuration:
 
 - Input tensor: `row_major[SIZE]()`
 - Output tensor: `row_major[SIZE]()`
-- Custom op parameters: `{"target": ..., "input_size": input_tensor.shape[0],
-  "dtype": dtype}`
+- Custom op parameters: `{"input_size": input_tensor.shape[0]}`
 
 Key aspects of this puzzle include:
 
@@ -190,7 +189,7 @@ Skipped: 0 (0.00%)
 3. Pass the input tensor as a value to the custom operation
 4. Specify the output type to match the input shape
 5. Include the "input_size" parameter which is required by the kernel
-6. Call `graph.output()` with your operation's output tensor
+6. Set `graph.outputs` to a list containing your operation's output tensor
 
 </div>
 </details>
@@ -287,27 +286,28 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 
 ```mojo
 def softmax_gpu_kernel[
+    layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, layout],
+    input: TileTensor[mut=False, dtype, layout],
 )
 ```
 
 The kernel is parameterized with:
 
+- Common layout parameter for both input and output tensors
 - Vector size as an Integer parameter
 - Configurable data type with float32 as default
-- Layout supplied by the module-level `LayoutType` binding, shared by both
-  tensors
-- Both tensors mutable (`mut=True`)
+- Mutable output tensor for in-place computation
+- Non-mutable input tensor (mut=False)
 
 #### Shared memory allocation
 
 ```mojo
-var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
-var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
 ```
 
 The kernel allocates two shared memory buffers:
@@ -320,7 +320,7 @@ The kernel allocates two shared memory buffers:
 #### Thread indexing
 
 ```mojo
-var global_i = thread_idx.x
+global_i = thread_idx.x
 ```
 
 This implementation of softmax operates on a single 1d thread block. i.e. The
@@ -331,9 +331,9 @@ global and local index are the same.
 ```mojo
 var val: Scalar[dtype] = min_finite[dtype]()
 if global_i < input_size:
-    val = input[global_i]
+    val = rebind[Scalar[dtype]](input[global_i])
 
-shared_max[global_i] = val
+shared_max[local_i] = val
 barrier()
 ```
 
@@ -347,10 +347,10 @@ This initializes each thread with:
 #### Parallel max reduction
 
 ```mojo
-var stride = BLOCK_DIM_X // 2
+stride = BLOCK_DIM_X // 2
 while stride > 0:
-    if global_i < stride:
-        shared_max[global_i] = max(shared_max[global_i], shared_max[global_i + stride])
+    if local_i < stride:
+        shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
     barrier()
     stride = stride // 2
 ```
@@ -371,11 +371,11 @@ inputs.
 #### Exponentiation with numerical stability
 
 ```mojo
-var block_max = shared_max[0]
+block_max = shared_max[0]
 
 var exp_val: Scalar[dtype] = 0.0
 if global_i < input_size:
-    exp_val = exp(val - block_max)
+    exp_val = rebind[Scalar[dtype]](exp(val - block_max))
 ```
 
 Each thread:
@@ -389,13 +389,13 @@ Each thread:
 #### Parallel sum reduction
 
 ```mojo
-shared_sum[global_i] = exp_val
+shared_sum[local_i] = exp_val
 barrier()
 
-var stride = BLOCK_DIM_X // 2
+stride = BLOCK_DIM_X // 2
 while stride > 0:
-    if global_i < stride:
-        shared_sum[global_i] += shared_sum[global_i + stride]
+    if local_i < stride:
+        shared_sum[local_i] += shared_sum[local_i + stride]
     barrier()
     stride = stride // 2
 ```
@@ -411,7 +411,7 @@ The second reduction phase:
 #### Final normalization
 
 ```mojo
-var block_sum = shared_sum[0]
+block_sum = shared_sum[0]
 
 if global_i < input_size:
     output[global_i] = exp_val / block_sum
@@ -426,18 +426,15 @@ Each thread:
 
 #### Performance characteristics
 
-The implementation has these performance characteristics:
+The implementation has excellent performance characteristics:
 
 - **Complexity**: \\(O(\log n)\\) for both max and sum calculations vs
   \\(O(n)\\) in a sequential approach
 - **Memory efficiency**: Uses only \\(2 \times BLOCK\\_DIM\\_X~\\) elements of
   shared memory
-- **Work efficiency**: The two reductions together perform about \\(2 \times
-  (BLOCK\\_DIM\\_X - 1)~\\) max/add operations, the same total work a sequential
-  pass would do, but spread across \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps
-- **Load balancing**: The number of active threads halves at every reduction
-  step, so the upper half of the block goes idle after the first step. That
-  imbalance is inherent to a tree reduction
+- **Work efficiency**: Each thread performs approximately \\(2 \times
+  \log_2(BLOCK\\_DIM\\_X)~\\) operations
+- **Load balancing**: Each thread handles the same amount of work
 - **Synchronization**: Uses minimal barriers, only where necessary
 - **Memory access**: Coalesced global memory access pattern for optimal
   bandwidth
@@ -461,7 +458,7 @@ Our CPU implementation provides a sequential fallback that follows the same math
    ```mojo
    var max_val: Scalar[dtype] = min_finite[dtype]()
    for i in range(input_size):
-       max_val = max(max_val, input[i])
+       max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
    ```
 
    We initialize with the minimum finite value and perform a linear scan through
@@ -474,7 +471,7 @@ Our CPU implementation provides a sequential fallback that follows the same math
    ```mojo
    var sum_exp: Scalar[dtype] = 0.0
    for i in range(input_size):
-       var exp_val = exp(input[i] - max_val)
+       var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
        output[i] = exp_val
        sum_exp += exp_val
    ```
@@ -544,7 +541,6 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    output = ops.custom(
        name="softmax",
        values=[input_value],
-       device=DeviceRef.from_device(device),
        out_types=[
            TensorType(
                dtype=input_value.tensor.dtype,

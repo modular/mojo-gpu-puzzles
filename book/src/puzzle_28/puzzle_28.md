@@ -22,7 +22,7 @@ compute()             # ← Finally, 50 cycles of actual work
 launch_async_load()   # ← Start 500-cycle transfer in background
 load_small_data()     # ← 100 cycles of useful work while waiting
 wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
-# Total: ~550 cycles, 9.1% compute utilization - 18% faster!
+# Total: ~550 cycles, 45% better utilization!
 ```
 
 **This is the power of async memory operations** - the difference between a
@@ -60,15 +60,13 @@ Before diving in, ensure you have solid foundation in:
 - Basic understanding of memory latency vs. bandwidth
 
 **API familiarity:**
-[Mojo GPU Memory Operations](https://max.modular.com/api/mojo/max/gpu/memory/)
+[Mojo GPU Memory Operations](https://docs.modular.com/mojo/std/gpu/memory/)
 
 > **⚠️ Hardware compatibility note:** This puzzle uses async copy operations
-> (`copy_dram_to_sram_async`, `async_copy_wait_all`) that lower to the NVIDIA
-> `cp.async` instruction, so on NVIDIA hardware they need
-> **compute capability 8.0 (Ampere) or newer**. If you encounter compilation
-> errors related to `.async` modifiers or unsupported operations, your GPU may
-> not support these features. The concepts remain valuable for understanding
-> memory optimization patterns.
+> (`copy_dram_to_sram_async`, `async_copy_wait_all`) that may require modern GPU
+> architectures. If you encounter compilation errors related to `.async`
+> modifiers or unsupported operations, your GPU may not support these features.
+> The concepts remain valuable for understanding memory optimization patterns.
 >
 > **Check your GPU compute capability:**
 >
@@ -76,12 +74,9 @@ Before diving in, ensure you have solid foundation in:
 > nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
 > ```
 >
-> - **Below SM_80** (e.g., V100, T4, RTX 20 series): no `cp.async` instruction,
->   so `copy_dram_to_sram_async` is unavailable
-> - **SM_80 and above** (e.g., A100, A10G, RTX 30 and 40 series): `cp.async`
->   support, which is what this puzzle needs
-> - **SM_90 and above** (e.g., H100): adds TMA bulk-copy operations on top of
->   `cp.async`
+> - **SM_70 and above** (e.g., V100, T4, A10G, RTX 20+ series): Basic async copy supported
+> - **SM_80 and above** (e.g., A100, RTX 30+ series): Full async copy features
+> - **SM_90 and above** (e.g., H100, RTX 40+ series): Advanced TMA operations supported
 
 ## What you'll focus
 
@@ -98,12 +93,12 @@ By the end of this puzzle, you'll have hands-on experience with:
 ### **Key APIs you'll focus**
 
 Building on the async copy operations introduced in
-[Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-tiletensor-tiling),
+[Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling),
 you'll now focus specifically on their memory optimization potential:
 
-- **[`copy_dram_to_sram_async()`](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)**:
-  Launch background DRAM→SRAM transfers that bypass the register file
-- **[`async_copy_wait_all()`](https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/)**:
+- **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)**:
+  Launch background DRAM→SRAM transfers using dedicated copy engines
+- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/)**:
   Synchronize transfer completion before accessing shared memory
 
 **What's different from Puzzle 16?** While Puzzle 16 used async copy for clean
@@ -243,10 +238,9 @@ async_copy_wait_all()  # Wait only when both operations complete
 
 **Why async copy works so well:**
 
-- **Register-file bypass**: `cp.async` moves data from global memory straight
-  into shared memory without staging it in registers, so the issuing warp keeps
-  executing (as explained in
-  [Puzzle 16](../puzzle_16/tiled.md#solution-idiomatic-tiletensor-tiling))
+- **Dedicated copy engines**: Modern GPUs have specialized hardware that
+  bypasses registers and enables true compute-memory overlap (as explained in
+  [Puzzle 16](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling))
 - **Latency hiding**: Memory transfers happen while GPU threads execute other
   operations
 - **Optimal coalescing**: Thread layouts ensure efficient DRAM access patterns
@@ -387,21 +381,20 @@ overlapping expensive DRAM transfers with useful computation:
 
 ```mojo
 # Phase 1: Launch async copy for input tile
-var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
 - **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a
   256-element view of the input array starting at `block_idx.x * 256`. The Mojo
-  [`tile` method](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile)
+  [`tile` method](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile)
   does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds
   indices results in undefined behavior. The implementation must ensure the tile
   size and offset remain within valid array bounds.
 
-- **Thread Layout**: `Layout.row_major(THREADS_PER_BLOCK_ASYNC)` creates a
-  256-element 1-D layout, one entry per thread in the block. This is
-  **critical** -
+- **Thread Layout**: `row_major[THREADS_PER_BLOCK_ASYNC, 1]()` creates a
+  `256 x 1` layout that matches our block organization. This is **critical** -
   the layout must match the physical thread arrangement for optimal coalesced
   memory access. When layouts mismatch, threads may access non-contiguous memory
   addresses, breaking coalescing and severely degrading performance.
@@ -444,14 +437,14 @@ barrier()  # Sync all threads
 
 ```mojo
 # Phase 4: Compute convolution
-var global_i = block_idx.x * CONV_TILE_SIZE + local_i
-if local_i < CONV_TILE_SIZE and global_i < Int(output.dim[0]()):
-    var result: output.ElementType = 0
+global_i = block_idx.x * CONV_TILE_SIZE + local_i
+if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
+    var result: output.element_type = 0
 
     if local_i >= HALO_SIZE and local_i < CONV_TILE_SIZE - HALO_SIZE:
         # Full convolution for center elements
         for k in range(KERNEL_SIZE):
-            var input_idx = local_i + k - HALO_SIZE
+            input_idx = local_i + k - HALO_SIZE
             if input_idx >= 0 and input_idx < CONV_TILE_SIZE:
                 result += input_shared[input_idx] * kernel_shared[k]
     else:
@@ -503,17 +496,16 @@ scenarios with larger overlaps, speedups can be much more significant.
 
 #### **Key technical insights**
 
-1. **Thread Layout Matching**: The 1-D `Layout.row_major(256)` layout supplies
-   one entry per thread in the block's `(256, 1)` organization, enabling optimal
-   memory coalescing.
+1. **Thread Layout Matching**: The `row_major[256, 1]()` layout precisely
+   matches the block's `(256, 1)` thread organization, enabling optimal memory
+   coalescing.
 
 2. **Race Condition Avoidance**: Proper sequencing (async copy → kernel load →
    wait → barrier → compute) eliminates all race conditions that could corrupt
    shared memory.
 
-3. **Hardware Optimization**: `cp.async` is a hardware instruction on compute
-   capability 8.0 and newer, so the transfer proceeds while the issuing warp
-   executes other instructions.
+3. **Hardware Optimization**: Modern GPUs have dedicated hardware for async copy
+   operations, allowing true parallelism between memory and compute units.
 
 4. **Memory Hierarchy Exploitation**: The pattern moves data through the
    hierarchy efficiently: DRAM → Shared Memory → Registers → Computation.

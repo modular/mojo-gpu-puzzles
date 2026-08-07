@@ -56,7 +56,7 @@ Notes:
 
 - **TileTensor allocation**: Use
   `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
-- **Element access**: Natural indexing with explicit bounds guards
+- **Element access**: Natural indexing with bounds checking
 - **Layout handling**: Separate layouts for input and output
 - **Thread coordination**: Same synchronization patterns with `barrier()`
 
@@ -143,7 +143,7 @@ expected: HostBuffer([140.0])
 The solution implements a parallel reduction for dot product using TileTensor.
 Here's the detailed breakdown:
 
-### Phase 1: element-wise multiplication
+### Phase 1: Element-wise Multiplication
 
 Each thread performs one multiplication with natural indexing:
 
@@ -151,7 +151,7 @@ Each thread performs one multiplication with natural indexing:
 shared[local_i] = a[global_i] * b[global_i]
 ```
 
-### Phase 2: parallel reduction
+### Phase 2: Parallel Reduction
 
 Tree-based reduction with layout-aware operations:
 
@@ -174,8 +174,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 1. **Memory Management**:
    - Clean shared memory allocation with TileTensor address_space parameter
    - Type-safe operations with TileTensor
-   - Explicit bounds guards in the kernel, since TileTensor indexing is
-     unchecked
+   - Automatic bounds checking
    - Layout-aware indexing
 
 2. **Thread Synchronization**:
@@ -186,7 +185,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 3. **Reduction Logic**:
 
    ```mojo
-   var stride = TPB // 2
+   stride = TPB // 2
    while stride > 0:
        if local_i < stride:
            shared[local_i] += shared[local_i + stride]
@@ -197,7 +196,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 4. **Performance Benefits**:
    - \\(O(\log n)\\) time complexity
    - Coalesced memory access
-   - Contiguous active threads at each step
+   - Minimal thread divergence
    - Efficient shared memory usage
 
 The TileTensor version maintains the same efficient parallel reduction while
@@ -224,9 +223,9 @@ Thread 2 reads: shared[2] = 4, shared[6] = 36
 Thread 3 reads: shared[3] = 9, shared[7] = 49
 
 Without barrier:
-- Thread 2 writes: shared[2] = 4 + 36 = 40
-- Thread 0 runs ahead to the next step (stride = 2) before Thread 2
-  finishes and reads the stale shared[2] = 4 instead of 40!
+- Thread 0 writes: shared[0] = 0 + 16 = 16
+- Thread 1 starts next step (stride = 2) before Thread 0 finishes
+  and reads old value shared[0] = 0 instead of 16!
 ```
 
 With `barrier()`:

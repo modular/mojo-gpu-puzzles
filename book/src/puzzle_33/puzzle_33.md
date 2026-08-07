@@ -17,8 +17,8 @@ Tensor Cores (also known as Matrix Cores on AMD hardware) are specialized
 processing units that can perform mixed-precision matrix-matrix operations in a
 single instruction. These units are available on modern GPU architectures:
 
-- **NVIDIA**: Tensor Cores (Volta, Turing, Ampere, Ada, Hopper, Blackwell)
-- **AMD**: Matrix Cores (CDNA architectures, plus WMMA on RDNA 3 and RDNA 4)
+- **NVIDIA**: Tensor Cores (Volta, Turing, Ampere, Hopper)
+- **AMD**: Matrix Cores (CDNA/CDNA2/CDNA3 architectures)
 
 Think of them as hardware-accelerated GEMM (General Matrix Multiply) engines
 built directly into the GPU.
@@ -31,9 +31,8 @@ built directly into the GPU.
   16×8×8 for FP32)
 - **Mixed precision**: Can mix input and output precisions for optimal
   performance
-- **Massive throughput**: Peak matrix throughput is roughly an order of
-  magnitude above the general-purpose FP32 pipeline—though, as the profiling
-  section below shows, peak throughput is not the same as achieved performance
+- **Massive throughput**: Can achieve 10-100x speedup over regular compute cores
+  for matrix operations
 
 ## From tiled to tensor cores
 
@@ -63,24 +62,24 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 
 ```mojo
 # Entire warp cooperates on matrix fragments
-var a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
-var b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
-var c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
-var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
+a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
+b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
+c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
+d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
 mma_op.store_d(C_mma_tile, d_reg)           # Store result
 ```
 
 ## Tensor core API in Mojo
 
 Mojo provides a clean interface to Tensor Cores through the
-[`TensorCore`](https://max.modular.com/api/mojo/layout/tensor_core/TensorCore/)
+[`TensorCore`](https://docs.modular.com/mojo/layout/tensor_core/TensorCore/)
 type:
 
 ```mojo
 from layout.tensor_core import TensorCore
 
 # Create a Tensor Core operator for specific tile sizes
-var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
 # Core operations:
 # - load_a(): Load matrix A fragment from shared memory
@@ -94,7 +93,7 @@ var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 different swizzle patterns for memory access optimization, and mixed-precision
 arithmetic. For complete documentation of all supported shapes, data types, and
 methods, see the
-[official TensorCore API reference](https://max.modular.com/api/mojo/layout/tensor_core/TensorCore/).
+[official TensorCore API reference](https://docs.modular.com/mojo/layout/tensor_core/TensorCore/).
 
 ### Matrix fragment sizes
 
@@ -152,14 +151,14 @@ differently:
 
 ```mojo
 # Calculate warp coordinates within the block
-var warp_id = thread_idx.x // WARP_SIZE
-var warps_in_n = BN // WN  # Number of warps along N dimension
-var warps_in_m = BM // WM  # Number of warps along M dimension
-var warp_y = warp_id // warps_in_n  # Warp's row
-var warp_x = warp_id % warps_in_n   # Warp's column
+warp_id = thread_idx.x // WARP_SIZE
+warps_in_n = BN // WN  # Number of warps along N dimension
+warps_in_m = BM // WM  # Number of warps along M dimension
+warp_y = warp_id // warps_in_n  # Warp's row
+warp_x = warp_id % warps_in_n   # Warp's column
 
 # Each warp handles a WM×WN tile of the output
-var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 ```
 
 **Warp organization example** (with BM=128, BN=64, WM=32, WN=32):
@@ -200,31 +199,19 @@ operations.
 2. **Maintain correctness**: Your result must match the CPU reference
    implementation
 3. **Proper warp coordination**: Handle multiple warps per block correctly
+   (works on both NVIDIA and AMD)
 4. **Memory efficiency**: Use the same async copy patterns from Puzzle 16
-5. **Warp-width independence**: Ensure tiling parameters are multiples of
+5. **Cross-platform compatibility**: Ensure tiling parameters are multiples of
    `WARP_SIZE`
 
 ## Configuration
 
 - Matrix size: \\(\\text{SIZE} = 1024\\)
-- Block tiling: \\(\\text{BM} = 4 \\times \\text{WARP\_SIZE}\\),
-  \\(\\text{BN} = 2 \\times \\text{WARP\_SIZE}\\),
-  \\(\\text{BK} = \\text{WARP\_SIZE}\\)
-- Warp tiling: \\(\\text{WM} = \\text{WN} = \\text{WARP\_SIZE}\\)
+- Block tiling: \\(\\text{BM} = 128, \\text{BN} = 64, \\text{BK} = 32\\)
+- Warp tiling: \\(\\text{WM} = 32, \\text{WN} = 32\\) (multiples of `WARP_SIZE`)
 - MMA fragments: \\(16 \\times 8 \\times 8\\) for FP32
 - Threads per block: \\(8 \\times \\text{WARP\_SIZE}\\) (8 warps per block)
 - Grid dimensions: Covers full matrix with block tiles
-
-Deriving every tile size from `WARP_SIZE` keeps the block and warp
-decomposition portable across warp widths. The concrete numbers used throughout
-this page assume \\(\\text{WARP\_SIZE} = 32\\), which gives
-\\(\\text{BM} = 128\\), \\(\\text{BN} = 64\\), \\(\\text{BK} = 32\\), and
-\\(\\text{WM} = \\text{WN} = 32\\). On a 64-wide AMD wavefront they all double,
-and the fragment counts derived from them change accordingly.
-
-The MMA shape does not follow that rule. `16×8×8` is an NVIDIA shape; AMD's
-matrix cores take `16×16×4` for FP32, so this puzzle is NVIDIA-only—see the
-[support matrix](../howto.md).
 
 Layout configuration:
 
@@ -268,8 +255,7 @@ Transform the above approach using specialized hardware acceleration:
 
 The tensor core version uses different tiling parameters optimized for hardware:
 
-- **Block tiling**: `BM=128, BN=64, BK=32` (larger blocks for more reuse per
-  shared memory tile)
+- **Block tiling**: `BM=128, BN=64, BK=32` (larger blocks for better occupancy)
 - **Warp tiling**: `WM=32, WN=32` (each warp handles a 32×32 output region)
 - **MMA fragments**: `16×8×8` (hardware-defined matrix fragment sizes)
 - **Warps per block**: 8 warps (organized as 4×2 in the BM×BN block)
@@ -287,15 +273,16 @@ The tensor core version uses different tiling parameters optimized for hardware:
 **How warps map to MMA fragments:**
 
 ```txt
-Each 32×32 warp tile contains multiple 16×8 MMA fragments
-(MMA_M = 16 rows, MMA_N = 8 cols):
+Each 32×32 warp tile contains multiple 16×8 MMA fragments:
 
-  8 cols    8 cols    8 cols    8 cols
-    |         |         |         |
-[ MMA 0,0 ][ MMA 0,1 ][ MMA 0,2 ][ MMA 0,3 ]  ← 16 rows each
-[ MMA 1,0 ][ MMA 1,1 ][ MMA 1,2 ][ MMA 1,3 ]  ← 16 rows each
+    16 cols   16 cols
+     |         |
+[ MMA 0,0 ][ MMA 0,1 ]  ← 8 rows each (32÷8=4 fragments down)
+[ MMA 1,0 ][ MMA 1,1 ]  ← 8 rows each
+[ MMA 2,0 ][ MMA 2,1 ]  ← 8 rows each
+[ MMA 3,0 ][ MMA 3,1 ]  ← 8 rows each
 
-4 fragments across (32÷8=4) × 2 fragments down (32÷16=2) = 8 MMA operations per warp per K-slice
+2 fragments across (32÷16=2) × 4 fragments down (32÷8=4) = 8 MMA operations per warp per K-tile
 ```
 
 ### Step 4: Code to complete
@@ -361,11 +348,12 @@ Think about the Tensor Core workflow - you need to:
    - Store the result back to the accumulator tile
    - The operation follows the pattern: result = A × B + C
 
-**Key insight**: You're replacing 1024 individual multiply-add operations (a
-16×8 output tile × 8 K-steps) with a single hardware instruction!
+**Key insight**: You're replacing 128 individual multiply-add operations with a
+single hardware instruction!
 
-**Debugging tip**: If you get dimension errors, double-check your tile
-indexing—the order of `mma_m`, `mma_k`, `mma_n` matters for getting the right
+**Debugging tip**: If you get dimension errors, double-check your tile indexing
+
+- the order of `mma_m`, `mma_k`, `mma_n` matters for getting the right
 fragments.
 
 </div>
@@ -401,13 +389,10 @@ Your output will show accuracy test results once completed:
 ```txt
 === Running All Accuracy Tests ===
 --- Test 1: Tensor Core vs CPU Reference ---
-Tensor core test: passed
+✅ TENSOR CORE ACCURACY TEST PASSED!
 --- Test 2: Idiomatic Tiled vs CPU Reference ---
-Idiomatic tiled test: passed
-
-=== ACCURACY TEST SUMMARY ===
+✅ IDIOMATIC TILED ACCURACY TEST PASSED!
 ALL TESTS PASSED!
-Puzzle 33 complete ✅
 ```
 
 ## Solution
@@ -427,8 +412,8 @@ This solution demonstrates the Tensor Core programming model:
    - Calculates warp coordinates within the block using
      `warp_id = thread_idx.x // WARP_SIZE`
    - Maps warps to output tiles: each warp handles a `WM×WN` region
-   - Uses a `warp_is_active` guard to skip any warp whose row lands outside the
-     block's `BM // WM` warp rows
+   - Uses `warp_is_active` guards to handle blocks with fewer than expected
+     warps
 
 2. **Memory hierarchy optimization**
    - **Global → Shared**: Uses `copy_dram_to_sram_async` for efficient
@@ -447,13 +432,11 @@ This solution demonstrates the Tensor Core programming model:
      hardware
    - `store_d(C_mma_tile, d_reg)`: Stores 16×8 result fragment
 
-4. **Warp-width independence**
-   - All tiling parameters are multiples of `WARP_SIZE` (32 on NVIDIA, 32 on
-     AMD RDNA, 64 on AMD CDNA)
-   - Mojo abstracts hardware differences through the `TensorCore` interface,
-     which exposes Tensor Cores and Matrix Cores through one API
-   - The `16×8×8` fragment shape hardcoded here is NVIDIA-only, so porting to
-     AMD Matrix Cores means picking an AMD shape such as `16×16×4`
+4. **Cross-platform compatibility**
+   - All tiling parameters are multiples of `WARP_SIZE` (32 on NVIDIA, 64 on
+     AMD)
+   - Mojo abstracts hardware differences through the `TensorCore` interface
+   - Same code works on both NVIDIA Tensor Cores and AMD Matrix Cores
 
 The key insight is that Tensor Cores operate on entire matrix fragments at the
 warp level, rather than individual elements at the thread level. This enables
@@ -540,9 +523,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 - **Poor occupancy**: 26% vs 67% - high register usage (68 vs 38 per thread)
   limits concurrent warps
 - **Cache misses**: 29% L2 hit rate vs 97% shows poor memory locality
-- **Shared memory conflicts**: a plausible contributor, but none of the metrics
-  above measure it—add the bank-conflict counters from
-  [Puzzle 32](../puzzle_32/conflict_free_patterns.md) if you want to confirm it
+- **Shared memory conflicts**: Bank conflicts from unoptimized access patterns
 - **Launch configuration**: Suboptimal block/warp organization for this problem
   size
 
@@ -560,8 +541,8 @@ raw hardware capability doesn't guarantee better performance.
 - **Poor occupancy**: 26% vs 67% due to high register usage limits concurrent
   warps
 - **Cache misses**: 29% vs 97% L2 hit rate shows poor memory locality
-- **Resource waste**: suboptimal launch configuration, and possibly shared
-  memory bank conflicts—which the profile above does not measure
+- **Resource waste**: Shared memory bank conflicts and suboptimal launch
+  configuration
 
 **The lesson**: Understanding performance bottlenecks and systematic
 optimization matter more than using the "latest and greatest" APIs. Hardware

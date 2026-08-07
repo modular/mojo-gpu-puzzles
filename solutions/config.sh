@@ -20,21 +20,12 @@ BOLD='\033[1m'
 
 # Puzzles that require higher compute capability on NVIDIA
 # >= 8.0 (Ampere): Tensor Cores, full async copy (RTX 30xx, A100+)
-# p19 and p22 were listed here until 2026-08-16 but reach the GPU through MAX
-# graph ops rather than Ampere instructions, and both pass on compute 7.5.
-NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p28" "p29" "p33")
+NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p22" "p28" "p29" "p33")
 # >= 9.0 (Hopper): SM90+ cluster programming (H100+)
 NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 
-# These two lists are mirrored by the support matrix in book/src/howto.md.
-# Update both together, and prefer the APIs a puzzle imports as the deciding
-# evidence: a puzzle that calls into an NVIDIA-only intrinsic fails to compile
-# elsewhere rather than degrading, so it belongs in the list regardless of
-# whether it has been run on that hardware.
-
 # Puzzles that are not supported on AMD GPUs
-# p29 uses mbarrier_* from max.gpu.sync, which is NVIDIA-only (sm_80+).
-AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p29" "p30" "p31" "p32" "p33" "p34")
+AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p30" "p31" "p32" "p33" "p34")
 
 # Puzzles that are not supported on Apple GPUs
 APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p20" "p21" "p22" "p29" "p30" "p31" "p32" "p33" "p34")

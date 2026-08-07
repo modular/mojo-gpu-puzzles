@@ -73,43 +73,19 @@ var value = input[random_indices[global_i]]  # Scattered reads
 
 # Data-dependent work
 if input[global_i] > threshold:
-    var result = expensive_computation()  # Causes warp divergence
+    result = expensive_computation()  # Causes warp divergence
 ```
 
 ## Performance measurement
 
-Always benchmark both approaches:
-
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
 ```bash
-uv run poe p24 --benchmark
-```
+# Always benchmark both approaches
+mojo p22.mojo --benchmark
 
-  </div>
-  <div class="tab-content">
-
-```bash
-pixi run p24 --benchmark
-```
-
-  </div>
-</div>
-
-Then look for scaling patterns across the reported rows:
-
-```text
-traditional_1x:       X.XX ms
-simple_warp_1x:       Y.YY ms  # Should be faster
-functional_warp_1x:   Y.YY ms
-traditional_32x:      A.AA ms
-simple_warp_32x:      Z.ZZ ms  # Advantage should increase
-functional_warp_32x:  Z.ZZ ms
+# Look for scaling patterns:
+# traditional_1x:  X.XX ms
+# warp_1x:         Y.YY ms  # Should be faster
+# warp_32x:        Z.ZZ ms  # Advantage should increase
 ```
 
 ## Summary

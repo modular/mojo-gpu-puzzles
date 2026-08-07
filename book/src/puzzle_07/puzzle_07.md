@@ -24,7 +24,7 @@ requiring proper block coordination for large matrices.
 
 > 🔑 **2D thread indexing convention**
 >
-> We extend the block-based indexing from [puzzle 6](../puzzle_06/puzzle_06.md)
+> We extend the block-based indexing from [puzzle 4](../puzzle_04/puzzle_04.md)
 > to 2D:
 >
 > ```txt
@@ -33,7 +33,7 @@ requiring proper block coordination for large matrices.
 > col = block_dim.x * block_idx.x + thread_idx.x
 > ```
 >
-> For example, with 2×2 thread blocks covering a 4×4 matrix:
+> For example, with 2×2 blocks in a 4×4 grid:
 >
 > ```txt
 > Block (0,0):   Block (1,0):
@@ -123,10 +123,12 @@ uv run poe p07
   </div>
 </div>
 
-If the puzzle isn't solved yet, `out` prints as an all-zero \\(5 \times 5\\)
-grid while `expected` holds `10.0` through `34.0`. Both are wrapped in a
-`TileTensor` before printing, so they render as a two-dimensional grid rather
-than as a flat buffer.
+Your output will look like this if the puzzle isn't solved yet:
+
+```txt
+out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
+expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
+```
 
 ## Solution
 
@@ -165,8 +167,7 @@ This solution demonstrates how TileTensor simplifies 2D block-based processing:
 2. **TileTensor benefits**
    - Natural 2D indexing: `tensor[row, col]` instead of manual offset
      calculation
-   - The row-major layout travels with the tensor, so the offset arithmetic
-     stays out of the kernel
+   - Automatic memory layout optimization
    - Example access pattern:
 
      ```txt
@@ -176,20 +177,21 @@ This solution demonstrates how TileTensor simplifies 2D block-based processing:
      ```
 
 3. **Bounds checking**
-   - The grid launches 36 threads (2×2 blocks of 3×3) for 25 elements
-   - Guard `row < size and col < size` switches off the 11 threads that land
-     outside the tensor
-   - Without the guard, those threads would read and write past the end of the
-     buffer—the exact bug [puzzle 10](../puzzle_10/memcheck.md) hunts down
+   - Guard `row < size and col < size` handles:
+     - Excess threads in partial blocks
+     - Edge cases at tensor boundaries
+     - Automatic memory layout handling by TileTensor
+     - 36 threads (2×2 blocks of 3×3) for 25 elements
 
 4. **Block coordination**
-   - Each 3×3 block covers one tile of the 5×5 tensor
-   - The block indices decide which tile a block touches; the guard decides
-     which of its threads do any work
-   - `TileTensor` maps `(row, col)` to a flat offset the same way from every
-     block, so no block needs to know where its tile starts
+   - Each 3×3 block processes part of 5×5 tensor
+   - TileTensor handles:
+     - Memory layout optimization
+     - Efficient access patterns
+     - Block boundary coordination
+     - Cache-friendly data access
 
-This pattern shows how TileTensor simplifies 2D block processing while keeping
-thread coordination explicit.
+This pattern shows how TileTensor simplifies 2D block processing while
+maintaining optimal memory access patterns and thread coordination.
 </div>
 </details>

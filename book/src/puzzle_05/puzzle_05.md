@@ -6,11 +6,12 @@ Implement a kernel that broadcast adds 1D TileTensor `a` and 1D TileTensor `b`
 and stores it in 2D TileTensor `output`.
 
 **Broadcasting** in parallel programming refers to the operation where
-lower-dimensional arrays are expanded to match the shape of higher-dimensional
-arrays during element-wise operations. Instead of physically replicating data in
-memory, values are logically repeated across the additional dimensions. For
-example, adding a 1D vector to each row (or column) of a 2D matrix applies the
-same vector elements repeatedly without creating multiple copies.
+lower-dimensional arrays are automatically expanded to match the shape of
+higher-dimensional arrays during element-wise operations. Instead of physically
+replicating data in memory, values are logically repeated across the additional
+dimensions. For example, adding a 1D vector to each row (or column) of a 2D
+matrix applies the same vector elements repeatedly without creating multiple
+copies.
 
 **Note:** _You have more threads than positions._
 
@@ -26,11 +27,9 @@ In this puzzle, you'll learn about:
 - Working with different tensor shapes for mixed-dimension operations
 - Handling boundary conditions in broadcast patterns
 
-The key insight is that you write the broadcast yourself, one index at a time.
-`TileTensor` gives each input its own shape, \\((1, n)\\) and \\((n, 1)\\), and
-you pin the degenerate axis to `0` when you read it, so a single value is reused
-across the \\((n,n)\\) output. Nothing expands on its own, and you still need
-bounds checking.
+The key insight is that `TileTensor` allows natural broadcasting through
+different tensor shapes: \\((1, n)\\) and \\((n, 1)\\) to \\((n,n)\\), while
+still requiring bounds checking.
 
 - **Tensor shapes**: Input vectors have shapes \\((1, n)\\) and \\((n, 1)\\)
 - **Broadcasting**: Each element of `a` combines with each element of `b`;
@@ -106,7 +105,6 @@ uv run poe p05
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
-out shape: 2 x 2
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 ```
@@ -132,7 +130,6 @@ thread mapping:
    - Excess threads (3×3 grid) are handled by bounds checking
 
 2. **Broadcasting mechanics**
-
    - Input `a` has shape `(1,n)`: `a[0,col]` broadcasts across rows
    - Input `b` has shape `(n,1)`: `b[row,0]` broadcasts across columns
    - Output has shape `(n,n)`: Each element is sum of corresponding broadcasts
@@ -142,15 +139,12 @@ thread mapping:
                  [ b1 ]     [ a0+b1  a1+b1 ]
    ```
 
-3. **Bounds checking**
-
+3. **Bounds Checking**
    - Guard condition `row < size and col < size` prevents out-of-bounds access
-   - Covers the matrix bounds and the excess threads in one test
-   - `a` and `b` need no separate checks: `col` and `row` already index them
-     within their own shapes
+   - Handles both matrix bounds and excess threads efficiently
+   - No need for separate checks for `a` and `b` due to broadcasting
 
 This pattern forms the foundation for more complex tensor operations we'll
 explore in later puzzles.
-
 </div>
 </details>

@@ -24,9 +24,10 @@
 ## Overview
 
 GPU synchronization is the foundation that enables complex parallel algorithms
-to work correctly and efficiently. This chapter explores two fundamental
+to work correctly and efficiently. This chapter explores three fundamental
 synchronization patterns that appear throughout high-performance GPU computing:
-**pipeline coordination** and **memory barrier management**.
+**pipeline coordination**, **memory barrier management**, and
+**streaming computation**.
 
 **Core learning objectives:**
 
@@ -37,7 +38,8 @@ synchronization patterns that appear throughout high-performance GPU computing:
 
 **Architectural progression:** These puzzles follow a carefully designed
 progression from basic pipeline coordination to advanced memory barrier
-management.
+management, culminating in streaming computation patterns used in
+high-throughput applications.
 
 ## Key concepts
 
@@ -54,10 +56,12 @@ management.
 **Synchronization primitive hierarchy:**
 
 - **Basic
-  [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)**:
+  [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)**:
   Simple thread synchronization within blocks
-- **Advanced [mbarrier APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/)**:
+- **Advanced [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/)**:
   Fine-grained memory barrier control with state tracking
+- **Streaming coordination**: Asynchronous copy and bulk transfer
+  synchronization
 
 **Memory consistency models:**
 
@@ -83,6 +87,8 @@ management.
 1. **Multi-stage pipelines**: Thread specialization with barrier coordination
 2. **Double-buffered iterations**: Memory barrier management for iterative
    algorithms
+3. **Streaming computation**: Asynchronous copy coordination for high-throughput
+   processing
 
 **Performance considerations:**
 
@@ -93,7 +99,7 @@ management.
 
 ## Puzzle structure
 
-This chapter contains two interconnected puzzles that build upon each other:
+This chapter contains three interconnected puzzles that build upon each other:
 
 ### **[Multi-Stage Pipeline Coordination](barrier.md)**
 
@@ -118,15 +124,15 @@ computations, neural network layer coordination
 **Focus**: Advanced memory barrier APIs and iterative processing
 
 Explore **fine-grained synchronization control** using
-[mbarrier APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/) for iterative
+[mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) for iterative
 algorithms that require precise memory coordination. This puzzle demonstrates
 double-buffering patterns essential for iterative solvers and simulation
 algorithms.
 
 **Key concepts**:
 
-- Advanced [mbarrier APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/) vs
-  basic [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
+- Advanced [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) vs
+  basic [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
 - Double-buffering with alternating read/write buffer roles
 - Iterative algorithm coordination with explicit memory barriers
 
@@ -141,8 +147,8 @@ automata, simulation time-stepping
    specialization basics
 2. **Progress to [Memory Barriers](memory_barrier.md)**: Learn fine-grained
    synchronization control
-3. **Revisit [Puzzle 28](../puzzle_28/puzzle_28.md)**: Combine these patterns
-   with asynchronous copy for high-throughput applications
+3. **Apply to streaming patterns**: Combine concepts for high-throughput
+   applications
 
 **Prerequisites:**
 

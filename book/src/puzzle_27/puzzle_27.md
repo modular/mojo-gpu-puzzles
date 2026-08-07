@@ -15,9 +15,9 @@ leverage hardware-optimized block-wide communication primitives across multiple
 warps.
 
 **Key insight:** _GPU thread blocks execute with sophisticated hardware
-coordination - Mojo's block operations combine warp shuffles with shared memory
-and barriers to provide complete parallel programming building blocks:
-reduction (all→one), scan (all→each), and broadcast (one→all)._
+coordination - Mojo's block operations harness cross-warp communication and
+dedicated hardware units to provide complete parallel programming building
+blocks: reduction (all→one), scan (all→each), and broadcast (one→all)._
 
 ## What you'll learn
 
@@ -43,22 +43,21 @@ Cross-warp coordination:
 
 - **Cross-warp synchronization**: Automatic coordination across multiple warps
   within a block
-- **Warp shuffle plus shared memory**: A per-warp shuffle scan combined across
-  warps through shared memory
-- **Zero explicit barriers**: The primitives place the required `barrier()`
-  calls for you
-- **Logarithmic complexity**: \\(O(\\log n)\\) algorithms with single-call
-  simplicity
+- **Dedicated hardware units**: Specialized scan units and butterfly reduction
+  networks
+- **Zero explicit barriers**: Hardware manages all synchronization internally
+- **Logarithmic complexity**: \\(O(\\log n)\\) algorithms with
+  single-instruction simplicity
 
 ### **Block operations in Mojo**
 
-Learn the complete parallel programming toolkit from `max.gpu.primitives.block`:
+Learn the complete parallel programming toolkit from `gpu.primitives.block`:
 
-1. **[`block.sum(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/block/sum)**:
+1. **[`block.sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/sum)**:
    All-to-one reduction for totals, averages, maximum/minimum values
-2. **[`block.prefix_sum(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)**:
+2. **[`block.prefix_sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum)**:
    All-to-each scan for parallel filtering and extraction
-3. **[`block.broadcast(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/block/broadcast)**:
+3. **[`block.broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast)**:
    One-to-all distribution for parameter sharing and coordination
 
 > **Note:** These primitives enable sophisticated parallel algorithms like
@@ -72,7 +71,7 @@ Learn the complete parallel programming toolkit from `max.gpu.primitives.block`:
 # Complex block-wide reduction (traditional approach - from Puzzle 12):
 shared_memory[local_i] = my_value
 barrier()
-var stride = 64
+stride = 64
 while stride > 0:
     if local_i < stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
@@ -82,8 +81,8 @@ if local_i == 0:
     output[block_idx.x] = shared_memory[0]
 
 # Block operations eliminate all this complexity:
-var my_partial = compute_local_contribution()
-var total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
+my_partial = compute_local_contribution()
+total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
 if local_i == 0:
     output[block_idx.x] = total[0]
 ```
@@ -110,7 +109,7 @@ Complex but educational - explicit shared memory, barriers, and tree reduction:
 shared_memory[local_i] = my_value
 barrier()
 # Tree reduction with stride-based indexing...
-var stride = 64
+stride = 64
 while stride > 0:
     if local_i < stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
@@ -120,12 +119,11 @@ while stride > 0:
 
 ### **The intermediate step: Warp programming (Puzzle 24)**
 
-Hardware-accelerated but limited scope - `warp.sum()` within a single warp
-(`WARP_SIZE` threads):
+Hardware-accelerated but limited scope - `warp.sum()` within 32-thread warps:
 
 ```mojo
 # Warp approach: 1 line but single warp only
-var total = warp.sum(partial_product)
+total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
 ```
 
 ### **The destination: Block programming (This puzzle)**
@@ -134,7 +132,7 @@ Complete toolkit - hardware-optimized primitives across entire blocks:
 
 ```mojo
 # Block approach: 1 line across multiple warps (128+ threads)
-var total = block.sum[block_size=128, broadcast=False](val=partial_product)
+total = block.sum[block_size=128, broadcast=False](val=partial_product)
 ```
 
 ## The three fundamental communication patterns

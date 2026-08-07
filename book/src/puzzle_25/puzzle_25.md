@@ -6,8 +6,8 @@
 **warp-level communication operations** - hardware-accelerated primitives that
 enable efficient data exchange and coordination patterns within warps. You'll
 learn about using
-[shuffle_down](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/)
-and [broadcast](https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/)
+[shuffle_down](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)
+and [broadcast](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)
 to implement neighbor communication and collective coordination without complex
 shared memory patterns.
 
@@ -18,7 +18,7 @@ that leverage hardware-optimized data movement.
 
 **Key insight:** _GPU warps execute in lockstep - Mojo's warp communication
 operations use this synchronization to provide efficient data exchange
-primitives with zero explicit synchronization._
+primitives with automatic boundary handling and zero explicit synchronization._
 
 ## What you'll learn
 
@@ -43,53 +43,52 @@ Lane 0 ──broadcast──> All lanes (0, 1, 2, ..., 31)
 - **Register-to-register communication**: Data moves directly between thread
   registers
 - **Zero memory overhead**: No shared memory allocation required
-- **Explicit boundary handling**: `shuffle_down` returns undefined values for
-  the top `offset` lanes, so guard those lanes with a lane check
+- **Automatic boundary handling**: Hardware manages warp edge cases
 - **Single-cycle operations**: Communication happens in one instruction cycle
 
 ### **Warp communication operations in Mojo**
 
-Learn the core communication primitives from `std.gpu.primitives.warp`:
+Learn the core communication primitives from `gpu.primitives.warp`:
 
 1. **[`shuffle_down(value,
-   offset)`](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/)**:
+   offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**:
    Get value from lane at higher index (neighbor access)
-2. **[`broadcast(value)`](https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/)**:
+2. **[`broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)**:
    Share lane 0's value with all other lanes (one-to-many)
 3. **[`shuffle_idx(value,
-   lane)`](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_idx/)**:
+   lane)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**:
    Get value from specific lane (random access)
 4. **[`shuffle_up(value,
-   offset)`](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_up/)**:
+   offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**:
    Get value from lane at lower index (reverse neighbor)
 
 > **Note:** This puzzle focuses on `shuffle_down()` and `broadcast()` as the
 > most commonly used communication patterns. For complete coverage of all warp
 > operations, see the
-> [Mojo GPU Warp Documentation](https://mojolang.org/docs/std/gpu/primitives/warp/).
+> [Mojo GPU Warp Documentation](https://docs.modular.com/mojo/std/gpu/primitives/warp/).
 
 ### **Performance transformation example**
 
 ```mojo
 # Complex neighbor access pattern (traditional approach):
-var shared = stack_allocation[
-    dtype=dtype, address_space=AddressSpace.SHARED
-](row_major[WARP_SIZE]())
+shared = TileTensor[
+    dtype,
+    row_major[WARP_SIZE](),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = input[global_i]
 barrier()
-var result: Scalar[dtype]
 if local_i < WARP_SIZE - 1:
-    var next_value = shared[local_i + 1]  # Neighbor access
+    next_value = shared[local_i + 1]  # Neighbor access
     result = next_value - shared[local_i]
 else:
     result = 0  # Boundary handling
 barrier()
 
-# Warp communication removes the shared memory and the barriers, but the
-# boundary check stays: shuffle_down is undefined past the warp edge.
-var lane = Int(lane_id())
-var current_val = input[global_i]
-var next_val = shuffle_down(current_val, 1)  # Direct neighbor access
+# Warp communication eliminates all this complexity:
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)  # Direct neighbor access
 if lane < WARP_SIZE - 1:
     result = next_val - current_val
 else:
@@ -105,7 +104,7 @@ Learn the performance characteristics:
 | Neighbor access       | Shared memory     | Register-to-register    |
 | Stencil operations    | Complex indexing  | Simple shuffle patterns |
 | Block coordination    | Barriers + shared | Single broadcast        |
-| Boundary handling     | Manual checks     | Single lane-ID check    |
+| Boundary handling     | Manual checks     | Hardware automatic      |
 
 ## Prerequisites
 
@@ -130,17 +129,16 @@ differences.
 
 - Using `shuffle_down()` for accessing adjacent lane data
 - Implementing finite differences and moving averages
-- Guarding warp boundaries with a lane check
+- Handling warp boundaries automatically
 - Multi-offset shuffling for extended neighbor access
 
 **Key pattern:**
 
 ```mojo
-var lane = Int(lane_id())
-var current_val = input[global_i]
-var next_val = shuffle_down(current_val, 1)
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)
 if lane < WARP_SIZE - 1:
-    var result = compute_with_neighbors(current_val, next_val)
+    result = compute_with_neighbors(current_val, next_val)
 ```
 
 ### **2. Collective coordination with broadcast**
@@ -164,7 +162,7 @@ var shared_value = 0.0
 if lane == 0:
     shared_value = compute_block_statistic()
 shared_value = broadcast(shared_value)
-var result = use_shared_value(shared_value, local_data)
+result = use_shared_value(shared_value, local_data)
 ```
 
 ## Key concepts
@@ -193,7 +191,7 @@ Converting traditional parallel patterns to warp communication:
 
 - **Array neighbor access** → `shuffle_down()`
 - **Shared memory coordination** → `broadcast()`
-- **Complex boundary logic** → A single lane-ID guard
+- **Complex boundary logic** → Hardware-handled edge cases
 - **Multi-stage synchronization** → Single communication operations
 
 ## Getting started

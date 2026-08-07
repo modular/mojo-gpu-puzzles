@@ -6,7 +6,7 @@ finite differences, moving averages, and neighbor-based computations without
 shared memory or explicit synchronization.
 
 **Key insight:** _The
-[shuffle_down()](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/)
+[shuffle_down()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)
 operation leverages SIMT execution to let each lane access data from its
 neighbors within the same warp, enabling efficient stencil patterns and sliding
 window operations._
@@ -59,8 +59,8 @@ Traditional neighbor access requires complex indexing and bounds checking:
 ```mojo
 # Traditional approach - complex and error-prone
 if global_i < size - 1:
-    var next_value = input[global_i + 1]  # Potential out-of-bounds
-    var result = next_value - current_value
+    next_value = input[global_i + 1]  # Potential out-of-bounds
+    result = next_value - current_value
 ```
 
 **Problems with traditional approach:**
@@ -74,17 +74,16 @@ With `shuffle_down()`, neighbor access becomes elegant:
 
 ```mojo
 # Warp shuffle approach - simple and safe
-var current_val = input[global_i]
-var next_val = shuffle_down(current_val, 1)  # Get value from lane+1
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)  # Get value from lane+1
 if lane < WARP_SIZE - 1:
-    var result = next_val - current_val
+    result = next_val - current_val
 ```
 
 **Benefits of shuffle_down:**
 
 - **Zero memory overhead**: No additional memory accesses
-- **Explicit bounds**: One lane check guards the top `offset` lanes, where
-  `shuffle_down` returns undefined values
+- **Automatic bounds**: Hardware handles warp boundaries
 - **No synchronization**: SIMT execution guarantees correctness
 - **Composable**: Easy to combine with other warp operations
 
@@ -149,7 +148,7 @@ For neighbor difference with `WARP_SIZE = 32`:
 ### 3. **Lane identification**
 
 ```mojo
-var lane = Int(lane_id())  # Returns 0 to WARP_SIZE-1
+lane = lane_id()  # Returns 0 to WARP_SIZE-1
 ```
 
 **Lane numbering:** Within each warp, lanes are numbered 0, 1, 2,...,
@@ -203,8 +202,7 @@ WARP_SIZE:  32
 SIZE:  32
 output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
 expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
-Neighbor difference test: passed
-Puzzle 25 complete ✅
+✅ Basic neighbor difference test passed!
 ```
 
 ### Solution
@@ -225,8 +223,8 @@ indexing into efficient warp-level communication.
 
 ```mojo
 if global_i < size:
-    var current_val = input[global_i]           # Each lane reads its element
-    var next_val = shuffle_down(current_val, 1) # Value from lane+1
+    current_val = input[global_i]           # Each lane reads its element
+    next_val = shuffle_down(current_val, 1) # Hardware shifts data right
 
     if lane < WARP_SIZE - 1:
         output[global_i] = next_val - current_val  # Compute difference
@@ -252,7 +250,7 @@ Cycle 2: shuffle_down(current_val, 1) executes on all lanes
   Lane 30: receives current_val from Lane 31 → next_val = 961
   Lane 31: receives undefined (no Lane 32) → next_val = ?
 
-Cycle 3: Difference computation (the lane check picks the branch)
+Cycle 3: Difference computation (lanes 0-30 only)
   Lane 0: output[0] = 1 - 0 = 1
   Lane 1: output[1] = 4 - 1 = 3
   Lane 2: output[2] = 9 - 4 = 5
@@ -270,8 +268,8 @@ For our quadratic input \\(f(i) = i^2\\):
 
 1. **Memory efficiency**: Traditional approach requires `input[global_i + 1]`
    load, potentially causing cache misses
-2. **Bounds safety**: No risk of out-of-bounds memory access; the lane check
-   guards the warp edge, where `shuffle_down` is undefined
+2. **Bounds safety**: No risk of out-of-bounds access; hardware handles warp
+   boundaries
 3. **SIMT optimization**: Single instruction processes all lanes simultaneously
 4. **Register communication**: Data moves between registers, not through memory
    hierarchy
@@ -280,7 +278,7 @@ For our quadratic input \\(f(i) = i^2\\):
 
 - **Latency**: 1 cycle (vs 100+ cycles for memory access)
 - **Bandwidth**: 0 bytes (vs 4 bytes per thread for traditional)
-- **Parallelism**: All lanes in the warp process simultaneously
+- **Parallelism**: All 32 lanes process simultaneously
 
 </div>
 </details>
@@ -290,8 +288,8 @@ For our quadratic input \\(f(i) = i^2\\):
 ### Configuration
 
 - Vector size: `SIZE_2 = 64` (multi-block scenario)
-- Grid configuration: `BLOCKS_PER_GRID_2 = (2, 1)` blocks per grid
-- Block configuration: `THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)` threads per block
+- Grid configuration: `BLOCKS_PER_GRID = (2, 1)` blocks per grid
+- Block configuration: `THREADS_PER_BLOCK = (WARP_SIZE, 1)` threads per block
 
 ### Code to complete
 
@@ -311,8 +309,8 @@ consecutive elements: \\[\\Large \\text{output}[i] =
 - **1-point window**: \\(\\text{output}[i] = \\text{input}[i]\\) when no
   neighbors available
 
-This demonstrates how `shuffle_down()` enables efficient stencil operations once
-you handle the warp boundary explicitly with lane checks.
+This demonstrates how `shuffle_down()` enables efficient stencil operations with
+automatic boundary handling within warp limits.
 
 ```mojo
 {{#include ../../../problems/p25/p25.mojo:moving_average_3}}
@@ -440,8 +438,7 @@ WARP_SIZE:  32
 SIZE_2:  64
 output: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
 expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
-Moving average test: passed
-Puzzle 25 complete ✅
+✅ Moving average test passed!
 ```
 
 ### Solution
@@ -463,9 +460,9 @@ operations.
 ```mojo
 if global_i < size:
     # Step 1: Acquire all needed data via multiple shuffles
-    var current_val = input[global_i]                   # Direct access
-    var next_val = shuffle_down(current_val, 1)         # Right neighbor
-    var next_next_val = shuffle_down(current_val, 2)    # Right+1 neighbor
+    current_val = input[global_i]                   # Direct access
+    next_val = shuffle_down(current_val, 1)         # Right neighbor
+    next_next_val = shuffle_down(current_val, 2)    # Right+1 neighbor
 
     # Step 2: Adaptive computation based on available data
     if lane < WARP_SIZE - 2 and global_i < size - 2:
@@ -482,27 +479,27 @@ if global_i < size:
 **Multi-offset execution trace (`WARP_SIZE = 32`):**
 
 ```text
-Initial state (Block 0, elements 0-31), input is the triangular numbers:
+Initial state (Block 0, elements 0-31):
   Lane 0: current_val = input[0] = 1
-  Lane 1: current_val = input[1] = 3
-  Lane 2: current_val = input[2] = 6
+  Lane 1: current_val = input[1] = 2
+  Lane 2: current_val = input[2] = 4
   ...
-  Lane 31: current_val = input[31] = 528
+  Lane 31: current_val = input[31] = X
 
 First shuffle: shuffle_down(current_val, 1)
-  Lane 0: next_val = input[1] = 3
-  Lane 1: next_val = input[2] = 6
-  Lane 2: next_val = input[3] = 10
+  Lane 0: next_val = input[1] = 2
+  Lane 1: next_val = input[2] = 4
+  Lane 2: next_val = input[3] = 7
   ...
-  Lane 30: next_val = input[31] = 528
+  Lane 30: next_val = input[31] = X
   Lane 31: next_val = undefined
 
 Second shuffle: shuffle_down(current_val, 2)
-  Lane 0: next_next_val = input[2] = 6
-  Lane 1: next_next_val = input[3] = 10
-  Lane 2: next_next_val = input[4] = 15
+  Lane 0: next_next_val = input[2] = 4
+  Lane 1: next_next_val = input[3] = 7
+  Lane 2: next_next_val = input[4] = 11
   ...
-  Lane 29: next_next_val = input[31] = 528
+  Lane 29: next_next_val = input[31] = X
   Lane 30: next_next_val = undefined
   Lane 31: next_next_val = undefined
 
@@ -527,10 +524,10 @@ Where the kernel adapts based on position:
 
 ```text
 Block 0 (global indices 0-31):
-  Degraded windows at global indices 30 and 31
+  Lane boundaries apply to global indices 29, 30, 31
 
 Block 1 (global indices 32-63):
-  Degraded windows at global indices 62 and 63
+  Lane boundaries apply to global indices 61, 62, 63
   Lane numbers reset: global_i=32 → lane=0, global_i=63 → lane=31
 ```
 
@@ -555,16 +552,16 @@ providing smoothing with a cutoff frequency at \\(f_c \\approx 0.25f_s\\).
 Here is what the core pattern of this section looks like
 
 ```mojo
-var current_val = input[global_i]
-var neighbor_val = shuffle_down(current_val, offset)
+current_val = input[global_i]
+neighbor_val = shuffle_down(current_val, offset)
 if lane < WARP_SIZE - offset:
-    var result = compute(current_val, neighbor_val)
+    result = compute(current_val, neighbor_val)
 ```
 
 **Key benefits:**
 
 - **Hardware efficiency**: Register-to-register communication
-- **Boundary safety**: One lane check covers the undefined top lanes
+- **Boundary safety**: Automatic warp limit handling
 - **SIMT optimization**: Single instruction, all lanes parallel
 
 **Applications**: Finite differences, stencil operations, moving averages,

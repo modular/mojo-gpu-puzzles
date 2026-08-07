@@ -2,16 +2,14 @@
 
 > ## Moving to TileTensor
 >
-> Earlier in our GPU puzzle journey, we explored two parallel approaches to GPU
-> memory management:
+> So far in our GPU puzzle journey, we've been exploring two parallel approaches
+> to GPU memory management:
 >
-> 1. Raw memory management with direct pointer manipulation using [Pointer](https://mojolang.org/docs/std/memory/pointer/Pointer/)
-> 2. The more structured [TileTensor](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/) with its powerful address_space parameter for memory allocation
+> 1. Raw memory management with direct pointer manipulation using [Pointer](https://docs.modular.com/mojo/std/memory/pointer/Pointer/)
+> 2. The more structured [TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/) with its powerful address_space parameter for memory allocation
 >
-> From Puzzle 7 onward the puzzles use `TileTensor` almost exclusively (Puzzle 9
-> keeps a raw-pointer kernel to demonstrate a debugging scenario), and
-> everything from here on builds on it. This abstraction provides several
-> benefits:
+> Starting from this puzzle, we're transitioning exclusively to using
+> `TileTensor`. This abstraction provides several benefits:
 >
 > - Type-safe memory access patterns
 > - Clear representation of data layouts

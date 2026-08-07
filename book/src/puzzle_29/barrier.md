@@ -1,7 +1,7 @@
 # Multi-Stage Pipeline Coordination
 
 **Important note**: Puzzle 29 is currently NVIDIA-only — the
-[`mbarrier` APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/) used in
+[`mbarrier` APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) used in
 the [companion stencil puzzle](memory_barrier.md) require NVIDIA hardware,
 and the `pixi` task pulls them into the same compilation unit.
 
@@ -47,7 +47,7 @@ where \\(P[i]\\) is the preprocessed data and \\(I[i]\\) is the input data.
 
 **Stage 2 - Horizontal Blur Filter:**
 
-\\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where } i+k \in
+\\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where} i+k \in
 [0, 255]\\]
 
 where \\(B[i]\\) is the blur result, and \\(N_i\\) is the count of valid
@@ -235,7 +235,7 @@ Testing Puzzle 29A: Multi-Stage Pipeline Coordination
 Multi-stage pipeline blur completed
 Input sample: 0.0 1.01 2.02
 Output sample: 1.6665002 2.3331003 3.3996604
-Puzzle 29 complete ✅
+✅ Multi-stage pipeline coordination test PASSED!
 ```
 
 ## Solution
@@ -328,8 +328,7 @@ required for real-world GPU algorithms.
 **Shared memory architecture:**
 
 - Two specialized buffers handle data flow between stages
-- Global memory is accessed only for the Stage 1 input load and the Stage 3
-  output store
+- Global memory access minimized to boundary operations only
 - All intermediate processing uses fast shared memory
 
 **Access pattern benefits:**
@@ -392,5 +391,4 @@ leverage thread specialization and strategic synchronization for complex
 multi-stage computations, moving beyond simple parallel loops to architectural
 approaches used in production GPU software.
 
-</div>
 </details>

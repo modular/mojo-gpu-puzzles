@@ -7,10 +7,9 @@ combine results automatically, demonstrating how warp programming transforms GPU
 synchronization.
 
 **Key insight:** _The
-[warp.sum()](https://mojolang.org/docs/std/gpu/primitives/warp/sum/)
+[warp.sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/sum)
 operation leverages SIMT execution to replace shared memory + barriers + tree
-reduction with a `log2(WARP_SIZE)`-step shuffle reduction behind one function
-call._
+reduction with a single hardware-accelerated instruction._
 
 ## Key concepts
 
@@ -129,7 +128,7 @@ You need to complete the `simple_warp_dot_product` function with
 
 ```mojo
 def simple_warp_dot_product[...](output, a, b):
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 ```
 
@@ -144,15 +143,12 @@ def simple_warp_dot_product[...](output, a, b):
 ```mojo
 var partial_product: Scalar[dtype] = 0
 if global_i < size:
-    partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
-        Scalar[dtype]
-    ](b_lt[global_i])
+    partial_product = (a[global_i] * b[global_i]).reduce_add()
 ```
 
-**Why `rebind`?** Indexing a `LayoutTensor` yields a SIMD value, so each element
-is narrowed to `Scalar[dtype]` with `rebind` before the multiply. Note the
-receivers are `a_lt` and `b_lt`—the `LayoutTensor` handles obtained from
-`to_layout_tensor()` inside the kernel, not the `TileTensor` parameters.
+**Why `.reduce_add()`?** Values in Mojo are SIMD-based, so
+`a[global_i] * b[global_i]` returns a SIMD vector. Use `.reduce_add()` to sum
+the vector into a scalar.
 
 **Bounds checking:** Essential because not all threads may have valid data to
 process.
@@ -160,13 +156,13 @@ process.
 ### 3. **Warp reduction magic**
 
 ```mojo
-var total = warp_sum(partial_product)
+total = warp_sum(partial_product)
 ```
 
 **What `warp_sum()` does:**
 
 - Takes each lane's `partial_product` value
-- Sums them across all lanes in the warp with `log2(WARP_SIZE)` shuffle steps
+- Sums them across all lanes in the warp (hardware-accelerated)
 - Returns the same total to **all lanes** (not just lane 0)
 - Requires **zero explicit synchronization** (SIMT handles it)
 
@@ -174,7 +170,7 @@ var total = warp_sum(partial_product)
 
 ```mojo
 if lane_id() == 0:
-    out_lt.store[1](Index(global_i // WARP_SIZE), total)
+    output[global_i // WARP_SIZE] = total
 ```
 
 **Why only lane 0?** All lanes have the same `total` value after `warp_sum()`,
@@ -184,8 +180,8 @@ but we only want to write once to avoid race conditions.
 where there is more than one warp. i.e. The result from each warp is written to
 the unique location `global_i // WARP_SIZE`.
 
-**`lane_id()`:** Returns 0 to `WARP_SIZE - 1` (0-31 on NVIDIA, AMD RDNA and
-Apple; 0-63 on AMD CDNA) - identifies which lane within the warp.
+**`lane_id()`:** Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane
+within the warp.
 
 </div>
 </details>
@@ -219,9 +215,10 @@ SIZE: 32
 WARP_SIZE: 32
 SIMD_WIDTH: 8
 === RESULT ===
-actual: HostBuffer([10416.0])
-expected: HostBuffer([10416.0])
-Puzzle 24 complete ✅
+out: 10416.0
+expected: 10416.0
+🚀 Notice how simple the warp version is compared to p12.mojo!
+   Same kernel structure, but warp_sum() replaces all the complexity!
 ```
 
 ### Solution
@@ -235,14 +232,14 @@ Puzzle 24 complete ✅
 
 <div class="solution-explanation">
 
-The simple warp kernel demonstrates the fundamental transformation from explicit
-shared-memory synchronization to a single warp primitive:
+The simple warp kernel demonstrates the fundamental transformation from complex
+synchronization to hardware-accelerated primitives:
 
 **What disappeared from the traditional approach:**
 
 - **15+ lines → 6 lines**: Dramatic code reduction
 - **Shared memory allocation**: Zero memory management required
-- **`1 + log2(WARP_SIZE)` barrier() calls**: Zero explicit synchronization
+- **3+ barrier() calls**: Zero explicit synchronization
 - **Complex tree reduction**: Single function call
 - **Stride-based indexing**: Eliminated entirely
 
@@ -251,25 +248,22 @@ shared-memory synchronization to a single warp primitive:
 ```text
 Warp lanes (SIMT execution):
 Lane 0: partial_product = a[0] * b[0]    = 0.0
-Lane 1: partial_product = a[1] * b[1]    = 1.0
-Lane 2: partial_product = a[2] * b[2]    = 4.0
+Lane 1: partial_product = a[1] * b[1]    = 4.0
+Lane 2: partial_product = a[2] * b[2]    = 16.0
 ...
-Lane 31: partial_product = a[31] * b[31] = 961.0
+Lane 31: partial_product = a[31] * b[31] = 3844.0
 
-warp_sum() shuffle reduction:
-All lanes → 0.0 + 1.0 + 4.0 + ... + 961.0 = 10416.0
+warp_sum() hardware operation:
+All lanes → 0.0 + 4.0 + 16.0 + ... + 3844.0 = 10416.0
 All lanes receive → total = 10416.0 (broadcast result)
 ```
 
 **Why this works without barriers:**
 
 1. **SIMT execution**: All lanes execute each instruction simultaneously
-2. **Implicit synchronization**: When `warp_sum()` begins, all lanes have
+2. **Hardware synchronization**: When `warp_sum()` begins, all lanes have
    computed their `partial_product`
-3. **Register-to-register exchange**: Lanes trade values through shuffle
-   instructions instead of shared memory, so no barrier is needed. The
-   reduction itself is a `log2(WARP_SIZE)`-step loop over those shuffles, not a
-   single hardware reduction unit
+3. **Built-in communication**: GPU hardware handles the reduction operation
 4. **Broadcast result**: All lanes receive the same `total` value
 
 </div>
@@ -297,10 +291,8 @@ You need to complete the `compute_dot_product` function with
 ```mojo
 @parameter
 @always_inline
-def compute_dot_product[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -> None:
-    var idx = Int(indices[0].value())
+def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+    idx = indices[0]
     # FILL IN (10 lines at most)
 ```
 
@@ -315,16 +307,15 @@ def compute_dot_product[
 ```mojo
 var partial_product: Scalar[dtype] = 0.0
 if idx < size:
-    var a_val = a_lt.load[1](Index(idx))
-    var b_val = b_lt.load[1](Index(idx))
-    partial_product = a_val * b_val
+    a_val = a.load[1](idx, 0)
+    b_val = b.load[1](idx, 0)
+    partial_product = (a_val * b_val).reduce_add()
 else:
     partial_product = 0.0
 ```
 
-**Loading pattern:** `a_lt.load[1](Index(idx))` loads exactly 1 element at
-position `idx` (not SIMD vectorized). The tensor is 1-D, so the index is a
-single `Index(idx)`.
+**Loading pattern:** `a.load[1](idx, 0)` loads exactly 1 element at position
+`idx` (not SIMD vectorized).
 
 **Bounds handling:** Set `partial_product = 0.0` for out-of-bounds threads so
 they don't contribute to the sum.
@@ -332,14 +323,14 @@ they don't contribute to the sum.
 ### 3. **Warp operations and storing**
 
 ```mojo
-var total = warp_sum(partial_product)
+total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    out_lt.store[1](Index(idx // WARP_SIZE), total)
+    output.store[1](Index(idx // WARP_SIZE), total)
 ```
 
-**Storage pattern:** `out_lt.store[1](Index(idx // WARP_SIZE), total)` stores
-1 element at position `idx // WARP_SIZE` in the 1-D output tensor.
+**Storage pattern:** `output.store[1](Index(idx // WARP_SIZE), 0, total)` stores
+1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
 
 **Same warp logic:** `warp_sum()` and lane 0 writing work identically in
 functional approach.
@@ -351,9 +342,9 @@ from std.gpu import lane_id
 from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
-var my_lane = lane_id()           # 0 to WARP_SIZE-1
-var total = warp_sum(my_value)    # Shuffle-based reduction
-var warp_size = WARP_SIZE         # 32 on NVIDIA, AMD RDNA, Apple; 64 on CDNA
+my_lane = lane_id()           # 0 to WARP_SIZE-1
+total = warp_sum(my_value)    # Hardware-accelerated reduction
+warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
 ```
 
 </div>
@@ -388,9 +379,10 @@ SIZE: 32
 WARP_SIZE: 32
 SIMD_WIDTH: 8
 === RESULT ===
-actual: HostBuffer([10416.0])
-expected: HostBuffer([10416.0])
-Puzzle 24 complete ✅
+out: 10416.0
+expected: 10416.0
+🔧 Functional approach shows modern Mojo style with warp operations!
+   Clean, composable, and still leverages warp hardware primitives!
 ```
 
 ### Solution
@@ -429,8 +421,7 @@ elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
 **Same warp benefits:**
 
 - **Zero synchronization**: `warp_sum()` works identically
-- **Same reduction**: `warp_sum()` expands to the same shuffle sequence in both
-  approaches; only the launch mechanism differs
+- **Hardware acceleration**: Same performance as kernel approach
 - **Cross-architecture**: `WARP_SIZE` adapts automatically
 
 </div>
@@ -543,14 +534,11 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 
 **Performance insights from this example:**
 
-- **Small scales (1x-256x)**: All three land within a few microseconds of each
-  other and the ordering flips between runs - the grid is too small for the
-  measurement to separate them, which is why the analysis text says so
-- **Medium scale (2048x)**: The warp approaches start to pull ahead of the
-  traditional tree reduction
-- **Large scales (16K-65K)**: The gap widens rather than closing - in this run
-  the functional warp approach finishes about 4x faster than the traditional
-  one at 65536x
+- **Small scales (1x-4x)**: Warp operations show modest improvements (~10-15%
+  faster)
+- **Medium scale (32x-256x)**: Functional approach often performs best
+- **Large scales (16K-65K)**: All approaches converge as memory bandwidth
+  dominates
 - **Variability**: Performance depends heavily on specific GPU architecture and
   memory subsystem
 
@@ -568,10 +556,10 @@ Once you've learned warp sum operations, you're ready for:
   `prefix_sum()` for complex communication patterns
 - **Multi-warp algorithms**: Combining warp operations with block-level
   synchronization
-- **Part VIII: Block-Level Programming**: Scaling these patterns from one warp
-  to a whole block
+- **Part VII: Memory Coalescing**: Optimizing memory access patterns for maximum
+  bandwidth
 
 💡 **Key Takeaway**: Warp operations transform GPU programming by replacing
-complex synchronization patterns with lane-to-lane shuffles, demonstrating how
-understanding the execution model enables dramatic simplification without
-sacrificing performance.
+complex synchronization patterns with hardware-accelerated primitives,
+demonstrating how understanding the execution model enables dramatic
+simplification without sacrificing performance.

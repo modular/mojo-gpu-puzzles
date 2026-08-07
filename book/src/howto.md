@@ -27,19 +27,19 @@ and solution verification procedures.
 ### System requirements
 
 Make sure your system meets our
-[system requirements](https://max.modular.com/packages/#system-requirements).
+[system requirements](https://docs.modular.com/packages#system-requirements).
 
 ### Compatible GPU
 
 You'll need a
-[compatible GPU](https://max.modular.com/packages/#gpu-compatibility) to run
-the puzzles. After setup, you can verify your GPU compatibility using the
-`gpu-specs` command (see
-[Setting up your environment](#setting-up-your-environment)).
+[compatible GPU](https://docs.modular.com/faq#gpu-requirements) to run the
+puzzles. After setup, you can verify your GPU compatibility using the
+`gpu-specs` command (see Quick Start section below).
 
 ## Operating System
 
-> **Note:** Here is some documentation how to setup GPU support in your OS for
+> [!NOTE]
+> Here is some documentation how to setup GPU support in your OS for
 >
 > - [Windows WSL2 for Linux with NVIDIA](#windows-wsl2-for-linux-with-nvidia)
 > - [Linux native with NVIDIA](#linux-native-with-nvidia)
@@ -47,9 +47,9 @@ the puzzles. After setup, you can verify your GPU compatibility using the
 
 ### Windows WSL2 for Linux with NVIDIA
 
-To setup NVIDIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Ubuntu
+To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Ubuntu
 please follow the
-[NVIDIA CUDA on WSL Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
+[NVIDIA CUDA on WLS Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
 
 The important information is to install the NVIDIA Windows CUDA Driver for
 *Windows* because they fully support WSL2. Once a Windows NVIDIA GPU driver is
@@ -65,7 +65,7 @@ Verify from Windows: Open PowerShell (not WSL)
 nvidia-smi
 ```
 
-Verify from inside WSL: (first start WSL e.g. via wsl -d Ubuntu)
+Verify from inside WSL: (first start WLS e.g. via wsl -d Ubuntu)
 
 ```bash
 ls -l /usr/lib/wsl/lib/nvidia-smi
@@ -88,10 +88,8 @@ For WSL you can install VSCode as your Editor
   [https://code.visualstudio.com/](https://code.visualstudio.com/).
 - Then install the Remote - WSL extension.
 
-> **Note:** All 35 puzzles work on WSL and Linux with a supported NVIDIA GPU. Some
-> puzzles require a minimum compute capability, and the debugging and profiling
-> puzzles require the corresponding NVIDIA tools. See the
-> [GPU support matrix](#gpu-support-matrix).
+> [!NOTE]
+> All puzzles 1-15 are working on WSL and Linux.
 
 ### Linux native with NVIDIA
 
@@ -138,16 +136,15 @@ sudo apt install code
 code --version
 ```
 
-> **Note:** All 35 puzzles work on Linux with a supported NVIDIA GPU. Some puzzles
-> require a minimum compute capability; puzzle 34 needs SM90 (Hopper) or
-> newer. See the [GPU support matrix](#gpu-support-matrix).
+> [!NOTE]
+> All puzzles 1-15 are working on Linux.
 
 ### macOS Apple Silicon
 
 For `osx-arm64` users, you'll need:
 
-- **macOS 15.0 or later** for optimal compatibility. Run
-  `pixi run -e apple check-macos` and if it fails you'd need to upgrade.
+- **macOS 15.0 or later** for optimal compatibility. Run `pixi run check-macos`
+  and if it fails you'd need to upgrade.
 - **Xcode 16 or later** (minimum required). Use `xcodebuild -version` to check.
 
 If `xcrun -sdk macosx metal` outputs
@@ -159,10 +156,9 @@ xcodebuild -downloadComponent MetalToolchain
 
 and then `xcrun -sdk macosx metal`, should give you the `no input files error`.
 
-> **Note:** Puzzles 1-8, 11-19, 23-28, and 35 work on macOS (24 of the 35). The
-> remainder need NVIDIA-specific tooling, hardware, or PyTorch GPU support.
-> See the [GPU support matrix](#gpu-support-matrix). We're working to enable
-> more. Please stay tuned!
+> [!NOTE]
+> Currently the puzzles 1-8 and 11-15 are working on macOS. We're working to
+> enable more. Please stay tuned!
 
 ## Programming knowledge
 
@@ -170,10 +166,10 @@ Basic knowledge of:
 
 - Programming fundamentals (variables, loops, conditionals, functions)
 - Parallel computing concepts (threads, synchronization, race conditions)
-- Basic familiarity with [Mojo](https://mojolang.org/docs/manual/) (language
+- Basic familiarity with [Mojo](https://docs.modular.com/mojo/manual/) (language
   basics parts and
-  [intro to pointers](https://mojolang.org/docs/manual/pointers/) section)
-- [GPU programming fundamentals](https://max.modular.com/gpu/fundamentals/)
+  [intro to pointers](https://docs.modular.com/mojo/manual/pointers/) section)
+- [GPU programming fundamentals](https://docs.modular.com/mojo/manual/gpu/fundamentals)
   is helpful!
 
 No prior GPU programming experience is necessary! We'll build that knowledge
@@ -187,63 +183,55 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
    and navigate to the repository:
 
     ```bash
-    # Clone the stable branch, which matches this book
-    git clone --branch stable https://github.com/modular/mojo-gpu-puzzles
+    # Clone the repository
+    git clone https://github.com/modular/mojo-gpu-puzzles
     cd mojo-gpu-puzzles
     ```
-
-    The `stable` branch is what
-    [puzzles.modular.com](https://puzzles.modular.com) is built from, and it
-    is pinned to the current MAX release. The repository's default branch,
-    `main`, tracks nightly builds instead, so cloning it gives you puzzle code
-    that may not compile against the release toolchain these instructions
-    install. If you want to contribute a change, see
-    [Development](#development).
 
 2. Install a package manager to run the Mojo🔥 programs:
 
 ### **Option 1 (Highly recommended)**
 
-[pixi](https://pixi.sh/latest/#installation)
+   [pixi](https://pixi.sh/latest/#installation)
 
-`pixi` is the **recommended option** for this project because:
-- Easy access to Modular's MAX/Mojo packages
-- Handles GPU dependencies
-- Full conda + PyPI ecosystem support
+   `pixi` is the **recommended option** for this project because:
+   - Easy access to Modular's MAX/Mojo packages
+   - Handles GPU dependencies
+   - Full conda + PyPI ecosystem support
 
-> **Note: Some puzzles only work with `pixi`**
+    > **Note: Some puzzles only work with `pixi`**
 
-**Install:**
+    **Install:**
 
-```bash
-curl -fsSL https://pixi.sh/install.sh | sh
-```
+     ```bash
+    curl -fsSL https://pixi.sh/install.sh | sh
+     ```
 
-**Update:**
+    **Update:**
 
-```bash
-pixi self-update
-```
+     ```bash
+    pixi self-update
+     ```
 
-### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+#### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
-**Install:**
+    **Install:**
 
-```bash
-curl -fsSL https://astral.sh/uv/install.sh | sh
-```
+    ```bash
+    curl -fsSL https://astral.sh/uv/install.sh | sh
+    ```
 
-**Update:**
+    **Update:**
 
-```bash
-uv self update
-```
+    ```bash
+    uv self update
+    ```
 
-**Create a virtual environment:**
+    **Create a virtual environment:**
 
-```bash
-uv venv && source .venv/bin/activate
-```
+    ```bash
+    uv venv && source .venv/bin/activate
+    ```
 
 3. **Verify setup and run your first puzzle:**
 
@@ -270,7 +258,7 @@ pixi run p01
 
 ```bash
 # Check your GPU specifications
-pixi run -e amd gpu-specs
+pixi run gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
@@ -282,7 +270,7 @@ pixi run -e amd p01
 
 ```bash
 # Check your GPU specifications
-pixi run -e apple gpu-specs
+pixi run gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
@@ -313,15 +301,11 @@ uv run poe p01
 
 ### Project structure
 
-- **[`problems/`](https://github.com/modular/mojo-gpu-puzzles/tree/stable/problems)**:
+- **[`problems/`](https://github.com/modular/mojo-gpu-puzzles/tree/main/problems)**:
   Where you implement your solutions (this is where you work!)
-- **[`solutions/`](https://github.com/modular/mojo-gpu-puzzles/tree/stable/solutions)**:
+- **[`solutions/`](https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions)**:
   Reference solutions for comparison and learning that we use throughout the
   book
-
-These links point at the `stable` branch, matching the clone instructions
-above. Browsing `main` instead shows nightly code that can differ from what
-this book describes.
 
 ### Workflow
 
@@ -341,10 +325,7 @@ this book describes.
   <div class="tab-content">
 
 ```bash
-# The NVIDIA environment is the default. On an AMD or Apple GPU, add
-# `-e amd` or `-e apple` to every `pixi run` and `pixi shell` below.
-
-# Run puzzles
+# Run puzzles (remember to include your platform with -e if needed)
 pixi run pXX             # NVIDIA (default) same as `pixi run -e nvidia pXX`
 pixi run -e amd pXX      # AMD GPU
 pixi run -e apple pXX    # Apple GPU
@@ -398,29 +379,29 @@ puzzles require different GPU features and vendor-specific tools.
 | **Part I: GPU Fundamentals**     |            |         |           |                                      |
 | 1 - Map                          | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 2 - Zip                          | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 3 - Guards                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 4 - 2D Map                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 3 - Guard                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 4 - Map 2D                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 5 - Broadcast                    | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 6 - Blocks                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 7 - 2D Blocks                    | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 8 - Shared Memory                | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 7 - Shared Memory                | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 8 - Stencil                      | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | **Part II: Debugging**           |            |         |           |                                      |
 | 9 - GPU Debugger                 | ✅         | ❌      | ❌        | NVIDIA-specific debugging tools      |
 | 10 - Sanitizer                   | ✅         | ❌      | ❌        | NVIDIA-specific debugging tools      |
 | **Part III: GPU Algorithms**     |            |         |           |                                      |
-| 11 - Pooling                     | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 12 - Dot Product                 | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 13 - 1D Convolution              | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 14 - Prefix Sum                  | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 15 - Axis Sum                    | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 16 - Matrix Multiplication       | ✅         | ✅      | ✅        | Advanced memory patterns             |
+| 11 - Reduction                   | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 12 - Scan                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 13 - Pool                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 14 - Conv                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 15 - Matmul                      | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 16 - Flashdot                    | ✅         | ✅      | ✅        | Advanced memory patterns             |
 | **Part IV: MAX Graph**           |            |         |           |                                      |
 | 17 - Custom Op                   | ✅         | ✅      | ✅        | MAX Graph integration                |
 | 18 - Softmax                     | ✅         | ✅      | ✅        | MAX Graph integration                |
 | 19 - Attention                   | ✅         | ✅      | ✅        | MAX Graph integration                |
 | **Part V: PyTorch Integration**  |            |         |           |                                      |
-| 20 - 1D Convolution Op           | ✅         | ✅      | ❌        | PyTorch integration                  |
-| 21 - Embedding Op                | ✅         | ✅      | ❌        | PyTorch integration                  |
+| 20 - Torch Bridge                | ✅         | ✅      | ❌        | PyTorch integration                  |
+| 21 - Autograd                    | ✅         | ✅      | ❌        | PyTorch integration                  |
 | 22 - Fusion                      | ✅         | ✅      | ❌        | PyTorch integration                  |
 | **Part VI: Functional Patterns** |            |         |           |                                      |
 | 23 - Functional                  | ✅         | ✅      | ✅        | Advanced Mojo patterns               |
@@ -434,14 +415,12 @@ puzzles require different GPU features and vendor-specific tools.
 | 28 - Async Memory                | ✅         | ✅      | ✅        | Advanced memory operations           |
 | 29 - Barriers                    | ✅         | ❌      | ❌        | Advanced NVIDIA-only synchronization |
 | **Part X: Performance Analysis** |            |         |           |                                      |
-| 30 - Profiling                   | ✅         | ❌      | ❌        | NVIDIA profiling tools (Nsight)      |
+| 30 - Profiling                   | ✅         | ❌      | ❌        | NVIDIA profiling tools (NSight)      |
 | 31 - Occupancy                   | ✅         | ❌      | ❌        | NVIDIA profiling tools               |
 | 32 - Bank Conflicts              | ✅         | ❌      | ❌        | NVIDIA profiling tools               |
 | **Part XI: Modern GPU Features** |            |         |           |                                      |
 | 33 - Tensor Cores                | ✅         | ❌      | ❌        | NVIDIA Tensor Core specific          |
 | 34 - Cluster                     | ✅         | ❌      | ❌        | NVIDIA cluster programming           |
-| **Part XII: Memory Alignment**   |            |         |           |                                      |
-| 35 - Memory Alignment            | ✅         | ✅      | ✅        | Aligned vectorized load/store        |
 
 ### Legend
 
@@ -452,26 +431,23 @@ puzzles require different GPU features and vendor-specific tools.
 
 **NVIDIA GPUs (Complete Support)**
 
-- All puzzles (1-35) work on NVIDIA GPUs with CUDA support
+- All puzzles (1-34) work on NVIDIA GPUs with CUDA support
 - Requires CUDA toolkit and compatible drivers
 - Best learning experience with access to all features
 
 **AMD GPUs (Extensive Support)**
 
-- Most puzzles (1-8, 11-28, 35) work with ROCm support, 27 of the 35
-- Missing only: Debugging tools (9-10), barriers (29), profiling (30-32),
-  Tensor Cores (33), cluster programming (34)
+- Most puzzles (1-8, 11-29) work with ROCm support
+- Missing only: Debugging tools (9-10), profiling (30-32), Tensor Cores (33-34)
 - Excellent for learning GPU programming including advanced algorithms and
   memory patterns
 
-**Apple GPUs (Substantial Support)**
+**Apple GPUs (Basic Support)**
 
-- Fundamental (1-8, 11-19), advanced (23-28), and memory alignment (35)
-  puzzles are supported, 24 of the 35
-- Missing: Debugging tools (9-10), PyTorch integration (20-22), barriers (29),
-  profiling (30-32), Tensor Cores (33), cluster programming (34)
-- Covers everything up to and including warp and block operations and
-  asynchronous memory patterns
+- A selection of fundamental (1-8, 11-18) and advanced (23-27) puzzles are
+  supported
+- Missing: All advanced features, debugging, profiling tools
+- Suitable for learning basic GPU programming patterns
 
 > **Future Support**: We're actively working to expand tooling and platform
 > support for AMD and Apple GPUs. Missing features like debugging tools,
@@ -501,23 +477,15 @@ programming:
 - **Older GPU architecture**: T4 GPUs may have limited compatibility with
   advanced Mojo GPU features
 - **Session limits**: 12-hour maximum runtime, then automatic disconnect
-- **Tooling-dependent puzzles**: Puzzles 9, 10 and 30-32 drive external NVIDIA
-  tools rather than GPU features. `compute-sanitizer` (9, 10) comes with the
-  environment. Profiling with `ncu` (30-32) needs GPU performance-counter
-  access, which shared platforms often restrict, and `nsys` (30, 31) needs a
-  system CUDA installation. Interactive debugging with `cuda-gdb` (9) expects a
-  terminal rather than a notebook cell
-- **Compute capability limits**: T4 is compute capability 7.5, so puzzles
-  requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won't run
+- **Limited debugging support**: NVIDIA debugging tools (puzzles 9-10) may not
+  be fully available
 - **Package installation restrictions**: May require workarounds for Mojo/MAX
   installation
 - **Performance limitations**: Shared infrastructure affects consistent
   benchmarking
 
-**Recommended for:** Most of the curriculum. On a compute-capability-7.5 GPU
-every puzzle runs except 16, 28, 29 and 33 (which need 8.0) and 34 (which needs
-9.0); the tooling-dependent puzzles above depend on what your environment
-exposes.
+**Recommended for:** Basic GPU programming concepts (puzzles 1-8, 11-15) and
+learning fundamental patterns.
 
 #### **Kaggle Notebooks**
 
@@ -539,33 +507,24 @@ Kaggle offers more generous free GPU access:
 
 - **Same GPU architecture constraints**: T4 compatibility issues with advanced
   features
-- **Tooling-dependent puzzles**: Puzzles 9, 10 and 30-32 drive external NVIDIA
-  tools rather than GPU features. `compute-sanitizer` (9, 10) comes with the
-  environment. Profiling with `ncu` (30-32) needs GPU performance-counter
-  access, which shared platforms often restrict, and `nsys` (30, 31) needs a
-  system CUDA installation. Interactive debugging with `cuda-gdb` (9) expects a
-  terminal rather than a notebook cell
+- **Limited debugging tools**: NVIDIA profiling and debugging tools (puzzles
+  9-10, 30-32) unavailable
 - **Mojo installation complexity**: Requires manual setup of Mojo environment
-- **Compute capability limits**: T4 is compute capability 7.5, so puzzles
-  requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won't run
+- **No cluster programming support**: Advanced puzzles (33-34) won't work
 
-**Recommended for:** Extended learning sessions across most of the curriculum.
-On a compute-capability-7.5 GPU every puzzle runs except 16, 28, 29 and 33
-(which need 8.0) and 34 (which needs 9.0); the tooling-dependent puzzles above
-depend on what your environment exposes.
+**Recommended for:** Extended learning sessions on fundamental GPU programming
+(puzzles 1-16).
 
 ### Recommendations
 
-- **Complete Learning Path**: Use NVIDIA GPU for full curriculum access (all 35
+- **Complete Learning Path**: Use NVIDIA GPU for full curriculum access (all 34
   puzzles)
-- **Comprehensive Learning**: AMD GPUs work well for most content (27 of 35
+- **Comprehensive Learning**: AMD GPUs work well for most content (27 of 34
   puzzles)
-- **Broad Coverage**: Apple GPUs cover fundamental through advanced concepts
-  (24 of 35 puzzles)
-- **Free Platform Learning**: Google Colab/Kaggle cover most of the curriculum.
-  Their T4 GPUs are compute capability 7.5, which rules out only puzzles 16,
-  28, 29, 33 (8.0) and 34 (9.0); the debugging and profiling puzzles depend on
-  the tooling each platform exposes
+- **Basic Understanding**: Apple GPUs suitable for fundamental concepts (13 of
+  34 puzzles)
+- **Free Platform Learning**: Google Colab/Kaggle suitable for basic to
+  intermediate concepts (puzzles 1-16)
 - **Debugging & Profiling**: NVIDIA GPU required for debugging tools and
   performance analysis
 - **Modern GPU Features**: NVIDIA GPU required for Tensor Cores and cluster
@@ -573,16 +532,13 @@ depend on what your environment exposes.
 
 ## Development
 
-This section is for contributing changes to the puzzles themselves, not for
-solving them. Contributions target the `main` branch, which tracks nightly
-builds, rather than the `stable` branch you cloned to work through the book.
-For the build, test, and pull request workflow, see
-[Development in the README](https://github.com/modular/mojo-gpu-puzzles#development).
+Please see details in the
+[README](https://github.com/modular/mojo-gpu-puzzles#development).
 
 ## Join the community
 
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
-  <a href="https://max.modular.com/get-started/#stay-in-touch">
+  <a href="https://www.modular.com/company/talk-to-us">
     <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
   </a>
   <a href="https://forum.modular.com/c/">

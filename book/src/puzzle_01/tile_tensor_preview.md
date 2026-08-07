@@ -6,8 +6,8 @@ issues:
 ### Current approach
 
 ```mojo
-var i = thread_idx.x
-output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
+i = thread_idx.x
+output[i] = a[i] + 10.0
 ```
 
 This works for 1D arrays, but what happens when we need to:
@@ -22,7 +22,7 @@ As we progress through the puzzles, array indexing will become more complex:
 
 ```mojo
 # 2D indexing coming in later puzzles
-var idx = row * WIDTH + col
+idx = row * WIDTH + col
 
 # 3D indexing
 idx = (batch * HEIGHT + row) * WIDTH + col
@@ -33,7 +33,7 @@ idx = (batch * padded_height + row) * padded_width + col
 
 ### TileTensor preview
 
-[TileTensor](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/)
+[TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/)
 will help us handle these cases more elegantly:
 
 ```mojo

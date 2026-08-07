@@ -218,7 +218,7 @@ $1 = 0
 
 ```bash
 (cuda-gdb) n
-74              shared_workspace[thread_id] = a[thread_id]
+70              shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 (cuda-gdb) n
 69          if thread_id < SIZE - 1:
 (cuda-gdb) n
@@ -320,13 +320,13 @@ if thread_id < SIZE - 1:        # ← Only threads 0, 1, 2 enter this block
 **💀 Deadlock Mechanism**:
 
 1. **Thread 0**: `0 < 3` → **True** → Enters block → **Waits at barrier** (line
-   78)
+   69)
 2. **Thread 1**: `1 < 3` → **True** → Enters block → **Waits at barrier** (line
-   78)
+   69)
 3. **Thread 2**: `2 < 3` → **True** → Enters block → **Waits at barrier** (line
-   78)
+   69)
 4. **Thread 3**: `3 < 3` → **False** → **NEVER enters block** →
-   **Continues to line 81**
+   **Continues to line 72**
 
 **Result**: 3 threads wait forever for the 4th thread, but thread 3 never
 arrives at the barrier.
@@ -349,24 +349,27 @@ if thread_id < SIZE - 1:    # Not all threads enter
 # ✅ CORRECT: Barrier outside conditional
 if thread_id < SIZE - 1:    # Not all threads enter
     # ... some computation ...
-barrier()                   # ALL threads reach this
+ barrier()                # ALL threads reach this
 ```
 
 **The Fix**: Move the barrier outside the conditional block:
 
 ```mojo
 def collaborative_filter(
-    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, vector_layout],
+    a: TileTensor[mut=False, dtype, vector_layout],
 ):
-    var thread_id = thread_idx.x
-    var shared_workspace = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[SIZE - 1]())
+    thread_id = thread_idx.x
+    shared_workspace = TileTensor[
+        dtype,
+        row_major[SIZE-1](),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
-        shared_workspace[thread_id] = a[thread_id]
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing
@@ -382,7 +385,7 @@ def collaborative_filter(
     if thread_id < SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = a[thread_id]
+        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 ```
 
 ## Key debugging lessons
@@ -402,12 +405,10 @@ def collaborative_filter(
 - **Deadlocks are silent killers** - programs just hang with no error messages
 - **Thread coordination debugging requires patience** - systematic analysis of
   each thread's path
-- **Conditional barriers are the classic deadlock cause** - always verify all
-  threads reach the same sync points
-- **CUDA-GDB thread inspection pinpoints the stall** - it shows exactly where
-  each thread stopped; `compute-sanitizer --tool synccheck`
-  ([Puzzle 10](../puzzle_10/racecheck.md)) can flag the same divergent barrier
-  without a debugger
+- **Conditional barriers are the #1 deadlock cause** - always verify all threads
+  reach the same sync points
+- **CUDA-GDB thread inspection is essential** - the only way to see thread
+  coordination failures
 
 **Advanced GPU synchronization**:
 

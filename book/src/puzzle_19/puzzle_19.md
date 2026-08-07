@@ -32,11 +32,9 @@ The computation involves three main steps:
    the final output
 
 > **Scope:** This puzzle composes existing kernels (transpose, tiled matmul,
-> softmax) into one attention op for a single query vector. The launches are
-> enqueued on one device context, so each kernel finishes before the next
-> starts and the only synchronization you write is the `barrier()` inside the
-> transpose—your focus is that kernel and the host-side orchestration that
-> connects the pieces.
+> softmax) into one attention op for a single query vector. Cross-block
+> coordination lives inside each reused kernel — your focus is the transpose
+> kernel and the host-side orchestration that connects the pieces.
 
 ## Understanding attention: a step-by-step breakdown
 
@@ -81,10 +79,10 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 This allows us to leverage the highly optimized
 [tiled matmul kernel from Puzzle 16](../puzzle_16/tiled.md)!
 
-In Mojo, you reshape a `TileTensor` by calling `reshape()` with the target
-layout as a runtime argument (for example, `q_tensor.reshape(layout_q_2d)`)
-rather than copying or mutating data in place. You'll see this idiom in the
-orchestration code below.
+In Mojo, you reshape a `LayoutTensor` by calling `reshape[new_layout]()` with the
+target layout as a compile-time parameter (for example,
+`q_tensor.reshape[layout_q_2d]()`) rather than copying or mutating data in place.
+You'll see this idiom in the orchestration code below.
 
 Our GPU implementation
 **reuses and combines optimized kernels, mostly from previous puzzles**:
@@ -100,13 +98,13 @@ Our GPU implementation
 > **🔄 Kernel Reuse Strategy**: This puzzle demonstrates how to build complex
 > operations by combining proven, optimized kernels from previous puzzles.
 > Rather than writing everything from scratch, we leverage the
-> `matmul_idiomatic_tiled` from Puzzle 16 and `softmax_gpu_kernel` from
-> Puzzle 18, showcasing the power of modular GPU kernel design.
+> `matmul_idiomatic_tiled` from Puzzle 16 and `softmax_kernel` from Puzzle 18,
+> showcasing the power of modular GPU kernel design.
 >
 > **Reuse checkpoint**: Before continuing, revisit the kernels you're about to
 > compose — `matmul_idiomatic_tiled` in
-> [Puzzle 16's tiled solution](../puzzle_16/tiled.md) and `softmax_gpu_kernel`
-> in [Puzzle 18](../puzzle_18/puzzle_18.md). Treat this puzzle as a
+> [Puzzle 16's tiled solution](../puzzle_16/tiled.md) and `softmax_kernel` in
+> [Puzzle 18](../puzzle_18/puzzle_18.md). Treat this puzzle as a
 > composition/refactor exercise: your job is to wire these existing building
 > blocks together (plus the transpose you write here), not to reinvent them.
 
@@ -166,9 +164,8 @@ Our attention custom operation will:
 
 To complete this puzzle, we'll leverage the tiled matmul kernel from
 [Puzzle 16](../puzzle_16/puzzle_16.md) and the softmax kernel from
-[Puzzle 18](../puzzle_18/puzzle_18.md). You implement the transpose kernel in
-the Mojo file using shared memory, then wire up the seven-step attention
-orchestration that calls it.
+[Puzzle 18](../puzzle_18/puzzle_18.md). You only need to implement the transpose
+kernel in the Mojo file using shared memory.
 
 ### 1. Implement the transpose kernel
 
@@ -232,7 +229,7 @@ K → transpose → Kᵀ → matmul(Q, Kᵀ) → scores → softmax → weights 
 ```
 
 The orchestration function below allocates the intermediate buffers (`Kᵀ`,
-`scores`, `weights`), reshapes \\(Q\\) to \\((1, 16)\\) with `reshape()` as
+`scores`, `weights`), reshapes \\(Q\\) to \\((1, 16)\\) with `reshape[...]()` as
 shown above, and enqueues each kernel launch on the GPU. There's no new kernel
 math here — the work is choosing buffer layouts and calling the existing kernels
 in the right order.
@@ -376,25 +373,21 @@ implementation.
 <summary></summary>
 
 To solve this puzzle, we need to implement the transpose kernel in Mojo and
-wire up the attention orchestration that drives it. This puzzle builds upon
-concepts from previous puzzles, combining
+complete the Python graph definition for our attention custom operation. This
+puzzle builds upon concepts from previous puzzles, combining
 **tiled matrix multiplication from [Puzzle 16](../puzzle_16/puzzle_16.md)** and
 **softmax from [Puzzle 18](../puzzle_18/puzzle_18.md)** into a complete
 attention mechanism.
 
 ### Reused kernels
 
-Our implementation adapts these proven kernels:
+Our implementation directly incorporates these proven kernels:
 
 1. **`matmul_idiomatic_tiled`** from [Puzzle 16](../puzzle_16/puzzle_16.md) -
    Powers both \\(Q \\times K^T\\) and \\(\\text{weights} \\times V\\)
-   operations. The attention version keeps the tiling structure but takes
-   separate layouts for the two inputs and the output, loads each tile with a
-   plain per-thread copy instead of the asynchronous copy, and bounds-checks
-   every access, because these matrices are not square and their inner
-   dimension need not be a multiple of the tile size
-2. **`softmax_gpu_kernel`** from [Puzzle 18](../puzzle_18/puzzle_18.md) -
-   Provides numerically stable attention weight computation
+   operations
+2. **`softmax_kernel`** from [Puzzle 18](../puzzle_18/puzzle_18.md) - Provides
+   numerically stable attention weight computation
 
 This exemplifies **modular GPU architecture**: complex neural network operations
 built by orchestrating proven, optimized components rather than monolithic
@@ -458,9 +451,9 @@ The GPU orchestration demonstrates **sophisticated kernel chaining** and
 
 ```mojo
 # Zero-copy reshaping - no data movement, just reinterpret tensor shape
-var q_2d = q_tensor.reshape(layout_q_2d)
+q_2d = q_tensor.reshape[layout_q_2d]()
 # Aggressive buffer reuse - same memory, different interpretations
-var weights = scores_2d.reshape(layout_scores)
+weights = scores_2d.reshape[layout_scores]()
 ```
 
 The implementation achieves **maximum memory efficiency** through:
@@ -484,7 +477,7 @@ The implementation achieves **maximum memory efficiency** through:
     \\((1,\\text{seq_len}) \\times (\\text{seq_len},d) \\rightarrow (1,d)\\)
   - Both operations include bounds checking for robustness with variable matrix
     dimensions
-- **Step 5**: Employs `softmax_gpu_kernel` from
+- **Step 5**: Employs `softmax_kernel` from
   [Puzzle 18](../puzzle_18/puzzle_18.md)
   - Converts raw scores into normalized probability distribution
   - Ensures numerical stability through max subtraction and parallel reduction
@@ -506,8 +499,8 @@ buffer reuse:
 
 ```mojo
 # Only 2 temporary buffers needed for the entire operation
-var k_t_buf = ctx.enqueue_create_buffer[dtype](seq_len * d)
-var scores_weights_buf = ctx.enqueue_create_buffer[dtype](seq_len)
+k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len * d)
+scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 ```
 
 **Key optimization insights**:
@@ -523,7 +516,7 @@ kernels:
 
 - **`matmul_idiomatic_tiled`** (used twice) - Powers both \\(Q \\times K^T\\)
   and \\(\\text{weights} \\times V\\) operations
-- **`softmax_gpu_kernel`** - Provides numerically stable attention weight
+- **`softmax_kernel`** - Provides numerically stable attention weight
   computation with parallel reduction
 - **`transpose_kernel`** - Enables efficient \\(K^T\\) computation with
   coalesced memory access

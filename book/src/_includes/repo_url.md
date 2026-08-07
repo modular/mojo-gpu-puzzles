@@ -1,1 +1,1 @@
-https://github.com/modular/mojo-gpu-puzzles
+<https://github.com/modular/mojo-gpu-puzzles>

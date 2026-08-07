@@ -131,8 +131,8 @@ Size calculation:
 
    ```mojo
    # First: account for padding needed for convolution window
-   var shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
-   var shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
+   shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
+   shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
    ```
 
    This allocation pattern ensures we have enough space for both the block's
@@ -149,7 +149,7 @@ Size calculation:
 
    # Boundary data from next block
    if local_i < CONV_2 - 1:
-       var next_idx = global_i + TPB
+       next_idx = global_i + TPB
        if next_idx < SIZE_2:
            shared_a[TPB + local_i] = a[next_idx]
        else:
@@ -159,14 +159,14 @@ Size calculation:
    ```
 
    - Only threads with `local_i < CONV_2 - 1` load boundary data
-   - Avoids redundant halo loads, at the cost of one short divergent branch
+   - Prevents unnecessary thread divergence
    - Maintains memory coalescing for main data load
    - Explicitly zeroes out-of-bounds elements to avoid undefined behavior
 
 3. **Filter Loading**:
 
    ```mojo
-   if local_i < CONV_2:
+   if local_i < b_size:
        shared_b[local_i] = b[local_i]
    ```
 
@@ -177,14 +177,14 @@ Size calculation:
 
    ```mojo
    if global_i < SIZE_2:
-       var local_sum: output.ElementType = 0
+       var local_sum: output.element_type = 0
        comptime for j in range(CONV_2):
            if global_i + j < SIZE_2:
                local_sum += shared_a[local_i + j] * shared_b[j]
    ```
 
    - Uses `comptime for` for compile-time loop unrolling
-   - Proper type inference with `output.ElementType`
+   - Proper type inference with `output.element_type`
    - Semantically correct bounds check: only compute convolution for valid input
      positions
 
@@ -201,18 +201,17 @@ Size calculation:
    ```
 
 2. **Block 1 Access Pattern**:
-
-   Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to
-   `False` and hence iterations are skipped.
+Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to `False`
+and hence iterations are skipped.
 
    ```txt
    Thread 0: [8  9 10 11] × [0 1 2 3]
    Thread 1: [9 10 11 12] × [0 1 2 3]
    ...
-   Thread 4: [12 13 14] × [0 1 2]       // Tail of the array
+   Thread 4: [12 13 14] × [0 1 2]       // Zero padding at end
    Thread 5: [13 14]    × [0 1]
    Thread 6: [14]       × [0]
-   Thread 7: skipped                    // global_i = 15 fails global_i < SIZE_2, no output
+   Thread 7: skipped                    // global_i + j < SIZE_2 evaluates to false for all j, no computation
    ```
 
 ### Performance optimizations
@@ -224,7 +223,7 @@ Size calculation:
 
 2. **Thread Divergence Minimization**:
    - Clean separation of main and boundary loading
-   - Divergence confined to the halo load and the tail of the array
+   - Uniform computation pattern within warps
    - Efficient bounds checking
 
 3. **Shared Memory Usage**:

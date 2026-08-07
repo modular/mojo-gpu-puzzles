@@ -43,7 +43,7 @@ Layout configuration:
 
 <div class="solution-tips">
 
-1. Use the `row` and `col` the stub already computes from the thread indices
+1. Calculate `row` and `col` from thread indices
 2. Check if indices are within `size`
 3. Accumulate products in a local variable
 4. Write final sum to correct output position
@@ -125,21 +125,20 @@ Matrix A:          Matrix B:                   Output C:
 1. **Thread mapping**:
 
    ```mojo
-   var row = block_dim.y * block_idx.y + thread_idx.y
-   var col = block_dim.x * block_idx.x + thread_idx.x
+   row = block_dim.y * block_idx.y + thread_idx.y
+   col = block_dim.x * block_idx.x + thread_idx.x
    ```
 
 2. **Memory access pattern**:
-   - Row-wise access: `a[row, k]` walks along one row of \\(A\\)
-   - Column-wise access: `b[k, col]` walks down one column of \\(B\\), which in
-     a row-major layout strides by `SIZE` on every step
+   - Direct 2D indexing: `a[row, k]`
+   - Transposed access: `b[k, col]`
    - Output writing: `output[row, col]`
 
 3. **Computation flow**:
 
    ```mojo
    # Use var for mutable accumulator with tensor's element type
-   var acc: output.ElementType = 0
+   var acc: output.element_type = 0
 
    # comptime for compile-time loop unrolling
    comptime for k in range(size):
@@ -149,12 +148,12 @@ Matrix A:          Matrix B:                   Output C:
 ### Key language features
 
 1. **Variable declaration**:
-   - Annotating the accumulator in `var acc: output.ElementType = 0` ties its
-     type to the output tensor's element type, so the accumulation and the
-     final store agree
+   - The use of `var` in `var acc: output.element_type = 0` allows for type
+     inference with `output.element_type` ensures type compatibility with the
+     output tensor
    - Initialized to zero before accumulation
 
-2. **Loop optimization**:
+2. **Loop pptimization**:
    - `comptime for` unrolls the loop at compile time
    - Improves performance for small, known matrix sizes
    - Enables better instruction scheduling

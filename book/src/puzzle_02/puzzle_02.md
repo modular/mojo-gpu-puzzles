@@ -120,12 +120,12 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 This solution:
 
 - Gets thread index with `i = thread_idx.x`
-- Adds values from both arrays: `output[unsafe_offset=i] = a[unsafe_offset=i] + b[unsafe_offset=i]`
+- Adds values from both arrays: `output[i] = a[i] + b[i]`
 
 </div>
 </details>
 
-## Looking ahead
+### Looking ahead
 
 While this direct indexing works for simple element-wise operations, consider:
 
@@ -133,5 +133,5 @@ While this direct indexing works for simple element-wise operations, consider:
 - What if we need to broadcast one array to another?
 - How to ensure coalesced access across multiple arrays?
 
-We start answering these when we
+These questions will be addressed when we
 [introduce TileTensor in Puzzle 4](../puzzle_04/introduction_tile_tensor.md).

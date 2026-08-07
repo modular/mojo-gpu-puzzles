@@ -41,12 +41,12 @@ Running race condition example...
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
 stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:148:33: AssertionError: `left == right` comparison failed:
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:122:33: AssertionError: `left == right` comparison failed:
    left: 0.0
   right: 6.0
 ```
 
-Let's see how `compute-sanitizer` can help us detect issues in our GPU code.
+Let's see how `compute-sanitizer` can help us detection issues in our GPU code.
 
 ## Debugging with `compute-sanitizer`
 
@@ -104,10 +104,9 @@ AssertionError: `left == right` comparison failed:
 ========= ERROR SUMMARY: 0 errors
 ```
 
-**Key insight**: `synccheck` found **0 errors**. It checks that synchronization
-primitives are used correctly—that every thread in a block reaches the same
-`barrier()`—and nothing in this kernel violates that. The problem is a
-**data race**, not a synchronization bug.
+**Key insight**: `synccheck` found **0 errors** - there are no synchronization
+issues like deadlocks. The problem is **race conditions**, not synchronization
+bugs.
 
 ## Deadlock vs Race Condition: Understanding the Difference
 
@@ -136,7 +135,7 @@ primitives are used correctly—that every thread in a block reaches the same
 
 ## Challenge
 
-Equipped with these tools, fix the failing kernel.
+Equipped with these tools, fix the kernel failing kernel.
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -161,27 +160,24 @@ can interleave:
 - **Non-atomic operation** → The `+=` compound assignment isn't atomic in GPU
   shared memory
 
-**Where the 9 hazards come from:**
+**Why we get exactly 9 hazards:**
 
-- Each of the 4 active threads performs a read-modify-write on `shared_sum[0]`
-- `compute-sanitizer` counts conflicting access *pairs*, not threads, so the
-  total depends on how those reads and writes interleaved on this particular run
-- Here that came to 4 write-versus-read pairs and 5 write-versus-write pairs
+- Each thread tries to perform read-modify-write
+- 4 threads × 2-3 hazards per thread = 9 total hazards
+- `compute-sanitizer` tracks every conflicting memory access pair
 
 ### Race condition debugging tips
 
-1. **Use racecheck for data races**: Detects hazards on *shared* memory; it
-   does not inspect global memory
-2. **Use synccheck for synchronization misuse**: Detects threads that fail to
-   reach the same synchronization primitive together, which is what turns a
-   conditional `barrier()` into a deadlock
+1. **Use racecheck for data races**: Detects shared memory hazards and data
+   corruption
+2. **Use synccheck for deadlocks**: Detects synchronization bugs (barrier
+   issues, deadlocks)
 3. **Focus on shared memory access**: Look for unsynchronized `+=`, `=`
    operations to shared variables
 4. **Identify the pattern**: Read-modify-write operations are common race
    condition sources
-5. **Know what a barrier can fix**: A barrier orders one phase of the kernel
-   against the next, so it fixes a read that must see another thread's earlier
-   write—it cannot serialize concurrent read-modify-writes to one address
+5. **Check barrier placement**: Barriers must be placed BEFORE conflicting
+   operations, not after
 
 **Why this distinction matters for debugging:**
 
@@ -194,8 +190,7 @@ can interleave:
 
 - Multiple threads writing to the same shared memory location
 - Unsynchronized read-modify-write operations (`+=`, `++`, etc.)
-- Reaching for a barrier to protect a read-modify-write, when a barrier only
-  orders one phase against the next
+- Barriers placed after the race condition instead of before
 
 </div>
 </details>
@@ -224,20 +219,17 @@ shared_sum[0] += a[row, col]  # RACE CONDITION!
 This single line creates multiple hazards among the 4 valid threads:
 
 1. **Thread (0,0) reads** `shared_sum[0]` (value: 0.0)
-2. **Thread (0,1) reads** `shared_sum[0]` (value: 0.0)—both threads now hold
-   the same stale value
-3. **Thread (0,0) writes** back `0.0 + 0` ← this write races with thread
-   (0,1)'s read: **write-versus-read hazard!**
-4. **Thread (1,0) writes** back `0.0 + 2` ← **write-versus-write hazard!**
+2. **Thread (0,1) reads** `shared_sum[0]` (value: 0.0) ←
+   **Read-after-write hazard!**
+3. **Thread (0,0) writes** back `0.0 + 0`
+4. **Thread (1,0) writes** back `0.0 + 2` ← **Write-after-write hazard!**
 
 #### Why the test failed
 
 - Multiple threads corrupt each other's writes during the `+=` operation
 - The `+=` operation gets interrupted, causing lost updates
 - Expected sum of 6.0 (0+1+2+3), but race conditions resulted in 0.0
-- Moving the `barrier()` wouldn't help: it orders one phase of the kernel
-  against the next, and cannot make a single thread's read-modify-write
-  indivisible with respect to the other three
+- The `barrier()` comes too late - after the race condition already occurred
 
 #### What are race conditions?
 
@@ -255,11 +247,10 @@ and the result depends on the unpredictable timing of thread execution.
 
 **Massive parallelism impact:**
 
-- **Warp-wide lockstep**: The 32 threads of a warp issue the same instruction
-  together, so a read-modify-write on one address collides across the whole warp
-  at once
-- **Repeated per block**: Shared memory is private to a block, so the same
-  unsynchronized pattern re-runs independently in every block of the grid
+- **Warp-level corruption**: Race conditions can affect entire warps (32
+  threads)
+- **Memory coalescing issues**: Races can disrupt efficient memory access
+  patterns
 - **Kernel-wide failures**: Shared memory corruption can affect the entire GPU
   kernel
 
@@ -299,10 +290,10 @@ Use direct coordinate check to identify thread at position (0,0).
 
 ```mojo
 if row == 0 and col == 0:
-    var local_sum = Scalar[dtype](0.0)
+    local_sum = Scalar[dtype](0.0)
     for r in range(size):
         for c in range(size):
-            local_sum += a[r, c]
+            local_sum += rebind[Scalar[dtype]](a[r, c])
     shared_sum[0] = local_sum  # Single write operation
 ```
 
@@ -354,8 +345,7 @@ out shape: 2 x 2
 Running race condition example...
 out: HostBuffer([6.0, 6.0, 6.0, 6.0])
 expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
-Race condition test: passed
-Puzzle 10 complete ✅
+✅ Race condition test PASSED! (racecheck will find hazards)
 ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
 ```
 

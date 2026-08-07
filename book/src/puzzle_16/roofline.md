@@ -68,21 +68,22 @@ while those above are compute-bound.
 
 ## 3. Visualizing our matrix multiplication implementations
 
-The visualization below shows how our puzzle implementations map onto the A100's
+The animation below shows how our puzzle implementations map onto the A100's
 roofline model:
 
 <img src="./media/roofline-w.png" alt="Roofline visualization" class="light-mode-img">
 <img src="./media/roofline-b.png" alt="Roofline visualization" class="dark-mode-img">
 
-It lays out the optimization journey we'll take in this puzzle:
+The visualization demonstrates the optimization journey we'll take in this
+puzzle:
 
 1. **Hardware constraints** – The red memory roof and blue compute roof define
    performance limits
-2. **Our starting point** – The naive implementation (teal dot), firmly in the
-   memory-bound region
-3. **Optimization target** – The shared memory version (orange dot) with
-   improved arithmetic intensity
-4. **Ultimate goal** – The orange curve pointing toward the critical intensity
+2. **Our starting point** – The naive implementation (orange dot) sitting firmly
+   on the memory roof
+3. **Optimization target** – The shared memory version (teal dot) with improved
+   arithmetic intensity
+4. **Ultimate goal** – The golden arrow pointing toward the critical intensity
    where kernels become compute-bound
 
 ## 4. Analyzing our naive implementation
@@ -115,8 +116,8 @@ that our naive kernel is **severely memory-bound**.
 I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\\]
 
 This represents only \\(\frac{292}{19{,}500} \approx 1.5\\%\\) of the GPU's
-computational potential! The visualization plots this as the teal dot, deep in
-the memory-bound region—we're nowhere near the compute ceiling.
+computational potential! The visualization clearly shows this as the yellow dot
+sitting squarely on the memory roof—we're nowhere near the compute ceiling.
 
 ## 5. The path forward: shared memory optimization
 
@@ -159,7 +160,7 @@ arithmetic intensity).
 **Note on asynchronous operations**: Standard GPU memory loads (`ld.global`) are
 already asynchronous - warps continue executing until they need the loaded data.
 Specialized async copy instructions like `cp.async` (CUDA) or
-[copy_dram_to_sram_async](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
+[copy_dram_to_sram_async](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
 (Mojo) provide additional benefits by using dedicated copy engines, bypassing
 registers, and enabling better resource utilization rather than simply making
 synchronous operations asynchronous.
@@ -194,7 +195,7 @@ performance characteristics, requiring specialized roofline analysis.
 
 In the next section, we'll implement the **shared memory optimization** that
 begins moving our kernel up the roofline. As the visualization shows, this takes
-us from the teal dot (naive) to the orange dot (shared memory)—a clear
+us from the orange dot (naive) to the teal dot (shared memory)—a clear
 performance improvement through better data reuse.
 
 While our \\(2 \times 2\\) example won't reach the compute roof, you'll see how

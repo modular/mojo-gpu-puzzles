@@ -20,7 +20,7 @@
 In [Puzzle 13](../puzzle_13/puzzle_13.md), we implemented a 1D convolution
 kernel that runs efficiently on the GPU. Now we'll take this kernel and
 transform it into a custom operation that can be called directly from Python
-using [MAX Graph](https://max.modular.com/api/python/graph/).
+using [MAX Graph](https://docs.modular.com/api/python/graph/).
 
 The 1D convolution kernel we'll be working with is already implemented:
 
@@ -51,8 +51,8 @@ Python's rich ecosystem and Mojo's powerful GPU performance.
 
 ## Code to complete
 
-To complete this puzzle, you only need to fill in the call to `conv1d_kernel` in
-`conv1d.mojo`:
+To complete this puzzle, you only need to fill one line in `conv1d.mojo` to call
+the `conv1d_kernel`:
 
 ```mojo
 {{#include ../../../problems/p17/op/conv1d.mojo:conv1d_custom_op}}
@@ -130,15 +130,15 @@ The solution is:
 ```
 
 <div class="solution-explanation">
-These two statements do several important things:
+This single line does several important things:
 
 1. Calls
-   [enqueue_function](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
+   [enqueue_function](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function)
    on the GPU context (`gpu_ctx` is of type
-   [DeviceContext](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))
+   [DeviceContext](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/))
    to schedule our kernel execution
-2. Binds the layout and size information as **compile-time** parameters through
-   the `comptime kernel = conv1d_kernel[...]` binding
+2. Passes the necessary layout and size information as **compile-time**
+   parameters
 3. Provides the output, input, and kernel tensors as runtime arguments
 4. Configures the execution grid with the appropriate dimensions
 
@@ -152,23 +152,23 @@ Let's break down how this works in the larger context:
    - Creates NumPy arrays for input and kernel
    - Calls `conv_1d()` function which wraps our operation in MAX Graph
    - Converts NumPy arrays to
-     [MAX driver](https://max.modular.com/api/python/driver) Buffers with
+     [MAX driver](https://docs.modular.com/api/python/driver) Buffers with
      `Buffer.from_numpy(input).to(device)`
    - Loads the custom operation package with `custom_extensions=[mojo_kernels]`
 
 2. **Graph building**:
    - Defines input and output tensor types with
-     [TensorType](https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType)
+     [TensorType](https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType)
    - Specifies parameters for our operation via `parameters={...}`
    - Creates a computation graph with
-     [`Graph("conv_1d_graph", ...)`](https://max.modular.com/api/python/graph/Graph)
+     [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/api/python/graph/Graph)
    - Calls our operation using
-     [`ops.custom(name="conv1d", ...)`](https://max.modular.com/api/python/graph/ops#custom)
+     [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/api/python/graph/ops#custom)
 
 3. **Custom op registration**:
    - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
      Graph. See
-     [@extensibility.register](https://max.modular.com/api/mojo/extensibility/decorators/register/)
+     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
    - The `execute` method parameters define the interface (inputs, outputs,
      context)
    - Input/output tensors are converted to TileTensors for use in our kernel
@@ -189,9 +189,9 @@ Let's break down how this works in the larger context:
    struct Conv1DCustomOp:
        @staticmethod
        def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
-           output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-           input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
-           kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+           output: OutputTensor[rank=1],
+           input: InputTensor[dtype = output.dtype, rank = output.rank],
+           kernel: InputTensor[dtype = output.dtype, rank = output.rank],
            ctx: DeviceContext,
        ) raises:
            # Implementation
@@ -200,36 +200,24 @@ Let's break down how this works in the larger context:
    - `target` indicates the device type ("gpu" or "cpu")
    - `input_size` and `conv_size` are parameters passed from Python
    - Tensor types ensure correct shape and type checking
-   - `raises` is the effect annotation, marking that `execute` can propagate
-     errors
+   - Return type is `raises` for proper error handling
 
 2. **Tensor Conversion**:
 
    ```mojo
-   comptime out_layout_val = row_major[input_size]()
-   comptime OutLayout = type_of(out_layout_val)
-
-   var output_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-       output.unsafe_ptr(), out_layout_val
-   )
-   var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-       input.unsafe_ptr(), out_layout_val
-   )
+   output_tensor = output.to_layout_tensor()
+   input_tensor = input.to_layout_tensor()
+   kernel_tensor = kernel.to_layout_tensor()
    ```
 
-   The layouts are constructed from the op's compile-time parameters and the
-   tensors are built from raw pointers—they are not extracted from the
-   `OutputTensor`/`InputTensor` arguments.
-
-   - MAX Graph tensors are wrapped as Mojo TileTensors over the same memory
+   - MAX Graph tensors are converted to Mojo TileTensors
    - This allows our kernel to work with them directly
-   - Because the layouts are compile-time values, the kernel's indexing
-     arithmetic is resolved statically
+   - The layouts are extracted for compile-time optimization
 
 3. **Device Context Usage**:
 
    ```mojo
-   var gpu_ctx = ctx
+   gpu_ctx = ctx.get_device_context()
    gpu_ctx.enqueue_memset(...)  # Zero output buffer
    gpu_ctx.enqueue_function[...](...) # Schedule kernel
    ```
@@ -248,8 +236,8 @@ functions to create efficient, type-safe, accelerated operations.
 
 > Check out the follow tutorials for more details:
 >
-> - [Get started with MAX Graph in Python](https://max.modular.com/tutorials/get-started-with-max-graph-in-python/)
-> - [MAX Graph custom op for GPUs](https://max.modular.com/tutorials/build-custom-ops/)
+> - [Get started with MAX Graph in Python](https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/)
+> - [MAX Graph custom op for GPUs](https://docs.modular.com/tutorials/build-custom-ops/)
 
 ### Custom op registration
 
@@ -261,9 +249,9 @@ and the associated structure:
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
-        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
-        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        output: OutputTensor[rank=1],
+        input: InputTensor[dtype = output.dtype, rank = output.rank],
+        kernel: InputTensor[type = output.dtype, rank = output.rank],
         ctx: DeviceContext,
     ) raises:
         # Implementation here

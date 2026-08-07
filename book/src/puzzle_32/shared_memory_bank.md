@@ -75,7 +75,7 @@ serializes these accesses:
 
 ```mojo
 # 2-way conflict: stride-2 access pattern
-shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; 1,17→Bank 2; even banks only
+shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; Thread 1,17→Bank 1; etc.
 ```
 
 **Result:** 2 accesses per bank, 2 cycles total (50% efficiency)
@@ -95,7 +95,7 @@ memory access:
 
 ```mojo
 # Broadcast: all threads read the same value
-var constant = shared[0]  # All threads read shared[0]
+constant = shared[0]  # All threads read shared[0]
 ```
 
 **Result:** 1 access broadcasts to 32 threads, 1 cycle total
@@ -159,9 +159,9 @@ You can often predict bank conflicts by analyzing access patterns:
 **Stride-2 access (2-way conflicts):**
 
 ```mojo
-# Thread ID:  0   1   2   3 ...  15  16  17  18 ...  31
-# Address:    0   8  16  24 ... 120 128 136 144 ... 248
-# Bank:       0   2   4   6 ...  30   0   2   4 ...  30
+# Thread ID:  0  1  2  3  ...  15 16 17 18 ... 31
+# Address:    0  8 16 24  ... 120  4 12 20 ... 124
+# Bank:       0  2  4  6  ...  30  1  3  5 ...  31
 # Conflict:   Banks 0,2,4... have 2 threads each  ❌
 ```
 
@@ -173,7 +173,7 @@ You can often predict bank conflicts by analyzing access patterns:
 # Bank:       0   0   0   0  ...   0  ❌ All threads→Bank 0
 ```
 
-### Profiling with Nsight Compute (`ncu`)
+### Profiling with NSight Compute (`ncu`)
 
 Building on the profiling methodology from
 [Puzzle 30](../puzzle_30/puzzle_30.md), you can measure bank conflicts
@@ -185,6 +185,7 @@ ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_b
 
 # Additional context metrics
 ncu --metrics=smsp__sass_average_branch_targets_threads_uniform.pct your_kernel
+ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 ```
 
 The `l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld` and

@@ -1,4 +1,4 @@
-# Simple Version with Single Block
+# Simple Case with Single Block
 
 Implement a GPU kernel that computes a 1D convolution between input 1D
 TileTensor `a` and filter 1D TileTensor `b`, storing the result in 1D
@@ -28,8 +28,7 @@ while maintaining correct boundary conditions.
 
 Notes:
 
-- **Data loading**: Each thread loads one input element; the first `CONV`
-  threads also load one filter element
+- **Data loading**: Each thread loads one element from input and filter
 - **Memory pattern**: Shared arrays for input and filter
 - **Thread sync**: Coordination before computation
 
@@ -153,7 +152,7 @@ Filter b:        [0  1  2]
 
      ```mojo
      # Inefficient version - all threads compute even when results won't be used
-     var local_sum = Scalar[dtype](0)
+     local_sum = Scalar[dtype](0)
      for j in range(CONV):
          if local_i + j < SIZE:
              local_sum += shared_a[local_i + j] * shared_b[j]
@@ -162,32 +161,32 @@ Filter b:        [0  1  2]
          output[global_i] = local_sum
      ```
 
-   - The efficient approach with a single thread guard:
+   - The efficient and correct implementation:
 
      ```mojo
      if global_i < SIZE:
-         var local_sum: output.ElementType = 0  # Using var allows type inference
+         var local_sum: output.element_type = 0  # Using var allows type inference
          comptime for j in range(CONV):  # Unrolls loop at compile time since CONV is constant
              if local_i + j < SIZE:
                  local_sum += shared_a[local_i + j] * shared_b[j]
          output[global_i] = local_sum
      ```
 
-   The key difference is that the inefficient version lets
-   **every thread run the convolution loop** (including those where
-   `global_i >= SIZE`) and guards only the final write. Here the per-element
-   check `local_i + j < SIZE` already zeroes out the work for threads 6 and 7,
-   so the two versions do the same arithmetic; what the outer guard buys is a
-   single, explicit statement of which threads are in play, rather than a
-   bounds condition smeared across the loop body and the write.
+The key difference is that the inefficient version has
+**all threads perform the convolution computation** (including those where
+`global_i >= SIZE`), and only the final write is guarded. This leads to:
 
-   Don't expect the guard to buy back time on the hardware, though. Threads in
-   a warp issue instructions in lockstep, so masking off two threads out of
-   eight neither costs nor saves the warp anything. A guard like this starts to
-   pay only when whole warps fall outside the valid range.
+   - **Wasteful computation**: Threads beyond the valid range still perform
+     unnecessary work
+   - **Reduced efficiency**: Extra computations that won't be used
+   - **Poor resource utilization**: GPU cores working on meaningless
+     calculations
+
+The efficient version ensures that only threads with valid `global_i` values
+perform any computation, making better use of GPU resources.
 
 2. **Key Implementation Features**:
-   - Uses `var` for proper type inference with `output.ElementType`
+   - Uses `var` for proper type inference with `output.element_type`
    - Employs `comptime for` to unroll the convolution loop at compile
      time
    - Maintains strict bounds checking for memory safety
@@ -206,6 +205,7 @@ Filter b:        [0  1  2]
 5. **Performance Optimizations**:
    - Minimizes global memory access
    - Uses shared memory for fast data access
+   - Avoids thread divergence in main computation loop
    - Loop unrolling through `comptime for`
 
 </div>

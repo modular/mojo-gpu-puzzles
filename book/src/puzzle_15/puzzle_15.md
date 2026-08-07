@@ -39,7 +39,7 @@ Row 2: [12, 13, 14, 15, 16, 17] → Block(0,2)
 Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 ```
 
-## Code to complete
+## Code to Complete
 
 ```mojo
 {{#include ../../../problems/p15/p15.mojo:axis_sum}}
@@ -55,12 +55,12 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 1. Use `batch = block_idx.y` to select row
 2. Load elements: `cache[local_i] = a[batch, local_i]`
 3. Perform parallel reduction with halving stride
-4. Thread 0 writes final sum to `output[batch, 0]`
+4. Thread 0 writes final sum to `output[batch]`
 
 </div>
 </details>
 
-## Running the code
+## Running the Code
 
 To test your solution, run the following command in your terminal:
 
@@ -104,7 +104,7 @@ uv run poe p15
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
-out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 ```
 
@@ -137,19 +137,19 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
 1. **Initial Data Loading**:
 
    ```txt
-   Block(0,0): cache = [a[0,0] a[0,1] a[0,2] a[0,3] a[0,4] a[0,5] 0 0]  // padding zero-initialized
-   Block(0,1): cache = [a[1,0] a[1,1] a[1,2] a[1,3] a[1,4] a[1,5] 0 0]
-   Block(0,2): cache = [a[2,0] a[2,1] a[2,2] a[2,3] a[2,4] a[2,5] 0 0]
-   Block(0,3): cache = [a[3,0] a[3,1] a[3,2] a[3,3] a[3,4] a[3,5] 0 0]
+   Block(0,0): cache = [a[0,0] a[0,1] a[0,2] a[0,3] a[0,4] a[0,5] * *]  // * = padding
+   Block(0,1): cache = [a[1,0] a[1,1] a[1,2] a[1,3] a[1,4] a[1,5] * *]
+   Block(0,2): cache = [a[2,0] a[2,1] a[2,2] a[2,3] a[2,4] a[2,5] * *]
+   Block(0,3): cache = [a[3,0] a[3,1] a[3,2] a[3,3] a[3,4] a[3,5] * *]
    ```
 
 2. **Reduction Steps** (for Block 0,0):
 
    ```txt
-   Initial:  [0  1  2  3  4  5  0  0]
-   Stride 4: [4  6  2  3  4  5  0  0]
-   Stride 2: [6  9  2  3  4  5  0  0]
-   Stride 1: [15 9  2  3  4  5  0  0]
+   Initial:  [0  1  2  3  4  5  *  *]
+   Stride 4: [4  5  6  7  4  5  *  *]
+   Stride 2: [10 12 6  7  4  5  *  *]
+   Stride 1: [15 12 6  7  4  5  *  *]
    ```
 
 ### Key implementation features
@@ -167,28 +167,27 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
 3. **Parallel Reduction Logic**:
 
    ```mojo
-   var stride = TPB // 2
+   stride = TPB // 2
    while stride > 0:
-       var temp_val: output.ElementType = 0
+       if local_i < stride:
+           cache[local_i] += cache[local_i + stride]
+       barrier()
+       stride //= 2
+   ```
+
+   **Note**: This implementation has a potential race condition where threads
+   simultaneously read from and write to shared memory during the same
+   iteration. A safer approach would separate the read and write phases:
+
+   ```mojo
+   stride = TPB // 2
+   while stride > 0:
+       var temp_val: output.element_type = 0
        if local_i < stride:
            temp_val = cache[local_i + stride]  # Read phase
        barrier()
        if local_i < stride:
            cache[local_i] += temp_val  # Write phase
-       barrier()
-       stride //= 2
-   ```
-
-   **Note**: The read and write phases are deliberately separated by a
-   `barrier()`. The simpler form below reads and writes shared memory in the
-   same iteration, which races:
-
-   ```mojo
-   # Racy - do not use
-   var stride = TPB // 2
-   while stride > 0:
-       if local_i < stride:
-           cache[local_i] += cache[local_i + stride]
        barrier()
        stride //= 2
    ```
@@ -209,16 +208,16 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
 
 2. **Thread Utilization**:
    - Perfect load balancing across rows
-   - Active threads stay contiguous as the stride halves
+   - No thread divergence in main computation
    - Efficient parallel reduction pattern
 
 3. **Synchronization**:
-   - One barrier after the load, then two per reduction step
+   - Minimal barriers (only during reduction)
    - Independent processing between rows
    - No inter-block communication needed
-   - **Race condition handling**: read-write hazards during the reduction are
-     avoided by explicit phase separation—each iteration stages its read in
-     `temp_val`, barriers, then writes
+   - **Race condition consideration**: The current implementation may have
+     read-write hazards during parallel reduction that could be resolved with
+     explicit read-write phase separation
 
 ### Complexity analysis
 

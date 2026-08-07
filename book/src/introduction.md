@@ -5,7 +5,7 @@
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://mojolang.org/docs/manual/" target="_blank">
+  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
@@ -22,7 +22,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://max.modular.com/get-started/#stay-in-touch"
+    <a href="https://docs.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">
@@ -34,10 +34,9 @@
 > _"For the things we have to learn before we can do them, we learn by doing
 > them."_ Aristotle (Nicomachean Ethics)
 
-Welcome to our hands-on guide to GPU programming with
-[Mojo](https://mojolang.org/docs/manual/) 🔥, the programming language that
-combines Python syntax with systems-level performance, and the MAX accelerator
-library, which provides most of the GPU APIs these puzzles use.
+Welcome to our hands-on guide to GPU programming using
+[Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that
+combines Python syntax with systems-level performance.
 
 Start with this overview video, or continue reading below.
 
@@ -86,10 +85,9 @@ more accessible:
 - **Improved Safety** over traditional C/C++ GPU programming
 - **Lower Barrier to Entry** for more programmers to access GPU power
 
-> **Mojo🔥 aims to fuel innovation by democratizing GPU programming.**
->
-> **By expanding on Python's familiar syntax while adding direct GPU access,
-> Mojo allows programmers with minimal specialized knowledge to build
+> **Mojo🔥 aims to fuel innovation by democratizing GPU programming.** >**By
+> expanding on Python's familiar syntax while adding direct GPU access, Mojo
+> allows programmers with minimal specialized knowledge to build
 > high-performance, heterogeneous (CPU, GPU-enabled) applications.**
 
 ## Why learn through puzzles?
@@ -144,7 +142,7 @@ data elements simultaneously:
 
 ```mojo
 # GPU approach (conceptual)
-var thread_id = get_global_id()
+thread_id = get_global_id()
 if thread_id < data_size:
     result[thread_id] = process(data[thread_id])
 ```
@@ -209,7 +207,6 @@ versatility to tackle any GPU programming challenge.
 | Advanced memory operations         | ✅ **Available** | Part IX (28-29)  |
 | Performance analysis               | ✅ **Available** | Part X (30-32)   |
 | Modern GPU features                | ✅ **Available** | Part XI (33-34)  |
-| Memory alignment                   | ✅ **Available** | Part XII (35)    |
 
 ### Detailed learning objectives
 
@@ -288,12 +285,6 @@ versatility to tackle any GPU programming challenge.
 
 - Program tensor cores for AI workloads
 - Learn cluster programming in modern GPUs
-
-**Part XII: Memory alignment (Puzzle 35) ✅**
-
-- Understand why alignment governs memory throughput
-- Write aligned vectorized loads and stores
-- Benchmark and profile the difference alignment makes
 
 The book uniquely challenges the status quo approach by first building
 understanding with low-level memory manipulation, then gradually transitioning

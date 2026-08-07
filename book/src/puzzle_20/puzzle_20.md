@@ -8,8 +8,8 @@
 > In [Puzzle 17](../puzzle_17/puzzle_17.md), we learned how to integrate Mojo
 > GPU kernels with Python using MAX Graph. Now we'll explore how to:
 >
-> - Use the same Mojo kernel through MAX's `CustomOpLibrary` for PyTorch
-> - Integrate with PyTorch's tensor system
+> - Use the same Mojo kernel with PyTorch's CustomOpLibrary
+> - Integrate with PyTorch's tensor system and autograd
 > - Compare MAX Graph vs PyTorch approaches for custom operations
 > - Understand the critical pattern of explicit output tensor allocation
 >
@@ -20,8 +20,8 @@
 
 In this puzzle, we'll take the exact same 1D convolution kernel from
 [Puzzle 17](../puzzle_17/puzzle_17.md) and integrate it with PyTorch using the
-[CustomOpLibrary](https://max.modular.com/api/python/generated/max.experimental.torch.CustomOpLibrary/)
-instead of MAX Graph.
+[CustomOpLibrary](https://docs.modular.com/api/python/torch/) instead of MAX
+Graph.
 
 The key learning here is that **the same Mojo kernel works unchanged** - only
 the Python integration layer differs between MAX Graph and PyTorch approaches.
@@ -84,7 +84,7 @@ PyTorch custom op result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 1
 ✅ PyTorch custom op verification PASSED
 
 Comparing with MAX Graph approach (like p15)
-----------------------------------------
+--------------------------------------------
 MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 ✅ MAX Graph verification PASSED
 ✅ PyTorch and MAX Graph results MATCH
@@ -132,7 +132,7 @@ ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shap
 
 - Parameters are passed as a dictionary to the operation
 - These become compile-time parameters in the Mojo kernel
-- Must match the parameter names in the Mojo `@staticmethod def execute`
+- Must match the parameter names in the Mojo `@staticmethod fn execute`
   signature
 
 ### 4. **Same Kernel, Different Integration**
@@ -153,7 +153,7 @@ The underlying Mojo kernel (`conv1d_kernel`) is identical to Puzzle 17:
 This puzzle illustrates several important patterns for PyTorch custom
 operations:
 
-| Concept               | MAX Graph (p17)         | PyTorch CustomOpLibrary (p20) |
+| Concept               | MAX Graph (p15)         | PyTorch CustomOpLibrary (p18) |
 |-----------------------|-------------------------|-------------------------------|
 | **Output Allocation** | Automatic               | Manual (`torch.empty_like()`) |
 | **Operation Call**    | `ops.custom(...)`       | `torch.compile(op)(...)`      |
@@ -183,19 +183,21 @@ This pattern ensures:
 
 ### torch.compile() integration
 
-`torch.compile()` traces the call and hands it to PyTorch's Inductor backend,
-so the custom op is compiled into the surrounding PyTorch graph instead of
-being dispatched on its own at every call. Operations produced by
-`CustomOpLibrary` are ordinary PyTorch custom ops and can also be invoked
-eagerly, so this is an integration choice rather than a requirement of the
-API.
+`torch.compile()` is essential because it:
+
+- Handles memory layout conversion between PyTorch and Mojo
+- Manages device synchronization (CPU ↔ GPU)
+- Optimizes tensor format conversion
+- Provides proper error handling for memory operations
+
+_Note: Without `torch.compile()`, you might encounter `std::bad_alloc` errors
+because the raw operation can't handle PyTorch's tensor memory management._
 
 ## Debugging custom operations
 
 Common issues and solutions:
 
-1. **Missing Output Tensor**: The op writes in place, so allocate the output
-   first and pass it as the leading argument
+1. **Memory Allocation Errors**: Always use `torch.compile()`
 2. **Wrong Output Shape**: Ensure output tensor matches expected dimensions
 3. **Device Mismatch**: All tensors must be on the same device
 4. **Parameter Errors**: Verify parameter names match Mojo operation signature

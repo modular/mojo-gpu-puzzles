@@ -10,11 +10,11 @@ implement two different approaches to vectorized computation:
 
 1. **Manual vectorization**: Direct SIMD control with explicit index
    calculations
-2. **Mojo's vectorize function**: High-level vectorization with automatic
-   remainder handling
+2. **Mojo's vectorize function**: High-level vectorization with automatic bounds
+   checking
 
 Both approaches build on tiling concepts but with different trade-offs between
-control, convenience, and performance optimization.
+control, safety, and performance optimization.
 
 **Key insight:** _Different vectorization strategies suit different performance
 requirements and complexity levels._
@@ -24,10 +24,10 @@ requirements and complexity levels._
 In this puzzle, you'll learn:
 
 - **Manual SIMD operations** with explicit index management
-- **Mojo's vectorize function** for automatic chunk and remainder handling
+- **Mojo's vectorize function** for safe, automatic vectorization
 - **Chunk-based memory organization** for optimal SIMD alignment
 - **Bounds checking strategies** for edge cases
-- **Performance trade-offs** between manual control and generated loops
+- **Performance trade-offs** between manual control and safety
 
 The same mathematical operation as before:
 \\[\Large \text{output}[i] = a[i] + b[i]\\]
@@ -72,7 +72,7 @@ Each tile now contains multiple SIMD groups, not just sequential elements.
 ### 2. **Global index calculation**
 
 ```mojo
-var global_start = tile_id * chunk_size + i * simd_width
+global_start = tile_id * chunk_size + i * simd_width
 ```
 
 This calculates the exact global position for each SIMD vector within the chunk.
@@ -80,18 +80,17 @@ This calculates the exact global position for each SIMD vector within the chunk.
 ### 3. **Direct tensor access**
 
 ```mojo
-var a_vec = a_lt.aligned_load[width=simd_width](Index(global_start))     # Load from global tensor
-out_lt.store[simd_width](Index(global_start), ret)  # Store to global tensor
+a_vec = a.aligned_load[simd_width](Index(global_start))     # Load from global tensor
+output.store[simd_width](Index(global_start), ret)  # Store to global tensor
 ```
 
-Note: Access the whole-tensor `LayoutTensor` handles from
-`to_layout_tensor()`, not the tile views.
+Note: Access the original tensors, not the tile views.
 
 ### 4. **Key characteristics**
 
 - More control, more complexity, global tensor access
 - Perfect SIMD alignment with hardware
-- No bounds check at all: `size` must divide evenly into `chunk_size`
+- Manual bounds checking required
 
 </div>
 </details>
@@ -141,6 +140,14 @@ Your output will look like this when not yet solved:
 SIZE: 1024
 simd_width: 4
 tile size: 32
+tile_id: 0
+tile_id: 1
+tile_id: 2
+tile_id: 3
+tile_id: 4
+tile_id: 5
+tile_id: 6
+tile_id: 7
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
@@ -187,7 +194,7 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 
 ```mojo
 comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
-    var global_start = tile_id * chunk_size + i * simd_width
+    global_start = tile_id * chunk_size + i * simd_width
     # For tile_id=0: global_start = 0, 4, 8, 12, ..., 124
     # For tile_id=1: global_start = 128, 132, 136, 140, ..., 252
 ```
@@ -198,21 +205,19 @@ comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 - **Work per thread**: 128 elements (32 SIMD operations of 4 elements each)
 - **Memory pattern**: Large chunks with perfect SIMD alignment
 - **Overhead**: Minimal - direct hardware mapping
-- **Safety**: No bounds check; correct only because `size` divides evenly into
-  `chunk_size`
+- **Safety**: Manual bounds checking required
 
 **Key advantages:**
 
 - **Predictable indexing**: Exact control over memory access patterns
 - **Optimal alignment**: SIMD operations perfectly aligned to hardware
-- **No per-element guard**: The chunk loop runs unconditionally
+- **Maximum throughput**: No overhead from safety checks
 - **Hardware optimization**: Direct mapping to GPU SIMD units
 
 **Key challenges:**
 
 - **Index complexity**: Manual calculation of global positions
-- **Bounds responsibility**: A ragged tail is yours to handle, and this solution
-  assumes there isn't one
+- **Bounds responsibility**: Must handle edge cases explicitly
 - **Debugging difficulty**: More complex to verify correctness
 
 </div>
@@ -238,21 +243,20 @@ comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 Start by writing the addition as a plain scalar loop over a tile, then convert it
 to `vectorize`. The transformation is mechanical: replace the per-element loop
 body with a SIMD load/add/store, and hand the loop to `vectorize`, which calls
-your body in `width`-sized steps and then calls it once per leftover element
-with `width=1`.
+your body in `width`-sized steps and processes the leftover remainder for you.
 
 ```mojo
 # Before: scalar loop over the tile (one element at a time)
 for i in range(actual_tile_size):
-    var global_idx = tile_start + i
+    global_idx = tile_start + i
     out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
 
 # After: same logic, but the body operates on a SIMD vector of `width`
 def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
     global_idx = tile_start + i
     if global_idx + width <= size:                       # bounds check
-        var a_vec = a_lt.aligned_load[width](Index(global_idx))
-        var b_vec = b_lt.aligned_load[width](Index(global_idx))
+        a_vec = a_lt.aligned_load[width](Index(global_idx))
+        b_vec = b_lt.aligned_load[width](Index(global_idx))
         out_lt.store[width](Index(global_idx), a_vec + b_vec)
 
 vectorize[simd_width](actual_tile_size, vectorized_add)  # drives the loop + remainder
@@ -263,9 +267,9 @@ The remaining tips break this down piece by piece.
 ### 1. **Tile boundary calculation**
 
 ```mojo
-var tile_start = tile_id * tile_size
-var tile_end = min(tile_start + tile_size, size)
-var actual_tile_size = tile_end - tile_start
+tile_start = tile_id * tile_size
+tile_end = min(tile_start + tile_size, size)
+actual_tile_size = tile_end - tile_start
 ```
 
 Handle cases where the last tile might be smaller than `tile_size`.
@@ -275,8 +279,8 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
-    var global_idx = tile_start + i
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
+    global_idx = tile_start + i
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
 ```
@@ -293,10 +297,9 @@ This automatically handles the vectorization loop with the provided SIMD width.
 
 ### 4. **Key characteristics**
 
-- Automatic remainder handling, tile-based access
+- Automatic remainder handling, built-in safety, tile-based access
 - Takes explicit SIMD width parameter
-- Drives the loop and the remainder for you; the bounds check inside
-  `vectorized_add` is still yours to write
+- Built-in bounds checking and automatic remainder element processing
 
 </div>
 </details>
@@ -330,6 +333,14 @@ Your output will look like this when not yet solved:
 SIZE: 1024
 simd_width: 4
 tile size: 32
+tile_id: 0 tile_start: 0 tile_end: 32 actual_tile_size: 32
+tile_id: 1 tile_start: 32 tile_end: 64 actual_tile_size: 32
+tile_id: 2 tile_start: 64 tile_end: 96 actual_tile_size: 32
+tile_id: 3 tile_start: 96 tile_end: 128 actual_tile_size: 32
+...
+tile_id: 29 tile_start: 928 tile_end: 960 actual_tile_size: 32
+tile_id: 30 tile_start: 960 tile_end: 992 actual_tile_size: 32
+tile_id: 31 tile_start: 992 tile_end: 1024 actual_tile_size: 32
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
@@ -347,20 +358,20 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 ### Mojo vectorize deep dive
 
-**Mojo's vectorize function** drives the loop and its remainder for you:
+**Mojo's vectorize function** provides automatic vectorization with built-in
+safety:
 
 - **Explicit SIMD width parameter**: You provide the simd_width to use
+- **Built-in bounds checking**: Prevents buffer overruns automatically
 - **Automatic remainder handling**: Processes leftover elements automatically
-- **Explicit bounds check**: `vectorize` doesn't validate indices, which is why
-  `vectorized_add` keeps its own `if global_idx + width <= size` guard
 - **Nested function pattern**: Clean separation of vectorization logic
 
 **Tile-based organization:**
 
 ```mojo
-var tile_start = tile_id * tile_size    # 0, 32, 64, 96, ...
-var tile_end = min(tile_start + tile_size, size)
-var actual_tile_size = tile_end - tile_start
+tile_start = tile_id * tile_size    # 0, 32, 64, 96, ...
+tile_end = min(tile_start + tile_size, size)
+actual_tile_size = tile_end - tile_start
 ```
 
 **Automatic vectorization mechanism:**
@@ -368,8 +379,8 @@ var actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
-    var global_idx = tile_start + i
+](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
+    global_idx = tile_start + i
     if global_idx + width <= size:
         # Automatic SIMD optimization
 ```
@@ -378,8 +389,9 @@ def vectorized_add[
 
 - **Automatic chunking**: Divides `actual_tile_size` into chunks of your
   provided `simd_width`
-- **Remainder handling**: Calls your body once per leftover element with
-  `width=1`
+- **Remainder handling**: Automatically processes leftover elements with smaller
+  widths
+- **Bounds safety**: Automatically prevents buffer overruns
 - **Loop management**: Handles the vectorization loop automatically
 
 **Execution visualization (TILE_SIZE=32, SIMD_WIDTH=4):**
@@ -398,9 +410,8 @@ Tile 0 processing:
 - **Thread count**: 32 threads (1024 ÷ 32 = 32)
 - **Work per thread**: 32 elements (automatic SIMD chunking)
 - **Memory pattern**: Smaller tiles with automatic vectorization
-- **Overhead**: Slight - the loop and remainder are generated for you
-- **Safety**: Edge cases handled by the generated remainder loop plus your own
-  bounds guard
+- **Overhead**: Slight - automatic optimization and bounds checking
+- **Safety**: Built-in bounds checking and edge case handling
 
 </div>
 </details>
@@ -419,11 +430,11 @@ Tile 0 processing:
 
 **Choose Mojo vectorize when:**
 
-- **Development speed** and fewer hand-written loops are priorities
+- **Development speed** and safety are priorities
 - Working with **irregular or dynamic data sizes**
 - You want **automatic remainder handling** instead of manual edge case
   management
-- Hand-written **chunk and remainder loops** would be error-prone
+- **Bounds checking** complexity would be error-prone
 - You prefer **cleaner vectorization patterns** over manual loop management
 
 ### Advanced optimization insights
@@ -463,12 +474,11 @@ Both achieve similar total throughput but with different parallelism strategies.
 - Choose appropriate SIMD width for your data and hardware
 - Focus on algorithm clarity over micro-optimizations
 - Use nested parameter functions for clean vectorization logic
-- Let `vectorize` handle the remainder, but keep your own bounds guard in the
-  body
+- Trust automatic bounds checking and remainder handling for edge cases
 
 Both approaches represent valid strategies in the GPU performance optimization
 toolkit, with manual vectorization offering maximum control and Mojo's vectorize
-handling the loop and its remainder for you.
+providing safety and automatic remainder handling.
 
 ## Next steps
 
@@ -481,5 +491,5 @@ Now that you understand all three fundamental patterns:
 
 💡 **Key takeaway**: Different vectorization strategies suit different
 performance requirements. Manual vectorization gives maximum control, while
-Mojo's vectorize function generates the chunk loop and its remainder for you.
+Mojo's vectorize function provides safety and automatic remainder handling.
 Choose based on your specific performance needs and development constraints.

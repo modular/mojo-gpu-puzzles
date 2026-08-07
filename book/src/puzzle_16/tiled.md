@@ -10,7 +10,7 @@ matrices by processing them in smaller chunks (tiles).
 
 - Matrix tiling with TileTensor for efficient computation
 - Multi-block coordination with proper layouts
-- Efficient shared memory usage through `stack_allocation`
+- Efficient shared memory usage through TensorBuilder
 - Boundary handling for tiles with TileTensor indexing
 
 ## Configuration
@@ -25,7 +25,7 @@ Layout configuration:
 - Input A: `row_major[SIZE_TILED, SIZE_TILED]()`
 - Input B: `row_major[SIZE_TILED, SIZE_TILED]()`
 - Output: `row_major[SIZE_TILED, SIZE_TILED]()`
-- Shared Memory: Two `TPB × TPB` shared buffers using `stack_allocation`
+- Shared Memory: Two `TPB × TPB` TileTensors using TensorBuilder
 
 ## Tiling strategy
 
@@ -53,7 +53,7 @@ Each block processes a tile using TileTensor indexing
 ### Memory access pattern
 
 ```txt
-Matrix A (9×9)                 Matrix B (9×9)               Matrix C (9×9)
+Matrix A (8×8)                 Matrix B (8×8)               Matrix C (8×8)
 +---+---+---+                  +---+---+---+                +---+---+---+
 |T00|T01|T02| ...              |T00|T01|T02| ...            |T00|T01|T02| ...
 +---+---+---+                  +---+---+---+                +---+---+---+
@@ -137,10 +137,9 @@ Synchronization required:
      - global_row = 1 * 3 + 1 = 4
      - This thread handles row 4 of the matrix
 
-     ```
+     ```text
 
-3. Allocate shared memory with `stack_allocation` (it does not zero the
-   allocation, so write every element you later read)
+3. Allocate shared memory (now pre-initialized with `.fill(0)`)
 4. With 9×9 perfect tiling, no bounds checking needed!
 5. Accumulate results across tiles with proper synchronization
 
@@ -261,9 +260,8 @@ it works:
 4. **Computation within tile**
 
    ```mojo
-   if tiled_row < size and tiled_col < size:
-       comptime for k in range(min(Int(TPB), Int(size - tile * TPB))):
-           acc += a_shared[local_row, k] * b_shared[k, local_col]
+   for k in range(min(TPB, size - tile * TPB)):
+       acc += a_shared[local_row, k] * b_shared[k, local_col]
    ```
 
    - Avoids shared memory bank conflicts:
@@ -297,6 +295,15 @@ it works:
    2. Tile computation
    ```
 
+Key performance features:
+
+- Processes \\((9 \times 9)\\) matrix using \\((3 \times 3)\\) tiles (perfect
+  fit!)
+- Uses shared memory for fast tile access
+- Minimizes global memory transactions with coalesced memory access
+- Optimized shared memory layout and access pattern to avoid shared memory bank
+  conflicts
+
 6. **Result writing**:
 
    ```mojo
@@ -309,15 +316,6 @@ it works:
    - Direct assignment to output matrix
    - All threads write valid results
 
-Key performance features:
-
-- Processes \\((9 \times 9)\\) matrix using \\((3 \times 3)\\) tiles (perfect
-  fit!)
-- Uses shared memory for fast tile access
-- Minimizes global memory transactions with coalesced memory access
-- Optimized shared memory layout and access pattern to avoid shared memory bank
-  conflicts
-
 ### Key optimizations
 
 1. **Layout optimization**:
@@ -329,7 +327,7 @@ Key performance features:
    - Efficient shared memory usage
 
 3. **Computation**:
-   - Register-based accumulation i.e. `var acc: output.ElementType = 0`
+   - Register-based accumulation i.e. `var acc: output.element_type = 0`
    - Compile-time loop unrolling via `comptime for`
 
 This implementation achieves high performance through:
@@ -363,8 +361,8 @@ B using coalesced loading for both matrices.**
 
 - **Matrix operation**: Standard \\(A \times B\\) multiplication (not \\(A
   \times B^T\\))
-- **Loading pattern**: Both matrices use `Layout.row_major(1, TPB)` for
-  coalesced access
+- **Loading pattern**: Both matrices use `row_major[1, TPB]()` for coalesced
+  access
 - **Computation**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 - **Data layout**: No transposition during loading - both matrices loaded in
   same orientation
@@ -381,14 +379,14 @@ all boundary checks:
 1. **TileTensor tile API**
 
    ```mojo
-   var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-   var a_tile = a.tile[TPB, TPB](block_idx.y, idx)
-   var b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+   out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
+   a_tile = a.tile[TPB, TPB](block_idx.y, idx)
+   b_tile = b.tile[TPB, TPB](idx, block_idx.x)
    ```
 
    This directly expresses "get the tile at position (block_idx.y, block_idx.x)"
    without manual coordinate calculation. See the
-   [documentation](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile)
+   [documentation](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile)
    for more details.
 
 2. **Asynchronous memory operations**
@@ -398,55 +396,45 @@ all boundary checks:
       thread_layout = load_a_layout,
       num_threads = NUM_THREADS,
       block_dim_count = BLOCK_DIM_COUNT
-   ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
+   ](a_shared,a_tile)
    copy_dram_to_sram_async[
       thread_layout = load_b_layout,
       num_threads = NUM_THREADS,
       block_dim_count = BLOCK_DIM_COUNT
-   ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+   ](b_shared, b_tile)
    async_copy_wait_all()
    ```
 
    These operations:
-   - Issue the copy through the GPU's asynchronous copy path (`cp.async` on
-     NVIDIA), which moves global memory straight into shared memory without
-     staging through registers, via
-     [copy_dram_to_sram_async](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
+   - Use dedicated copy engines that bypass registers and enable compute-memory
+     overlap via
+     [copy_dram_to_sram_async](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
    - Use specialized thread layouts for optimal memory access patterns
    - Eliminate the need for manual memory initialization
    - **Important**:
      - Standard GPU loads are already asynchronous; these provide better
        resource utilization and register bypass
-     - `copy_dram_to_sram_async` assumes a 1D thread block
-       (`block_dim.y == block_dim.z == 1`) holding exactly `thread_layout.size()`
-       threads. Neither assumption holds here, so both defaults are overridden:
+     - `copy_dram_to_sram_async` assumes that you are using a 1d thread block
+       (`block_dim.y == block_dim.z == 1`) and all the threads from a thread
+       block participate in the copy unless you specify otherwise. This
+       behaviour in overridden by specifying:
        - `block_dim_count`: the dimensionality of the thread block (`2` for the
-         2D thread block `THREADS_PER_BLOCK_TILED = (TPB, TPB)`), so the copy
-         derives each thread's index as
-         `thread_idx.y * block_dim.x + thread_idx.x` instead of `thread_idx.x`
+         2d thread block `THREADS_PER_BLOCK_TILED = (TPB, TPB)`)
        - `num_threads`: the number of threads in the thread block
-         (`TPB * TPB == 9`). The copy itself is carried out by the
-         `thread_layout.size() == TPB` threads the layout describes; telling the
-         function how large the block really is lets it turn the remaining
-         threads off instead of letting them run off the end of the layout
+         (`TPB*TPB == 9`)
 
 3. **Optimized memory access layouts**
 
    ```mojo
-   comptime load_a_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
-   comptime load_b_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
+   comptime load_a_layout = row_major[1, TPB]()    # Coalesced loading
+   comptime load_b_layout = row_major[1, TPB]()    # Coalesced loading
    # Note: Both matrices use the same layout for standard A × B multiplication
    ```
 
-   Thread layouts are IntTuple `Layout` values built with the function form
-   `Layout.row_major(1, TPB)`, which the solution imports as `IntTupleLayout` to
-   keep them distinct from the `row_major[...]()` tensor layouts used for the
-   tensors themselves.
-
    **Memory Access Analysis for Current Implementation:**
 
-   Both matrices use `Layout.row_major(1, TPB)` for coalesced loading from
-   global memory:
+   Both matrices use `row_major[1, TPB]()` for coalesced loading from global
+   memory:
    - `load_a_layout`: Threads cooperate to load consecutive elements from matrix
      A rows
    - `load_b_layout`: Threads cooperate to load consecutive elements from matrix
@@ -471,12 +459,12 @@ all boundary checks:
    - Matrix A tile: threads load A[block_row, k], A[block_row, k+1], A[block_row, k+2]... (consecutive)
    - Matrix B tile: threads load B[k, block_col], B[k, block_col+1], B[k, block_col+2]... (consecutive)
 
-   Both patterns are coalesced with Layout.row_major(1, TPB)
+   Both patterns are coalesced with row_major[1, TPB]()
    ```
 
    **Three separate memory concerns:**
-   1. **Global-to-shared coalescing**: `Layout.row_major(1, TPB)` ensures
-      coalesced global memory access
+   1. **Global-to-shared coalescing**: `row_major[1, TPB]()` ensures coalesced
+      global memory access
    2. **Shared memory computation**:
       `a_shared[local_row, k] * b_shared[k, local_col]` avoids bank conflicts
    3. **Matrix operation**: The computation pattern determines this is A × B,
@@ -513,8 +501,7 @@ providing cleaner abstractions:
    patterns
 3. **Compute-memory overlap**: Potential overlap through asynchronous memory
    operations
-4. **Shared memory efficiency**: Tiles land in shared memory without a round
-   trip through registers
+4. **Shared memory efficiency**: No redundant initialization of shared memory
 5. **Register pressure**: Uses accumulation registers for optimal compute
    throughput
 
@@ -528,8 +515,8 @@ control.
 | Feature            | Manual Tiling                                     | Idiomatic Tiling                                  |
 |--------------------|---------------------------------------------------|---------------------------------------------------|
 | Memory access      | Direct indexing with bounds checks                | TileTensor tile API                               |
-| Tile loading       | Explicit element-by-element copying               | Bulk transfer via `copy_dram_to_sram_async`       |
-| Shared memory      | Written element by element under bounds guards    | Populated by the async copy                       |
+| Tile loading       | Explicit element-by-element copying               | Dedicated copy engine bulk transfers              |
+| Shared memory      | Manual initialization (defensive)                 | Managed by copy functions                         |
 | Code complexity    | More verbose with explicit indexing               | More concise with higher-level APIs               |
 | Bounds checking    | Multiple checks during loading and computing      | Single defensive check at final write             |
 | Matrix orientation | Both A and B in same orientation (standard A × B) | Both A and B in same orientation (standard A × B) |
@@ -545,7 +532,7 @@ purely educational to show what's possible with the layout system.
 
 **Current implementation recap:**
 
-- Uses `Layout.row_major(1, TPB)` for both matrices
+- Uses `row_major[1, TPB]()` for both matrices
 - Performs standard A × B multiplication
 - No data transposition during copy
 
@@ -555,23 +542,12 @@ While this puzzle uses standard coalesced loading for both matrices, the layout
 system's flexibility enables powerful optimizations in other scenarios:
 
 ```mojo
-# Example: reading a pre-transposed B with one thread distribution and writing
-# shared memory with another
+# Example: Loading pre-transposed matrix B^T to compute A × B
 # (This is NOT what the current implementation does)
-comptime load_b_layout = IntTupleLayout.row_major(TPB, 1)   # Threads walk a column
-comptime store_b_layout = IntTupleLayout.row_major(1, TPB)  # Threads walk a row
-copy_dram_to_sram_async[
-    src_thread_layout=load_b_layout,
-    dst_thread_layout=store_b_layout,
-    num_threads=NUM_THREADS,
-    block_dim_count=BLOCK_DIM_COUNT,
-](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+comptime load_b_layout = row_major[TPB, 1]()   # Load B^T with coalesced access
+comptime store_b_layout = row_major[1, TPB]()  # Store as B in shared memory
+copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 ```
-
-Note that the two thread layouts are IntTuple `Layout` values, the same form as
-`load_a_layout` above, and that `copy_dram_to_sram_async` takes `LayoutTensor`
-arguments. The `src_thread_layout`/`dst_thread_layout` pair must describe the
-same number of threads.
 
 **Use cases for transposed loading (not used in this puzzle):**
 
@@ -586,7 +562,7 @@ same number of threads.
 
 **Key distinction:**
 
-- **Current implementation**: Both matrices use `Layout.row_major(1, TPB)` for
+- **Current implementation**: Both matrices use `row_major[1, TPB]()` for
   standard \\(A \times B\\) multiplication
 - **Transposed loading example**: Would use different layouts to handle
   pre-transposed data or different matrix operations
@@ -601,16 +577,16 @@ while maintaining high-level abstractions for common cases.
 **What the idiomatic tiled implementation actually does:**
 
 1. **Matrix Operation**: Standard A × B multiplication
-2. **Memory Loading**: Both matrices use `Layout.row_major(1, TPB)` for
-   coalesced access
+2. **Memory Loading**: Both matrices use `row_major[1, TPB]()` for coalesced
+   access
 3. **Computation Pattern**:
    `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 4. **Data Layout**: No transposition during loading
 
 **Why this is optimal:**
 
-- **Coalesced global memory access**: `Layout.row_major(1, TPB)` ensures
-  efficient loading
+- **Coalesced global memory access**: `row_major[1, TPB]()` ensures efficient
+  loading
 - **Bank conflict avoidance**: Shared memory access pattern avoids conflicts
 - **Standard algorithm**: Implements the most common matrix multiplication
   pattern
