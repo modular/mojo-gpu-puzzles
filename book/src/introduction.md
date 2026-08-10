@@ -5,7 +5,7 @@
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
+  <a href="https://mojolang.org/docs/manual/" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
@@ -34,9 +34,10 @@
 > _"For the things we have to learn before we can do them, we learn by doing
 > them."_ Aristotle (Nicomachean Ethics)
 
-Welcome to our hands-on guide to GPU programming using
-[Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that
-combines Python syntax with systems-level performance.
+Welcome to our hands-on guide to GPU programming with
+[Mojo](https://mojolang.org/docs/manual/) 🔥, the programming language that
+combines Python syntax with systems-level performance, and the MAX accelerator
+library, which provides most of the GPU APIs these puzzles use.
 
 Start with this overview video, or continue reading below.
 
@@ -207,6 +208,7 @@ versatility to tackle any GPU programming challenge.
 | Advanced memory operations         | ✅ **Available** | Part IX (28-29)  |
 | Performance analysis               | ✅ **Available** | Part X (30-32)   |
 | Modern GPU features                | ✅ **Available** | Part XI (33-34)  |
+| Memory alignment                   | ✅ **Available** | Part XII (35)    |
 
 ### Detailed learning objectives
 
@@ -285,6 +287,12 @@ versatility to tackle any GPU programming challenge.
 
 - Program tensor cores for AI workloads
 - Learn cluster programming in modern GPUs
+
+**Part XII: Memory alignment (Puzzle 35) ✅**
+
+- Understand why alignment governs memory throughput
+- Write aligned vectorized loads and stores
+- Benchmark and profile the difference alignment makes
 
 The book uniquely challenges the status quo approach by first building
 understanding with low-level memory manipulation, then gradually transitioning

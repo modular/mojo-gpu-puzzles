@@ -133,9 +133,9 @@ The solution is:
 This single line does several important things:
 
 1. Calls
-   [enqueue_function](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function)
+   [enqueue_function](https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
    on the GPU context (`gpu_ctx` is of type
-   [DeviceContext](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/))
+   [DeviceContext](https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))
    to schedule our kernel execution
 2. Passes the necessary layout and size information as **compile-time**
    parameters
@@ -168,7 +168,7 @@ Let's break down how this works in the larger context:
 3. **Custom op registration**:
    - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
      Graph. See
-     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
+     [@extensibility.register](https://mojolang.org/docs/reference/decorators/extensibility-register/)
    - The `execute` method parameters define the interface (inputs, outputs,
      context)
    - Input/output tensors are converted to TileTensors for use in our kernel

@@ -1,7 +1,7 @@
 # Multi-Stage Pipeline Coordination
 
 **Important note**: Puzzle 29 is currently NVIDIA-only — the
-[`mbarrier` APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) used in
+[`mbarrier` APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/) used in
 the [companion stencil puzzle](memory_barrier.md) require NVIDIA hardware,
 and the `pixi` task pulls them into the same compilation unit.
 

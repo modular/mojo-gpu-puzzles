@@ -6,7 +6,7 @@ finite differences, moving averages, and neighbor-based computations without
 shared memory or explicit synchronization.
 
 **Key insight:** _The
-[shuffle_down()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)
+[shuffle_down()](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/)
 operation leverages SIMT execution to let each lane access data from its
 neighbors within the same warp, enabling efficient stencil patterns and sliding
 window operations._

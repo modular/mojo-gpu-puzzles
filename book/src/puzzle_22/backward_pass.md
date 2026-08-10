@@ -76,7 +76,7 @@ The fused backward kernel combines LayerNorm and Linear backward operations into
 a single GPU kernel. This is a challenging implementation that requires careful
 handling of:
 
-- [Atomic operations](https://docs.modular.com/mojo/std/os/atomic/Atomic/) for
+- [Atomic operations](https://mojolang.org/docs/std/atomic/atomic/Atomic/) for
   gradient accumulation
 - Numerical stability in gradient computations
 - Memory access patterns for efficient GPU utilization

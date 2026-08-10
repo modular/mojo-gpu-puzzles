@@ -6,7 +6,7 @@ primitive enables efficient parallel reductions, sorting networks, and advanced
 coordination algorithms without shared memory or explicit synchronization.
 
 **Key insight:** _The
-[shuffle_xor()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)
+[shuffle_xor()](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/)
 operation leverages SIMT execution to create XOR-based communication trees,
 enabling efficient butterfly networks and parallel algorithms that scale with
 \\(O(\\log n)\\) complexity relative to warp size._
