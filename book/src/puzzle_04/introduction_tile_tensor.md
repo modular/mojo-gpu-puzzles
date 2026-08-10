@@ -2,7 +2,7 @@
 
 Let's take a quick break from solving puzzles to preview a powerful abstraction
 that will make our GPU programming journey more enjoyable: 🥁... the
-**[TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/)**.
+**[TileTensor](https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/)**.
 
 > 💡 _This is a motivational overview of TileTensor's capabilities. Don't worry
 > about understanding everything now - we'll explore each feature in depth as we
@@ -70,11 +70,11 @@ tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 ```
 
-To learn more about `Layout` and `TileTensor`, see these guides from the
-[Mojo manual](https://docs.modular.com/mojo/manual/):
+To learn more about `Layout` and `TileTensor`, see these guides in the
+[MAX documentation](https://docs.modular.com/tile-tensor/):
 
-- [Introduction to layouts](https://docs.modular.com/mojo/manual/layout/layouts)
-- [Using TileTensor](https://docs.modular.com/mojo/manual/layout/tensors)
+- [TileTensor layouts](https://docs.modular.com/tile-tensor/layouts/)
+- [Using TileTensor](https://docs.modular.com/tile-tensor/tensors/)
 
 ## Quick example
 

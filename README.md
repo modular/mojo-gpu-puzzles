@@ -54,7 +54,7 @@ Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
 ## Why Mojo🔥
 
-[Mojo](https://docs.modular.com/mojo/manual/) represents a revolutionary
+[Mojo](https://mojolang.org/docs/manual/) represents a revolutionary
 approach to GPU programming, making massive parallelism accessible while
 maintaining systems-level performance:
 
@@ -78,9 +78,16 @@ examples.
 2. Clone this repository
 
    ```bash
-   git clone https://github.com/modular/mojo-gpu-puzzles
+   git clone --branch stable https://github.com/modular/mojo-gpu-puzzles
    cd mojo-gpu-puzzles
    ```
+
+   The `stable` branch matches
+   [puzzles.modular.com](https://puzzles.modular.com) and is pinned to the
+   current MAX release. This repository's default branch, `main`, tracks
+   nightly builds, so its puzzle code may not compile against the release
+   toolchain. Clone `main` only if you intend to contribute a change (see
+   [Development](#development)).
 
 3. Install a package manager to run the Mojo🔥 programs:
 
@@ -107,6 +114,10 @@ examples.
    ```
 
 ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+
+> **Note**: This path is currently broken. The install fails because its
+> dependencies pin Mojo below version 1.0, which no longer resolves against the
+> release that the puzzles target. Use Option 1 (`pixi`) instead.
 
    **Install:**
 

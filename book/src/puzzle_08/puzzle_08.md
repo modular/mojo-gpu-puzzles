@@ -39,7 +39,7 @@ maintaining the performance benefits of block-local storage.
 > **Warning**: Each block can only have a _constant_ amount of shared memory
 > that threads in that block can read and write to. This needs to be a literal
 > python constant, not a variable. After writing to shared memory you need to
-> call [barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) to
+> call [barrier](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) to
 > ensure that threads do not cross.
 
 **Educational Note**: In this specific puzzle, the `barrier()` isn't strictly

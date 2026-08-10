@@ -46,7 +46,7 @@ these kernels.
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a>
 
 The key to this puzzle is understanding that
-[barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) only
+[barrier](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) only
 synchronizes threads within a block, not across blocks. For cross-block
 synchronization, you need to enqueue multiple kernels that run sequentially on
 the device:

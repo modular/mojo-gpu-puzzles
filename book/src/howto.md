@@ -89,7 +89,10 @@ For WSL you can install VSCode as your Editor
 - Then install the Remote - WSL extension.
 
 > [!NOTE]
-> All puzzles 1-15 are working on WSL and Linux.
+> All 35 puzzles work on WSL and Linux with a supported NVIDIA GPU. Some
+> puzzles require a minimum compute capability, and the debugging and profiling
+> puzzles require the corresponding NVIDIA tools. See the
+> [GPU support matrix](#gpu-support-matrix).
 
 ### Linux native with NVIDIA
 
@@ -137,7 +140,9 @@ code --version
 ```
 
 > [!NOTE]
-> All puzzles 1-15 are working on Linux.
+> All 35 puzzles work on Linux with a supported NVIDIA GPU. Some puzzles
+> require a minimum compute capability; puzzle 34 needs SM90 (Hopper) or
+> newer. See the [GPU support matrix](#gpu-support-matrix).
 
 ### macOS Apple Silicon
 
@@ -157,8 +162,10 @@ xcodebuild -downloadComponent MetalToolchain
 and then `xcrun -sdk macosx metal`, should give you the `no input files error`.
 
 > [!NOTE]
-> Currently the puzzles 1-8 and 11-15 are working on macOS. We're working to
-> enable more. Please stay tuned!
+> Puzzles 1-8, 11-19, 23-28, and 35 work on macOS (24 of the 35). The
+> remainder need NVIDIA-specific tooling, hardware, or PyTorch GPU support.
+> See the [GPU support matrix](#gpu-support-matrix). We're working to enable
+> more. Please stay tuned!
 
 ## Programming knowledge
 
@@ -166,10 +173,10 @@ Basic knowledge of:
 
 - Programming fundamentals (variables, loops, conditionals, functions)
 - Parallel computing concepts (threads, synchronization, race conditions)
-- Basic familiarity with [Mojo](https://docs.modular.com/mojo/manual/) (language
+- Basic familiarity with [Mojo](https://mojolang.org/docs/manual/) (language
   basics parts and
-  [intro to pointers](https://docs.modular.com/mojo/manual/pointers/) section)
-- [GPU programming fundamentals](https://docs.modular.com/mojo/manual/gpu/fundamentals)
+  [intro to pointers](https://mojolang.org/docs/manual/pointers/) section)
+- [GPU programming fundamentals](https://docs.modular.com/gpu/fundamentals/)
   is helpful!
 
 No prior GPU programming experience is necessary! We'll build that knowledge
@@ -183,10 +190,18 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
    and navigate to the repository:
 
     ```bash
-    # Clone the repository
-    git clone https://github.com/modular/mojo-gpu-puzzles
+    # Clone the stable branch, which matches this book
+    git clone --branch stable https://github.com/modular/mojo-gpu-puzzles
     cd mojo-gpu-puzzles
     ```
+
+    The `stable` branch is what
+    [puzzles.modular.com](https://puzzles.modular.com) is built from, and it
+    is pinned to the current MAX release. The repository's default branch,
+    `main`, tracks nightly builds instead, so cloning it gives you puzzle code
+    that may not compile against the release toolchain these instructions
+    install. If you want to contribute a change, see
+    [Development](#development).
 
 2. Install a package manager to run the Mojo🔥 programs:
 
@@ -214,6 +229,11 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
      ```
 
 #### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+
+> **Note**: This path is currently broken. The install fails because its
+> dependencies pin Mojo below version 1.0, which no longer resolves against the
+> release that the puzzles target. Use Option 1 (`pixi`) instead. The same
+> problem affects every `uv run poe ...` command in this book.
 
     **Install:**
 
@@ -301,11 +321,15 @@ uv run poe p01
 
 ### Project structure
 
-- **[`problems/`](https://github.com/modular/mojo-gpu-puzzles/tree/main/problems)**:
+- **[`problems/`](https://github.com/modular/mojo-gpu-puzzles/tree/stable/problems)**:
   Where you implement your solutions (this is where you work!)
-- **[`solutions/`](https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions)**:
+- **[`solutions/`](https://github.com/modular/mojo-gpu-puzzles/tree/stable/solutions)**:
   Reference solutions for comparison and learning that we use throughout the
   book
+
+These links point at the `stable` branch, matching the clone instructions
+above. Browsing `main` instead shows nightly code that can differ from what
+this book describes.
 
 ### Workflow
 
@@ -421,6 +445,8 @@ puzzles require different GPU features and vendor-specific tools.
 | **Part XI: Modern GPU Features** |            |         |           |                                      |
 | 33 - Tensor Cores                | ✅         | ❌      | ❌        | NVIDIA Tensor Core specific          |
 | 34 - Cluster                     | ✅         | ❌      | ❌        | NVIDIA cluster programming           |
+| **Part XII: Memory Alignment**   |            |         |           |                                      |
+| 35 - Memory Alignment            | ✅         | ✅      | ✅        | Aligned vectorized load/store        |
 
 ### Legend
 
@@ -431,23 +457,26 @@ puzzles require different GPU features and vendor-specific tools.
 
 **NVIDIA GPUs (Complete Support)**
 
-- All puzzles (1-34) work on NVIDIA GPUs with CUDA support
+- All puzzles (1-35) work on NVIDIA GPUs with CUDA support
 - Requires CUDA toolkit and compatible drivers
 - Best learning experience with access to all features
 
 **AMD GPUs (Extensive Support)**
 
-- Most puzzles (1-8, 11-29) work with ROCm support
-- Missing only: Debugging tools (9-10), profiling (30-32), Tensor Cores (33-34)
+- Most puzzles (1-8, 11-28, 35) work with ROCm support, 27 of the 35
+- Missing only: Debugging tools (9-10), barriers (29), profiling (30-32),
+  Tensor Cores (33), cluster programming (34)
 - Excellent for learning GPU programming including advanced algorithms and
   memory patterns
 
-**Apple GPUs (Basic Support)**
+**Apple GPUs (Substantial Support)**
 
-- A selection of fundamental (1-8, 11-18) and advanced (23-27) puzzles are
-  supported
-- Missing: All advanced features, debugging, profiling tools
-- Suitable for learning basic GPU programming patterns
+- Fundamental (1-8, 11-19), advanced (23-28), and memory alignment (35)
+  puzzles are supported, 24 of the 35
+- Missing: Debugging tools (9-10), PyTorch integration (20-22), barriers (29),
+  profiling (30-32), Tensor Cores (33), cluster programming (34)
+- Covers everything up to and including warp and block operations and
+  asynchronous memory patterns
 
 > **Future Support**: We're actively working to expand tooling and platform
 > support for AMD and Apple GPUs. Missing features like debugging tools,
@@ -510,21 +539,23 @@ Kaggle offers more generous free GPU access:
 - **Limited debugging tools**: NVIDIA profiling and debugging tools (puzzles
   9-10, 30-32) unavailable
 - **Mojo installation complexity**: Requires manual setup of Mojo environment
-- **No cluster programming support**: Advanced puzzles (33-34) won't work
+- **Compute capability limits**: T4 is compute capability 7.5, so puzzles
+  requiring 8.0 (16, 19, 22, 28, 29, 33) and 9.0 (34) won't run
 
 **Recommended for:** Extended learning sessions on fundamental GPU programming
-(puzzles 1-16).
+(puzzles 1-15).
 
 ### Recommendations
 
-- **Complete Learning Path**: Use NVIDIA GPU for full curriculum access (all 34
+- **Complete Learning Path**: Use NVIDIA GPU for full curriculum access (all 35
   puzzles)
-- **Comprehensive Learning**: AMD GPUs work well for most content (27 of 34
+- **Comprehensive Learning**: AMD GPUs work well for most content (27 of 35
   puzzles)
-- **Basic Understanding**: Apple GPUs suitable for fundamental concepts (13 of
-  34 puzzles)
+- **Broad Coverage**: Apple GPUs cover fundamental through advanced concepts
+  (24 of 35 puzzles)
 - **Free Platform Learning**: Google Colab/Kaggle suitable for basic to
-  intermediate concepts (puzzles 1-16)
+  intermediate concepts (puzzles 1-15; their T4 GPUs are below the compute
+  capability 8.0 that puzzle 16 onward can require)
 - **Debugging & Profiling**: NVIDIA GPU required for debugging tools and
   performance analysis
 - **Modern GPU Features**: NVIDIA GPU required for Tensor Cores and cluster
@@ -532,8 +563,11 @@ Kaggle offers more generous free GPU access:
 
 ## Development
 
-Please see details in the
-[README](https://github.com/modular/mojo-gpu-puzzles#development).
+This section is for contributing changes to the puzzles themselves, not for
+solving them. Contributions target the `main` branch, which tracks nightly
+builds, rather than the `stable` branch you cloned to work through the book.
+For the build, test, and pull request workflow, see
+[Development in the README](https://github.com/modular/mojo-gpu-puzzles#development).
 
 ## Join the community
 

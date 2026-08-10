@@ -31,8 +31,15 @@ NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p22" "p28" "p29" "p33")
 # >= 9.0 (Hopper): SM90+ cluster programming (H100+)
 NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 
+# These two lists are mirrored by the support matrix in book/src/howto.md.
+# Update both together, and prefer the APIs a puzzle imports as the deciding
+# evidence: a puzzle that calls into an NVIDIA-only intrinsic fails to compile
+# elsewhere rather than degrading, so it belongs in the list regardless of
+# whether it has been run on that hardware.
+
 # Puzzles that are not supported on AMD GPUs
-AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p30" "p31" "p32" "p33" "p34")
+# p29 uses mbarrier_* from max.gpu.sync, which is NVIDIA-only (sm_80+).
+AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p29" "p30" "p31" "p32" "p33" "p34")
 
 # Puzzles that are not supported on Apple GPUs
 APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p20" "p21" "p22" "p29" "p30" "p31" "p32" "p33" "p34")
