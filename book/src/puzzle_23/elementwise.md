@@ -62,7 +62,7 @@ one scalar at a time.
 The `elementwise` function expects a nested function with this exact signature:
 
 ```mojo
-@parameter
+@__parameter
 @always_inline
 def your_function[
     simd_width: Int, alignment: Int = align_of[dtype]()
@@ -72,7 +72,7 @@ def your_function[
 
 **Why each part matters:**
 
-- `@parameter`: Enables compile-time specialization for optimal GPU code
+- `@__parameter`: Enables compile-time specialization for optimal GPU code
   generation
 - `@always_inline`: Forces inlining to eliminate function call overhead in GPU
   kernels
@@ -250,7 +250,7 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 ### 2. **Deep dive: nested function architecture**
 
 ```mojo
-@parameter
+@__parameter
 @always_inline
 def add[
     simd_width: Int, alignment: Int = align_of[dtype]()
@@ -259,7 +259,7 @@ def add[
 
 **Parameter Analysis:**
 
-- **`@parameter`**: This decorator provides **compile-time specialization**. The
+- **`@__parameter`**: This decorator provides **compile-time specialization**. The
   function is generated separately for each unique `simd_width`, allowing
   aggressive optimization.
 - **`@always_inline`**: Critical for GPU performance - eliminates function call

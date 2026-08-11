@@ -275,7 +275,7 @@ warp_sum() 하드웨어 연산:
 `compute_dot_product` 함수를 **10줄 이내**로 완성해야 합니다:
 
 ```mojo
-@parameter
+@__parameter
 @always_inline
 def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
     idx = indices[0]
