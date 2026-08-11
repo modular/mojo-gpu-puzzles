@@ -200,10 +200,10 @@ def balanced_kernel(
 # ANCHOR_END: balanced_kernel
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def minimal_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()
@@ -237,12 +237,12 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom[minimal_workflow](b, bench_ctx)
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_sophisticated_parameterized[
     test_size: Int
 ](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def sophisticated_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()
@@ -276,10 +276,10 @@ def benchmark_sophisticated_parameterized[
     bencher_iter_custom[sophisticated_workflow](b, bench_ctx)
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def balanced_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()

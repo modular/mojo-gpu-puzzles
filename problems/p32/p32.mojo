@@ -113,10 +113,10 @@ def two_way_conflict_kernel(
 # ANCHOR_END: two_way_conflict_kernel
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()
@@ -150,10 +150,10 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom[kernel_workflow](b, bench_ctx)
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()

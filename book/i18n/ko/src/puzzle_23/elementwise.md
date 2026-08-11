@@ -51,7 +51,7 @@ _[elementwise](https://docs.modular.com/mojo/std/algorithm/functional/elementwis
 `elementwise` 함수는 다음과 같은 정확한 시그니처를 가진 중첩 함수를 기대합니다:
 
 ```mojo
-@parameter
+@__parameter
 @always_inline
 def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
     # 구현 코드
@@ -59,7 +59,7 @@ def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturin
 
 **각 부분이 중요한 이유:**
 
-- `@parameter`: 최적의 GPU 코드 생성을 위한 컴파일 타임 특수화를 활성화합니다
+- `@__parameter`: 최적의 GPU 코드 생성을 위한 컴파일 타임 특수화를 활성화합니다
 - `@always_inline`: GPU 커널에서 함수 호출 오버헤드를 제거하기 위해 인라이닝을
   강제합니다
 - `capturing`: 외부 스코프의 변수(입출력 텐서)에 접근할 수 있게 합니다
@@ -233,14 +233,14 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 ### 2. **심층 분석: 중첩 함수 아키텍처**
 
 ```mojo
-@parameter
+@__parameter
 @always_inline
 def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
 ```
 
 **매개변수 분석:**
 
-- **`@parameter`**: 이 데코레이터는 **컴파일 타임 특수화**를 제공합니다. 각
+- **`@__parameter`**: 이 데코레이터는 **컴파일 타임 특수화**를 제공합니다. 각
   고유한 `simd_width`와 `rank`에 대해 함수가 별도로 생성되어 적극적인 최적화가
   가능합니다.
 - **`@always_inline`**: GPU 성능에 매우 중요합니다 - 코드를 커널에 직접 내장하여

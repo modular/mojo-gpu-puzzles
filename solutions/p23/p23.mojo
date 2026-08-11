@@ -45,7 +45,7 @@ def elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @parameter
+    @__parameter
     @always_inline
     def add[
         simd_width: Int, alignment: Int = align_of[dtype]()
@@ -86,7 +86,7 @@ def tiled_elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @parameter
+    @__parameter
     @always_inline
     def process_tiles[
         simd_width: Int, alignment: Int = align_of[dtype]()
@@ -128,7 +128,7 @@ def manual_vectorized_tiled_elementwise_add[
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
 
-    @parameter
+    @__parameter
     @always_inline
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
@@ -173,7 +173,7 @@ def vectorize_within_tiles_elementwise_add[
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
-    @parameter
+    @__parameter
     @always_inline
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
@@ -209,7 +209,7 @@ def vectorize_within_tiles_elementwise_add[
 # ANCHOR_END: vectorize_within_tiles_elementwise_add_solution
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_elementwise_parameterized[
     test_size: Int, tile_size: Int
@@ -239,7 +239,7 @@ def benchmark_elementwise_parameterized[
         out, bench_layout
     )
 
-    @parameter
+    @__parameter
     @always_inline
     def elementwise_workflow(ctx: DeviceContext) raises:
         elementwise_add[BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size](
@@ -251,7 +251,7 @@ def benchmark_elementwise_parameterized[
     bench_ctx.synchronize()
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_tiled_parameterized[
     test_size: Int, tile_size: Int
@@ -281,7 +281,7 @@ def benchmark_tiled_parameterized[
         out, bench_layout
     )
 
-    @parameter
+    @__parameter
     @always_inline
     def tiled_workflow(ctx: DeviceContext) raises:
         tiled_elementwise_add[
@@ -293,7 +293,7 @@ def benchmark_tiled_parameterized[
     bench_ctx.synchronize()
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_manual_vectorized_parameterized[
     test_size: Int, tile_size: Int
@@ -323,7 +323,7 @@ def benchmark_manual_vectorized_parameterized[
         out, bench_layout
     )
 
-    @parameter
+    @__parameter
     @always_inline
     def manual_vectorized_workflow(ctx: DeviceContext) raises:
         manual_vectorized_tiled_elementwise_add[
@@ -335,7 +335,7 @@ def benchmark_manual_vectorized_parameterized[
     bench_ctx.synchronize()
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_vectorized_parameterized[
     test_size: Int, tile_size: Int
@@ -365,7 +365,7 @@ def benchmark_vectorized_parameterized[
         out, bench_layout
     )
 
-    @parameter
+    @__parameter
     @always_inline
     def vectorized_workflow(ctx: DeviceContext) raises:
         vectorize_within_tiles_elementwise_add[

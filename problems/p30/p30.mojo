@@ -87,10 +87,10 @@ def kernel3(
 # ANCHOR_END: kernel3
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def kernel1_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()
@@ -126,10 +126,10 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom[kernel1_workflow](b, bench_ctx)
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def kernel2_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()
@@ -165,10 +165,10 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom[kernel2_workflow](b, bench_ctx)
 
 
-@parameter
+@__parameter
 @always_inline
 def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
-    @parameter
+    @__parameter
     @always_inline
     def kernel3_workflow(ctx: DeviceContext) raises:
         comptime layout = row_major[test_size]()
