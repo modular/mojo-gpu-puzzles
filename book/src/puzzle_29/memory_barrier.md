@@ -1,14 +1,14 @@
 # Double-Buffered Stencil Computation
 
 **Important note**: This puzzle requires NVIDIA GPU hardware. The
-[`mbarrier` APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) are
+[`mbarrier` APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/) are
 NVIDIA-only.
 
 > **🔬 Fine-Grained Synchronization: mbarrier vs barrier()**
 >
 > This puzzle introduces **explicit memory barrier APIs** that provide
 > significantly more control than the basic
-> [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
+> [`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
 > function used in previous puzzles.
 >
 > **Basic `barrier()` limitations:**
@@ -19,12 +19,12 @@ NVIDIA-only.
 > - **Coarse-grained**: Limited control over memory ordering and timing
 > - **Static coordination**: Cannot adapt to different thread participation patterns
 >
-> **Advanced [`mbarrier APIs`](https://docs.modular.com/mojo/std/gpu/sync/sync/)
+> **Advanced [`mbarrier APIs`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/)
 > capabilities:**
 >
-> - **Precise control**: [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init) sets up reusable barrier objects with specific thread counts
-> - **State tracking**: [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive) signals individual thread completion and maintains arrival count
-> - **Flexible waiting**: [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait) allows threads to wait for specific completion states
+> - **Precise control**: [`mbarrier_init()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init) sets up reusable barrier objects with specific thread counts
+> - **State tracking**: [`mbarrier_arrive()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive) signals individual thread completion and maintains arrival count
+> - **Flexible waiting**: [`mbarrier_test_wait()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait) allows threads to wait for specific completion states
 > - **Reusable objects**: Same barrier can be reinitialized and reused across multiple iterations
 > - **Multiple barriers**: Different barrier objects for different synchronization points (initialization, iteration, finalization)
 > - **Hardware optimization**: Maps directly to GPU hardware synchronization primitives for better performance
@@ -112,7 +112,7 @@ In this puzzle, you'll learn about:
 
 - Implementing double-buffering patterns for iterative algorithms
 - Coordinating explicit memory barriers using
-  [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/)
+  [mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/)
 - Managing alternating read/write buffer roles across iterations
 
 The key insight is understanding how to safely coordinate buffer swapping in
@@ -129,10 +129,10 @@ depends on the complete results of the previous iteration.
 
 - **Previous puzzles ([P8](../puzzle_08/puzzle_08.md),
   [P12](../puzzle_12/puzzle_12.md), [P15](../puzzle_15/puzzle_15.md)):** Simple
-  [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) calls
+  [`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) calls
   for single-pass algorithms
 - **This puzzle:** Explicit
-  [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) for precise
+  [mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/) for precise
   control over buffer swap timing
 
 **Memory barrier specialization:** Unlike basic thread synchronization, this
@@ -169,7 +169,7 @@ when memory operations complete, essential for complex memory access patterns.
 
 - **Buffer setup**: Initialize buffer_A with input data, buffer_B with zeros
 - **Barrier initialization**: Set up
-  [mbarrier objects](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
+  [mbarrier objects](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init)
   for synchronization points
 - **Thread coordination**: All threads participate in initialization
 
@@ -183,9 +183,9 @@ when memory operations complete, essential for complex memory access patterns.
 
 **Memory barrier coordination:**
 
-- **[mbarrier_arrive()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)**:
+- **[mbarrier_arrive()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)**:
   Each thread signals completion of write phase
-- **[mbarrier_test_wait()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)**:
+- **[mbarrier_test_wait()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)**:
   All threads wait until everyone completes writes
 - **Buffer swap safety**: Prevents reading from buffer while others still
   writing
@@ -234,17 +234,17 @@ when memory operations complete, essential for complex memory access patterns.
 ### **Memory barrier coordination**
 
 - Call
-  [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
+  [`mbarrier_arrive()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)
   after each thread completes its write operations
 - Follow it with a polling loop on
-  [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait):
+  [`mbarrier_test_wait()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait):
   the API is a **non-blocking** check, so call it inside
   `while not mbarrier_test_wait(...): pass` to actually wait for every thread
   to arrive before the buffer swap
 - Reinitialize barriers between iterations for reuse:
-  [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
+  [`mbarrier_init()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init)
 - Only thread 0 should reinitialize barriers to avoid race conditions
-- Insert a [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
+- Insert a [`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
   after each `mbarrier_init` call (initial setup and per-iteration reinit) so
   every thread observes the initialized barrier before any thread calls
   `mbarrier_arrive`. This matches the
@@ -342,7 +342,7 @@ The fundamental breakthrough in this puzzle is
 **explicit memory barrier control** rather than simple thread synchronization:
 
 **Traditional approach:** Use basic
-[`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) for
+[`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) for
 simple thread coordination
 
 - All threads execute same operation on different data
@@ -353,7 +353,7 @@ simple thread coordination
 memory barriers
 
 - buffer_A and buffer_B alternate between read source and write target
-- [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) provide
+- [mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/) provide
   precise control over memory operation completion
 - Explicit coordination prevents race conditions during buffer transitions
 
@@ -373,29 +373,29 @@ careful buffer management:
 
 Understanding the mbarrier coordination pattern:
 
-- **[mbarrier_init()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)**:
+- **[mbarrier_init()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init)**:
   Initialize barrier for specific thread count (TPB)
-- **[mbarrier_arrive()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)**:
+- **[mbarrier_arrive()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)**:
   Signal individual thread completion of write phase
-- **[mbarrier_test_wait()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)**:
+- **[mbarrier_test_wait()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)**:
   Block until all threads signal completion
 - **Reinitialization**: Reset barrier state between iterations for reuse
 
 **Critical timing sequence:**
 
 1. **Init + sync**: Thread 0 calls
-   [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init),
+   [`mbarrier_init()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init),
    then every thread executes a
-   [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) so
+   [`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) so
    the initialized state is visible block-wide before any
    `mbarrier_arrive` call (see the
    [NVIDIA Async Barriers docs](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization))
 2. **All threads write**: Each thread updates its assigned buffer element
 3. **Signal completion**: Each thread calls
-   [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
+   [`mbarrier_arrive()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)
 4. **Poll until all arrived**: Every thread spins in
    `while not mbarrier_test_wait(...): pass` —
-   [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
+   [`mbarrier_test_wait()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)
    is a non-blocking check, so a single call is not a wait
 5. **Safe to proceed**: Now safe to swap buffer roles for next iteration
 

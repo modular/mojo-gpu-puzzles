@@ -7,9 +7,9 @@ introduces you to sophisticated GPU
 **warp-level butterfly communication and parallel scan operations** -
 hardware-accelerated primitives that enable efficient tree-based algorithms and
 parallel reductions within warps. You'll learn about using
-[shuffle_xor](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)
+[shuffle_xor](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/)
 for butterfly networks and
-[prefix_sum](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)
+[prefix_sum](https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/)
 for hardware-optimized parallel scan without complex multi-phase shared memory
 algorithms.
 
@@ -52,12 +52,12 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 
 ### **Advanced warp operations in Mojo**
 
-Learn the sophisticated communication primitives from `gpu.primitives.warp`:
+Learn the sophisticated communication primitives from `std.gpu.primitives.warp`:
 
 1. **[`shuffle_xor(value,
-   mask)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)**:
+   mask)`](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/)**:
    XOR-based butterfly communication for tree algorithms
-2. **[`prefix_sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)**:
+2. **[`prefix_sum(value)`](https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/)**:
    Hardware-accelerated parallel scan operations
 3. **Advanced coordination patterns**: Combining multiple primitives for complex
    algorithms
