@@ -89,7 +89,7 @@ for sol_dir in solutions/p*/; do
     echo "${puzzle}:"
     if [ -d "${prob_dir}/op" ]; then
         # Custom-op module: compile the package (no main()).
-        compile_target "${prob_dir}/op" package "${prob_dir}/op" -o /tmp/skel.mojopkg
+        compile_target "${prob_dir}/op" package "${prob_dir}/op" -o /tmp/skel.mojoc
         continue
     fi
     # Standalone puzzle files: compile each .mojo that defines a main().
