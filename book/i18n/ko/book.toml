@@ -39,7 +39,7 @@ enable = true
 renderers = ["html"]
 
 [preprocessor.youtube]
-command = "python scripts/youtube_preprocessor.py"
+command = "python3 scripts/youtube_preprocessor.py"
 
 [preprocessor.i18n-status]
-command = "python scripts/i18n_status_preprocessor.py"
+command = "python3 scripts/i18n_status_preprocessor.py"
