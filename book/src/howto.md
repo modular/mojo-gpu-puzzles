@@ -410,8 +410,8 @@ puzzles require different GPU features and vendor-specific tools.
 | 7 - Shared Memory                | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 8 - Stencil                      | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | **Part II: Debugging**           |            |         |           |                                      |
-| 9 - GPU Debugger                 | ✅         | ❌      | ❌        | NVIDIA-specific debugging tools      |
-| 10 - Sanitizer                   | ✅         | ❌      | ❌        | NVIDIA-specific debugging tools      |
+| 9 - GPU Debugger                 | ✅         | ✅      | ❌        | NVIDIA: real debugger; AMD: ported as plain-Mojo cases |
+| 10 - Sanitizer                   | ✅         | ✅      | ❌        | NVIDIA: sanitizers; AMD: ported memory/race probes      |
 | **Part III: GPU Algorithms**     |            |         |           |                                      |
 | 11 - Reduction                   | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 12 - Scan                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
@@ -439,9 +439,9 @@ puzzles require different GPU features and vendor-specific tools.
 | 28 - Async Memory                | ✅         | ✅      | ✅        | Advanced memory operations           |
 | 29 - Barriers                    | ✅         | ❌      | ❌        | Advanced NVIDIA-only synchronization |
 | **Part X: Performance Analysis** |            |         |           |                                      |
-| 30 - Profiling                   | ✅         | ❌      | ❌        | NVIDIA profiling tools (NSight)      |
-| 31 - Occupancy                   | ✅         | ❌      | ❌        | NVIDIA profiling tools               |
-| 32 - Bank Conflicts              | ✅         | ❌      | ❌        | NVIDIA profiling tools               |
+| 30 - Profiling                   | ✅         | ✅      | ❌        | NVIDIA: NSight; AMD: cache-paradox probes (fork port) |
+| 31 - Occupancy                   | ✅         | ✅      | ❌        | NVIDIA: NSight; AMD: occupancy probes (fork port)     |
+| 32 - Bank Conflicts              | ✅         | ✅      | ❌        | NVIDIA: NSight; AMD: conflict probes (fork port)      |
 | **Part XI: Modern GPU Features** |            |         |           |                                      |
 | 33 - Tensor Cores                | ✅         | ❌      | ❌        | NVIDIA Tensor Core specific          |
 | 34 - Cluster                     | ✅         | ❌      | ❌        | NVIDIA cluster programming           |
