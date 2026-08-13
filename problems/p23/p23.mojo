@@ -208,14 +208,13 @@ def benchmark_elementwise_parameterized[
         out, bench_layout
     )
 
-    @__parameter
     @always_inline
-    def elementwise_workflow(ctx: DeviceContext) raises:
+    def elementwise_workflow(ctx: DeviceContext) raises {imm}:
         elementwise_add[BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size](
             out_tensor, a_tensor, b_tensor, ctx
         )
 
-    bencher_iter_custom[elementwise_workflow](b, bench_ctx)
+    bencher_iter_custom(b, elementwise_workflow, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
@@ -250,14 +249,13 @@ def benchmark_tiled_parameterized[
         out, bench_layout
     )
 
-    @__parameter
     @always_inline
-    def tiled_workflow(ctx: DeviceContext) raises:
+    def tiled_workflow(ctx: DeviceContext) raises {imm}:
         tiled_elementwise_add[
             BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
-    bencher_iter_custom[tiled_workflow](b, bench_ctx)
+    bencher_iter_custom(b, tiled_workflow, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
@@ -292,14 +290,13 @@ def benchmark_manual_vectorized_parameterized[
         out, bench_layout
     )
 
-    @__parameter
     @always_inline
-    def manual_vectorized_workflow(ctx: DeviceContext) raises:
+    def manual_vectorized_workflow(ctx: DeviceContext) raises {imm}:
         manual_vectorized_tiled_elementwise_add[
             BenchLayoutType, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
-    bencher_iter_custom[manual_vectorized_workflow](b, bench_ctx)
+    bencher_iter_custom(b, manual_vectorized_workflow, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
@@ -334,14 +331,13 @@ def benchmark_vectorized_parameterized[
         out, bench_layout
     )
 
-    @__parameter
     @always_inline
-    def vectorized_workflow(ctx: DeviceContext) raises:
+    def vectorized_workflow(ctx: DeviceContext) raises {imm}:
         vectorize_within_tiles_elementwise_add[
             BenchLayoutType, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
-    bencher_iter_custom[vectorized_workflow](b, bench_ctx)
+    bencher_iter_custom(b, vectorized_workflow, bench_ctx)
     keep(out.unsafe_ptr())
     bench_ctx.synchronize()
 
