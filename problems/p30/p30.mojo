@@ -90,9 +90,10 @@ def kernel3(
 @__parameter
 @always_inline
 def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def kernel1_workflow(ctx: DeviceContext) raises:
+    def kernel1_workflow(
+        ctx: DeviceContext,
+    ) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
@@ -123,15 +124,16 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[kernel1_workflow](b, bench_ctx)
+    bencher_iter_custom(b, kernel1_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def kernel2_workflow(ctx: DeviceContext) raises:
+    def kernel2_workflow(
+        ctx: DeviceContext,
+    ) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
@@ -162,15 +164,16 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[kernel2_workflow](b, bench_ctx)
+    bencher_iter_custom(b, kernel2_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def kernel3_workflow(ctx: DeviceContext) raises:
+    def kernel3_workflow(
+        ctx: DeviceContext,
+    ) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
@@ -201,7 +204,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[kernel3_workflow](b, bench_ctx)
+    bencher_iter_custom(b, kernel3_workflow, bench_ctx)
 
 
 def test_kernel1() raises:

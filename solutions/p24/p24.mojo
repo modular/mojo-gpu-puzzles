@@ -249,9 +249,8 @@ def benchmark_simple_warp_parameterized[
         out, bench_out_layout
     )
 
-    @__parameter
     @always_inline
-    def traditional_workflow(ctx: DeviceContext) raises:
+    def traditional_workflow(ctx: DeviceContext) raises {imm}:
         comptime kernel = simple_warp_dot_product[
             BenchInLayout, BenchOutLayout, test_size
         ]
@@ -263,7 +262,7 @@ def benchmark_simple_warp_parameterized[
             block_dim=n_threads,
         )
 
-    bencher_iter_custom[traditional_workflow](bencher, bench_ctx)
+    bencher_iter_custom(bencher, traditional_workflow, bench_ctx)
     check_result[dtype, n_warps](out, expected)
     keep(out.unsafe_ptr())
     keep(a.unsafe_ptr())
@@ -307,14 +306,13 @@ def benchmark_functional_warp_parameterized[
         TileTensor[mut=True, dtype, BenchOutLayout, MutAnyOrigin]
     ](TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout))
 
-    @__parameter
     @always_inline
-    def functional_warp_workflow(ctx: DeviceContext) raises:
+    def functional_warp_workflow(ctx: DeviceContext) raises {imm}:
         functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
             out_tensor, a_tensor, b_tensor, ctx
         )
 
-    bencher_iter_custom[functional_warp_workflow](bencher, bench_ctx)
+    bencher_iter_custom(bencher, functional_warp_workflow, bench_ctx)
     check_result[dtype, n_warps](out, expected)
     keep(out.unsafe_ptr())
     keep(a.unsafe_ptr())
@@ -359,9 +357,8 @@ def benchmark_traditional_parameterized[
         out, bench_out_layout
     )
 
-    @__parameter
     @always_inline
-    def traditional_workflow(ctx: DeviceContext) raises:
+    def traditional_workflow(ctx: DeviceContext) raises {imm}:
         ctx.enqueue_function[
             traditional_dot_product_p12_style[
                 BenchInLayout, BenchOutLayout, test_size
@@ -374,7 +371,7 @@ def benchmark_traditional_parameterized[
             block_dim=THREADS_PER_BLOCK,
         )
 
-    bencher_iter_custom[traditional_workflow](bencher, bench_ctx)
+    bencher_iter_custom(bencher, traditional_workflow, bench_ctx)
     check_result[dtype, n_warps](out, expected)
     keep(out.unsafe_ptr())
     keep(a.unsafe_ptr())

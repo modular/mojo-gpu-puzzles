@@ -203,9 +203,10 @@ def balanced_kernel(
 @__parameter
 @always_inline
 def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def minimal_workflow(ctx: DeviceContext) raises:
+    def minimal_workflow(
+        ctx: DeviceContext,
+    ) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var y = ctx.enqueue_create_buffer[dtype](test_size)
@@ -234,7 +235,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[minimal_workflow](b, bench_ctx)
+    bencher_iter_custom(b, minimal_workflow, bench_ctx)
 
 
 @__parameter
@@ -242,9 +243,10 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 def benchmark_sophisticated_parameterized[
     test_size: Int
 ](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def sophisticated_workflow(ctx: DeviceContext) raises:
+    def sophisticated_workflow(
+        ctx: DeviceContext,
+    ) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var y = ctx.enqueue_create_buffer[dtype](test_size)
@@ -273,15 +275,16 @@ def benchmark_sophisticated_parameterized[
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[sophisticated_workflow](b, bench_ctx)
+    bencher_iter_custom(b, sophisticated_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def balanced_workflow(ctx: DeviceContext) raises:
+    def balanced_workflow(
+        ctx: DeviceContext,
+    ) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var y = ctx.enqueue_create_buffer[dtype](test_size)
@@ -310,7 +313,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[balanced_workflow](b, bench_ctx)
+    bencher_iter_custom(b, balanced_workflow, bench_ctx)
 
 
 def test_minimal() raises:

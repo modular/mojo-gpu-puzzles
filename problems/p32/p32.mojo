@@ -116,9 +116,8 @@ def two_way_conflict_kernel(
 @__parameter
 @always_inline
 def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def kernel_workflow(ctx: DeviceContext) raises:
+    def kernel_workflow(ctx: DeviceContext) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
@@ -147,15 +146,14 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[kernel_workflow](b, bench_ctx)
+    bencher_iter_custom(b, kernel_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
-    @__parameter
     @always_inline
-    def kernel_workflow(ctx: DeviceContext) raises:
+    def kernel_workflow(ctx: DeviceContext) raises {imm}:
         comptime layout = row_major[test_size]()
         comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
@@ -184,7 +182,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         ctx.synchronize()
 
     var bench_ctx = DeviceContext()
-    bencher_iter_custom[kernel_workflow](b, bench_ctx)
+    bencher_iter_custom(b, kernel_workflow, bench_ctx)
 
 
 def test_no_conflict() raises:
