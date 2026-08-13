@@ -38,7 +38,31 @@ def prefix_sum_simple(
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FILL ME IN (roughly 18 lines)
+    # Allocate shared memory and load the block's slice
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    if global_i < size:
+        shared[local_i] = a[global_i]
+    else:
+        shared[local_i] = 0
+    barrier()
+
+    # Hillis-Steele inclusive scan in shared memory
+    var offset = 1
+    while offset < TPB:
+        var t = Scalar[dtype](0)
+        if local_i >= offset:
+            t = shared[local_i - offset]
+        barrier()
+        if local_i >= offset:
+            shared[local_i] += t
+        barrier()
+        offset *= 2
+
+    if global_i < size:
+        output[global_i] = shared[local_i]
 
 
 # ANCHOR_END: prefix_sum_simple
@@ -64,7 +88,34 @@ def prefix_sum_local_phase(
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FILL ME IN (roughly 20 lines)
+    # Load this block's slice into shared memory (zero-padded)
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    if global_i < size:
+        shared[local_i] = a[global_i]
+    else:
+        shared[local_i] = 0
+    barrier()
+
+    # Hillis-Steele inclusive scan within the block
+    var offset = 1
+    while offset < TPB:
+        var t = Scalar[dtype](0)
+        if local_i >= offset:
+            t = shared[local_i - offset]
+        barrier()
+        if local_i >= offset:
+            shared[local_i] += t
+        barrier()
+        offset *= 2
+
+    # Write local prefix sums and stash the block total in the extended area
+    if global_i < size:
+        output[global_i] = shared[local_i]
+    if local_i == TPB - 1:
+        output[size + block_idx.x] = shared[TPB - 1]
 
 
 # Kernel 2: Add block sums to their respective blocks
@@ -74,7 +125,12 @@ def prefix_sum_block_sum_phase(
 ):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    # FILL ME IN (roughly 3 lines)
+    if global_i < size:
+        # Add the totals of all preceding blocks
+        var s = Scalar[dtype](0)
+        for k in range(block_idx.x):
+            s += output[size + k]
+        output[global_i] += s
 
 
 # ANCHOR_END: prefix_sum_complete

@@ -152,7 +152,20 @@ def layernorm_kernel[
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    # FILL ME IN (roughly 11 lines)
+    comptime for h in range(hidden_dim):
+        var x = rebind[Scalar[dtype]](input_lt[batch_idx, seq_idx, h])
+        sum_val += x
+        sq_sum += x * x
+
+    var mean = sum_val / Scalar[dtype](hidden_dim)
+    var variance = sq_sum / Scalar[dtype](hidden_dim) - mean * mean
+    var inv_std = 1.0 / sqrt(variance + 1e-5)
+
+    var x = rebind[Scalar[dtype]](input_lt[batch_idx, seq_idx, hidden_idx])
+    output_lt[batch_idx, seq_idx, hidden_idx] = (
+        (x - mean) * inv_std * rebind[Scalar[dtype]](ln_weight_lt[hidden_idx])
+        + rebind[Scalar[dtype]](ln_bias_lt[hidden_idx])
+    )
 
 
 # ANCHOR_END: layernorm_kernel
@@ -277,12 +290,27 @@ def minimal_fused_kernel[
     var linear_bias_lt = linear_bias.to_layout_tensor()
 
     # Step 1: Compute LayerNorm statistics once per sequence position
+    var sum_val: Scalar[dtype] = 0
+    var sq_sum: Scalar[dtype] = 0
 
-    # FILL IN roughly 10 lines
+    comptime for h in range(hidden_dim):
+        var x = rebind[Scalar[dtype]](input_lt[batch_idx, seq_idx, h])
+        sum_val += x
+        sq_sum += x * x
+
+    var mean = sum_val / Scalar[dtype](hidden_dim)
+    var variance = sq_sum / Scalar[dtype](hidden_dim) - mean * mean
+    var inv_std = 1.0 / sqrt(variance + 1e-5)
 
     # Step 2: Compute all outputs for this sequence position
-
-    # FILL IN roughly 10 lines
+    comptime for o in range(output_dim):
+        var acc = rebind[Scalar[dtype]](linear_bias_lt[o])
+        comptime for h in range(hidden_dim):
+            var x_hat = (
+                rebind[Scalar[dtype]](input_lt[batch_idx, seq_idx, h]) - mean
+            ) * inv_std
+            acc += x_hat * rebind[Scalar[dtype]](linear_weight_lt[o, h])
+        output_lt[batch_idx, seq_idx, o] = acc
 
 
 # ANCHOR_END: minimal_fused_forward_kernel
@@ -361,28 +389,79 @@ def minimal_fused_kernel_backward[
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    # FILL IN roughly 8 lines
+    comptime for h in range(hidden_dim):
+        var x = rebind[Scalar[dtype]](input_lt[batch_idx, seq_idx, h])
+        sum_val += x
+        sq_sum += x * x
+
+    var mean = sum_val / Scalar[dtype](hidden_dim)
+    var variance = sq_sum / Scalar[dtype](hidden_dim) - mean * mean
+    var inv_std = 1.0 / sqrt(variance + 1e-5)
+
+    # Normalized input, stored per hidden unit for reuse
+    var x_hat = stack_allocation[dtype=dtype](row_major[hidden_dim]())
+    comptime for h in range(hidden_dim):
+        x_hat[h] = (
+            rebind[Scalar[dtype]](input_lt[batch_idx, seq_idx, h]) - mean
+        ) * inv_std
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
+    comptime for o in range(output_dim):
+        var dy = rebind[Scalar[dtype]](
+            grad_output_lt[batch_idx, seq_idx, o]
+        )
+        Atomic.fetch_add(grad_bias.ptr.unsafe_offset(o), dy)
 
-    # FILL IN roughly 4 lines
-
-    # Step 3: Atomically accumulate gradients w.r.t. linear weight
-
-    # FILL IN roughly 10 lines
+        # Step 3: Atomically accumulate gradients w.r.t. linear weight
+        comptime for h in range(hidden_dim):
+            Atomic.fetch_add(
+                grad_weight.ptr.unsafe_offset(o * hidden_dim + h),
+                dy * x_hat[h],
+            )
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
-
-    # FILL IN roughly 10 lines
+    comptime for h in range(hidden_dim):
+        var dy_ln: Scalar[dtype] = 0
+        comptime for o in range(output_dim):
+            dy_ln += (
+                rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, o])
+                * rebind[Scalar[dtype]](linear_weight_lt[o, h])
+            )
+        Atomic.fetch_add(
+            grad_ln_weight.ptr.unsafe_offset(h), dy_ln * x_hat[h]
+        )
+        Atomic.fetch_add(grad_ln_bias.ptr.unsafe_offset(h), dy_ln)
 
     # Step 5: Compute gradients w.r.t. input (LayerNorm backward)
     # Compute sum terms needed for LayerNorm backward
+    var sum_dxhat: Scalar[dtype] = 0
+    var sum_dxhat_xhat: Scalar[dtype] = 0
 
-    # FILL IN roughly 12 lines
+    comptime for h in range(hidden_dim):
+        var dy_ln: Scalar[dtype] = 0
+        comptime for o in range(output_dim):
+            dy_ln += (
+                rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, o])
+                * rebind[Scalar[dtype]](linear_weight_lt[o, h])
+            )
+        var dx_hat = dy_ln * rebind[Scalar[dtype]](ln_weight_lt[h])
+        sum_dxhat += dx_hat
+        sum_dxhat_xhat += dx_hat * x_hat[h]
 
     # Compute actual input gradients (no race conditions here - each thread writes to different positions)
-
-    # FILL IN roughly 10 lines
+    comptime for h in range(hidden_dim):
+        var dy_ln: Scalar[dtype] = 0
+        comptime for o in range(output_dim):
+            dy_ln += (
+                rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, o])
+                * rebind[Scalar[dtype]](linear_weight_lt[o, h])
+            )
+        var dx_hat = dy_ln * rebind[Scalar[dtype]](ln_weight_lt[h])
+        grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
+            dx_hat
+            - sum_dxhat / Scalar[dtype](hidden_dim)
+            - x_hat[h] * (sum_dxhat_xhat / Scalar[dtype](hidden_dim))
+        )
 
 
 # ANCHOR_END: minimal_fused_backward_kernel

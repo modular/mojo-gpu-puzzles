@@ -46,6 +46,7 @@ Usage:
 import argparse
 import os
 import platform
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -115,9 +116,11 @@ def detect_platform() -> str:
 
     # Check for AMD GPU availability
     try:
-        # Check if ROCm is available
+        # Check if ROCm is available (rocm-smi may live in /opt/rocm/bin
+        # without being on PATH)
+        rocm_smi = shutil.which("rocm-smi") or "/opt/rocm/bin/rocm-smi"
         result = subprocess.run(
-            ["rocm-smi", "--showproductname"],
+            [rocm_smi, "--showproductname"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -348,9 +351,10 @@ def get_amd_specs(device_index: int = 0) -> GPUSpecs:
                 },
             )
 
-        # Get basic info from rocm-smi
+        # Get basic info from rocm-smi (fall back to /opt/rocm/bin)
+        rocm_smi = shutil.which("rocm-smi") or "/opt/rocm/bin/rocm-smi"
         result = subprocess.run(
-            ["rocm-smi", "--showproductname"],
+            [rocm_smi, "--showproductname"],
             capture_output=True,
             text=True,
             timeout=10,
@@ -362,7 +366,7 @@ def get_amd_specs(device_index: int = 0) -> GPUSpecs:
 
         # Get memory info
         mem_result = subprocess.run(
-            ["rocm-smi", "--showmeminfo", "vram"],
+            [rocm_smi, "--showmeminfo", "vram"],
             capture_output=True,
             text=True,
             timeout=10,

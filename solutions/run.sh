@@ -15,6 +15,26 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
+# Prefer the repo's own virtualenv when present (pixi-less setups); fall
+# back to whatever `python` resolves to on PATH (pixi shell, CI).
+if [ -x "${SCRIPT_DIR}/../.venv/bin/python" ]; then
+    PYTHON_BIN="${SCRIPT_DIR}/../.venv/bin/python"
+else
+    PYTHON_BIN="python"
+fi
+
+# TheRock rocm-sdk runtime libs (when installed into the venv): put them on
+# the loader path so torch's preloads and the MAX runtime resolve the same
+# HIP/HSA pair (mixing with the system 7.2.x stack breaks device init).
+# libnuma.so + unversioned libamdhip64.so/libhsa-runtime64.so symlinks and
+# the librocprofiler-register stub are installed in the sdk lib dir.
+VENV_SITE="$(ls -d ${SCRIPT_DIR}/../.venv/lib/python3.*/site-packages 2>/dev/null | head -1)"
+ROCM_SDK_CORE="${VENV_SITE}/_rocm_sdk_core/lib"
+ROCM_SDK_LIBS="${VENV_SITE}/_rocm_sdk_libraries/lib"
+if [ -d "${ROCM_SDK_CORE}" ]; then
+    export LD_LIBRARY_PATH="${ROCM_SDK_CORE}:${ROCM_SDK_LIBS}:${LD_LIBRARY_PATH}"
+fi
+
 # Unicode symbols
 CHECK_MARK="✓"
 CROSS_MARK="✗"
@@ -388,7 +408,7 @@ run_python_files() {
       if [ -n "$specific_flag" ]; then
         # Check if the file supports this flag
         if grep -q "sys\.argv\[1\] == \"$specific_flag\"" "$f"; then
-          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "python \"$f\" \"$specific_flag\""
+          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "$PYTHON_BIN \"$f\" \"$specific_flag\""
         else
           print_test_result "${path_prefix}$f" "$specific_flag" "SKIP"
         fi
@@ -398,10 +418,10 @@ run_python_files() {
         flags=$(grep -oE 'sys\.argv\[1\] == "--[^"]*"|"--[a-z-]+"' "$f" | grep -oE -- '--[a-z-]+' | sort -u | grep -v '^--demo')
 
         if [ -z "$flags" ]; then
-          execute_or_skip_test "${path_prefix}$f" "" "python \"$f\""
+          execute_or_skip_test "${path_prefix}$f" "" "$PYTHON_BIN \"$f\""
         else
           for flag in $flags; do
-            execute_or_skip_test "${path_prefix}$f" "$flag" "python \"$f\" \"$flag\""
+            execute_or_skip_test "${path_prefix}$f" "$flag" "$PYTHON_BIN \"$f\" \"$flag\""
           done
         fi
       fi

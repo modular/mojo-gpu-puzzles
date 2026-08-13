@@ -42,7 +42,14 @@ def butterfly_pair_swap[
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
-    # FILL ME IN (4 lines)
+    var current_val = input[global_i]
+
+    # Exchange with XOR-1 neighbor using butterfly pattern
+    # Lane 0 exchanges with lane 1, lane 2 with lane 3, etc.
+    var swapped_val = shuffle_xor(current_val, 1)
+
+    # For demonstration, we'll store the swapped value
+    output[global_i] = swapped_val
 
 
 # ANCHOR_END: butterfly_pair_swap_solution
@@ -63,7 +70,16 @@ def butterfly_parallel_max[
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
-    # FILL ME IN (roughly 7 lines)
+    var max_val = input[global_i]
+
+    # Butterfly reduction tree: dynamic for any WARP_SIZE (32, 64, etc.)
+    var offset = WARP_SIZE // 2
+    while offset > 0:
+        max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
+        offset //= 2
+
+    # All threads now have the maximum value across the entire warp
+    output[global_i] = max_val
 
 
 # ANCHOR_END: butterfly_parallel_max
@@ -95,7 +111,22 @@ def butterfly_conditional_max[
         var current_val = input[global_i]
         var min_val = current_val
 
-        # FILL ME IN (roughly 11 lines)
+        # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
+        var offset = WARP_SIZE // 2
+        while offset > 0:
+            var neighbor_val = shuffle_xor(current_val, UInt32(offset))
+            current_val = max(current_val, neighbor_val)
+
+            var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
+            min_val = min(min_val, min_neighbor_val)
+
+            offset //= 2
+
+        # Conditional output: max for even lanes, min for odd lanes
+        if lane % 2 == 0:
+            output[global_i] = current_val  # Maximum
+        else:
+            output[global_i] = min_val  # Minimum
 
 
 # ANCHOR_END: butterfly_conditional_max
@@ -129,7 +160,13 @@ def warp_inclusive_prefix_sum[
     """
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
-    # FILL ME IN (roughly 4 lines)
+    if global_i < size:
+        var current_val = input[global_i]
+
+        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+        var scan_result = prefix_sum[exclusive=False](current_val)
+
+        output[global_i] = scan_result
 
 
 # ANCHOR_END: warp_inclusive_prefix_sum

@@ -45,13 +45,20 @@ def elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @__parameter
+    @parameter
     @always_inline
     def add[
         simd_width: Int, alignment: Int = align_of[dtype]()
     ](indices: Coord) capturing -> None:
         var idx = Int(indices[0].value())
-        # FILL IN (2 to 4 lines)
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
+        var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))
+        var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))
+        var ret = a_simd + b_simd
+        out_lt.store[simd_width](Index(idx), ret)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 
@@ -76,7 +83,7 @@ def tiled_elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @__parameter
+    @parameter
     @always_inline
     def process_tiles[
         simd_width: Int, alignment: Int = align_of[dtype]()
@@ -87,7 +94,11 @@ def tiled_elementwise_add[
         var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
         var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 
-        # FILL IN (6 lines at most)
+        comptime for i in range(tile_size):
+            var a_vec = a_tile.aligned_load[width=simd_width](Index(i))
+            var b_vec = b_tile.aligned_load[width=simd_width](Index(i))
+            var ret = a_vec + b_vec
+            output_tile.store[simd_width](Index(i), ret)
 
     var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
@@ -114,7 +125,7 @@ def manual_vectorized_tiled_elementwise_add[
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
 
-    @__parameter
+    @parameter
     @always_inline
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
@@ -125,7 +136,17 @@ def manual_vectorized_tiled_elementwise_add[
         var b_lt = b.to_layout_tensor()
         var out_lt = output.to_layout_tensor()
 
-        # FILL IN (7 lines at most)
+        comptime for i in range(tile_size):
+            var global_start = tile_id * chunk_size + i * simd_width
+
+            var a_vec = a_lt.aligned_load[width=simd_width](
+                Index(global_start)
+            )
+            var b_vec = b_lt.aligned_load[width=simd_width](
+                Index(global_start)
+            )
+            var ret = a_vec + b_vec
+            out_lt.store[simd_width](Index(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     var num_tiles = (size + chunk_size - 1) // chunk_size
@@ -153,7 +174,7 @@ def vectorize_within_tiles_elementwise_add[
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
-    @__parameter
+    @parameter
     @always_inline
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = align_of[dtype]()
@@ -167,7 +188,18 @@ def vectorize_within_tiles_elementwise_add[
         var b_lt = b.to_layout_tensor()
         var out_lt = output.to_layout_tensor()
 
-        # FILL IN (9 lines at most)
+        def vectorized_add[
+            width: Int
+        ](i: Int) {tile_start, a_lt, b_lt, mut out_lt}:
+            var global_idx = tile_start + i
+            if global_idx + width <= size:
+                var a_vec = a_lt.aligned_load[width](Index(global_idx))
+                var b_vec = b_lt.aligned_load[width](Index(global_idx))
+                var result = a_vec + b_vec
+                out_lt.store[width](Index(global_idx), result)
+
+        # Use vectorize within each tile
+        vectorize[simd_width](actual_tile_size, vectorized_add)
 
     var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[
@@ -178,7 +210,7 @@ def vectorize_within_tiles_elementwise_add[
 # ANCHOR_END: vectorize_within_tiles_elementwise_add
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_elementwise_parameterized[
     test_size: Int, tile_size: Int
@@ -208,7 +240,7 @@ def benchmark_elementwise_parameterized[
         out, bench_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def elementwise_workflow(ctx: DeviceContext) raises:
         elementwise_add[BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size](
@@ -220,7 +252,7 @@ def benchmark_elementwise_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_tiled_parameterized[
     test_size: Int, tile_size: Int
@@ -250,7 +282,7 @@ def benchmark_tiled_parameterized[
         out, bench_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def tiled_workflow(ctx: DeviceContext) raises:
         tiled_elementwise_add[
@@ -262,7 +294,7 @@ def benchmark_tiled_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_manual_vectorized_parameterized[
     test_size: Int, tile_size: Int
@@ -292,7 +324,7 @@ def benchmark_manual_vectorized_parameterized[
         out, bench_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def manual_vectorized_workflow(ctx: DeviceContext) raises:
         manual_vectorized_tiled_elementwise_add[
@@ -304,7 +336,7 @@ def benchmark_manual_vectorized_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_vectorized_parameterized[
     test_size: Int, tile_size: Int
@@ -334,7 +366,7 @@ def benchmark_vectorized_parameterized[
         out, bench_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def vectorized_workflow(ctx: DeviceContext) raises:
         vectorize_within_tiles_elementwise_add[

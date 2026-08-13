@@ -58,13 +58,16 @@ def embedding_kernel_coalesced[
     var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq, embed) coordinates
-    # FILL IN roughly 4 lines
+    var e = global_idx % embed_dim
+    var tmp = global_idx // embed_dim
+    var s = tmp % seq_len
+    var b = tmp // seq_len
 
     # Get token index
-    # FILL IN 1 line
+    var token = rebind[Int32](indices_lt[b, s])
 
     # Simple, correct assignment
-    # FILL IN 4 lines
+    output_lt[b, s, e] = rebind[Scalar[dtype]](weights_lt[token, e])
 
 
 # ANCHOR_END: embedding_kernel_coalesced
@@ -109,13 +112,16 @@ def embedding_kernel_2d[
     var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq) coordinates
-    # FILL IN 2 lines
+    var s = batch_seq_idx % seq_len
+    var b = batch_seq_idx // seq_len
 
     # Get token index
-    # FILL IN 1 line
+    var token = rebind[Int32](indices_lt[b, s])
 
     # Assignment with 2D grid pattern
-    # FILL IN 4 lines
+    output_lt[b, s, embed_idx] = rebind[Scalar[dtype]](
+        weights_lt[token, embed_idx]
+    )
 
 
 # ANCHOR_END: embedding_kernel_2d
