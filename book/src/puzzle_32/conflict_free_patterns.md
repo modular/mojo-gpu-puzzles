@@ -15,9 +15,9 @@ detective skills to a new performance mystery: **shared memory bank conflicts**.
 
 **The detective challenge:** You have two GPU kernels that perform identical
 mathematical operations (`(input + 10) * 2`). Both produce exactly the same
-results. Both use the same amount of shared memory. Both have identical
-occupancy. Yet one experiences systematic performance degradation due to **how**
-it accesses shared memory.
+results. Yet one experiences systematic performance degradation due to **how**
+it accesses shared memory—the conflicting kernel also reserves twice the
+shared memory (`2 * TPB` against `TPB`) to make room for its strided pattern.
 
 **Your mission:** Use the profiling methodology you've learned to uncover this
 hidden performance trap and understand when bank conflicts matter in real-world
@@ -130,9 +130,9 @@ shared_buf[thread_idx.x]  # Thread 0→Index 0, Thread 1→Index 1, etc.
 **Two-way conflict kernel access pattern:**
 
 ```mojo
-# Thread mapping with stride-2 modulo operation
-shared_buf[(thread_idx.x * 2) % TPB]
-# For threads 0-31: Index 0,2,4,6,...,62, then wraps to 64,66,...,126, then 0,2,4...
+# Thread mapping with stride-2 access into a 2*TPB buffer
+shared_buf[thread_idx.x * 2]
+# For threads 0-31: Index 0,2,4,6,...,62 - no wraparound, the buffer is 2*TPB
 # Bank mapping examples:
 # Thread 0  → Index 0   → Bank 0
 # Thread 16 → Index 32  → Bank 0  (conflict!)
@@ -170,8 +170,8 @@ questions:**
 
 10. Why does the two-way conflict kernel show measurable conflicts while the
     no-conflict kernel shows zero?
-11. How does the stride-2 access pattern `(thread_idx.x * 2) % TPB` create
-    systematic conflicts?
+11. How does the stride-2 access pattern `thread_idx.x * 2` create systematic
+    conflicts?
 12. Why do bank conflicts matter more in compute-intensive kernels than
     memory-bound kernels?
 
@@ -314,24 +314,25 @@ within each warp, enabling parallel access.
 **Thread-to-index mapping:**
 
 ```mojo
-shared_buf[(thread_idx.x * 2) % TPB]  # TPB = 256
+shared_buf[thread_idx.x * 2]  # buffer sized 2 * TPB = 512
 ```
 
 **Bank assignment analysis for first warp (threads 0-31):**
 
 ```text
-Thread 0  → Index (0*2)%256 = 0   → Bank 0
-Thread 1  → Index (1*2)%256 = 2   → Bank 2
-Thread 2  → Index (2*2)%256 = 4   → Bank 4
+Thread 0  → Index 0*2  = 0   → Bank 0
+Thread 1  → Index 1*2  = 2   → Bank 2
+Thread 2  → Index 2*2  = 4   → Bank 4
 ...
-Thread 16 → Index (16*2)%256 = 32 → Bank 0  ← CONFLICT with Thread 0
-Thread 17 → Index (17*2)%256 = 34 → Bank 2  ← CONFLICT with Thread 1
-Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← CONFLICT with Thread 2
+Thread 16 → Index 16*2 = 32  → Bank 0  ← CONFLICT with Thread 0
+Thread 17 → Index 17*2 = 34  → Bank 2  ← CONFLICT with Thread 1
+Thread 18 → Index 18*2 = 36  → Bank 4  ← CONFLICT with Thread 2
 ...
 ```
 
-**Conflict pattern:** Each bank serves exactly 2 threads, creating systematic
-2-way conflicts across all 32 banks.
+**Conflict pattern:** Because every index is even, a warp touches only the 16
+even-numbered banks (0, 2, ..., 30); the odd banks go unused. Each of those
+banks serves exactly 2 threads, creating systematic 2-way conflicts.
 
 **Mathematical explanation:** The stride-2 pattern with modulo 256 creates a
 repeating access pattern where:
@@ -403,13 +404,13 @@ shared[thread_idx.x]  # Optimal - each thread different bank
 **2. Broadcast optimization:**
 
 ```mojo
-constant = shared[0]  # All threads read same address - hardware optimized
+var constant = shared[0]  # All threads read same address - hardware optimized
 ```
 
 **3. Padding techniques:**
 
 ```mojo
-shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + 1]())  # Shift access patterns
+var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + 1]())  # Shift access patterns
 ```
 
 **4. Access pattern analysis:**

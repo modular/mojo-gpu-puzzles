@@ -57,7 +57,7 @@ Learn the core warp primitives from `std.gpu.primitives.warp`:
 ```mojo
 # 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
-shared = TileTensor[
+var shared = TileTensor[
     dtype,
     row_major[WARP_SIZE](),
     MutAnyOrigin,
@@ -67,7 +67,7 @@ shared[local_i] = partial_product
 barrier()
 
 # Safe tree reduction through shared memory requires a barrier after each reduction phase:
-stride = WARP_SIZE // 2
+var stride = WARP_SIZE // 2
 while stride > 0:
     if local_i < stride:
         shared[local_i] += shared[local_i + stride]
@@ -80,7 +80,7 @@ while stride > 0:
 # after each reduction phase.
 # Mojo's warp-level sum operation uses warp primitives under the hood and hides all this
 # complexity:
-total = sum(partial_product)  # Internally no barriers, no race conditions!
+var total = sum(partial_product)  # Internally no barriers, no race conditions!
 ```
 
 ### **When warp operations excel**
@@ -138,8 +138,8 @@ Learn the most important warp operation through dot product implementation.
 **Key pattern:**
 
 ```mojo
-partial_result = compute_per_lane_value()
-total = sum(partial_result)  # Magic happens here!
+var partial_result = compute_per_lane_value()
+var total = sum(partial_result)  # Magic happens here!
 if lane_id() == 0:
     output[0] = total
 ```

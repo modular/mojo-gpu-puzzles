@@ -72,7 +72,7 @@ Each tile now contains multiple SIMD groups, not just sequential elements.
 ### 2. **Global index calculation**
 
 ```mojo
-global_start = tile_id * chunk_size + i * simd_width
+var global_start = tile_id * chunk_size + i * simd_width
 ```
 
 This calculates the exact global position for each SIMD vector within the chunk.
@@ -80,11 +80,12 @@ This calculates the exact global position for each SIMD vector within the chunk.
 ### 3. **Direct tensor access**
 
 ```mojo
-a_vec = a.aligned_load[simd_width](Index(global_start))     # Load from global tensor
-output.store[simd_width](Index(global_start), ret)  # Store to global tensor
+var a_vec = a_lt.aligned_load[width=simd_width](Index(global_start))     # Load from global tensor
+out_lt.store[simd_width](Index(global_start), ret)  # Store to global tensor
 ```
 
-Note: Access the original tensors, not the tile views.
+Note: Access the whole-tensor `LayoutTensor` handles from
+`to_layout_tensor()`, not the tile views.
 
 ### 4. **Key characteristics**
 
@@ -194,7 +195,7 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 
 ```mojo
 comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
-    global_start = tile_id * chunk_size + i * simd_width
+    var global_start = tile_id * chunk_size + i * simd_width
     # For tile_id=0: global_start = 0, 4, 8, 12, ..., 124
     # For tile_id=1: global_start = 128, 132, 136, 140, ..., 252
 ```
@@ -248,15 +249,15 @@ your body in `width`-sized steps and processes the leftover remainder for you.
 ```mojo
 # Before: scalar loop over the tile (one element at a time)
 for i in range(actual_tile_size):
-    global_idx = tile_start + i
+    var global_idx = tile_start + i
     out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
 
 # After: same logic, but the body operates on a SIMD vector of `width`
 def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
     global_idx = tile_start + i
     if global_idx + width <= size:                       # bounds check
-        a_vec = a_lt.aligned_load[width](Index(global_idx))
-        b_vec = b_lt.aligned_load[width](Index(global_idx))
+        var a_vec = a_lt.aligned_load[width](Index(global_idx))
+        var b_vec = b_lt.aligned_load[width](Index(global_idx))
         out_lt.store[width](Index(global_idx), a_vec + b_vec)
 
 vectorize[simd_width](actual_tile_size, vectorized_add)  # drives the loop + remainder
@@ -267,9 +268,9 @@ The remaining tips break this down piece by piece.
 ### 1. **Tile boundary calculation**
 
 ```mojo
-tile_start = tile_id * tile_size
-tile_end = min(tile_start + tile_size, size)
-actual_tile_size = tile_end - tile_start
+var tile_start = tile_id * tile_size
+var tile_end = min(tile_start + tile_size, size)
+var actual_tile_size = tile_end - tile_start
 ```
 
 Handle cases where the last tile might be smaller than `tile_size`.
@@ -279,8 +280,8 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
-    global_idx = tile_start + i
+](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+    var global_idx = tile_start + i
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
 ```
@@ -369,9 +370,9 @@ safety:
 **Tile-based organization:**
 
 ```mojo
-tile_start = tile_id * tile_size    # 0, 32, 64, 96, ...
-tile_end = min(tile_start + tile_size, size)
-actual_tile_size = tile_end - tile_start
+var tile_start = tile_id * tile_size    # 0, 32, 64, 96, ...
+var tile_end = min(tile_start + tile_size, size)
+var actual_tile_size = tile_end - tile_start
 ```
 
 **Automatic vectorization mechanism:**
@@ -379,8 +380,8 @@ actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
-    global_idx = tile_start + i
+](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+    var global_idx = tile_start + i
     if global_idx + width <= size:
         # Automatic SIMD optimization
 ```

@@ -172,7 +172,7 @@ from std.gpu import lane_id
 from std.gpu.primitives.warp import WARP_SIZE
 
 # Within a kernel function:
-my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
+var my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 ```
 
 **Key insight:** `lane_id()` is **free** - it's just reading a hardware
@@ -207,7 +207,7 @@ same time. When `sum()` starts, all lanes have already computed their
 ```mojo
 if lane_id() % 2 == 0:
     # Even lanes execute this path
-    result = compute_even()
+    var result = compute_even()
 else:
     # Odd lanes execute this path
     result = compute_odd()
@@ -268,7 +268,7 @@ if lane_id() == 0:
 ```mojo
 # Regular patterns can be optimized by compiler
 if (global_i / 4) % 2 == 0:
-    result = method_a()
+    var result = method_a()
 else:
     result = method_b()
 ```
@@ -280,7 +280,7 @@ else:
 ```mojo
 # Different lanes may take different paths based on data
 if input[global_i] > threshold:  # Unpredictable branching
-    result = expensive_computation()
+    var result = expensive_computation()
 else:
     result = simple_computation()
 ```
@@ -293,7 +293,7 @@ else:
 # Multiple levels of unpredictable branching
 if input[global_i] > threshold1:
     if input[global_i] > threshold2:
-        result = very_expensive()
+        var result = very_expensive()
     else:
         result = expensive()
 else:

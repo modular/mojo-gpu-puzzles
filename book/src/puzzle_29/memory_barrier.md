@@ -167,7 +167,9 @@ when memory operations complete, essential for complex memory access patterns.
 
 **Initialization phase:**
 
-- **Buffer setup**: Initialize buffer_A with input data, buffer_B with zeros
+- **Buffer setup**: Initialize buffer_A with input data (zeros for
+  out-of-range indices); buffer_B is left uninitialized and is first written by
+  iteration 0 of the stencil loop
 - **Barrier initialization**: Set up
   [mbarrier objects](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init)
   for synchronization points
@@ -300,7 +302,7 @@ Testing Puzzle 29B: Double-Buffered Stencil Computation
 Double-buffered stencil completed
 Input sample: 1.0 1.0 1.0
 GPU output sample: 1.0 1.0 1.0
-✅ Double-buffered stencil test PASSED!
+Puzzle 29 complete ✅
 ```
 
 ## Solution
@@ -378,7 +380,7 @@ Understanding the mbarrier coordination pattern:
 - **[mbarrier_arrive()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)**:
   Signal individual thread completion of write phase
 - **[mbarrier_test_wait()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)**:
-  Block until all threads signal completion
+  Non-blocking poll of barrier state—call it in a loop until it returns true
 - **Reinitialization**: Reset barrier state between iterations for reuse
 
 **Critical timing sequence:**
@@ -407,7 +409,7 @@ The 3-point stencil operation with adaptive boundary handling:
 
 ```mojo
 # Average with left, center, and right neighbors
-stencil_sum = buffer[i-1] + buffer[i] + buffer[i+1]
+var stencil_sum = buffer[i-1] + buffer[i] + buffer[i+1]
 result[i] = stencil_sum / 3.0
 ```
 
@@ -415,7 +417,7 @@ result[i] = stencil_sum / 3.0
 
 ```mojo
 # Only include valid neighbors in average
-stencil_count = 0
+var stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
@@ -450,7 +452,7 @@ buffer_B[10] = stencil_result_A
 
 # Thread B immediately reads buffer_B[10] for its stencil
 # RACE CONDITION: Thread B might read old value before Thread A's write completes
-stencil_input = buffer_B[10]  // Undefined behavior!
+var stencil_input = buffer_B[10]  # Undefined behavior!
 ```
 
 **With barriers (correct)**:
@@ -460,15 +462,15 @@ stencil_input = buffer_B[10]  // Undefined behavior!
 buffer_B[local_i] = stencil_result
 
 # Signal write completion
-_ = mbarrier_arrive(barrier)
+_ = mbarrier_arrive(iter_barrier.ptr)
 
 # Poll until ALL threads have completed writes. mbarrier_test_wait is
 # non-blocking, so a single call is NOT a wait — it must run in a loop.
-while not mbarrier_test_wait(barrier, TPB):
+while not mbarrier_test_wait(iter_barrier.ptr, TPB):
     pass
 
 # Now safe to read - all writes guaranteed complete
-stencil_input = buffer_B[neighbor_index]  # Always sees correct values
+var stencil_input = buffer_B[neighbor_index]  # Always sees correct values
 ```
 
 ## **Output buffer selection**

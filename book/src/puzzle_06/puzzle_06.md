@@ -49,7 +49,7 @@ element-to-thread mapping.
 
 1. Calculate global index: `i = block_dim.x * block_idx.x + thread_idx.x`
 2. Add guard: `if i < size`
-3. Inside guard: `output[i] = a[i] + 10.0`
+3. Inside guard: `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
 
 </div>
 </details>
@@ -119,24 +119,25 @@ This solution covers key concepts of block-based GPU processing:
    - Combines block and thread indices:
      `block_dim.x * block_idx.x + thread_idx.x`
    - Maps each thread to a unique global position
-   - Example for 3 threads per block:
+   - Example for 4 threads per block:
 
      ```txt
-     Block 0: [0 1 2]
-     Block 1: [3 4 5]
-     Block 2: [6 7 8]
+     Block 0: [0 1 2 3]
+     Block 1: [4 5 6 7]
+     Block 2: [8 9 10 11]
      ```
 
 2. **Block coordination**
    - Each block processes a contiguous chunk of data
-   - Block size (3) < Data size (9) requires multiple blocks
-   - Automatic work distribution across blocks:
+   - Block size (4) < Data size (9) requires multiple blocks
+   - Automatic work distribution across blocks, with the guard switching off
+     the threads that run past the end:
 
      ```txt
      Data:    [0 1 2 3 4 5 6 7 8]
-     Block 0: [0 1 2]
-     Block 1:       [3 4 5]
-     Block 2:             [6 7 8]
+     Block 0: [0 1 2 3]
+     Block 1:          [4 5 6 7]
+     Block 2:                   [8]  (threads 9-11 guarded off)
      ```
 
 3. **Bounds checking**
@@ -147,7 +148,7 @@ This solution covers key concepts of block-based GPU processing:
 
 4. **Memory access pattern**
    - Coalesced memory access: threads in a block access contiguous memory
-   - Each thread processes one element: `output[i] = a[i] + 10.0`
+   - Each thread processes one element: `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
    - Block-level parallelism provides efficient memory bandwidth utilization
 
 This pattern forms the foundation for processing large datasets that exceed the

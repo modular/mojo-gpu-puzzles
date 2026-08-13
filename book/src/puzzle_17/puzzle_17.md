@@ -189,9 +189,9 @@ Let's break down how this works in the larger context:
    struct Conv1DCustomOp:
        @staticmethod
        def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
-           output: OutputTensor[rank=1],
-           input: InputTensor[dtype = output.dtype, rank = output.rank],
-           kernel: InputTensor[dtype = output.dtype, rank = output.rank],
+           output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+           input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+           kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
            ctx: DeviceContext,
        ) raises:
            # Implementation
@@ -200,15 +200,26 @@ Let's break down how this works in the larger context:
    - `target` indicates the device type ("gpu" or "cpu")
    - `input_size` and `conv_size` are parameters passed from Python
    - Tensor types ensure correct shape and type checking
-   - Return type is `raises` for proper error handling
+   - `raises` is the effect annotation, marking that `execute` can propagate
+     errors
 
 2. **Tensor Conversion**:
 
    ```mojo
-   output_tensor = output.to_layout_tensor()
-   input_tensor = input.to_layout_tensor()
-   kernel_tensor = kernel.to_layout_tensor()
+   comptime out_layout_val = row_major[input_size]()
+   comptime OutLayout = type_of(out_layout_val)
+
+   var output_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+       output.unsafe_ptr(), out_layout_val
+   )
+   var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+       input.unsafe_ptr(), out_layout_val
+   )
    ```
+
+   The layouts are constructed from the op's compile-time parameters and the
+   tensors are built from raw pointers—they are not extracted from the
+   `OutputTensor`/`InputTensor` arguments.
 
    - MAX Graph tensors are converted to Mojo TileTensors
    - This allows our kernel to work with them directly
@@ -217,7 +228,7 @@ Let's break down how this works in the larger context:
 3. **Device Context Usage**:
 
    ```mojo
-   gpu_ctx = ctx.get_device_context()
+   var gpu_ctx = ctx
    gpu_ctx.enqueue_memset(...)  # Zero output buffer
    gpu_ctx.enqueue_function[...](...) # Schedule kernel
    ```
@@ -251,7 +262,7 @@ struct Conv1DCustomOp:
     def execute[...](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[type = output.dtype, rank = output.rank],
+        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
         ctx: DeviceContext,
     ) raises:
         # Implementation here

@@ -103,7 +103,7 @@ The benchmarking system uses Mojo's built-in `benchmark` module:
 
 ```mojo
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
-bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
+var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 ```
 
 - **`max_iters=10`**: Up to 10 iterations for statistical reliability
@@ -120,7 +120,7 @@ Each benchmark follows a streamlined pattern:
 ```mojo
 @parameter
 def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
     @parameter
     def pattern_workflow(ctx: DeviceContext) raises:

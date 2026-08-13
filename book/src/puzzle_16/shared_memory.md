@@ -144,20 +144,20 @@ Matrix B:                           b_shared: (similar layout)
 
    ```mojo
    # Create 2D shared memory tensors using TileTensor with address_space
-   a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
-   b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
+   var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
+   var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
    ```
 
 2. **Thread Indexing**:
 
    ```mojo
    # Global indices for matrix access
-   row = block_dim.y * block_idx.y + thread_idx.y
-   col = block_dim.x * block_idx.x + thread_idx.x
+   var row = block_dim.y * block_idx.y + thread_idx.y
+   var col = block_dim.x * block_idx.x + thread_idx.x
 
    # Local indices for shared memory
-   local_row = thread_idx.y
-   local_col = thread_idx.x
+   var local_row = thread_idx.y
+   var local_col = thread_idx.x
    ```
 
 3. **Data Loading**:
@@ -175,7 +175,7 @@ Matrix B:                           b_shared: (similar layout)
    # Guard ensures we only compute for valid matrix elements
    if row < size and col < size:
        # Initialize accumulator with output tensor's type
-       var acc: output.element_type = 0
+       var acc: output.ElementType = 0
 
        # Compile-time unrolled loop for matrix multiplication
        comptime for k in range(size):
@@ -191,7 +191,7 @@ Matrix B:                           b_shared: (similar layout)
      - Only valid threads perform work
      - Essential because TPB (3×3) > SIZE (2×2)
 
-   - **Accumulator Type**: `var acc: output.element_type`
+   - **Accumulator Type**: `var acc: output.ElementType`
      - Uses output tensor's element type for type safety
      - Ensures consistent numeric precision
      - Initialized to zero before accumulation

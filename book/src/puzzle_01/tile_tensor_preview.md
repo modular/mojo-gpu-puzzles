@@ -6,7 +6,7 @@ issues:
 ### Current approach
 
 ```mojo
-i = thread_idx.x
+var i = thread_idx.x
 output[i] = a[i] + 10.0
 ```
 
@@ -22,7 +22,7 @@ As we progress through the puzzles, array indexing will become more complex:
 
 ```mojo
 # 2D indexing coming in later puzzles
-idx = row * WIDTH + col
+var idx = row * WIDTH + col
 
 # 3D indexing
 idx = (batch * HEIGHT + row) * WIDTH + col

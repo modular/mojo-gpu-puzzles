@@ -84,8 +84,8 @@ Implement parallel histogram binning using `block.prefix_sum()` for extraction:
 Just like `block_sum_dot_product`, you need these key variables:
 
 ```mojo
-global_i = block_dim.x * block_idx.x + thread_idx.x
-local_i = thread_idx.x
+var global_i = block_dim.x * block_idx.x + thread_idx.x
+var local_i = thread_idx.x
 ```
 
 Your function will have **5 main steps** (about 15-20 lines total):
@@ -101,8 +101,8 @@ Your function will have **5 main steps** (about 15-20 lines total):
 To classify a `Float32` value into bins:
 
 ```mojo
-my_value = input_data[global_i][0]  # Extract SIMD like in dot product
-bin_number = Int(floor(my_value * Float32(num_bins)))
+var my_value = input_data[global_i][0]  # Extract SIMD like in dot product
+var bin_number = Int(floor(my_value * Float32(num_bins)))
 ```
 
 **Edge case handling**: Values exactly 1.0 would go to bin `NUM_BINS`, but you
@@ -128,7 +128,7 @@ positions!
 Following the documentation, the call looks like:
 
 ```mojo
-offset = block.prefix_sum[
+var offset = block.prefix_sum[
     dtype=DType.int32,         # Working with integer predicates
     block_size=tpb,            # Same as block.sum()
     exclusive=True             # Key: gives position BEFORE each thread
@@ -157,7 +157,7 @@ The last thread (not thread 0!) computes the total count:
 
 ```mojo
 if local_i == tpb - 1:  # Last thread in block
-    total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
+    var total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
     count_output[0] = total_count
 ```
 

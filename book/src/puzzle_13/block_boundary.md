@@ -131,8 +131,8 @@ Size calculation:
 
    ```mojo
    # First: account for padding needed for convolution window
-   shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
-   shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
+   var shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
+   var shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
    ```
 
    This allocation pattern ensures we have enough space for both the block's
@@ -149,7 +149,7 @@ Size calculation:
 
    # Boundary data from next block
    if local_i < CONV_2 - 1:
-       next_idx = global_i + TPB
+       var next_idx = global_i + TPB
        if next_idx < SIZE_2:
            shared_a[TPB + local_i] = a[next_idx]
        else:
@@ -166,7 +166,7 @@ Size calculation:
 3. **Filter Loading**:
 
    ```mojo
-   if local_i < b_size:
+   if local_i < CONV_2:
        shared_b[local_i] = b[local_i]
    ```
 
@@ -177,14 +177,14 @@ Size calculation:
 
    ```mojo
    if global_i < SIZE_2:
-       var local_sum: output.element_type = 0
+       var local_sum: output.ElementType = 0
        comptime for j in range(CONV_2):
            if global_i + j < SIZE_2:
                local_sum += shared_a[local_i + j] * shared_b[j]
    ```
 
    - Uses `comptime for` for compile-time loop unrolling
-   - Proper type inference with `output.element_type`
+   - Proper type inference with `output.ElementType`
    - Semantically correct bounds check: only compute convolution for valid input
      positions
 

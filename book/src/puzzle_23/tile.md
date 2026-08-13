@@ -63,7 +63,7 @@ hierarchy.
 The tiled approach divides your data into fixed-size chunks:
 
 ```mojo
-num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
+var num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
 ```
 
 For a 1024-element vector with `TILE_SIZE=32`: `1024 ÷ 32 = 32` tiles exactly.
@@ -74,10 +74,10 @@ Check out the
 [TileTensor `.tile` documentation](https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile).
 
 ```mojo
-tile_id = indices[0]  # Each thread gets one tile to process
-out_tile = output.tile[tile_size](tile_id)
-a_tile = a.tile[tile_size](tile_id)
-b_tile = b.tile[tile_size](tile_id)
+var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
+var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 ```
 
 The `tile[size](id)` method creates a view of `size` consecutive elements
@@ -97,9 +97,9 @@ This `comptime for` loop unrolls at compile-time for optimal performance.
 ### 4. **SIMD operations within tile elements**
 
 ```mojo
-a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
-b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
-result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
+var a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
+var b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
+var result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
 out_tile.store[simd_width](Index(i), result)  # Store to position i in tile
 ```
 
@@ -220,10 +220,10 @@ Tiling represents a fundamental shift in how we think about parallel processing:
 ### 2. **Tile organization and indexing**
 
 ```mojo
-tile_id = indices[0]
-out_tile = output.tile[tile_size](tile_id)
-a_tile = a.tile[tile_size](tile_id)
-b_tile = b.tile[tile_size](tile_id)
+var tile_id = Int(indices[0].value())
+var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 ```
 
 **Tile mapping visualization (TILE_SIZE=32):**
@@ -248,9 +248,9 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 
 ```mojo
 comptime for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](Index(i))
-    b_vec = b_tile.load[simd_width](Index(i))
-    ret = a_vec + b_vec
+    var a_vec = a_tile.load[simd_width](Index(i))
+    var b_vec = b_tile.load[simd_width](Index(i))
+    var ret = a_vec + b_vec
     out_tile.store[simd_width](Index(i), ret)
 ```
 
@@ -265,14 +265,17 @@ comptime for i in range(tile_size):
 **Execution pattern within one tile (TILE_SIZE=32, SIMD_WIDTH=4):**
 
 ```text
-Thread processes tile sequentially:
-Step 0: Process elements [0:4] with SIMD
-Step 1: Process elements [4:8] with SIMD
-Step 2: Process elements [8:12] with SIMD
+Thread processes tile sequentially, one iteration per element:
+Step 0:  Load/store the SIMD window at [0:4]
+Step 1:  Load/store the SIMD window at [1:5]
+Step 2:  Load/store the SIMD window at [2:6]
 ...
-Step 7: Process elements [28:32] with SIMD
-Total: 8 SIMD operations per thread (32 ÷ 4 = 8)
+Step 31: Load/store the SIMD window at [31:35]
+Total: 32 SIMD operations per thread (comptime for i in range(tile_size))
 ```
+
+Note that the loop advances by one element per iteration, not by
+`SIMD_WIDTH`, so consecutive windows overlap.
 
 ### 4. **Memory access pattern analysis**
 

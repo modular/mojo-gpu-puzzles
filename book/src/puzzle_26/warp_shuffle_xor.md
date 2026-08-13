@@ -39,9 +39,10 @@ patterns, enabling efficient tree reductions and sorting networks without
 explicit coordination.
 
 > **Scope:** `shuffle_xor()` exchanges data *within a single warp*. Every
-> reduction and butterfly here is per-warp; the results are global only because
-> each section runs a single warp over the data. There is no cross-warp or
-> cross-block communication.
+> reduction and butterfly here is per-warp. Sections 1 and 2 run a single warp,
+> so their per-warp results are also the global ones; section 3 launches two
+> blocks of `WARP_SIZE` threads, and each warp reduces its own half
+> independently. There is no cross-warp or cross-block communication.
 
 ## 1. Basic butterfly pair swap
 
@@ -62,11 +63,11 @@ Traditional pair swapping requires complex indexing and coordination:
 shared_memory[lane] = input[global_i]
 barrier()
 if lane % 2 == 0:
-    partner = lane + 1
+    var partner = lane + 1
 else:
     partner = lane - 1
 if partner < WARP_SIZE:
-    swapped_val = shared_memory[partner]
+    var swapped_val = shared_memory[partner]
 ```
 
 **Problems with traditional approach:**
@@ -80,8 +81,8 @@ With `shuffle_xor()`, pair swapping becomes elegant:
 
 ```mojo
 # Butterfly XOR approach - simple and hardware-optimized
-current_val = input[global_i]
-swapped_val = shuffle_xor(current_val, 1)  # XOR with 1 creates pairs
+var current_val = input[global_i]
+var swapped_val = shuffle_xor(current_val, 1)  # XOR with 1 creates pairs
 output[global_i] = swapped_val
 ```
 
@@ -197,7 +198,8 @@ WARP_SIZE:  32
 SIZE:  32
 output: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
 expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
-✅ Butterfly pair swap test passed!
+Butterfly pair swap test: passed
+Puzzle 26 complete ✅
 ```
 
 ### Solution
@@ -218,8 +220,8 @@ through XOR communication patterns.
 
 ```mojo
 if global_i < size:
-    current_val = input[global_i]              # Each lane reads its element
-    swapped_val = shuffle_xor(current_val, 1)  # XOR creates pair exchange
+    var current_val = input[global_i]              # Each lane reads its element
+    var swapped_val = shuffle_xor(current_val, 1)  # XOR creates pair exchange
 
     # For demonstration, store the swapped value
     output[global_i] = swapped_val
@@ -433,7 +435,8 @@ WARP_SIZE:  32
 SIZE:  32
 output: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
 expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
-✅ Butterfly parallel max test passed!
+Butterfly parallel max test: passed
+Puzzle 26 complete ✅
 ```
 
 ### Solution
@@ -454,10 +457,10 @@ reduction trees with \\(O(\\log n)\\) complexity.
 
 ```mojo
 if global_i < size:
-    max_val = input[global_i]  # Start with local value
+    var max_val = input[global_i]  # Start with local value
 
     # Butterfly reduction tree: dynamic for any WARP_SIZE
-    offset = WARP_SIZE // 2
+    var offset = WARP_SIZE // 2
     while offset > 0:
         max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
         offset //= 2
@@ -648,7 +651,8 @@ WARP_SIZE:  32
 SIZE_2:  64
 output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
 expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
-✅ Butterfly conditional max test passed!
+Butterfly conditional max test: passed
+Puzzle 26 complete ✅
 ```
 
 ### Solution
@@ -669,16 +673,16 @@ conditional output.
 
 ```mojo
 if global_i < size:
-    current_val = input[global_i]
-    min_val = current_val  # Track minimum separately
+    var current_val = input[global_i]
+    var min_val = current_val  # Track minimum separately
 
     # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
-    offset = WARP_SIZE // 2
+    var offset = WARP_SIZE // 2
     while offset > 0:
-        neighbor_val = shuffle_xor(current_val, UInt32(offset))
+        var neighbor_val = shuffle_xor(current_val, UInt32(offset))
         current_val = max(current_val, neighbor_val)    # Max reduction
 
-        min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
+        var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
         min_val = min(min_val, min_neighbor_val)        # Min reduction
 
         offset //= 2
@@ -717,12 +721,12 @@ Final result: All lanes have current_val=7 (global max) and min_val=1 (global mi
 **Dynamic algorithm** (works for any WARP_SIZE):
 
 ```mojo
-offset = WARP_SIZE // 2
+var offset = WARP_SIZE // 2
 while offset > 0:
-    neighbor_val = shuffle_xor(current_val, UInt32(offset))
+    var neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = max(current_val, neighbor_val)
 
-    min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
+    var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
     min_val = min(min_val, min_neighbor_val)
 
     offset //= 2
@@ -789,9 +793,9 @@ problems, you've learned:
 **Dynamic Algorithm Design:**
 
 ```mojo
-offset = WARP_SIZE // 2
+var offset = WARP_SIZE // 2
 while offset > 0:
-    neighbor_val = shuffle_xor(current_val, UInt32(offset))
+    var neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = operation(current_val, neighbor_val)
     offset //= 2
 ```

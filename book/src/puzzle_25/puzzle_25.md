@@ -71,7 +71,7 @@ Learn the core communication primitives from `std.gpu.primitives.warp`:
 
 ```mojo
 # Complex neighbor access pattern (traditional approach):
-shared = TileTensor[
+var shared = TileTensor[
     dtype,
     row_major[WARP_SIZE](),
     MutAnyOrigin,
@@ -80,15 +80,15 @@ shared = TileTensor[
 shared[local_i] = input[global_i]
 barrier()
 if local_i < WARP_SIZE - 1:
-    next_value = shared[local_i + 1]  # Neighbor access
-    result = next_value - shared[local_i]
+    var next_value = shared[local_i + 1]  # Neighbor access
+    var result = next_value - shared[local_i]
 else:
     result = 0  # Boundary handling
 barrier()
 
 # Warp communication eliminates all this complexity:
-current_val = input[global_i]
-next_val = shuffle_down(current_val, 1)  # Direct neighbor access
+var current_val = input[global_i]
+var next_val = shuffle_down(current_val, 1)  # Direct neighbor access
 if lane < WARP_SIZE - 1:
     result = next_val - current_val
 else:
@@ -135,10 +135,10 @@ differences.
 **Key pattern:**
 
 ```mojo
-current_val = input[global_i]
-next_val = shuffle_down(current_val, 1)
+var current_val = input[global_i]
+var next_val = shuffle_down(current_val, 1)
 if lane < WARP_SIZE - 1:
-    result = compute_with_neighbors(current_val, next_val)
+    var result = compute_with_neighbors(current_val, next_val)
 ```
 
 ### **2. Collective coordination with broadcast**
@@ -162,7 +162,7 @@ var shared_value = 0.0
 if lane == 0:
     shared_value = compute_block_statistic()
 shared_value = broadcast(shared_value)
-result = use_shared_value(shared_value, local_data)
+var result = use_shared_value(shared_value, local_data)
 ```
 
 ## Key concepts
