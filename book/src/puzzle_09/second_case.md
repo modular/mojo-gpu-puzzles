@@ -265,7 +265,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-47                  var value = rebind[Scalar[dtype]](a[idx])
+51                  var value = a[idx]
 (cuda-gdb) n
 48                  window_sum += value
 (cuda-gdb) n
@@ -356,9 +356,9 @@ Looking at the problem code, we find:
 comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
-    idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
+    var idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
     if 0 <= idx < SIZE:
-        value = rebind[Scalar[dtype]](a[idx])
+        var value = a[idx]
         window_sum += value
 ```
 

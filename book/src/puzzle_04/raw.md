@@ -106,7 +106,7 @@ This solution:
 
 1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
 2. Add guard: `if row < size and col < size`
-3. Inside guard: `output[row * size + col] = a[row * size + col] + 10.0`
+3. Inside guard: `output[unsafe_offset=row * size + col] = a[unsafe_offset=row * size + col] + 10.0`
 
 </div>
 </details>

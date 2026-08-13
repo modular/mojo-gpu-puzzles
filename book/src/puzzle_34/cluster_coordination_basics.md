@@ -150,7 +150,7 @@ Block coordination results:
   Block 1 : 255.0
   Block 2 : 382.5
   Block 3 : 510.0
-✅ Multi-block coordination tests passed!
+Puzzle 34 complete ✅
 ```
 
 **Success Criteria:**
@@ -178,10 +178,10 @@ synchronization pattern using a carefully orchestrated two-phase approach:**
 **Thread and block identification:**
 
 ```mojo
-global_i = block_dim.x * block_idx.x + thread_idx.x  # Global thread index
-local_i = thread_idx.x                               # Local thread index within block
-my_block_rank = Int(block_rank_in_cluster())         # Cluster rank (0-3)
-block_id = Int(block_idx.x)                          # Block index for reliable addressing
+var global_i = block_dim.x * block_idx.x + thread_idx.x  # Global thread index
+var local_i = thread_idx.x                               # Local thread index within block
+var my_block_rank = Int(block_rank_in_cluster())         # Cluster rank (0-3)
+var block_id = Int(block_idx.x)                          # Block index for reliable addressing
 ```
 
 **Shared memory allocation and data processing:**

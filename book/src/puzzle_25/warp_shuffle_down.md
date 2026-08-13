@@ -59,8 +59,8 @@ Traditional neighbor access requires complex indexing and bounds checking:
 ```mojo
 # Traditional approach - complex and error-prone
 if global_i < size - 1:
-    next_value = input[global_i + 1]  # Potential out-of-bounds
-    result = next_value - current_value
+    var next_value = input[global_i + 1]  # Potential out-of-bounds
+    var result = next_value - current_value
 ```
 
 **Problems with traditional approach:**
@@ -74,10 +74,10 @@ With `shuffle_down()`, neighbor access becomes elegant:
 
 ```mojo
 # Warp shuffle approach - simple and safe
-current_val = input[global_i]
-next_val = shuffle_down(current_val, 1)  # Get value from lane+1
+var current_val = input[global_i]
+var next_val = shuffle_down(current_val, 1)  # Get value from lane+1
 if lane < WARP_SIZE - 1:
-    result = next_val - current_val
+    var result = next_val - current_val
 ```
 
 **Benefits of shuffle_down:**
@@ -148,7 +148,7 @@ For neighbor difference with `WARP_SIZE = 32`:
 ### 3. **Lane identification**
 
 ```mojo
-lane = lane_id()  # Returns 0 to WARP_SIZE-1
+var lane = lane_id()  # Returns 0 to WARP_SIZE-1
 ```
 
 **Lane numbering:** Within each warp, lanes are numbered 0, 1, 2,...,
@@ -202,7 +202,8 @@ WARP_SIZE:  32
 SIZE:  32
 output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
 expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
-✅ Basic neighbor difference test passed!
+Neighbor difference test: passed
+Puzzle 25 complete ✅
 ```
 
 ### Solution
@@ -223,8 +224,8 @@ indexing into efficient warp-level communication.
 
 ```mojo
 if global_i < size:
-    current_val = input[global_i]           # Each lane reads its element
-    next_val = shuffle_down(current_val, 1) # Hardware shifts data right
+    var current_val = input[global_i]           # Each lane reads its element
+    var next_val = shuffle_down(current_val, 1) # Hardware shifts data right
 
     if lane < WARP_SIZE - 1:
         output[global_i] = next_val - current_val  # Compute difference
@@ -288,8 +289,8 @@ For our quadratic input \\(f(i) = i^2\\):
 ### Configuration
 
 - Vector size: `SIZE_2 = 64` (multi-block scenario)
-- Grid configuration: `BLOCKS_PER_GRID = (2, 1)` blocks per grid
-- Block configuration: `THREADS_PER_BLOCK = (WARP_SIZE, 1)` threads per block
+- Grid configuration: `BLOCKS_PER_GRID_2 = (2, 1)` blocks per grid
+- Block configuration: `THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)` threads per block
 
 ### Code to complete
 
@@ -438,7 +439,8 @@ WARP_SIZE:  32
 SIZE_2:  64
 output: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
 expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
-✅ Moving average test passed!
+Moving average test: passed
+Puzzle 25 complete ✅
 ```
 
 ### Solution
@@ -460,9 +462,9 @@ operations.
 ```mojo
 if global_i < size:
     # Step 1: Acquire all needed data via multiple shuffles
-    current_val = input[global_i]                   # Direct access
-    next_val = shuffle_down(current_val, 1)         # Right neighbor
-    next_next_val = shuffle_down(current_val, 2)    # Right+1 neighbor
+    var current_val = input[global_i]                   # Direct access
+    var next_val = shuffle_down(current_val, 1)         # Right neighbor
+    var next_next_val = shuffle_down(current_val, 2)    # Right+1 neighbor
 
     # Step 2: Adaptive computation based on available data
     if lane < WARP_SIZE - 2 and global_i < size - 2:
@@ -552,10 +554,10 @@ providing smoothing with a cutoff frequency at \\(f_c \\approx 0.25f_s\\).
 Here is what the core pattern of this section looks like
 
 ```mojo
-current_val = input[global_i]
-neighbor_val = shuffle_down(current_val, offset)
+var current_val = input[global_i]
+var neighbor_val = shuffle_down(current_val, offset)
 if lane < WARP_SIZE - offset:
-    result = compute(current_val, neighbor_val)
+    var result = compute(current_val, neighbor_val)
 ```
 
 **Key benefits:**

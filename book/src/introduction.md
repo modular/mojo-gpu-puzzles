@@ -143,7 +143,7 @@ data elements simultaneously:
 
 ```mojo
 # GPU approach (conceptual)
-thread_id = get_global_id()
+var thread_id = get_global_id()
 if thread_id < data_size:
     result[thread_id] = process(data[thread_id])
 ```

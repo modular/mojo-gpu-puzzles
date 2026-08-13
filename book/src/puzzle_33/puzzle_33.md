@@ -62,10 +62,10 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 
 ```mojo
 # Entire warp cooperates on matrix fragments
-a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
-b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
-c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
-d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
+var a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
+var b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
+var c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
+var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
 mma_op.store_d(C_mma_tile, d_reg)           # Store result
 ```
 
@@ -79,7 +79,7 @@ type:
 from layout.tensor_core import TensorCore
 
 # Create a Tensor Core operator for specific tile sizes
-mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
 # Core operations:
 # - load_a(): Load matrix A fragment from shared memory
@@ -151,14 +151,14 @@ differently:
 
 ```mojo
 # Calculate warp coordinates within the block
-warp_id = thread_idx.x // WARP_SIZE
-warps_in_n = BN // WN  # Number of warps along N dimension
-warps_in_m = BM // WM  # Number of warps along M dimension
-warp_y = warp_id // warps_in_n  # Warp's row
-warp_x = warp_id % warps_in_n   # Warp's column
+var warp_id = thread_idx.x // WARP_SIZE
+var warps_in_n = BN // WN  # Number of warps along N dimension
+var warps_in_m = BM // WM  # Number of warps along M dimension
+var warp_y = warp_id // warps_in_n  # Warp's row
+var warp_x = warp_id % warps_in_n   # Warp's column
 
 # Each warp handles a WM×WN tile of the output
-C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 ```
 
 **Warp organization example** (with BM=128, BN=64, WM=32, WN=32):
@@ -273,16 +273,15 @@ The tensor core version uses different tiling parameters optimized for hardware:
 **How warps map to MMA fragments:**
 
 ```txt
-Each 32×32 warp tile contains multiple 16×8 MMA fragments:
+Each 32×32 warp tile contains multiple 16×8 MMA fragments
+(MMA_M = 16 rows, MMA_N = 8 cols):
 
-    16 cols   16 cols
-     |         |
-[ MMA 0,0 ][ MMA 0,1 ]  ← 8 rows each (32÷8=4 fragments down)
-[ MMA 1,0 ][ MMA 1,1 ]  ← 8 rows each
-[ MMA 2,0 ][ MMA 2,1 ]  ← 8 rows each
-[ MMA 3,0 ][ MMA 3,1 ]  ← 8 rows each
+  8 cols    8 cols    8 cols    8 cols
+    |         |         |         |
+[ MMA 0,0 ][ MMA 0,1 ][ MMA 0,2 ][ MMA 0,3 ]  ← 16 rows each
+[ MMA 1,0 ][ MMA 1,1 ][ MMA 1,2 ][ MMA 1,3 ]  ← 16 rows each
 
-2 fragments across (32÷16=2) × 4 fragments down (32÷8=4) = 8 MMA operations per warp per K-tile
+4 fragments across (32÷8=4) × 2 fragments down (32÷16=2) = 8 MMA operations per warp per K-slice
 ```
 
 ### Step 4: Code to complete

@@ -71,7 +71,7 @@ Learn the complete parallel programming toolkit from `max.gpu.primitives.block`:
 # Complex block-wide reduction (traditional approach - from Puzzle 12):
 shared_memory[local_i] = my_value
 barrier()
-stride = 64
+var stride = 64
 while stride > 0:
     if local_i < stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
@@ -81,8 +81,8 @@ if local_i == 0:
     output[block_idx.x] = shared_memory[0]
 
 # Block operations eliminate all this complexity:
-my_partial = compute_local_contribution()
-total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
+var my_partial = compute_local_contribution()
+var total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
 if local_i == 0:
     output[block_idx.x] = total[0]
 ```
@@ -109,7 +109,7 @@ Complex but educational - explicit shared memory, barriers, and tree reduction:
 shared_memory[local_i] = my_value
 barrier()
 # Tree reduction with stride-based indexing...
-stride = 64
+var stride = 64
 while stride > 0:
     if local_i < stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
@@ -123,7 +123,7 @@ Hardware-accelerated but limited scope - `warp.sum()` within 32-thread warps:
 
 ```mojo
 # Warp approach: 1 line but single warp only
-total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
+var total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
 ```
 
 ### **The destination: Block programming (This puzzle)**
@@ -132,7 +132,7 @@ Complete toolkit - hardware-optimized primitives across entire blocks:
 
 ```mojo
 # Block approach: 1 line across multiple warps (128+ threads)
-total = block.sum[block_size=128, broadcast=False](val=partial_product)
+var total = block.sum[block_size=128, broadcast=False](val=partial_product)
 ```
 
 ## The three fundamental communication patterns

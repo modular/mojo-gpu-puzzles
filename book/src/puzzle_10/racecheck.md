@@ -290,10 +290,10 @@ Use direct coordinate check to identify thread at position (0,0).
 
 ```mojo
 if row == 0 and col == 0:
-    local_sum = Scalar[dtype](0.0)
+    var local_sum = Scalar[dtype](0.0)
     for r in range(size):
         for c in range(size):
-            local_sum += rebind[Scalar[dtype]](a[r, c])
+            local_sum += a[r, c]
     shared_sum[0] = local_sum  # Single write operation
 ```
 
@@ -345,7 +345,8 @@ out shape: 2 x 2
 Running race condition example...
 out: HostBuffer([6.0, 6.0, 6.0, 6.0])
 expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
-✅ Race condition test PASSED! (racecheck will find hazards)
+Race condition test: passed
+Puzzle 10 complete ✅
 ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
 ```
 

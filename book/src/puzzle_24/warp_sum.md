@@ -128,7 +128,7 @@ You need to complete the `simple_warp_dot_product` function with
 
 ```mojo
 def simple_warp_dot_product[...](output, a, b):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 ```
 
@@ -143,12 +143,15 @@ def simple_warp_dot_product[...](output, a, b):
 ```mojo
 var partial_product: Scalar[dtype] = 0
 if global_i < size:
-    partial_product = (a[global_i] * b[global_i]).reduce_add()
+    partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        Scalar[dtype]
+    ](b_lt[global_i])
 ```
 
-**Why `.reduce_add()`?** Values in Mojo are SIMD-based, so
-`a[global_i] * b[global_i]` returns a SIMD vector. Use `.reduce_add()` to sum
-the vector into a scalar.
+**Why `rebind`?** Indexing a `LayoutTensor` yields a SIMD value, so each element
+is narrowed to `Scalar[dtype]` with `rebind` before the multiply. Note the
+receivers are `a_lt` and `b_lt`—the `LayoutTensor` handles obtained from
+`to_layout_tensor()` inside the kernel, not the `TileTensor` parameters.
 
 **Bounds checking:** Essential because not all threads may have valid data to
 process.
@@ -156,7 +159,7 @@ process.
 ### 3. **Warp reduction magic**
 
 ```mojo
-total = warp_sum(partial_product)
+var total = warp_sum(partial_product)
 ```
 
 **What `warp_sum()` does:**
@@ -170,7 +173,7 @@ total = warp_sum(partial_product)
 
 ```mojo
 if lane_id() == 0:
-    output[global_i // WARP_SIZE] = total
+    out_lt.store[1](Index(global_i // WARP_SIZE), total)
 ```
 
 **Why only lane 0?** All lanes have the same `total` value after `warp_sum()`,
@@ -291,8 +294,10 @@ You need to complete the `compute_dot_product` function with
 ```mojo
 @__parameter
 @always_inline
-def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
-    idx = indices[0]
+def compute_dot_product[
+    simd_width: Int, alignment: Int = align_of[dtype]()
+](indices: Coord) capturing -> None:
+    var idx = Int(indices[0].value())
     # FILL IN (10 lines at most)
 ```
 
@@ -307,15 +312,16 @@ def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) ca
 ```mojo
 var partial_product: Scalar[dtype] = 0.0
 if idx < size:
-    a_val = a.load[1](idx, 0)
-    b_val = b.load[1](idx, 0)
-    partial_product = (a_val * b_val).reduce_add()
+    var a_val = a_lt.load[1](Index(idx))
+    var b_val = b_lt.load[1](Index(idx))
+    partial_product = a_val * b_val
 else:
     partial_product = 0.0
 ```
 
-**Loading pattern:** `a.load[1](idx, 0)` loads exactly 1 element at position
-`idx` (not SIMD vectorized).
+**Loading pattern:** `a_lt.load[1](Index(idx))` loads exactly 1 element at
+position `idx` (not SIMD vectorized). The tensor is 1-D, so the index is a
+single `Index(idx)`.
 
 **Bounds handling:** Set `partial_product = 0.0` for out-of-bounds threads so
 they don't contribute to the sum.
@@ -323,14 +329,14 @@ they don't contribute to the sum.
 ### 3. **Warp operations and storing**
 
 ```mojo
-total = warp_sum(partial_product)
+var total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    output.store[1](Index(idx // WARP_SIZE), total)
+    out_lt.store[1](Index(idx // WARP_SIZE), total)
 ```
 
-**Storage pattern:** `output.store[1](Index(idx // WARP_SIZE), 0, total)` stores
-1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
+**Storage pattern:** `out_lt.store[1](Index(idx // WARP_SIZE), total)` stores
+1 element at position `idx // WARP_SIZE` in the 1-D output tensor.
 
 **Same warp logic:** `warp_sum()` and lane 0 writing work identically in
 functional approach.
@@ -342,9 +348,9 @@ from std.gpu import lane_id
 from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
-my_lane = lane_id()           # 0 to WARP_SIZE-1
-total = warp_sum(my_value)    # Hardware-accelerated reduction
-warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
+var my_lane = lane_id()           # 0 to WARP_SIZE-1
+var total = warp_sum(my_value)    # Hardware-accelerated reduction
+var warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
 ```
 
 </div>

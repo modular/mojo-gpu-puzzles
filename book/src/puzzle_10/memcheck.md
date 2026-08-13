@@ -38,7 +38,8 @@ out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
-✅ Memory test PASSED! (memcheck may find bounds violations)
+Memory bug test: passed
+Puzzle 10 complete ✅
 ```
 
 ✅ **Test PASSED!** The output matches expected results perfectly. Case closed,
@@ -219,7 +220,8 @@ out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
-✅ Memory test PASSED! (memcheck may find bounds violations)
+Memory bug test: passed
+Puzzle 10 complete ✅
 ========= ERROR SUMMARY: 0 errors
 ```
 
