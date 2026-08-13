@@ -371,15 +371,15 @@ def minimal_fused_kernel_backward[
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).unsafe_write(0)
-            (grad_ln_bias.ptr + h).unsafe_write(0)
+            grad_ln_weight.ptr.store(h, 0)
+            grad_ln_bias.ptr.store(h, 0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).unsafe_write(0)
+            grad_bias.ptr.store(out_idx, 0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
+                grad_weight.ptr.store(out_idx * hidden_dim + h, 0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
