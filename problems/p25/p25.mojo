@@ -42,7 +42,18 @@ def neighbor_difference[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
-    # FILL IN (roughly 7 lines)
+    if global_i < size:
+        # Get current value
+        var current_val = input[global_i]
+
+        # Get next neighbor's value using shuffle_down
+        var next_val = shuffle_down(current_val, 1)
+
+        if lane < WARP_SIZE - 1:
+            output[global_i] = next_val - current_val
+        else:
+            # Last thread in warp: no valid neighbor, set to 0
+            output[global_i] = 0
 
 
 # ANCHOR_END: neighbor_difference
@@ -70,7 +81,21 @@ def moving_average_3[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
-    # FILL IN (roughly 10 lines)
+    if global_i < size:
+        # Get current, next, and next+1 values
+        var current_val = input[global_i]
+        var next_val = shuffle_down(current_val, 1)
+        var next_next_val = shuffle_down(current_val, 2)
+
+        # Compute 3-point average - valid within warp boundaries
+        if lane < WARP_SIZE - 2 and global_i < size - 2:
+            output[global_i] = (current_val + next_val + next_next_val) / 3.0
+        elif lane < WARP_SIZE - 1 and global_i < size - 1:
+            # Second-to-last in warp: only current + next available
+            output[global_i] = (current_val + next_val) / 2.0
+        else:
+            # Last thread in warp or boundary cases: only current available
+            output[global_i] = current_val
 
 
 # ANCHOR_END: moving_average_3
@@ -94,7 +119,29 @@ def broadcast_shuffle_coordination[
     if global_i < size:
         var scale_factor: output.ElementType = 0.0
 
-        # FILL IN (roughly 14 lines)
+        # Step 1: Lane 0 computes block-local scaling factor
+        if lane == 0:
+            var block_start = block_idx.x * block_dim.x
+            var sum: output.ElementType = 0.0
+            for i in range(4):
+                if block_start + i < size:
+                    sum += input[block_start + i]
+            scale_factor = sum / 4.0
+
+        # Step 2: Broadcast scaling factor to all lanes in this warp
+        scale_factor = broadcast(scale_factor)
+
+        # Step 3: Each lane gets current and next values
+        var current_val = input[global_i]
+        var next_val = shuffle_down(current_val, 1)
+
+        # Step 4: Apply broadcast factor with neighbor coordination
+        if lane < WARP_SIZE - 1 and global_i < size - 1:
+            # Combine current + next, then scale by broadcast factor
+            output[global_i] = (current_val + next_val) * scale_factor
+        else:
+            # Last lane in warp or last element: only current value, scaled by broadcast factor
+            output[global_i] = current_val * scale_factor
 
 
 # ANCHOR_END: broadcast_shuffle_coordination
@@ -117,7 +164,20 @@ def basic_broadcast[
     if global_i < size:
         var broadcast_value: output.ElementType = 0.0
 
-        # FILL IN (roughly 10 lines)
+        # Step 1: Lane 0 computes special value (sum of first 4 elements in this block)
+        if lane == 0:
+            var block_start = block_idx.x * block_dim.x
+            var sum: output.ElementType = 0.0
+            for i in range(4):
+                if block_start + i < size:
+                    sum += input[block_start + i]
+            broadcast_value = sum
+
+        # Step 2: Broadcast lane 0's value to all lanes in this warp
+        broadcast_value = broadcast(broadcast_value)
+
+        # Step 3: All lanes use broadcast value in their computation
+        output[global_i] = broadcast_value + input[global_i]
 
 
 # ANCHOR_END: basic_broadcast
@@ -140,7 +200,20 @@ def conditional_broadcast[
     if global_i < size:
         var decision_value: output.ElementType = 0.0
 
-        # FILL IN (roughly 10 lines)
+        # Step 1: Lane 0 finds the max of the first 8 elements in this block
+        if lane == 0:
+            var block_start = block_idx.x * block_dim.x
+            decision_value = (
+                input[block_start] if block_start < size else 0.0
+            )
+            for i in range(1, min(8, min(WARP_SIZE, size - block_start))):
+                if block_start + i < size:
+                    var current_val = input[block_start + i]
+                    if current_val > decision_value:
+                        decision_value = current_val
+
+        # Step 2: Broadcast decision to all lanes in this warp
+        decision_value = broadcast(decision_value)
 
         var current_input = input[global_i]
         var threshold = decision_value / 2.0

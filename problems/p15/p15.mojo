@@ -40,7 +40,27 @@ def axis_sum(
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
-    # FILL ME IN (roughly 15 lines)
+    # Stage this batch row in shared memory
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    if local_i < size:
+        shared[local_i] = a[batch, local_i]
+    else:
+        shared[local_i] = 0
+    barrier()
+
+    # Tree reduction within the block
+    var stride = TPB // 2
+    while stride > 0:
+        if local_i < stride:
+            shared[local_i] += shared[local_i + stride]
+        barrier()
+        stride //= 2
+
+    if local_i == 0:
+        output[batch, 0] = shared[0]
 
 
 # ANCHOR_END: axis_sum

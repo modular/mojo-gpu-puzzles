@@ -65,7 +65,42 @@ def async_copy_overlap_convolution[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    # FILL IN HERE (roughly 19 lines)
+    var local_i = thread_idx.x
+
+    # Phase 1: Launch async copy for input tile
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
+
+    # Use async copy with thread layout matching the p14 pattern
+    comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+    copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
+
+    # Phase 2: Load kernel synchronously (small data)
+    if local_i < KERNEL_SIZE:
+        kernel_shared[local_i] = kernel[local_i]
+
+    # Phase 3: Wait for async copy to complete
+    async_copy_wait_all()  # Always wait since we always do async copy
+    barrier()  # Sync all threads
+
+    # Phase 4: Compute convolution
+    var global_i = block_idx.x * CONV_TILE_SIZE + local_i
+    if local_i < CONV_TILE_SIZE and global_i < Int(output.dim[0]()):
+        var result: output.ElementType = 0
+
+        # Simple convolution avoiding boundary issues
+        if local_i >= HALO_SIZE and local_i < CONV_TILE_SIZE - HALO_SIZE:
+            # Full convolution for center elements
+            for k in range(KERNEL_SIZE):
+                var input_idx = local_i + k - HALO_SIZE
+                if input_idx >= 0 and input_idx < CONV_TILE_SIZE:
+                    result += rebind[Scalar[dtype]](
+                        input_shared[input_idx]
+                    ) * rebind[Scalar[dtype]](kernel_shared[k])
+        else:
+            # For boundary elements, just copy input (no convolution)
+            result = rebind[Scalar[dtype]](input_shared[local_i])
+
+        output[global_i] = result
 
 
 # ANCHOR_END: async_copy_overlap_convolution

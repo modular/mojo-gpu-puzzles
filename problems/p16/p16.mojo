@@ -38,7 +38,11 @@ def naive_matmul[
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
-    # FILL ME IN (roughly 6 lines)
+    if row < size and col < size:
+        var s = Scalar[dtype](0)
+        for k in range(size):
+            s += a[row, k] * b[k, col]
+        output[row, col] = s
 
 
 # ANCHOR_END: naive_matmul
@@ -56,7 +60,24 @@ def single_block_matmul[
     var col = block_dim.x * block_idx.x + thread_idx.x
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    # FILL ME IN (roughly 12 lines)
+    # Stage the full matrices in shared memory (one block covers SIZE x SIZE)
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+
+    if row < size and col < size:
+        shared_a[local_row, local_col] = a[row, col]
+        shared_b[local_row, local_col] = b[row, col]
+    barrier()
+
+    if row < size and col < size:
+        var s = Scalar[dtype](0)
+        for k in range(size):
+            s += shared_a[local_row, k] * shared_b[k, local_col]
+        output[row, col] = s
 
 
 # ANCHOR_END: single_block_matmul
@@ -81,7 +102,27 @@ def matmul_tiled[
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
     var tiled_col = block_idx.x * TPB + local_col
-    # FILL ME IN (roughly 20 lines)
+    # Per-block tiles of A and B, staged from global memory
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+
+    var acc = Scalar[dtype](0)
+    for kt in range(size // TPB):
+        # Stage the k-th tile of A and B
+        shared_a[local_row, local_col] = a[tiled_row, kt * TPB + local_col]
+        shared_b[local_row, local_col] = b[kt * TPB + local_row, tiled_col]
+        barrier()
+
+        # Accumulate the tile product
+        for k in range(TPB):
+            acc += shared_a[local_row, k] * shared_b[k, local_col]
+        barrier()
+
+    output[tiled_row, tiled_col] = acc
 
 
 # ANCHOR_END: matmul_tiled

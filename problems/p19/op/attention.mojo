@@ -134,8 +134,36 @@ def transpose_kernel[
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
 ):
-    # FILL ME IN (roughly 18 lines)
-    ...
+    # Stage the input tile in shared memory, already flipped, so that the
+    # write back is coalesced and the transpose is exact (shared[row, col] =
+    # input[col, row] convention below).
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var tiled_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
+
+    comptime tile_layout = row_major[
+        TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
+    ]()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](tile_layout)
+
+    var input_lt = inp.to_layout_tensor()
+    var output_lt = output.to_layout_tensor()
+
+    # Flip indices while staging: shared[local_col, local_row] = in[row, col]
+    if tiled_row < rows and tiled_col < cols:
+        shared[local_col, local_row] = rebind[Scalar[dtype]](
+            input_lt[tiled_row, tiled_col]
+        )
+    barrier()
+
+    # Write the transposed tile back, swapping the block indices
+    var out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
+    if out_row < cols and out_col < rows:
+        output_lt[out_row, out_col] = shared[local_row, local_col]
 
 
 # ANCHOR_END: transpose_kernel
@@ -371,28 +399,74 @@ struct AttentionCustomOp:
             var k_t = TileTensor(k_t_buf, layout_k_t)
 
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
-            # FILL ME IN 1 line
+            var q_2d = TileTensor[
+                mut=True, dtype, Q2DLayout, MutAnyOrigin
+            ](q.unsafe_ptr(), layout_q_2d)
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
-            # FILL ME IN 1 function call
+            ctx.enqueue_function[
+                transpose_kernel[seq_len, d, KTLayout, KLayout]
+            ](
+                k_t,
+                k_tensor,
+                grid_dim=transpose_blocks_per_grid,
+                block_dim=transpose_threads_per_block,
+            )
 
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len)
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
-            # FILL ME IN 2 lines
+            var scores_2d = TileTensor[
+                mut=True, dtype, Scores2DLayout, MutAnyOrigin
+            ](scores_weights_buf, layout_scores_2d)
+            ctx.enqueue_function[
+                matmul_idiomatic_tiled[
+                    1, seq_len, d, Scores2DLayout, Q2DLayout, KTLayout
+                ]
+            ](
+                scores_2d,
+                q_2d,
+                k_t,
+                grid_dim=scores_blocks_per_grid,
+                block_dim=matmul_threads_per_block,
+            )
 
             # Step 4: Reshape scores from (1, seq_len) to (seq_len,) for softmax
-            # FILL ME IN 1 line
+            var scores_1d = TileTensor[
+                mut=True, dtype, ScoresLayout, MutAnyOrigin
+            ](scores_weights_buf, layout_scores)
 
             # Step 5: Apply softmax to get attention weights (in-place)
-            # FILL ME IN 1 function call
+            ctx.enqueue_function[
+                softmax_gpu_kernel[seq_len, ScoresLayout]
+            ](
+                scores_1d,
+                scores_1d,
+                grid_dim=softmax_blocks_per_grid,
+                block_dim=softmax_threads,
+            )
 
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
-            # FILL ME IN 1 line
+            var weights_2d = TileTensor[
+                mut=True, dtype, Weights2DLayout, MutAnyOrigin
+            ](scores_weights_buf, layout_weights_2d)
 
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
-            # FILL ME IN 2 lines
+            var result_2d = TileTensor[
+                mut=True, dtype, Result2DLayout, MutAnyOrigin
+            ](output.unsafe_ptr(), layout_result_2d)
+            ctx.enqueue_function[
+                matmul_idiomatic_tiled[
+                    1, d, seq_len, Result2DLayout, Weights2DLayout, VLayout
+                ]
+            ](
+                result_2d,
+                weights_2d,
+                v_tensor,
+                grid_dim=result_blocks_per_grid,
+                block_dim=matmul_threads_per_block,
+            )
 
             # ANCHOR_END: attention_orchestration
 

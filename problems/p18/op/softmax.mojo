@@ -40,7 +40,45 @@ def softmax_gpu_kernel[
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    # FILL IN (roughly 31 lines)
+    # Single-block softmax: block max -> exp -> block sum -> normalize
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[BLOCK_DIM_X]())
+    var tid = thread_idx.x
+
+    # Phase 1: block-wide max (out-of-range threads contribute the identity)
+    if tid < input_size:
+        shared[tid] = input[tid]
+    else:
+        shared[tid] = min_finite[dtype]()
+    barrier()
+
+    var stride = BLOCK_DIM_X // 2
+    while stride > 0:
+        if tid < stride:
+            shared[tid] = max(shared[tid], shared[tid + stride])
+        barrier()
+        stride //= 2
+    var block_max = shared[0]
+
+    # Phase 2: exp(x - max), then block-wide sum
+    if tid < input_size:
+        shared[tid] = exp(input[tid] - block_max)
+    else:
+        shared[tid] = 0
+    barrier()
+
+    stride = BLOCK_DIM_X // 2
+    while stride > 0:
+        if tid < stride:
+            shared[tid] += shared[tid + stride]
+        barrier()
+        stride //= 2
+    var total = shared[0]
+
+    # Phase 3: normalize
+    if tid < input_size:
+        output[tid] = exp(input[tid] - block_max) / total
 
 
 # ANCHOR_END: softmax_gpu_kernel
@@ -57,7 +95,19 @@ def softmax_cpu_kernel[
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    # FILL IN (roughly 10 lines)
+    # Sequential softmax: max, then exp/sum, then normalize
+    var m = min_finite[dtype]()
+    for i in range(input_size):
+        m = max(m, input[i])
+
+    var total = Scalar[dtype](0)
+    for i in range(input_size):
+        var e = exp(input[i] - m)
+        output[i] = e
+        total += e
+
+    for i in range(input_size):
+        output[i] = output[i] / total
 
 
 # ANCHOR_END: softmax_cpu_kernel

@@ -41,7 +41,12 @@ def conv_1d_simple(
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FILL ME IN (roughly 14 lines)
+    if global_i < SIZE:
+        var s = Scalar[dtype](0)
+        for j in range(CONV):
+            if global_i + j < SIZE:
+                s += a[global_i + j] * b[j]
+        output[global_i] = s
 
 
 # ANCHOR_END: conv_1d_simple
@@ -66,7 +71,12 @@ def conv_1d_block_boundary(
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FILL ME IN (roughly 18 lines)
+    if global_i < SIZE_2:
+        var s = Scalar[dtype](0)
+        for j in range(CONV_2):
+            if global_i + j < SIZE_2:
+                s += a[global_i + j] * b[j]
+        output[global_i] = s
 
 
 # ANCHOR_END: conv_1d_block_boundary

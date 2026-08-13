@@ -39,7 +39,7 @@ NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 
 # Puzzles that are not supported on AMD GPUs
 # p29 uses mbarrier_* from max.gpu.sync, which is NVIDIA-only (sm_80+).
-AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p29" "p30" "p31" "p32" "p33" "p34")
+AMD_UNSUPPORTED_PUZZLES=("p29" "p33" "p34")
 
 # Puzzles that are not supported on Apple GPUs
 APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p20" "p21" "p22" "p29" "p30" "p31" "p32" "p33" "p34")

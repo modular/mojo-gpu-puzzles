@@ -4,16 +4,22 @@ version = "1.0.0"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "mojo>=0.26.3.0.dev2026042005,<1.0.0",
-    "max==26.3.0.dev2026042005",
+    "mojo>=0.26.3.0.dev2026042817",
+    "max>=26.3.0.dev2026042817",
     "poethepoet>=0.34.0",
     "scipy>=1.15.3",
-    "torch==2.13.0",
+    "torch==2.14.0a0+rocm7.14.0a20260624; sys_platform == 'linux'",
+    "amd-torch-device-gfx1201==2.14.0a0+rocm7.14.0a20260624; sys_platform == 'linux'",
+    "rocm-sdk-core==7.14.0a20260624; sys_platform == 'linux'",
+    "rocm-sdk-libraries==7.14.0a20260624; sys_platform == 'linux'",
+    "rocm-sdk-device-gfx1201==7.14.0a20260624; sys_platform == 'linux'",
+    "rocm==7.14.0a20260624; sys_platform == 'linux'",
+    "torch; sys_platform != 'linux'",
 ]
 
 [project.optional-dependencies]
 nvidia = ["pynvml>=11.5.0"]
-amd = ["pytorch-triton-rocm"]
+amd = ["triton==3.7.1+git5d6048aa.rocm7.14.0a20260624"]
 
 [[tool.uv.index]]
 name = "modular-nightly"
@@ -26,9 +32,9 @@ url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [[tool.uv.index]]
-name = "pytorch-rocm63"
-url = "https://download.pytorch.org/whl/rocm6.3"
-explicit = true
+name = "rocm-nightly"
+url = "https://rocm.nightlies.amd.com/whl-multi-arch/"
+prerelease = "allow"
 
 [tool.uv.sources]
 mojo = [
@@ -47,14 +53,30 @@ mojo-lldb-libs = [
   { index = "modular-nightly" },
 ]
 torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'darwin'" },
+  { index = "rocm-nightly", marker = "sys_platform == 'linux'" },
 ]
-pytorch-triton-rocm = [
-  { index = "pytorch-rocm63" },
+amd-torch-device-gfx1201 = [
+  { index = "rocm-nightly" },
+]
+triton = [
+  { index = "rocm-nightly", marker = "sys_platform == 'linux'" },
+]
+rocm-sdk-device-gfx1201 = [
+  { index = "rocm-nightly" },
+]
+rocm-sdk-libraries = [
+  { index = "rocm-nightly" },
+]
+rocm-sdk-core = [
+  { index = "rocm-nightly" },
 ]
 
 [tool.uv]
 prerelease = "allow"
+
+[tool.setuptools]
+packages = []
 
 [tool.poe.tasks]
 tests = "bash solutions/run.sh"

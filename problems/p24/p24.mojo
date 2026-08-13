@@ -103,7 +103,20 @@ def simple_warp_dot_product[
     var b_lt = b.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    # FILL IN (6 lines at most)
+
+    # Each thread computes one partial product
+    var partial_product: Scalar[dtype] = 0
+    if global_i < size:
+        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+            Scalar[dtype]
+        ](b_lt[global_i])
+
+    # warp_sum() replaces all the shared memory + barriers + tree reduction
+    var total = warp_sum(partial_product)
+
+    # Only lane 0 writes the result (all lanes have the same total)
+    if lane_id() == 0:
+        out_lt.store[1](Index(global_i // WARP_SIZE), total)
 
 
 # ANCHOR_END: simple_warp_kernel
@@ -124,7 +137,7 @@ def functional_warp_dot_product[
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @__parameter
+    @parameter
     @always_inline
     def compute_dot_product[
         simd_width: Int, alignment: Int = align_of[dtype]()
@@ -134,7 +147,22 @@ def functional_warp_dot_product[
         var a_lt = a.to_layout_tensor()
         var b_lt = b.to_layout_tensor()
         var out_lt = output.to_layout_tensor()
-        # FILL IN (10 lines at most)
+
+        # Each thread computes one partial product
+        var partial_product: Scalar[dtype] = 0.0
+        if idx < size:
+            var a_val = a_lt.load[1](Index(idx))
+            var b_val = b_lt.load[1](Index(idx))
+            partial_product = a_val * b_val
+        else:
+            partial_product = 0.0
+
+        # Warp magic - combines all WARP_SIZE partial products!
+        var total = warp_sum(partial_product)
+
+        # Only lane 0 writes the result (all lanes have the same total)
+        if lane_id() == 0:
+            out_lt.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
@@ -183,7 +211,7 @@ def check_result[
             assert_equal(actual_host[i], expected[i])
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_simple_warp_parameterized[
     test_size: Int
@@ -221,7 +249,7 @@ def benchmark_simple_warp_parameterized[
         out, bench_out_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
         comptime kernel = simple_warp_dot_product[
@@ -243,7 +271,7 @@ def benchmark_simple_warp_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_functional_warp_parameterized[
     test_size: Int
@@ -279,7 +307,7 @@ def benchmark_functional_warp_parameterized[
         TileTensor[mut=True, dtype, BenchOutLayout, MutAnyOrigin]
     ](TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout))
 
-    @__parameter
+    @parameter
     @always_inline
     def functional_warp_workflow(ctx: DeviceContext) raises:
         functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
@@ -294,7 +322,7 @@ def benchmark_functional_warp_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_traditional_parameterized[
     test_size: Int
@@ -331,7 +359,7 @@ def benchmark_traditional_parameterized[
         out, bench_out_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
         ctx.enqueue_function[

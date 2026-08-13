@@ -222,10 +222,10 @@ def test_aligned() raises:
 # ---------------------------------------------------------------------------- #
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_scalar(mut b: Bencher) raises:
-    @__parameter
+    @parameter
     @always_inline
     def workflow(ctx: DeviceContext) raises:
         var out = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -252,10 +252,10 @@ def benchmark_scalar(mut b: Bencher) raises:
     bencher_iter_custom[workflow](b, bench_ctx)
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_unaligned(mut b: Bencher) raises:
-    @__parameter
+    @parameter
     @always_inline
     def workflow(ctx: DeviceContext) raises:
         var out = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -282,10 +282,10 @@ def benchmark_unaligned(mut b: Bencher) raises:
     bencher_iter_custom[workflow](b, bench_ctx)
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_aligned(mut b: Bencher) raises:
-    @__parameter
+    @parameter
     @always_inline
     def workflow(ctx: DeviceContext) raises:
         var out = ctx.enqueue_create_buffer[dtype](SIZE)

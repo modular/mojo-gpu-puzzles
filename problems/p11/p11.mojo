@@ -41,7 +41,16 @@ def pooling(
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FILL ME IN (roughly 10 lines)
+
+    if global_i < size:
+        shared[local_i] = a[global_i]
+    barrier()
+
+    if global_i < size:
+        var s = Scalar[dtype](0)
+        for j in range(max(global_i - 2, 0), global_i + 1):
+            s += shared[j]
+        output[global_i] = s
 
 
 # ANCHOR_END: pooling
