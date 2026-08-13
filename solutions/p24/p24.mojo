@@ -137,7 +137,7 @@ def functional_warp_dot_product[
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @__parameter
+    @parameter
     @always_inline
     def compute_dot_product[
         simd_width: Int, alignment: Int = align_of[dtype]()
@@ -211,7 +211,7 @@ def check_result[
             assert_equal(actual_host[i], expected[i])
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_simple_warp_parameterized[
     test_size: Int
@@ -249,7 +249,7 @@ def benchmark_simple_warp_parameterized[
         out, bench_out_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
         comptime kernel = simple_warp_dot_product[
@@ -271,7 +271,7 @@ def benchmark_simple_warp_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_functional_warp_parameterized[
     test_size: Int
@@ -307,7 +307,7 @@ def benchmark_functional_warp_parameterized[
         TileTensor[mut=True, dtype, BenchOutLayout, MutAnyOrigin]
     ](TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout))
 
-    @__parameter
+    @parameter
     @always_inline
     def functional_warp_workflow(ctx: DeviceContext) raises:
         functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
@@ -322,7 +322,7 @@ def benchmark_functional_warp_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
+@parameter
 @always_inline
 def benchmark_traditional_parameterized[
     test_size: Int
@@ -359,7 +359,7 @@ def benchmark_traditional_parameterized[
         out, bench_out_layout
     )
 
-    @__parameter
+    @parameter
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
         ctx.enqueue_function[
