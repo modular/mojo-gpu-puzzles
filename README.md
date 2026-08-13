@@ -123,8 +123,24 @@ examples.
    **Create a virtual environment:**
 
    ```bash
-   uv venv && source .venv/bin/activate
+   uv venv --python 3.12 && source .venv/bin/activate
    ```
+
+   **Install GPU-specific dependencies:**
+
+   ```bash
+   uv pip install -e ".[nvidia]"  # For NVIDIA GPUs
+   # OR
+   uv pip install -e ".[amd]"     # For AMD GPUs
+   ```
+
+   > **AMD note**: the `amd` extra resolves `torch` from the CUDA index.
+   > Install the ROCm build afterwards so GPU puzzles 20-22 can run:
+   >
+   > ```bash
+   > uv pip install --reinstall --index https://download.pytorch.org/whl/rocm6.3 \
+   >   --index-strategy unsafe-best-match "torch==2.7.1"
+   > ```
 
 4. Start solving puzzles!
 
