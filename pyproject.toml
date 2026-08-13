@@ -4,11 +4,11 @@ version = "1.0.0"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "mojo>=0.26.3.0.dev2026042005,<1.0.0",
-    "max==26.3.0.dev2026042005",
+    "mojo>=0.26.3.0.dev2026042817",
+    "max>=26.3.0.dev2026042817",
     "poethepoet>=0.34.0",
     "scipy>=1.15.3",
-    "torch==2.13.0",
+    "torch==2.7.1",
 ]
 
 [project.optional-dependencies]
@@ -55,6 +55,9 @@ pytorch-triton-rocm = [
 
 [tool.uv]
 prerelease = "allow"
+
+[tool.setuptools]
+packages = []
 
 [tool.poe.tasks]
 tests = "bash solutions/run.sh"
