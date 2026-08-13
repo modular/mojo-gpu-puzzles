@@ -84,7 +84,7 @@ def your_function[
 ### 2. **Index extraction and SIMD processing**
 
 ```mojo
-idx = Int(indices[0].value())  # Extract linear index for 1D operations
+var idx = Int(indices[0].value())  # Extract linear index for 1D operations
 ```
 
 This `idx` represents the **starting position** for a SIMD vector, not a single
@@ -98,18 +98,20 @@ element. If `SIMD_WIDTH=4` (GPU-dependent), then:
 ### 3. **SIMD loading pattern**
 
 ```mojo
-a_simd = a.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
-b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
 ```
 
-The second parameter `0` is the dimension offset (always 0 for 1D vectors). This
-loads a **vectorized chunk** of data in a single operation. The exact number of
-elements loaded depends on your GPU's SIMD capabilities.
+`aligned_load` is a `LayoutTensor` method, so the receivers are the `a_lt` /
+`b_lt` handles produced by `to_layout_tensor()` inside the kernel—not the
+`TileTensor` parameters. This loads a **vectorized chunk** of data in a single
+operation. The exact number of elements loaded depends on your GPU's SIMD
+capabilities.
 
 ### 4. **Vector arithmetic**
 
 ```mojo
-result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
+var result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
 ```
 
 This performs element-wise addition across the entire SIMD vector (if supported)
@@ -227,9 +229,9 @@ programming:
 
 ```mojo
 # Manual thread management
-idx = thread_idx.x + block_idx.x * block_dim.x
+var idx = thread_idx.x + block_idx.x * block_dim.x
 if idx < size:
-    output[idx] = a[idx] + b[idx];  // Scalar operation
+    output[idx] = a[idx] + b[idx]  # Scalar operation
 ```
 
 **Mojo functional approach:**
@@ -272,10 +274,10 @@ def add[
 ### 3. **SIMD execution model deep dive**
 
 ```mojo
-idx = Int(indices[0].value())                     # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
+var idx = Int(indices[0].value())                     # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+var a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+var b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+var ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
 output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
 ```
 
@@ -306,7 +308,7 @@ RTX 4090, 16 for A100).
 ### 4. **Memory access pattern analysis**
 
 ```mojo
-a.aligned_load[simd_width](Index(idx))  // Coalesced memory access
+a.aligned_load[simd_width](Index(idx))  # Coalesced memory access
 ```
 
 **Memory Coalescing Benefits:**
@@ -378,16 +380,18 @@ This elementwise pattern is the building block for:
 
 **Compared to Traditional Approaches:**
 
-```mojo
-// Traditional: Error-prone, verbose, hardware-specific
+```cpp
+// Traditional: error-prone, verbose, hardware-specific
 __global__ void add_kernel(float* output, float* a, float* b, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         output[idx] = a[idx] + b[idx];  // No vectorization
     }
 }
+```
 
-// Mojo: Safe, concise, automatically vectorized
+```mojo
+# Mojo: safe, concise, automatically vectorized
 elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 ```
 

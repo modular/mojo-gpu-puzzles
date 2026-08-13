@@ -185,7 +185,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 3. **Reduction Logic**:
 
    ```mojo
-   stride = TPB // 2
+   var stride = TPB // 2
    while stride > 0:
        if local_i < stride:
            shared[local_i] += shared[local_i + stride]

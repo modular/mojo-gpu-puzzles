@@ -152,7 +152,7 @@ Filter b:        [0  1  2]
 
      ```mojo
      # Inefficient version - all threads compute even when results won't be used
-     local_sum = Scalar[dtype](0)
+     var local_sum = Scalar[dtype](0)
      for j in range(CONV):
          if local_i + j < SIZE:
              local_sum += shared_a[local_i + j] * shared_b[j]
@@ -165,7 +165,7 @@ Filter b:        [0  1  2]
 
      ```mojo
      if global_i < SIZE:
-         var local_sum: output.element_type = 0  # Using var allows type inference
+         var local_sum: output.ElementType = 0  # Using var allows type inference
          comptime for j in range(CONV):  # Unrolls loop at compile time since CONV is constant
              if local_i + j < SIZE:
                  local_sum += shared_a[local_i + j] * shared_b[j]
@@ -186,7 +186,7 @@ The efficient version ensures that only threads with valid `global_i` values
 perform any computation, making better use of GPU resources.
 
 2. **Key Implementation Features**:
-   - Uses `var` for proper type inference with `output.element_type`
+   - Uses `var` for proper type inference with `output.ElementType`
    - Employs `comptime for` to unroll the convolution loop at compile
      time
    - Maintains strict bounds checking for memory safety

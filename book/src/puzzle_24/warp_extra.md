@@ -73,7 +73,7 @@ var value = input[random_indices[global_i]]  # Scattered reads
 
 # Data-dependent work
 if input[global_i] > threshold:
-    result = expensive_computation()  # Causes warp divergence
+    var result = expensive_computation()  # Causes warp divergence
 ```
 
 ## Performance measurement

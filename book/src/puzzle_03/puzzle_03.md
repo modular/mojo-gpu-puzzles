@@ -61,7 +61,7 @@ Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
 
 1. Store `thread_idx.x` in `i`
 2. Add guard: `if i < size`
-3. Inside guard: `output[i] = a[i] + 10.0`
+3. Inside guard: `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
 
 </div>
 </details>

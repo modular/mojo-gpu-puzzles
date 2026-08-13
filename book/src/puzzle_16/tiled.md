@@ -10,7 +10,7 @@ matrices by processing them in smaller chunks (tiles).
 
 - Matrix tiling with TileTensor for efficient computation
 - Multi-block coordination with proper layouts
-- Efficient shared memory usage through TensorBuilder
+- Efficient shared memory usage through `stack_allocation`
 - Boundary handling for tiles with TileTensor indexing
 
 ## Configuration
@@ -25,7 +25,7 @@ Layout configuration:
 - Input A: `row_major[SIZE_TILED, SIZE_TILED]()`
 - Input B: `row_major[SIZE_TILED, SIZE_TILED]()`
 - Output: `row_major[SIZE_TILED, SIZE_TILED]()`
-- Shared Memory: Two `TPB × TPB` TileTensors using TensorBuilder
+- Shared Memory: Two `TPB × TPB` shared buffers using `stack_allocation`
 
 ## Tiling strategy
 
@@ -53,7 +53,7 @@ Each block processes a tile using TileTensor indexing
 ### Memory access pattern
 
 ```txt
-Matrix A (8×8)                 Matrix B (8×8)               Matrix C (8×8)
+Matrix A (9×9)                 Matrix B (9×9)               Matrix C (9×9)
 +---+---+---+                  +---+---+---+                +---+---+---+
 |T00|T01|T02| ...              |T00|T01|T02| ...            |T00|T01|T02| ...
 +---+---+---+                  +---+---+---+                +---+---+---+
@@ -137,9 +137,10 @@ Synchronization required:
      - global_row = 1 * 3 + 1 = 4
      - This thread handles row 4 of the matrix
 
-     ```text
+     ```
 
-3. Allocate shared memory (now pre-initialized with `.fill(0)`)
+3. Allocate shared memory with `stack_allocation` (it does not zero the
+   allocation, so write every element you later read)
 4. With 9×9 perfect tiling, no bounds checking needed!
 5. Accumulate results across tiles with proper synchronization
 
@@ -327,7 +328,7 @@ Key performance features:
    - Efficient shared memory usage
 
 3. **Computation**:
-   - Register-based accumulation i.e. `var acc: output.element_type = 0`
+   - Register-based accumulation i.e. `var acc: output.ElementType = 0`
    - Compile-time loop unrolling via `comptime for`
 
 This implementation achieves high performance through:
@@ -379,9 +380,9 @@ all boundary checks:
 1. **TileTensor tile API**
 
    ```mojo
-   out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-   a_tile = a.tile[TPB, TPB](block_idx.y, idx)
-   b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+   var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
+   var a_tile = a.tile[TPB, TPB](block_idx.y, idx)
+   var b_tile = b.tile[TPB, TPB](idx, block_idx.x)
    ```
 
    This directly expresses "get the tile at position (block_idx.y, block_idx.x)"
@@ -396,12 +397,12 @@ all boundary checks:
       thread_layout = load_a_layout,
       num_threads = NUM_THREADS,
       block_dim_count = BLOCK_DIM_COUNT
-   ](a_shared,a_tile)
+   ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
    copy_dram_to_sram_async[
       thread_layout = load_b_layout,
       num_threads = NUM_THREADS,
       block_dim_count = BLOCK_DIM_COUNT
-   ](b_shared, b_tile)
+   ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
    async_copy_wait_all()
    ```
 
@@ -426,8 +427,8 @@ all boundary checks:
 3. **Optimized memory access layouts**
 
    ```mojo
-   comptime load_a_layout = row_major[1, TPB]()    # Coalesced loading
-   comptime load_b_layout = row_major[1, TPB]()    # Coalesced loading
+   comptime load_a_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
+   comptime load_b_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
    # Note: Both matrices use the same layout for standard A × B multiplication
    ```
 

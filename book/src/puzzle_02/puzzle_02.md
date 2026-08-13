@@ -120,7 +120,7 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 This solution:
 
 - Gets thread index with `i = thread_idx.x`
-- Adds values from both arrays: `output[i] = a[i] + b[i]`
+- Adds values from both arrays: `output[unsafe_offset=i] = a[unsafe_offset=i] + b[unsafe_offset=i]`
 
 </div>
 </details>

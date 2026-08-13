@@ -65,8 +65,8 @@ With `prefix_sum()`, parallel scan becomes trivial:
 
 ```mojo
 # Hardware-optimized approach - single function call!
-current_val = input[global_i]
-scan_result = prefix_sum[exclusive=False](current_val)
+var current_val = input[global_i]
+var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result
 ```
 
@@ -185,7 +185,8 @@ WARP_SIZE:  32
 SIZE:  32
 output: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
 expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
-✅ Warp inclusive prefix sum test passed!
+Warp inclusive prefix sum test: passed
+Puzzle 26 complete ✅
 ```
 
 ### Solution
@@ -206,12 +207,12 @@ algorithms with a single hardware-optimized function call.
 
 ```mojo
 if global_i < size:
-    current_val = input[global_i]
+    var current_val = input[global_i]
 
     # This one call replaces ~30 lines of complex shared memory logic from Puzzle 14!
     # But it only works within the current warp (WARP_SIZE threads)
-    scan_result = prefix_sum[exclusive=False](
-        rebind[Scalar[dtype]](current_val)
+    var scan_result = prefix_sum[exclusive=False](
+        current_val
     )
 
     output[global_i] = scan_result
@@ -258,8 +259,8 @@ Cycle 3: Store results
   specialized hardware
 - **Memory**: Zero shared memory usage vs explicit allocation
 
-**Evolution from Puzzle 12:** This demonstrates the power of modern GPU
-architectures - what required careful manual implementation in Puzzle 12 is now
+**Evolution from Puzzle 14:** This demonstrates the power of modern GPU
+architectures - what required careful manual implementation in Puzzle 14 is now
 a single hardware-accelerated primitive. The warp-level `prefix_sum()` gives you
 the same algorithmic benefits with zero implementation complexity.
 
@@ -394,7 +395,8 @@ SIZE:  32
 output: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0])
 pivot: 5.0
-✅ Warp partition test passed!
+Warp partition test: passed
+Puzzle 26 complete ✅
 ```
 
 ### Solution
@@ -415,21 +417,21 @@ primitives to implement sophisticated parallel algorithms.
 
 ```mojo
 if global_i < size:
-    current_val = input[global_i]
+    var current_val = input[global_i]
 
     # Phase 1: Create warp-level predicates
-    predicate_left = Float32(1.0) if current_val < pivot else Float32(0.0)
-    predicate_right = Float32(1.0) if current_val >= pivot else Float32(0.0)
+    var predicate_left = Float32(1.0) if current_val < pivot else Float32(0.0)
+    var predicate_right = Float32(1.0) if current_val >= pivot else Float32(0.0)
 
     # Phase 2: Warp-level prefix sum to get positions within warp
-    warp_left_pos = prefix_sum[exclusive=True](predicate_left)
-    warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+    var warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+    var warp_right_pos = prefix_sum[exclusive=True](predicate_right)
 
     # Phase 3: Get total left count using shuffle_xor reduction
-    warp_left_total = predicate_left
+    var warp_left_total = predicate_left
 
     # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
-    offset = WARP_SIZE // 2
+    var offset = WARP_SIZE // 2
     while offset > 0:
         warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
         offset //= 2
@@ -560,16 +562,16 @@ calls. Through these two problems, you've learned:
 
 ```mojo
 # Phase 1: Create predicates for partition membership
-predicate = 1.0 if condition else 0.0
+var predicate = 1.0 if condition else 0.0
 
 # Phase 2: Use prefix_sum for local positions
-local_pos = prefix_sum[exclusive=True](predicate)
+var local_pos = prefix_sum[exclusive=True](predicate)
 
 # Phase 3: Use shuffle_xor for global totals
-global_total = butterfly_reduce(predicate)
+var global_total = butterfly_reduce(predicate)
 
 # Phase 4: Combine for final positioning
-final_pos = local_pos + partition_offset
+var final_pos = local_pos + partition_offset
 ```
 
 **Performance Advantages:**

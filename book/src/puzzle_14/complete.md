@@ -398,10 +398,10 @@ The two kernel phases execute sequentially
 
 ```mojo
 # Phase 1: Local prefix sums
-ctx.enqueue_function[prefix_sum_local_phase[...]](...)
+ctx.enqueue_function[prefix_sum_local_phase](...)
 
 # Phase 2: Add block sums (automatically waits for Phase 1)
-ctx.enqueue_function[prefix_sum_block_sum_phase[...]](...)
+ctx.enqueue_function[prefix_sum_block_sum_phase](...)
 ```
 
 **Key insight**: Mojo's `DeviceContext` uses a single execution stream (CUDA
@@ -454,7 +454,7 @@ block, kernel ordering comes from Mojo's single-stream execution model, while
 **Local phase synchronization pattern**: Each iteration within a block follows a
 strict read → sync → write pattern:
 
-1. `var current_val: out.element_type = 0` - Initialize local variable
+1. `var current_val: output.ElementType = 0` - Initialize local variable
 2. `current_val = shared[local_i - offset]` - Read phase (if conditions met)
 3. `barrier()` - Explicit synchronization to prevent race conditions
 4. `shared[local_i] += current_val` - Write phase (if conditions met)

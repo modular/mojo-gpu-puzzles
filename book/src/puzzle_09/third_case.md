@@ -218,7 +218,7 @@ $1 = 0
 
 ```bash
 (cuda-gdb) n
-70              shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+74              shared_workspace[thread_id] = a[thread_id]
 (cuda-gdb) n
 69          if thread_id < SIZE - 1:
 (cuda-gdb) n
@@ -356,20 +356,17 @@ if thread_id < SIZE - 1:    # Not all threads enter
 
 ```mojo
 def collaborative_filter(
-    output: TileTensor[mut=True, dtype, vector_layout],
-    a: TileTensor[mut=False, dtype, vector_layout],
+    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ):
-    thread_id = thread_idx.x
-    shared_workspace = TileTensor[
-        dtype,
-        row_major[SIZE-1](),
-        MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
-    ].stack_allocation()
+    var thread_id = thread_idx.x
+    var shared_workspace = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[SIZE - 1]())
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
-        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+        shared_workspace[thread_id] = a[thread_id]
     barrier()
 
     # Phase 2: Collaborative processing
@@ -385,7 +382,7 @@ def collaborative_filter(
     if thread_id < SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+        output[thread_id] = a[thread_id]
 ```
 
 ## Key debugging lessons

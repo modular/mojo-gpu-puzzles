@@ -62,7 +62,8 @@ Layout configuration:
 
 - Input tensor: `row_major[SIZE]()`
 - Output tensor: `row_major[SIZE]()`
-- Custom op parameters: `{"input_size": input_tensor.shape[0]}`
+- Custom op parameters: `{"target": ..., "input_size": input_tensor.shape[0],
+  "dtype": dtype}`
 
 Key aspects of this puzzle include:
 
@@ -189,7 +190,7 @@ Skipped: 0 (0.00%)
 3. Pass the input tensor as a value to the custom operation
 4. Specify the output type to match the input shape
 5. Include the "input_size" parameter which is required by the kernel
-6. Set `graph.outputs` to a list containing your operation's output tensor
+6. Call `graph.output()` with your operation's output tensor
 
 </div>
 </details>
@@ -286,12 +287,11 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 
 ```mojo
 def softmax_gpu_kernel[
-    layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: TileTensor[mut=True, dtype, layout],
-    input: TileTensor[mut=False, dtype, layout],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 )
 ```
 
@@ -306,8 +306,8 @@ The kernel is parameterized with:
 #### Shared memory allocation
 
 ```mojo
-shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
-shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
 ```
 
 The kernel allocates two shared memory buffers:
@@ -320,7 +320,7 @@ The kernel allocates two shared memory buffers:
 #### Thread indexing
 
 ```mojo
-global_i = thread_idx.x
+var global_i = thread_idx.x
 ```
 
 This implementation of softmax operates on a single 1d thread block. i.e. The
@@ -331,9 +331,9 @@ global and local index are the same.
 ```mojo
 var val: Scalar[dtype] = min_finite[dtype]()
 if global_i < input_size:
-    val = rebind[Scalar[dtype]](input[global_i])
+    val = input[global_i]
 
-shared_max[local_i] = val
+shared_max[global_i] = val
 barrier()
 ```
 
@@ -347,10 +347,10 @@ This initializes each thread with:
 #### Parallel max reduction
 
 ```mojo
-stride = BLOCK_DIM_X // 2
+var stride = BLOCK_DIM_X // 2
 while stride > 0:
-    if local_i < stride:
-        shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
+    if global_i < stride:
+        shared_max[global_i] = max(shared_max[global_i], shared_max[global_i + stride])
     barrier()
     stride = stride // 2
 ```
@@ -371,11 +371,11 @@ inputs.
 #### Exponentiation with numerical stability
 
 ```mojo
-block_max = shared_max[0]
+var block_max = shared_max[0]
 
 var exp_val: Scalar[dtype] = 0.0
 if global_i < input_size:
-    exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+    exp_val = exp(val - block_max)
 ```
 
 Each thread:
@@ -389,13 +389,13 @@ Each thread:
 #### Parallel sum reduction
 
 ```mojo
-shared_sum[local_i] = exp_val
+shared_sum[global_i] = exp_val
 barrier()
 
-stride = BLOCK_DIM_X // 2
+var stride = BLOCK_DIM_X // 2
 while stride > 0:
-    if local_i < stride:
-        shared_sum[local_i] += shared_sum[local_i + stride]
+    if global_i < stride:
+        shared_sum[global_i] += shared_sum[global_i + stride]
     barrier()
     stride = stride // 2
 ```
@@ -411,7 +411,7 @@ The second reduction phase:
 #### Final normalization
 
 ```mojo
-block_sum = shared_sum[0]
+var block_sum = shared_sum[0]
 
 if global_i < input_size:
     output[global_i] = exp_val / block_sum
@@ -458,7 +458,7 @@ Our CPU implementation provides a sequential fallback that follows the same math
    ```mojo
    var max_val: Scalar[dtype] = min_finite[dtype]()
    for i in range(input_size):
-       max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+       max_val = max(max_val, input[i])
    ```
 
    We initialize with the minimum finite value and perform a linear scan through
@@ -471,7 +471,7 @@ Our CPU implementation provides a sequential fallback that follows the same math
    ```mojo
    var sum_exp: Scalar[dtype] = 0.0
    for i in range(input_size):
-       var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+       var exp_val = exp(input[i] - max_val)
        output[i] = exp_val
        sum_exp += exp_val
    ```
@@ -541,6 +541,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    output = ops.custom(
        name="softmax",
        values=[input_value],
+       device=DeviceRef.from_device(device),
        out_types=[
            TensorType(
                dtype=input_value.tensor.dtype,

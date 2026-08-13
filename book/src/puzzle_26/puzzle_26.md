@@ -71,7 +71,7 @@ Learn the sophisticated communication primitives from `std.gpu.primitives.warp`:
 
 ```mojo
 # Complex parallel reduction (traditional approach - from Puzzle 14):
-shared = TileTensor[
+var shared = TileTensor[
     dtype,
     row_major[WARP_SIZE](),
     MutAnyOrigin,
@@ -79,9 +79,9 @@ shared = TileTensor[
 ].stack_allocation()
 shared[local_i] = input[global_i]
 barrier()
-offset = 1
+var offset = 1
 for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
-    var current_val: output.element_type = 0
+    var current_val: output.ElementType = 0
     if local_i >= offset and local_i < WARP_SIZE:
         current_val = shared[local_i - offset]
     barrier()
@@ -91,8 +91,8 @@ for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
     offset *= 2
 
 # Advanced warp primitives eliminate all this complexity:
-current_val = input[global_i]
-scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
+var current_val = input[global_i]
+var scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
 output[global_i] = scan_result
 ```
 
@@ -141,8 +141,8 @@ and parallel reductions.
 **Key pattern:**
 
 ```mojo
-max_val = input[global_i]
-offset = WARP_SIZE // 2
+var max_val = input[global_i]
+var offset = WARP_SIZE // 2
 while offset > 0:
     max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
     offset //= 2
@@ -166,8 +166,8 @@ multi-phase algorithms with single function calls.
 **Key pattern:**
 
 ```mojo
-current_val = input[global_i]
-scan_result = prefix_sum[exclusive=False](current_val)
+var current_val = input[global_i]
+var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result  # Hardware-optimized cumulative sum
 ```
 

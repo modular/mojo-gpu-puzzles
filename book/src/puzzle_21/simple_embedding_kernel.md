@@ -181,15 +181,14 @@ These registered operations can be called from Python using the
 # Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
 
-# Call the 1D coalesced version
-result_1d = ops.embedding[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}](
-    indices, weights
-)
+# Call the 1D coalesced version. The op writes into `output` and returns
+# nothing, so allocate the destination tensor first.
+embedding_op = ops.embedding[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}]
+embedding_op(output_1d, indices, weights)
 
 # Call the 2D non-coalesced version
-result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}](
-    indices, weights
-)
+embedding_2d_op = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}]
+embedding_2d_op(output_2d, indices, weights)
 ```
 
 The power of this approach is that the same kernel implementations can be used

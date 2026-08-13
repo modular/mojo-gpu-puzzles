@@ -381,8 +381,8 @@ overlapping expensive DRAM transfers with useful computation:
 
 ```mojo
 # Phase 1: Launch async copy for input tile
-input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
+var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
+comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
@@ -393,8 +393,9 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
   indices results in undefined behavior. The implementation must ensure the tile
   size and offset remain within valid array bounds.
 
-- **Thread Layout**: `row_major[THREADS_PER_BLOCK_ASYNC, 1]()` creates a
-  `256 x 1` layout that matches our block organization. This is **critical** -
+- **Thread Layout**: `Layout.row_major(THREADS_PER_BLOCK_ASYNC)` creates a
+  256-element 1-D layout, one entry per thread in the block. This is
+  **critical** -
   the layout must match the physical thread arrangement for optimal coalesced
   memory access. When layouts mismatch, threads may access non-contiguous memory
   addresses, breaking coalescing and severely degrading performance.
@@ -437,14 +438,14 @@ barrier()  # Sync all threads
 
 ```mojo
 # Phase 4: Compute convolution
-global_i = block_idx.x * CONV_TILE_SIZE + local_i
-if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
-    var result: output.element_type = 0
+var global_i = block_idx.x * CONV_TILE_SIZE + local_i
+if local_i < CONV_TILE_SIZE and global_i < Int(output.dim[0]()):
+    var result: output.ElementType = 0
 
     if local_i >= HALO_SIZE and local_i < CONV_TILE_SIZE - HALO_SIZE:
         # Full convolution for center elements
         for k in range(KERNEL_SIZE):
-            input_idx = local_i + k - HALO_SIZE
+            var input_idx = local_i + k - HALO_SIZE
             if input_idx >= 0 and input_idx < CONV_TILE_SIZE:
                 result += input_shared[input_idx] * kernel_shared[k]
     else:
@@ -496,9 +497,9 @@ scenarios with larger overlaps, speedups can be much more significant.
 
 #### **Key technical insights**
 
-1. **Thread Layout Matching**: The `row_major[256, 1]()` layout precisely
-   matches the block's `(256, 1)` thread organization, enabling optimal memory
-   coalescing.
+1. **Thread Layout Matching**: The 1-D `Layout.row_major(256)` layout supplies
+   one entry per thread in the block's `(256, 1)` organization, enabling optimal
+   memory coalescing.
 
 2. **Race Condition Avoidance**: Proper sequencing (async copy → kernel load →
    wait → barrier → compute) eliminates all race conditions that could corrupt

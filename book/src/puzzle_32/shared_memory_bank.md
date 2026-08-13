@@ -95,7 +95,7 @@ memory access:
 
 ```mojo
 # Broadcast: all threads read the same value
-constant = shared[0]  # All threads read shared[0]
+var constant = shared[0]  # All threads read shared[0]
 ```
 
 **Result:** 1 access broadcasts to 32 threads, 1 cycle total

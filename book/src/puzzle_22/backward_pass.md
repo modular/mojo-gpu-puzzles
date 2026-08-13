@@ -45,7 +45,8 @@ x} \\] where:
   - Access output tensor with `[batch_idx, seq_idx, out_idx]`
   - Access weights with `[out_idx, h]` for linear layer
   - Ensure memory alignment for atomic operations
-  - Use shared memory for frequently accessed data
+  - Recompute LayerNorm statistics per thread—this kernel uses no shared
+    memory, so there is nothing to cache across threads
 
 - **Computation flow**:
   - Compute LayerNorm statistics in same order as forward pass
@@ -264,9 +265,10 @@ The fused backward implementation combines operations efficiently:
      - Input gradient: \\[\Large \frac{\partial L}{\partial x} =
        W^T\frac{\partial L}{\partial y} \\]
    - Use atomic operations for gradient accumulation:
-     - `atomic_add` for bias gradients with proper alignment
-     - `atomic_add` for weight gradients with proper alignment
-     - `atomic_add` for LayerNorm parameter gradients with proper alignment
+     - `Atomic.fetch_add` for bias gradients with proper alignment
+     - `Atomic.fetch_add` for weight gradients with proper alignment
+     - `Atomic.fetch_add` for LayerNorm parameter gradients with proper
+       alignment
 
 4. **Memory access patterns**:
    - Coalesced access for input/output tensors
@@ -298,7 +300,7 @@ The fused backward implementation combines operations efficiently:
    - Use of `comptime` for compile-time constants
    - Proper handling of tensor dimensions
    - Efficient type casting and conversions
-   - Careful management of shared memory
+   - Per-thread recomputation in place of shared-memory caching
    - Proper synchronization between operations
    - Error handling and boundary checks
    - Integration with PyTorch's autograd system

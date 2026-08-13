@@ -55,7 +55,7 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 1. Use `batch = block_idx.y` to select row
 2. Load elements: `cache[local_i] = a[batch, local_i]`
 3. Perform parallel reduction with halving stride
-4. Thread 0 writes final sum to `output[batch]`
+4. Thread 0 writes final sum to `output[batch, 0]`
 
 </div>
 </details>
@@ -167,27 +167,28 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
 3. **Parallel Reduction Logic**:
 
    ```mojo
-   stride = TPB // 2
+   var stride = TPB // 2
    while stride > 0:
-       if local_i < stride:
-           cache[local_i] += cache[local_i + stride]
-       barrier()
-       stride //= 2
-   ```
-
-   **Note**: This implementation has a potential race condition where threads
-   simultaneously read from and write to shared memory during the same
-   iteration. A safer approach would separate the read and write phases:
-
-   ```mojo
-   stride = TPB // 2
-   while stride > 0:
-       var temp_val: output.element_type = 0
+       var temp_val: output.ElementType = 0
        if local_i < stride:
            temp_val = cache[local_i + stride]  # Read phase
        barrier()
        if local_i < stride:
            cache[local_i] += temp_val  # Write phase
+       barrier()
+       stride //= 2
+   ```
+
+   **Note**: The read and write phases are deliberately separated by a
+   `barrier()`. The simpler form below reads and writes shared memory in the
+   same iteration, which races:
+
+   ```mojo
+   # Racy - do not use
+   var stride = TPB // 2
+   while stride > 0:
+       if local_i < stride:
+           cache[local_i] += cache[local_i + stride]
        barrier()
        stride //= 2
    ```
@@ -215,9 +216,9 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    - Minimal barriers (only during reduction)
    - Independent processing between rows
    - No inter-block communication needed
-   - **Race condition consideration**: The current implementation may have
-     read-write hazards during parallel reduction that could be resolved with
-     explicit read-write phase separation
+   - **Race condition handling**: read-write hazards during the reduction are
+     avoided by explicit phase separation—each iteration stages its read in
+     `temp_val`, barriers, then writes
 
 ### Complexity analysis
 

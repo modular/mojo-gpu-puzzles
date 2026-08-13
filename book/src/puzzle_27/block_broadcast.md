@@ -68,7 +68,7 @@ barrier()
 
 # Phase 2: Thread 0 computes mean
 if local_i == 0:
-    mean = shared_sum[0] / size
+    var mean = shared_sum[0] / size
     shared_mean[0] = mean
 
 barrier()
@@ -123,7 +123,7 @@ if global_i < size:
 Then use `block.sum()` exactly like the dot product earlier:
 
 ```mojo
-total_sum = block.sum[block_size=tpb, broadcast=False](...)
+var total_sum = block.sum[block_size=tpb, broadcast=False](...)
 ```
 
 ### 3. **Mean computation (thread 0 only)**
@@ -149,7 +149,7 @@ Study the function signature - it needs:
 The call pattern follows the established template style:
 
 ```mojo
-result = block.broadcast[
+var result = block.broadcast[
     dtype = DType.float32,
     width = 1,
     block_size = tpb
@@ -174,7 +174,7 @@ Once every thread has the broadcast mean, normalize your element:
 
 ```mojo
 if global_i < size:
-    normalized_value = my_value / broadcasted_mean[0]  # Extract SIMD
+    var normalized_value = my_value / broadcasted_mean[0]  # Extract SIMD
     output_data[global_i] = normalized_value
 ```
 
@@ -352,7 +352,7 @@ Each thread independently normalizes using broadcast mean:
   ...
 
 Mathematical verification:
-  Output sum = (0.222... + 0.444... + ... + 1.777...) × 16 = 4.5 × 16 × 2 = 128.0
+  Output sum = (0.222... + 0.444... + ... + 1.777...) × 16 = 8.0 × 16 = 128.0
   Output mean = 128.0 / 128 = 1.0  Perfect normalization!
 
 Each value divided by original mean gives output with mean = 1.0

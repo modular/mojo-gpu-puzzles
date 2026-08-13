@@ -48,9 +48,9 @@ Each GPU thread can process multiple data elements simultaneously using
 
 ```mojo
 # Within one GPU thread:
-a_simd = a.load[simd_width](Index(idx))      # Load 4 floats simultaneously
-b_simd = b.load[simd_width](Index(idx))      # Load 4 floats simultaneously
-result = a_simd + b_simd                 # Add 4 pairs simultaneously
+var a_simd = a.load[simd_width](Index(idx))      # Load 4 floats simultaneously
+var b_simd = b.load[simd_width](Index(idx))      # Load 4 floats simultaneously
+var result = a_simd + b_simd                 # Add 4 pairs simultaneously
 output.store[simd_width](Index(idx), result) # Store 4 results simultaneously
 ```
 

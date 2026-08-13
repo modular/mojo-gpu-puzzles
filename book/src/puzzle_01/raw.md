@@ -93,7 +93,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 This solution:
 
 - Gets thread index with `i = thread_idx.x`
-- Adds 10 to input value: `output[i] = a[i] + 10.0`
+- Adds 10 to input value: `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
 
 </div>
 </details>

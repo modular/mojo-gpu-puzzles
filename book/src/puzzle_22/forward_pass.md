@@ -196,7 +196,7 @@ Now complete this kernel to implement the LayerNorm operation. You'll need to:
 
 **Characteristics of unfused approach:**
 
-- Multiple kernel launches (LayerNorm → MatMul → Bias)
+- Multiple kernel launches (LayerNorm → Transpose → MatMul → Bias)
 - Intermediate tensor allocations between operations
 - More memory bandwidth usage due to separate passes
 - Simpler implementation with clear separation of concerns
@@ -330,9 +330,9 @@ handles one element of the output tensor. Let's break down the key components:
 1. **Thread and Block Organization**:
 
    ```mojo
-   batch_idx = block_idx.x
-   seq_idx = block_idx.y
-   hidden_idx = thread_idx.x
+   var batch_idx = block_idx.x
+   var seq_idx = block_idx.y
+   var hidden_idx = thread_idx.x
    ```
 
    - Each thread block handles one sequence position in the batch
@@ -352,7 +352,7 @@ handles one element of the output tensor. Let's break down the key components:
    var sq_sum: Scalar[dtype] = 0
 
    comptime for h in range(hidden_dim):
-       val = input[batch_idx, seq_idx, h]
+       var val = input_lt[batch_idx, seq_idx, h]
        sum_val += rebind[Scalar[dtype]](val)
        sq_sum += rebind[Scalar[dtype]](val * val)
    ```
@@ -363,16 +363,16 @@ handles one element of the output tensor. Let's break down the key components:
    - Calculate mean and variance:
 
      ```mojo
-     mean_val = sum_val / hidden_dim
-     var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
-     inv_std = 1.0 / sqrt(var_val + 1e-5)
+     var mean_val = sum_val / Scalar[dtype](hidden_dim)
+     var var_val = (sq_sum / Scalar[dtype](hidden_dim)) - (mean_val * mean_val)
+     var inv_std = 1.0 / sqrt(var_val + 1e-5)
      ```
 
 3. **Normalization and Scaling**:
 
    ```mojo
-   input_val = input[batch_idx, seq_idx, hidden_idx]
-   normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
+   var input_val = input[batch_idx, seq_idx, hidden_idx]
+   var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
        ln_weight[hidden_idx]
    ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
    output[batch_idx, seq_idx, hidden_idx] = normalized

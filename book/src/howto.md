@@ -38,8 +38,7 @@ puzzles. After setup, you can verify your GPU compatibility using the
 
 ## Operating System
 
-> [!NOTE]
-> Here is some documentation how to setup GPU support in your OS for
+> **Note:** Here is some documentation how to setup GPU support in your OS for
 >
 > - [Windows WSL2 for Linux with NVIDIA](#windows-wsl2-for-linux-with-nvidia)
 > - [Linux native with NVIDIA](#linux-native-with-nvidia)
@@ -88,8 +87,7 @@ For WSL you can install VSCode as your Editor
   [https://code.visualstudio.com/](https://code.visualstudio.com/).
 - Then install the Remote - WSL extension.
 
-> [!NOTE]
-> All 35 puzzles work on WSL and Linux with a supported NVIDIA GPU. Some
+> **Note:** All 35 puzzles work on WSL and Linux with a supported NVIDIA GPU. Some
 > puzzles require a minimum compute capability, and the debugging and profiling
 > puzzles require the corresponding NVIDIA tools. See the
 > [GPU support matrix](#gpu-support-matrix).
@@ -139,8 +137,7 @@ sudo apt install code
 code --version
 ```
 
-> [!NOTE]
-> All 35 puzzles work on Linux with a supported NVIDIA GPU. Some puzzles
+> **Note:** All 35 puzzles work on Linux with a supported NVIDIA GPU. Some puzzles
 > require a minimum compute capability; puzzle 34 needs SM90 (Hopper) or
 > newer. See the [GPU support matrix](#gpu-support-matrix).
 
@@ -161,8 +158,7 @@ xcodebuild -downloadComponent MetalToolchain
 
 and then `xcrun -sdk macosx metal`, should give you the `no input files error`.
 
-> [!NOTE]
-> Puzzles 1-8, 11-19, 23-28, and 35 work on macOS (24 of the 35). The
+> **Note:** Puzzles 1-8, 11-19, 23-28, and 35 work on macOS (24 of the 35). The
 > remainder need NVIDIA-specific tooling, hardware, or PyTorch GPU support.
 > See the [GPU support matrix](#gpu-support-matrix). We're working to enable
 > more. Please stay tuned!
@@ -207,26 +203,26 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
 
 ### **Option 1 (Highly recommended)**
 
-   [pixi](https://pixi.sh/latest/#installation)
+[pixi](https://pixi.sh/latest/#installation)
 
-   `pixi` is the **recommended option** for this project because:
-   - Easy access to Modular's MAX/Mojo packages
-   - Handles GPU dependencies
-   - Full conda + PyPI ecosystem support
+`pixi` is the **recommended option** for this project because:
+- Easy access to Modular's MAX/Mojo packages
+- Handles GPU dependencies
+- Full conda + PyPI ecosystem support
 
-    > **Note: Some puzzles only work with `pixi`**
+> **Note: Some puzzles only work with `pixi`**
 
-    **Install:**
+**Install:**
 
-     ```bash
-    curl -fsSL https://pixi.sh/install.sh | sh
-     ```
+```bash
+curl -fsSL https://pixi.sh/install.sh | sh
+```
 
-    **Update:**
+**Update:**
 
-     ```bash
-    pixi self-update
-     ```
+```bash
+pixi self-update
+```
 
 #### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
@@ -235,23 +231,23 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
 > release that the puzzles target. Use Option 1 (`pixi`) instead. The same
 > problem affects every `uv run poe ...` command in this book.
 
-    **Install:**
+**Install:**
 
-    ```bash
-    curl -fsSL https://astral.sh/uv/install.sh | sh
-    ```
+```bash
+curl -fsSL https://astral.sh/uv/install.sh | sh
+```
 
-    **Update:**
+**Update:**
 
-    ```bash
-    uv self update
-    ```
+```bash
+uv self update
+```
 
-    **Create a virtual environment:**
+**Create a virtual environment:**
 
-    ```bash
-    uv venv && source .venv/bin/activate
-    ```
+```bash
+uv venv && source .venv/bin/activate
+```
 
 3. **Verify setup and run your first puzzle:**
 

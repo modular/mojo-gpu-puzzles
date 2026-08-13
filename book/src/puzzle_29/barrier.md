@@ -235,7 +235,7 @@ Testing Puzzle 29A: Multi-Stage Pipeline Coordination
 Multi-stage pipeline blur completed
 Input sample: 0.0 1.01 2.02
 Output sample: 1.6665002 2.3331003 3.3996604
-✅ Multi-stage pipeline coordination test PASSED!
+Puzzle 29 complete ✅
 ```
 
 ## Solution

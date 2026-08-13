@@ -123,12 +123,10 @@ uv run poe p07
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
-
-```txt
-out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
-expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
-```
+If the puzzle isn't solved yet, `out` prints as an all-zero \\(5 \times 5\\)
+grid while `expected` holds `10.0` through `34.0`. Both are wrapped in a
+`TileTensor` before printing, so they render as a two-dimensional grid rather
+than as a flat buffer.
 
 ## Solution
 

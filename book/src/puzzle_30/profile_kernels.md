@@ -271,8 +271,12 @@ mathematical operations.
 {{#include ../../../problems/p30/p30.mojo:kernel2}}
 ```
 
-*Large stride=512 creates memory access gaps - same operation but scattered
-access*
+*Grid-stride loop with `stride = 512`. The stride separates successive
+iterations of a single thread, not the threads within a warp—so each warp
+access is still contiguous. The cost is redundant work: the grid is already
+`SIZE` threads wide, one per element, so having every thread additionally walk
+the whole buffer performs 16,384x the element operations kernel1 does. The last
+element is written by 32,768 separate threads.*
 
 **Kernel 3 - Efficient Reverse Access:**
 
@@ -316,13 +320,18 @@ comptime dtype = DType.float32             # 4 bytes per element
 **Memory Access Efficiency Visualization:**
 
 ```text
-KERNEL 1 (Coalesced):           KERNEL 2 (Strided by 512):
-Warp threads 0-31:             Warp threads 0-31:
+KERNEL 1 (Coalesced):           KERNEL 2 (Grid-stride loop, stride 512):
+Warp threads 0-31:             Warp threads 0-31, iteration 0:
   Thread 0: Memory[0]            Thread 0: Memory[0]
-  Thread 1: Memory[1]            Thread 1: Memory[512]
-  Thread 2: Memory[2]            Thread 2: Memory[1024]
+  Thread 1: Memory[1]            Thread 1: Memory[1]
+  Thread 2: Memory[2]            Thread 2: Memory[2]
   ...                           ...
-  Thread 31: Memory[31]          Thread 31: Memory[15872]
+  Thread 31: Memory[31]          Thread 31: Memory[31]
+
+                               Thread 0 across iterations:
+                                 iter 0: Memory[0]
+                                 iter 1: Memory[512]
+                                 iter 2: Memory[1024]
 
 Result: 1 cache line fetch       Result: 32 separate cache line fetches
 Status: ~308 GB/s throughput     Status: ~6 GB/s throughput
@@ -360,23 +369,29 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 
 **Why this creates the cache paradox:**
 
-1. **Cache line repetition**: Each 512-element jump stays within overlapping
-   cache line regions
-2. **False efficiency illusion**: Same cache lines accessed repeatedly =
-   artificially high "hit rates"
-3. **Bandwidth catastrophe**: 32 threads × 32 separate cache lines = massive
-   memory traffic
-4. **Warp execution mismatch**: GPU designed for coalesced access, but getting
-   scattered access
+1. **Cache line reuse across the grid**: a 512-element jump on `float32` is
+   2048 bytes—16 cache lines further on—but every one of those lines has
+   already been pulled in by another thread, since the grid spans the whole
+   buffer
+2. **False efficiency illusion**: the same cache lines are accessed over and
+   over = artificially high "hit rates"
+3. **Redundant work**: the grid already has one thread per element, so the loop
+   makes it re-traverse the buffer 16,384 times over—this is the dominant
+   cost, and it is what the repeated cache hits are hits *on*
+4. **Occupancy cost**: the long-running loop keeps every thread resident far
+   longer than the one-element-per-thread kernels
 
 **Concrete example with float32 (4 bytes each):**
 
 - **Cache line**: 128 bytes = 32 float32 values
-- **Stride 512**: Thread jumps by 512×4 = 2048 bytes = 16 cache lines apart!
-- **Warp impact**: 32 threads need 32 different cache lines instead of 1
+- **Stride 512**: a single thread jumps 512×4 = 2048 bytes = 16 cache lines
+  between its own iterations
+- **Warp impact**: a warp still reads 32 consecutive floats per iteration, so
+  each access is one cache line—the waste is in how many times the grid
+  revisits those lines, not in how many lines a warp touches
 
-**The key insight**: High cache hits in Kernel2 are
-**repeated access to inefficiently fetched data**, not smart caching!
+**The key insight**: High cache hits in Kernel2 come from
+**re-reading data the grid has already fetched**, not from smart caching!
 
 ## **Profiling methodology insights**
 

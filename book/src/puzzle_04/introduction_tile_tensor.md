@@ -28,7 +28,7 @@ As dimensions grow, code becomes more complex:
 
 ```mojo
 # Traditional 2D indexing for row-major 2D matrix
-idx = row * WIDTH + col
+var idx = row * WIDTH + col
 if row < height and col < width:
     output[idx] = a[idx] + 10.0
 ```
@@ -63,7 +63,7 @@ comptime layout = row_major[HEIGHT, WIDTH]()
 comptime LayoutType = type_of(layout)
 
 # Create tensor
-tensor = TileTensor(buffer, layout)
+var tensor = TileTensor(buffer, layout)
 
 # Access elements naturally
 tensor[0, 0] = 1.0  # First element

@@ -150,7 +150,7 @@ for `--first-crash`, we see that the host code creates a null pointer instead of
 allocating proper GPU memory:
 
 ```mojo
- input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
+ var input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
 ```
 
 **Why This Crashes**:
@@ -168,7 +168,7 @@ Replace null pointer creation with proper buffer allocation:
 
 ```mojo
 # Wrong: Creates null pointer
-input_buf = ctx.enqueue_create_buffer[dtype](0)
+var input_buf = ctx.enqueue_create_buffer[dtype](0)
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)

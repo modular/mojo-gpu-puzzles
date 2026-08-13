@@ -125,8 +125,8 @@ Matrix A:          Matrix B:                   Output C:
 1. **Thread mapping**:
 
    ```mojo
-   row = block_dim.y * block_idx.y + thread_idx.y
-   col = block_dim.x * block_idx.x + thread_idx.x
+   var row = block_dim.y * block_idx.y + thread_idx.y
+   var col = block_dim.x * block_idx.x + thread_idx.x
    ```
 
 2. **Memory access pattern**:
@@ -138,7 +138,7 @@ Matrix A:          Matrix B:                   Output C:
 
    ```mojo
    # Use var for mutable accumulator with tensor's element type
-   var acc: output.element_type = 0
+   var acc: output.ElementType = 0
 
    # comptime for compile-time loop unrolling
    comptime for k in range(size):
@@ -148,8 +148,8 @@ Matrix A:          Matrix B:                   Output C:
 ### Key language features
 
 1. **Variable declaration**:
-   - The use of `var` in `var acc: output.element_type = 0` allows for type
-     inference with `output.element_type` ensures type compatibility with the
+   - The use of `var` in `var acc: output.ElementType = 0` allows for type
+     inference with `output.ElementType` ensures type compatibility with the
      output tensor
    - Initialized to zero before accumulation
 

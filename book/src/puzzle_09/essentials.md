@@ -196,11 +196,11 @@ Back in puzzles 1-8, you wrote code like this:
 
 ```mojo
 # From puzzle 1: Basic thread indexing
-i = thread_idx.x  # Each thread gets a unique index
+var i = thread_idx.x  # Each thread gets a unique index
 
 # From puzzle 7: 2D thread indexing
-row = thread_idx.y  # 2D grid of threads
-col = thread_idx.x
+var row = thread_idx.y  # 2D grid of threads
+var col = thread_idx.x
 ```
 
 With CUDA-GDB, you can **actually see these thread coordinates in action**:

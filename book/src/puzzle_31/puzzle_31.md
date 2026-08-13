@@ -61,8 +61,8 @@ but different resource usage:
 ## Your task
 
 Use profiling tools to investigate three kernels and answer analysis questions
-about occupancy optimization. The kernels compute identical results but use
-resources very differently - your job is to discover why performance and
+about occupancy optimization. The kernels compute equivalent results (to within
+test tolerance) but use resources very differently - your job is to discover why performance and
 occupancy behave counterintuitively!
 
 > The specific numerical results shown in this puzzle are based on
@@ -114,8 +114,10 @@ pixi shell -e nvidia
 mojo problems/p31/p31.mojo --all
 ```
 
-All three should produce identical results. The mystery: why do they have
-different performance?
+All three compute the same SAXPY result to within test tolerance—the
+sophisticated and balanced kernels add small correction terms, so the tests
+compare with `rtol=1e-3` and `rtol=1e-4` rather than exactly. The mystery: why
+do they have different performance?
 
 ### Step 2: Benchmark performance
 
@@ -123,8 +125,10 @@ different performance?
 mojo problems/p31/p31.mojo --benchmark
 ```
 
-All three should produce identical results. The mystery: why do they have
-different performance?
+All three compute the same SAXPY result to within test tolerance—the
+sophisticated and balanced kernels add small correction terms, so the tests
+compare with `rtol=1e-3` and `rtol=1e-4` rather than exactly. The mystery: why
+do they have different performance?
 
 ### Step 3: Build for profiling
 
