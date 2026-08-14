@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -428,8 +442,9 @@ utilization, <strong>extremely high cache hit rates</strong></li>
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         output[i] = a[i] + b[i]
@@ -442,8 +457,9 @@ utilization, <strong>extremely high cache hit rates</strong></li>
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
 
@@ -454,15 +470,20 @@ utilization, <strong>extremely high cache hit rates</strong></li>
 
 
 </code></pre>
-<p><em>Large stride=512 creates memory access gaps - same operation but scattered
-access</em></p>
+<p><em>Grid-stride loop with <code>stride = 512</code>. The stride separates successive
+iterations of a single thread, not the threads within a warp—so each warp
+access is still contiguous. The cost is redundant work: the grid is already
+<code>SIZE</code> threads wide, one per element, so having every thread additionally walk
+the whole buffer performs 16,384x the element operations kernel1 does. The last
+element is written by 32,768 separate threads.</em></p>
 <p><strong>Kernel 3 - Efficient Reverse Access:</strong></p>
 <pre><code class="language-mojo">def kernel3(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
 
@@ -503,13 +524,18 @@ comptime dtype = DType.float32             # 4 bytes per element
 <li><strong>32 warps/block</strong>: Each block contains 32 warps of 32 threads each</li>
 </ul>
 <p><strong>Memory Access Efficiency Visualization:</strong></p>
-<pre><code class="language-text">KERNEL 1 (Coalesced):           KERNEL 2 (Strided by 512):
-Warp threads 0-31:             Warp threads 0-31:
+<pre><code class="language-text">KERNEL 1 (Coalesced):           KERNEL 2 (Grid-stride loop, stride 512):
+Warp threads 0-31:             Warp threads 0-31, iteration 0:
   Thread 0: Memory[0]            Thread 0: Memory[0]
-  Thread 1: Memory[1]            Thread 1: Memory[512]
-  Thread 2: Memory[2]            Thread 2: Memory[1024]
+  Thread 1: Memory[1]            Thread 1: Memory[1]
+  Thread 2: Memory[2]            Thread 2: Memory[2]
   ...                           ...
-  Thread 31: Memory[31]          Thread 31: Memory[15872]
+  Thread 31: Memory[31]          Thread 31: Memory[31]
+
+                               Thread 0 across iterations:
+                                 iter 0: Memory[0]
+                                 iter 1: Memory[512]
+                                 iter 2: Memory[1024]
 
 Result: 1 cache line fetch       Result: 32 separate cache line fetches
 Status: ~308 GB/s throughput     Status: ~6 GB/s throughput
@@ -538,23 +564,29 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 </code></pre>
 <p><strong>Why this creates the cache paradox:</strong></p>
 <ol>
-<li><strong>Cache line repetition</strong>: Each 512-element jump stays within overlapping
-cache line regions</li>
-<li><strong>False efficiency illusion</strong>: Same cache lines accessed repeatedly =
-artificially high “hit rates”</li>
-<li><strong>Bandwidth catastrophe</strong>: 32 threads × 32 separate cache lines = massive
-memory traffic</li>
-<li><strong>Warp execution mismatch</strong>: GPU designed for coalesced access, but getting
-scattered access</li>
+<li><strong>Cache line reuse across the grid</strong>: a 512-element jump on <code>float32</code> is
+2048 bytes—16 cache lines further on—but every one of those lines has
+already been pulled in by another thread, since the grid spans the whole
+buffer</li>
+<li><strong>False efficiency illusion</strong>: the same cache lines are accessed over and
+over = artificially high “hit rates”</li>
+<li><strong>Redundant work</strong>: the grid already has one thread per element, so the loop
+makes it re-traverse the buffer 16,384 times over—this is the dominant
+cost, and it is what the repeated cache hits are hits <em>on</em></li>
+<li><strong>Occupancy cost</strong>: the long-running loop keeps every thread resident far
+longer than the one-element-per-thread kernels</li>
 </ol>
 <p><strong>Concrete example with float32 (4 bytes each):</strong></p>
 <ul>
 <li><strong>Cache line</strong>: 128 bytes = 32 float32 values</li>
-<li><strong>Stride 512</strong>: Thread jumps by 512×4 = 2048 bytes = 16 cache lines apart!</li>
-<li><strong>Warp impact</strong>: 32 threads need 32 different cache lines instead of 1</li>
+<li><strong>Stride 512</strong>: a single thread jumps 512×4 = 2048 bytes = 16 cache lines
+between its own iterations</li>
+<li><strong>Warp impact</strong>: a warp still reads 32 consecutive floats per iteration, so
+each access is one cache line—the waste is in how many times the grid
+revisits those lines, not in how many lines a warp touches</li>
 </ul>
-<p><strong>The key insight</strong>: High cache hits in Kernel2 are
-<strong>repeated access to inefficiently fetched data</strong>, not smart caching!</p>
+<p><strong>The key insight</strong>: High cache hits in Kernel2 come from
+<strong>re-reading data the grid has already fetched</strong>, not from smart caching!</p>
 <h2 id="profiling-methodology-insights"><a class="header" href="#profiling-methodology-insights"><strong>Profiling methodology insights</strong></a></h2>
 <p><strong>Systematic Detective Approach:</strong></p>
 <p><strong>Phase 1: NSight Systems (Big Picture)</strong></p>

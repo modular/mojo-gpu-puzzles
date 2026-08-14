@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -227,7 +241,7 @@ while working in familiar Python environments.</p>
 <p>In <a href="../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution
 kernel that runs efficiently on the GPU. Now we’ll take this kernel and
 transform it into a custom operation that can be called directly from Python
-using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
+using <a href="https://docs.modular.com/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -314,8 +328,7 @@ the <code>conv1d_kernel</code>:</p>
 <pre><code class="language-mojo">import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from std.memory import UnsafePointer
-from std.gpu.host import DeviceBuffer
+from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("conv1d")
@@ -431,9 +444,9 @@ method in the <code>Conv1DCustomOp</code> struct.</p>
 This single line does several important things:
 <ol>
 <li>Calls
-<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>
 on the GPU context (<code>gpu_ctx</code> is of type
-<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)
+<a href="https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/">DeviceContext</a>)
 to schedule our kernel execution</li>
 <li>Passes the necessary layout and size information as <strong>compile-time</strong>
 parameters</li>
@@ -450,7 +463,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <li>Creates NumPy arrays for input and kernel</li>
 <li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
 <li>Converts NumPy arrays to
-<a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffers with
+<a href="https://docs.modular.com/api/python/driver">MAX driver</a> Buffers with
 <code>Buffer.from_numpy(input).to(device)</code></li>
 <li>Loads the custom operation package with <code>custom_extensions=[mojo_kernels]</code></li>
 </ul>
@@ -459,12 +472,12 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <p><strong>Graph building</strong>:</p>
 <ul>
 <li>Defines input and output tensor types with
-<a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
+<a href="https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
 <li>Specifies parameters for our operation via <code>parameters={...}</code></li>
 <li>Creates a computation graph with
-<a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
+<a href="https://docs.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
 <li>Calls our operation using
-<a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
+<a href="https://docs.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
 </ul>
 </li>
 <li>
@@ -472,7 +485,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>The <code>@extensibility.register("conv1d")</code> decorator exposes our operation to MAX
 Graph. See
-<a href="https://docs.modular.com/mojo/manual/decorators/extensibility-register/">@extensibility.register</a></li>
+<a href="https://mojolang.org/docs/reference/decorators/extensibility-register/">@extensibility.register</a></li>
 <li>The <code>execute</code> method parameters define the interface (inputs, outputs,
 context)</li>
 <li>Input/output tensors are converted to TileTensors for use in our kernel</li>
@@ -497,9 +510,9 @@ context)</li>
 struct Conv1DCustomOp:
     @staticmethod
     def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
-        output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
+        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         ctx: DeviceContext,
     ) raises:
         # Implementation
@@ -508,15 +521,25 @@ struct Conv1DCustomOp:
 <li><code>target</code> indicates the device type (“gpu” or “cpu”)</li>
 <li><code>input_size</code> and <code>conv_size</code> are parameters passed from Python</li>
 <li>Tensor types ensure correct shape and type checking</li>
-<li>Return type is <code>raises</code> for proper error handling</li>
+<li><code>raises</code> is the effect annotation, marking that <code>execute</code> can propagate
+errors</li>
 </ul>
 </li>
 <li>
 <p><strong>Tensor Conversion</strong>:</p>
-<pre><code class="language-mojo">output_tensor = output.to_layout_tensor()
-input_tensor = input.to_layout_tensor()
-kernel_tensor = kernel.to_layout_tensor()
+<pre><code class="language-mojo">comptime out_layout_val = row_major[input_size]()
+comptime OutLayout = type_of(out_layout_val)
+
+var output_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+    output.unsafe_ptr(), out_layout_val
+)
+var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+    input.unsafe_ptr(), out_layout_val
+)
 </code></pre>
+<p>The layouts are constructed from the op’s compile-time parameters and the
+tensors are built from raw pointers—they are not extracted from the
+<code>OutputTensor</code>/<code>InputTensor</code> arguments.</p>
 <ul>
 <li>MAX Graph tensors are converted to Mojo TileTensors</li>
 <li>This allows our kernel to work with them directly</li>
@@ -525,7 +548,7 @@ kernel_tensor = kernel.to_layout_tensor()
 </li>
 <li>
 <p><strong>Device Context Usage</strong>:</p>
-<pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
+<pre><code class="language-mojo">var gpu_ctx = ctx
 gpu_ctx.enqueue_memset(...)  # Zero output buffer
 gpu_ctx.enqueue_function[...](...) # Schedule kernel
 </code></pre>
@@ -544,8 +567,8 @@ functions to create efficient, type-safe, accelerated operations.</p>
 <blockquote>
 <p>Check out the follow tutorials for more details:</p>
 <ul>
-<li><a href="https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
-<li><a href="https://docs.modular.com/max/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
+<li><a href="https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
+<li><a href="https://docs.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
 </ul>
 </blockquote>
 <h3 id="custom-op-registration"><a class="header" href="#custom-op-registration">Custom op registration</a></h3>
@@ -557,7 +580,7 @@ struct Conv1DCustomOp:
     def execute[...](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[type = output.dtype, rank = output.rank],
+        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
         ctx: DeviceContext,
     ) raises:
         # Implementation here

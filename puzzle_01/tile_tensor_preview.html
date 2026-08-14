@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -212,7 +226,7 @@
 <p>Looking at our traditional implementation below, you might notice some potential
 issues:</p>
 <h3 id="current-approach"><a class="header" href="#current-approach">Current approach</a></h3>
-<pre><code class="language-mojo">i = thread_idx.x
+<pre><code class="language-mojo">var i = thread_idx.x
 output[i] = a[i] + 10.0
 </code></pre>
 <p>This works for 1D arrays, but what happens when we need to:</p>
@@ -224,7 +238,7 @@ output[i] = a[i] + 10.0
 <h3 id="preview-of-future-challenges"><a class="header" href="#preview-of-future-challenges">Preview of future challenges</a></h3>
 <p>As we progress through the puzzles, array indexing will become more complex:</p>
 <pre><code class="language-mojo"># 2D indexing coming in later puzzles
-idx = row * WIDTH + col
+var idx = row * WIDTH + col
 
 # 3D indexing
 idx = (batch * HEIGHT + row) * WIDTH + col
@@ -233,7 +247,7 @@ idx = (batch * HEIGHT + row) * WIDTH + col
 idx = (batch * padded_height + row) * padded_width + col
 </code></pre>
 <h3 id="tiletensor-preview"><a class="header" href="#tiletensor-preview">TileTensor preview</a></h3>
-<p><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a>
+<p><a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a>
 will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
 output[i, j] = a[i, j] + 10.0  # 2D indexing

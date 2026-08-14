@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -213,16 +227,16 @@
 <p>Building on basic cluster coordination from the previous section, this challenge
 teaches you to implement <strong>cluster-wide collective operations</strong> - extending the
 familiar
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum"><code>block.sum</code></a>
 pattern from <a href="../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across
 <strong>multiple thread blocks</strong>.</p>
 <p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024
 elements across 4 coordinated blocks, combining their individual reductions into
 a single global result.</p>
 <p><strong>Key Learning</strong>: Learn
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 for full cluster coordination and
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 for efficient final reductions.</p>
 <h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
 <p>Single blocks (as learned in <a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>) are limited
@@ -250,7 +264,7 @@ by their thread count and
 <ol>
 <li><strong>Local reduction</strong>: Each block computes partial sum using tree reduction</li>
 <li><strong>Cluster sync</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 ensures all partial results are ready</li>
 <li><strong>Final aggregation</strong>: One elected thread combines all partial results</li>
 </ol>
@@ -271,7 +285,7 @@ ensures all partial results are ready</li>
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -299,14 +313,14 @@ ensures all partial results are ready</li>
 <ul>
 <li>Store partial results in <code>temp_storage[block_id]</code> for reliable indexing</li>
 <li>Use
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 for full cluster synchronization (stronger than arrive/wait)</li>
 <li>Only one thread should perform the final global aggregation</li>
 </ul>
 <h3 id="election-pattern-for-efficiency"><a class="header" href="#election-pattern-for-efficiency"><strong>Election pattern for efficiency</strong></a></h3>
 <ul>
 <li>Use
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 within the first block (<code>my_block_rank == 0</code>) (pattern from
 <a href="../puzzle_24/warp_sum.html">warp programming</a>)</li>
 <li>This ensures only one thread performs the final sum to avoid redundancy</li>
@@ -328,14 +342,14 @@ communication</li>
 </details>
 <h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
 <p><strong>From
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/"><code>max.gpu.primitives.cluster</code></a>
 module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 Full cluster synchronization - stronger than arrive/wait pattern</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 Elects single thread within warp for efficient coordination</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
 Returns unique block identifier within cluster</li>
 </ul>
 <h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
@@ -390,9 +404,10 @@ Error: 0.0
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
@@ -473,9 +488,9 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <h2 id="phase-2-cluster-synchronization"><a class="header" href="#phase-2-cluster-synchronization"><strong>Phase 2: Cluster synchronization</strong></a></h2>
 <p><strong>Full cluster barrier:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 provides <strong>stronger guarantees</strong> than
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 <li>Ensures <strong>all blocks complete their local reductions</strong> before any block
 proceeds</li>
 <li>Hardware-accelerated synchronization across all blocks in the cluster</li>
@@ -490,7 +505,7 @@ proceeds</li>
 </code></pre>
 <p><strong>Why this election strategy?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 Hardware primitive that selects exactly one thread per warp</li>
 <li><strong><code>my_block_rank == 0</code></strong>: Only elect from the first block to ensure single
 writer</li>
@@ -518,7 +533,7 @@ summation</li>
 <ul>
 <li><strong><code>barrier()</code></strong>: Ensures all threads in block complete each tree reduction
 step</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 <strong>Global barrier</strong> - all blocks reach same execution point</li>
 <li><strong>Single writer</strong>: Election prevents race conditions on final output</li>
 </ul>

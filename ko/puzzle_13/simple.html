@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -208,10 +222,10 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+                        <!-- i18n-source-commit: f1ede433f4a483e4078e50fe24ed566a15ad90e6 -->
 <h1 id="단일-블록을-사용한-기본-버전"><a class="header" href="#단일-블록을-사용한-기본-버전">단일 블록을 사용한 기본 버전</a></h1>
-<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
-<code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>입력 1D TileTensor <code>a</code>와 필터 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D
+TileTensor <code>output</code>에 저장하는 GPU 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
@@ -226,15 +240,15 @@
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>입력 배열 크기: <code>SIZE = 6</code></li>
-<li>커널 크기: <code>CONV = 3</code></li>
+<li>필터 크기: <code>CONV = 3</code></li>
 <li>블록당 스레드 수: <code>TPB = 8</code></li>
 <li>블록 수: 1</li>
 <li>공유 메모리: <code>SIZE</code>와 <code>CONV</code> 크기의 배열 2개</li>
 </ul>
 <p>참고:</p>
 <ul>
-<li><strong>데이터 로딩</strong>: 각 스레드가 입력 배열과 커널에서 원소를 하나씩 로드</li>
-<li><strong>메모리 패턴</strong>: 입력 배열과 합성곱 커널을 저장하는 공유 배열</li>
+<li><strong>데이터 로딩</strong>: 각 스레드가 입력 배열과 필터에서 원소를 하나씩 로드</li>
+<li><strong>메모리 패턴</strong>: 입력 배열과 필터를 저장하는 공유 배열</li>
 <li><strong>스레드 동기화</strong>: 연산 시작 전 스레드 간 조율</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
@@ -256,7 +270,7 @@
 <ol>
 <li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code>으로
 공유 메모리 할당</li>
-<li>입력을 <code>shared_a[local_i]</code>에, 커널을 <code>shared_b[local_i]</code>에 로드</li>
+<li>입력을 <code>shared_a[local_i]</code>에, 필터를 <code>shared_b[local_i]</code>에 로드</li>
 <li>데이터 로드 후 <code>barrier()</code> 호출</li>
 <li>경계 안에서 곱을 합산: <code>if local_i + j &lt; SIZE</code></li>
 <li><code>global_i &lt; SIZE</code>일 때만 결과 기록</li>
@@ -332,8 +346,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
         # `out.ElementType` is available in TileTensor
         var local_sum: output.ElementType = 0
 
-        # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
-        # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
+        # Note: `comptime for` unrolls the loop at compile time given `CONV` is a compile-time constant
         comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j &lt; SIZE:
@@ -348,14 +361,14 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 단계별로 살펴보겠습니다:</p>
 <h3 id="메모리-레이아웃"><a class="header" href="#메모리-레이아웃">메모리 레이아웃</a></h3>
 <pre><code class="language-txt">입력 배열 a:       [0  1  2  3  4  5]
-커널 b:          [0  1  2]
+필터 b:          [0  1  2]
 </code></pre>
 <h3 id="연산-과정"><a class="header" href="#연산-과정">연산 과정</a></h3>
 <ol>
 <li>
 <p><strong>데이터 로딩</strong>:</p>
 <pre><code class="language-txt">shared_a: [0  1  2  3  4  5]  // 입력 배열
-shared_b: [0  1  2]           // 합성곱 커널
+shared_b: [0  1  2]           // 필터
 </code></pre>
 </li>
 <li>
@@ -389,8 +402,7 @@ if global_i &lt; SIZE:
 <p>효율적이고 올바른 구현:</p>
 <pre><code class="language-mojo">if global_i &lt; SIZE:
     var local_sum: output.element_type = 0  # var로 타입 추론 활용
-    @parameter  # CONV가 상수이므로 컴파일 타임에 루프 전개
-    for j in range(CONV):
+    comptime for j in range(CONV):  # CONV가 상수이므로 컴파일 타임에 루프 전개
         if local_i + j &lt; SIZE:
             local_sum += shared_a[local_i + j] * shared_b[j]
     output[global_i] = local_sum
@@ -414,7 +426,7 @@ if global_i &lt; SIZE:
 <p><strong>주요 구현 특징</strong>:</p>
 <ul>
 <li><code>var</code>와 <code>output.element_type</code>으로 적절한 타입 추론</li>
-<li><code>@parameter</code> 데코레이터로 합성곱 루프를 컴파일 타임에 전개</li>
+<li><code>comptime for</code>로 합성곱 루프를 컴파일 타임에 전개</li>
 <li>엄격한 경계 검사로 메모리 안전성 확보</li>
 <li>TileTensor의 타입 시스템으로 코드 안전성 향상</li>
 </ul>
@@ -422,7 +434,7 @@ if global_i &lt; SIZE:
 <li>
 <p><strong>메모리 관리</strong>:</p>
 <ul>
-<li>입력 배열과 커널 모두 공유 메모리 사용</li>
+<li>입력 배열과 필터 모두 공유 메모리 사용</li>
 <li>스레드당 전역 메모리에서 1회 로드</li>
 <li>로드한 데이터의 효율적 재사용</li>
 </ul>
@@ -441,7 +453,7 @@ if global_i &lt; SIZE:
 <li>전역 메모리 접근 최소화</li>
 <li>공유 메모리로 빠른 데이터 접근</li>
 <li>메인 연산 루프에서 스레드 분기 회피</li>
-<li><code>@parameter</code> 데코레이터를 통한 루프 전개</li>
+<li><code>comptime for</code>를 통한 루프 전개</li>
 </ul>
 </li>
 </ol>

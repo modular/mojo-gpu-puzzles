@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -299,14 +313,15 @@ The focus is SIMD control inside a tile, not coordination across them.</p>
 </code></pre>
 <p>Each tile now contains multiple SIMD groups, not just sequential elements.</p>
 <h3 id="2-global-index-calculation"><a class="header" href="#2-global-index-calculation">2. <strong>Global index calculation</strong></a></h3>
-<pre><code class="language-mojo">global_start = tile_id * chunk_size + i * simd_width
+<pre><code class="language-mojo">var global_start = tile_id * chunk_size + i * simd_width
 </code></pre>
 <p>This calculates the exact global position for each SIMD vector within the chunk.</p>
 <h3 id="3-direct-tensor-access"><a class="header" href="#3-direct-tensor-access">3. <strong>Direct tensor access</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a.aligned_load[simd_width](Index(global_start))     # Load from global tensor
-output.store[simd_width](Index(global_start), ret)  # Store to global tensor
+<pre><code class="language-mojo">var a_vec = a_lt.aligned_load[width=simd_width](Index(global_start))     # Load from global tensor
+out_lt.store[simd_width](Index(global_start), ret)  # Store to global tensor
 </code></pre>
-<p>Note: Access the original tensors, not the tile views.</p>
+<p>Note: Access the whole-tensor <code>LayoutTensor</code> handles from
+<code>to_layout_tensor()</code>, not the tile views.</p>
 <h3 id="4-key-characteristics"><a class="header" href="#4-key-characteristics">4. <strong>Key characteristics</strong></a></h3>
 <ul>
 <li>More control, more complexity, global tensor access</li>
@@ -424,9 +439,8 @@ Chunk 2 (thread 2): [256:384]  ← Next 128 elements
 Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 </code></pre>
 <p><strong>Processing within one chunk:</strong></p>
-<pre><code class="language-mojo">@parameter
-for i in range(tile_size):  # i = 0, 1, 2, ..., 31
-    global_start = tile_id * chunk_size + i * simd_width
+<pre><code class="language-mojo">comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
+    var global_start = tile_id * chunk_size + i * simd_width
     # For tile_id=0: global_start = 0, 4, 8, 12, ..., 124
     # For tile_id=1: global_start = 128, 132, 136, 140, ..., 252
 </code></pre>
@@ -504,31 +518,31 @@ body with a SIMD load/add/store, and hand the loop to <code>vectorize</code>, wh
 your body in <code>width</code>-sized steps and processes the leftover remainder for you.</p>
 <pre><code class="language-mojo"># Before: scalar loop over the tile (one element at a time)
 for i in range(actual_tile_size):
-    global_idx = tile_start + i
+    var global_idx = tile_start + i
     out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
 
 # After: same logic, but the body operates on a SIMD vector of `width`
 def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:                       # bounds check
-        a_vec = a_lt.aligned_load[width](Index(global_idx))
-        b_vec = b_lt.aligned_load[width](Index(global_idx))
+        var a_vec = a_lt.aligned_load[width](Index(global_idx))
+        var b_vec = b_lt.aligned_load[width](Index(global_idx))
         out_lt.store[width](Index(global_idx), a_vec + b_vec)
 
 vectorize[simd_width](actual_tile_size, vectorized_add)  # drives the loop + remainder
 </code></pre>
 <p>The remaining tips break this down piece by piece.</p>
 <h3 id="1-tile-boundary-calculation"><a class="header" href="#1-tile-boundary-calculation">1. <strong>Tile boundary calculation</strong></a></h3>
-<pre><code class="language-mojo">tile_start = tile_id * tile_size
-tile_end = min(tile_start + tile_size, size)
-actual_tile_size = tile_end - tile_start
+<pre><code class="language-mojo">var tile_start = tile_id * tile_size
+var tile_end = min(tile_start + tile_size, size)
+var actual_tile_size = tile_end - tile_start
 </code></pre>
 <p>Handle cases where the last tile might be smaller than <code>tile_size</code>.</p>
 <h3 id="2-vectorized-function-pattern"><a class="header" href="#2-vectorized-function-pattern">2. <strong>Vectorized function pattern</strong></a></h3>
 <pre><code class="language-mojo">def vectorized_add[
   width: Int
-](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
-    global_idx = tile_start + i
+](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+    var global_idx = tile_start + i
     if global_idx + width &lt;= size:  # Bounds checking
         # SIMD operations here
 </code></pre>
@@ -638,15 +652,15 @@ safety:</p>
 <li><strong>Nested function pattern</strong>: Clean separation of vectorization logic</li>
 </ul>
 <p><strong>Tile-based organization:</strong></p>
-<pre><code class="language-mojo">tile_start = tile_id * tile_size    # 0, 32, 64, 96, ...
-tile_end = min(tile_start + tile_size, size)
-actual_tile_size = tile_end - tile_start
+<pre><code class="language-mojo">var tile_start = tile_id * tile_size    # 0, 32, 64, 96, ...
+var tile_end = min(tile_start + tile_size, size)
+var actual_tile_size = tile_end - tile_start
 </code></pre>
 <p><strong>Automatic vectorization mechanism:</strong></p>
 <pre><code class="language-mojo">def vectorized_add[
   width: Int
-](i: Int) unified {imm tile_start, imm a, imm b, mut output}:
-    global_idx = tile_start + i
+](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+    var global_idx = tile_start + i
     if global_idx + width &lt;= size:
         # Automatic SIMD optimization
 </code></pre>

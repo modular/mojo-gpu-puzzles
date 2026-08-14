@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -215,9 +229,9 @@ introduces you to sophisticated GPU
 <strong>warp-level butterfly communication and parallel scan operations</strong> -
 hardware-accelerated primitives that enable efficient tree-based algorithms and
 parallel reductions within warps. You’ll learn about using
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor</a>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/">shuffle_xor</a>
 for butterfly networks and
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum</a>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/">prefix_sum</a>
 for hardware-optimized parallel scan without complex multi-phase shared memory
 algorithms.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier +
@@ -251,11 +265,11 @@ sequential patterns</li>
 <li><strong>Single-cycle operations</strong>: Complex reductions happen in specialized hardware</li>
 </ul>
 <h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
-<p>Learn the sophisticated communication primitives from <code>gpu.primitives.warp</code>:</p>
+<p>Learn the sophisticated communication primitives from <code>std.gpu.primitives.warp</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>:
+<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/"><code>shuffle_xor(value, mask)</code></a></strong>:
 XOR-based butterfly communication for tree algorithms</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/"><code>prefix_sum(value)</code></a></strong>:
 Hardware-accelerated parallel scan operations</li>
 <li><strong>Advanced coordination patterns</strong>: Combining multiple primitives for complex
 algorithms</li>
@@ -268,7 +282,7 @@ coordination code.</p>
 </blockquote>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex parallel reduction (traditional approach - from Puzzle 14):
-shared = TileTensor[
+var shared = TileTensor[
     dtype,
     row_major[WARP_SIZE](),
     MutAnyOrigin,
@@ -276,9 +290,9 @@ shared = TileTensor[
 ].stack_allocation()
 shared[local_i] = input[global_i]
 barrier()
-offset = 1
+var offset = 1
 for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
-    var current_val: output.element_type = 0
+    var current_val: output.ElementType = 0
     if local_i &gt;= offset and local_i &lt; WARP_SIZE:
         current_val = shared[local_i - offset]
     barrier()
@@ -288,8 +302,8 @@ for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
     offset *= 2
 
 # Advanced warp primitives eliminate all this complexity:
-current_val = input[global_i]
-scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
+var current_val = input[global_i]
+var scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
 output[global_i] = scan_result
 </code></pre>
 <h3 id="when-advanced-warp-operations-excel"><a class="header" href="#when-advanced-warp-operations-excel"><strong>When advanced warp operations excel</strong></a></h3>
@@ -328,8 +342,8 @@ and parallel reductions.</p>
 <li>Advanced conditional butterfly operations for multi-value reductions</li>
 </ul>
 <p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">max_val = input[global_i]
-offset = WARP_SIZE // 2
+<pre><code class="language-mojo">var max_val = input[global_i]
+var offset = WARP_SIZE // 2
 while offset &gt; 0:
     max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
     offset //= 2
@@ -347,8 +361,8 @@ multi-phase algorithms with single function calls.</p>
 <li>Understanding inclusive vs exclusive scan patterns</li>
 </ul>
 <p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">current_val = input[global_i]
-scan_result = prefix_sum[exclusive=False](current_val)
+<pre><code class="language-mojo">var current_val = input[global_i]
+var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result  # Hardware-optimized cumulative sum
 </code></pre>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>

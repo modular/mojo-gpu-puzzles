@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -289,10 +303,10 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 \((1,16)\) so we can use matrix multiplication instead of manual dot products.
 This allows us to leverage the highly optimized
 <a href="../puzzle_16/tiled.html">tiled matmul kernel from Puzzle 16</a>!</p>
-<p>In Mojo, you reshape a <code>LayoutTensor</code> by calling <code>reshape[new_layout]()</code> with the
-target layout as a compile-time parameter (for example,
-<code>q_tensor.reshape[layout_q_2d]()</code>) rather than copying or mutating data in place.
-You’ll see this idiom in the orchestration code below.</p>
+<p>In Mojo, you reshape a <code>TileTensor</code> by calling <code>reshape()</code> with the target
+layout as a runtime argument (for example, <code>q_tensor.reshape(layout_q_2d)</code>)
+rather than copying or mutating data in place. You’ll see this idiom in the
+orchestration code below.</p>
 <p>Our GPU implementation
 <strong>reuses and combines optimized kernels, mostly from previous puzzles</strong>:</p>
 <ul>
@@ -308,12 +322,12 @@ numerically stable attention weight computation</li>
 <p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex
 operations by combining proven, optimized kernels from previous puzzles.
 Rather than writing everything from scratch, we leverage the
-<code>matmul_idiomatic_tiled</code> from Puzzle 16 and <code>softmax_kernel</code> from Puzzle 18,
-showcasing the power of modular GPU kernel design.</p>
+<code>matmul_idiomatic_tiled</code> from Puzzle 16 and <code>softmax_gpu_kernel</code> from
+Puzzle 18, showcasing the power of modular GPU kernel design.</p>
 <p><strong>Reuse checkpoint</strong>: Before continuing, revisit the kernels you’re about to
 compose — <code>matmul_idiomatic_tiled</code> in
-<a href="../puzzle_16/tiled.html">Puzzle 16’s tiled solution</a> and <code>softmax_kernel</code> in
-<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. Treat this puzzle as a
+<a href="../puzzle_16/tiled.html">Puzzle 16’s tiled solution</a> and <code>softmax_gpu_kernel</code>
+in <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. Treat this puzzle as a
 composition/refactor exercise: your job is to wire these existing building
 blocks together (plus the transpose you write here), not to reinvent them.</p>
 </blockquote>
@@ -372,8 +386,9 @@ single custom op</li>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <p>To complete this puzzle, we’ll leverage the tiled matmul kernel from
 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> and the softmax kernel from
-<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. You only need to implement the transpose
-kernel in the Mojo file using shared memory.</p>
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. You implement the transpose kernel in
+the Mojo file using shared memory, then wire up the seven-step attention
+orchestration that calls it.</p>
 <h3 id="1-implement-the-transpose-kernel"><a class="header" href="#1-implement-the-transpose-kernel">1. Implement the transpose kernel</a></h3>
 <pre><code class="language-mojo">def transpose_kernel[
     rows: Int,
@@ -450,7 +465,7 @@ the input of the next:</p>
 <pre><code class="language-text">K → transpose → Kᵀ → matmul(Q, Kᵀ) → scores → softmax → weights → matmul(weights, V) → output
 </code></pre>
 <p>The orchestration function below allocates the intermediate buffers (<code>Kᵀ</code>,
-<code>scores</code>, <code>weights</code>), reshapes \(Q\) to \((1, 16)\) with <code>reshape[...]()</code> as
+<code>scores</code>, <code>weights</code>), reshapes \(Q\) to \((1, 16)\) with <code>reshape()</code> as
 shown above, and enqueues each kernel launch on the GPU. There’s no new kernel
 math here — the work is choosing buffer layouts and calling the existing kernels
 in the right order.</p>
@@ -647,7 +662,7 @@ implementation.</p>
 <details class="solution-details">
 <summary></summary>
 <p>To solve this puzzle, we need to implement the transpose kernel in Mojo and
-complete the Python graph definition for our attention custom operation. This
+wire up the attention orchestration that drives it. This
 puzzle builds upon concepts from previous puzzles, combining
 <strong>tiled matrix multiplication from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> and
 <strong>softmax from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></strong> into a complete
@@ -658,8 +673,8 @@ attention mechanism.</p>
 <li><strong><code>matmul_idiomatic_tiled</code></strong> from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> -
 Powers both \(Q \times K^T\) and \(\text{weights} \times V\)
 operations</li>
-<li><strong><code>softmax_kernel</code></strong> from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a> - Provides
-numerically stable attention weight computation</li>
+<li><strong><code>softmax_gpu_kernel</code></strong> from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a> -
+Provides numerically stable attention weight computation</li>
 </ol>
 <p>This exemplifies <strong>modular GPU architecture</strong>: complex neural network operations
 built by orchestrating proven, optimized components rather than monolithic
@@ -822,9 +837,9 @@ and writes remain coalesced while achieving the transpose operation.</p>
 <strong>zero-copy memory optimization</strong>:</p>
 <h4 id="advanced-memory-optimization-strategies"><a class="header" href="#advanced-memory-optimization-strategies">Advanced memory optimization strategies</a></h4>
 <pre><code class="language-mojo"># Zero-copy reshaping - no data movement, just reinterpret tensor shape
-q_2d = q_tensor.reshape[layout_q_2d]()
+var q_2d = q_tensor.reshape(layout_q_2d)
 # Aggressive buffer reuse - same memory, different interpretations
-weights = scores_2d.reshape[layout_scores]()
+var weights = scores_2d.reshape(layout_scores)
 </code></pre>
 <p>The implementation achieves <strong>maximum memory efficiency</strong> through:</p>
 <ul>
@@ -850,7 +865,7 @@ operation</li>
 dimensions</li>
 </ul>
 </li>
-<li><strong>Step 5</strong>: Employs <code>softmax_kernel</code> from
+<li><strong>Step 5</strong>: Employs <code>softmax_gpu_kernel</code> from
 <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>
 <ul>
 <li>Converts raw scores into normalized probability distribution</li>
@@ -869,8 +884,8 @@ implementations!</p>
 <p>The implementation achieves <strong>minimal memory allocation</strong> through aggressive
 buffer reuse:</p>
 <pre><code class="language-mojo"># Only 2 temporary buffers needed for the entire operation
-k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len * d)
-scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
+var k_t_buf = ctx.enqueue_create_buffer[dtype](seq_len * d)
+var scores_weights_buf = ctx.enqueue_create_buffer[dtype](seq_len)
 </code></pre>
 <p><strong>Key optimization insights</strong>:</p>
 <ul>
@@ -884,7 +899,7 @@ kernels:</p>
 <ul>
 <li><strong><code>matmul_idiomatic_tiled</code></strong> (used twice) - Powers both \(Q \times K^T\)
 and \(\text{weights} \times V\) operations</li>
-<li><strong><code>softmax_kernel</code></strong> - Provides numerically stable attention weight
+<li><strong><code>softmax_gpu_kernel</code></strong> - Provides numerically stable attention weight
 computation with parallel reduction</li>
 <li><strong><code>transpose_kernel</code></strong> - Enables efficient \(K^T\) computation with
 coalesced memory access</li>

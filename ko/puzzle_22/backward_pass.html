@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -208,7 +222,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+                        <!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="-오토그래드-통합과-역방향-패스"><a class="header" href="#-오토그래드-통합과-역방향-패스">⛓️ 오토그래드 통합과 역방향 패스</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>이 퍼즐에서는 퓨전 LayerNorm + Linear 연산의 역방향 패스(backward pass) 구현을
@@ -360,15 +374,17 @@ x} \] 여기서:</p>
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).unsafe_write(0)
-            (grad_ln_bias.ptr + h).unsafe_write(0)
+            grad_ln_weight.ptr.unsafe_offset(h).unsafe_write(0)
+            grad_ln_bias.ptr.unsafe_offset(h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).unsafe_write(0)
+            grad_bias.ptr.unsafe_offset(out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
+                grad_weight.ptr.unsafe_offset(
+                    out_idx * hidden_dim + h
+                ).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -580,15 +596,17 @@ BACKWARD PASS Test Completed!
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).unsafe_write(0)
-            (grad_ln_bias.ptr + h).unsafe_write(0)
+            grad_ln_weight.ptr.unsafe_offset(h).unsafe_write(0)
+            grad_ln_bias.ptr.unsafe_offset(h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).unsafe_write(0)
+            grad_bias.ptr.unsafe_offset(out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
+                grad_weight.ptr.unsafe_offset(
+                    out_idx * hidden_dim + h
+                ).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -608,7 +626,7 @@ BACKWARD PASS Test Completed!
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
     comptime for out_idx in range(output_dim):
-        var grad_bias_ptr = grad_bias.ptr + out_idx
+        var grad_bias_ptr = grad_bias.ptr.unsafe_offset(out_idx)
         _ = Atomic[dtype].fetch_add(
             grad_bias_ptr,
             rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, out_idx]),
@@ -627,13 +645,15 @@ BACKWARD PASS Test Completed!
             var grad_w = (
                 grad_output_lt[batch_idx, seq_idx, out_idx] * ln_output_val
             )
-            var grad_weight_ptr = grad_weight.ptr + out_idx * hidden_dim + h
+            var grad_weight_ptr = grad_weight.ptr.unsafe_offset(
+                out_idx * hidden_dim + h
+            )
             _ = Atomic.fetch_add(grad_weight_ptr, rebind[Scalar[dtype]](grad_w))
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
     comptime for h in range(hidden_dim):
-        input_val = input_lt[batch_idx, seq_idx, h]
-        normalized = (input_val - mean_val) * inv_std
+        var input_val = input_lt[batch_idx, seq_idx, h]
+        var normalized = (input_val - mean_val) * inv_std
 
         # Compute gradient w.r.t. LayerNorm output for this h
         var grad_ln_out: Scalar[dtype] = 0
@@ -645,8 +665,8 @@ BACKWARD PASS Test Completed!
             )
 
         # Atomic accumulation of LayerNorm parameter gradients
-        var grad_ln_weight_ptr = grad_ln_weight.ptr + h
-        var grad_ln_bias_ptr = grad_ln_bias.ptr + h
+        var grad_ln_weight_ptr = grad_ln_weight.ptr.unsafe_offset(h)
+        var grad_ln_bias_ptr = grad_ln_bias.ptr.unsafe_offset(h)
         _ = Atomic[dtype].fetch_add(
             grad_ln_weight_ptr, rebind[Scalar[dtype]](grad_ln_out * normalized)
         )
@@ -660,8 +680,8 @@ BACKWARD PASS Test Completed!
     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        h_input_val = input_lt[batch_idx, seq_idx, h]
-        h_normalized = (h_input_val - mean_val) * inv_std
+        var h_input_val = input_lt[batch_idx, seq_idx, h]
+        var h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
@@ -671,7 +691,7 @@ BACKWARD PASS Test Completed!
                 * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        var h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         sum_grad_normalized = sum_grad_normalized + rebind[Scalar[dtype]](
             h_grad_norm
         )
@@ -682,8 +702,8 @@ BACKWARD PASS Test Completed!
 
     # Compute actual input gradients (no race conditions here - each thread writes to different positions)
     comptime for h in range(hidden_dim):
-        h_input_val = input_lt[batch_idx, seq_idx, h]
-        h_normalized = (h_input_val - mean_val) * inv_std
+        var h_input_val = input_lt[batch_idx, seq_idx, h]
+        var h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
@@ -693,7 +713,7 @@ BACKWARD PASS Test Completed!
                 * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        var h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
             - (sum_grad_normalized / Scalar[dtype](hidden_dim))
@@ -818,7 +838,7 @@ L}{\partial y} \]</li>
 <li>
 <p><strong>구현 세부 사항</strong>:</p>
 <ul>
-<li>컴파일 타임 상수를 위한 <code>@parameter</code> 사용</li>
+<li>컴파일 타임 상수를 위한 <code>comptime</code> 사용</li>
 <li>텐서 차원의 적절한 처리</li>
 <li>효율적인 타입 캐스팅과 변환</li>
 <li>공유 메모리의 신중한 관리</li>

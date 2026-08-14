@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -215,7 +229,7 @@ powerful operation enables efficient cumulative computations, parallel
 partitioning, and advanced coordination algorithms that would otherwise require
 dozens of lines of shared memory and synchronization code.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum()</a>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/">prefix_sum()</a>
 operation leverages hardware-accelerated parallel scan to compute cumulative
 operations across warp lanes with \(O(\log n)\) complexity, replacing complex
 multi-phase algorithms with single function calls.</em></p>
@@ -256,8 +270,9 @@ explicit shared memory management:</p>
 <pre><code class="language-mojo">def prefix_sum_simple(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var shared = stack_allocation[
@@ -295,8 +310,8 @@ explicit shared memory management:</p>
 </ul>
 <p>With <code>prefix_sum()</code>, parallel scan becomes trivial:</p>
 <pre><code class="language-mojo"># Hardware-optimized approach - single function call!
-current_val = input[global_i]
-scan_result = prefix_sum[exclusive=False](current_val)
+var current_val = input[global_i]
+var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result
 </code></pre>
 <p><strong>Benefits of prefix_sum:</strong></p>
@@ -411,7 +426,8 @@ performance.</p>
 SIZE:  32
 output: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
 expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
-✅ Warp inclusive prefix sum test passed!
+Warp inclusive prefix sum test: passed
+Puzzle 26 complete ✅
 </code></pre>
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
@@ -459,12 +475,12 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 algorithms with a single hardware-optimized function call.</p>
 <p><strong>Algorithm breakdown:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
-    current_val = input[global_i]
+    var current_val = input[global_i]
 
     # This one call replaces ~30 lines of complex shared memory logic from Puzzle 14!
     # But it only works within the current warp (WARP_SIZE threads)
-    scan_result = prefix_sum[exclusive=False](
-        rebind[Scalar[dtype]](current_val)
+    var scan_result = prefix_sum[exclusive=False](
+        current_val
     )
 
     output[global_i] = scan_result
@@ -506,8 +522,8 @@ multiple barriers + complex indexing</li>
 specialized hardware</li>
 <li><strong>Memory</strong>: Zero shared memory usage vs explicit allocation</li>
 </ul>
-<p><strong>Evolution from Puzzle 12:</strong> This demonstrates the power of modern GPU
-architectures - what required careful manual implementation in Puzzle 12 is now
+<p><strong>Evolution from Puzzle 14:</strong> This demonstrates the power of modern GPU
+architectures - what required careful manual implementation in Puzzle 14 is now
 a single hardware-accelerated primitive. The warp-level <code>prefix_sum()</code> gives you
 the same algorithmic benefits with zero implementation complexity.</p>
 <p><strong>Why prefix_sum is superior:</strong></p>
@@ -642,7 +658,8 @@ SIZE:  32
 output: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0])
 pivot: 5.0
-✅ Warp partition test passed!
+Warp partition test: passed
+Puzzle 26 complete ✅
 </code></pre>
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
@@ -711,21 +728,21 @@ pivot: 5.0
 primitives to implement sophisticated parallel algorithms.</p>
 <p><strong>Complete algorithm analysis:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
-    current_val = input[global_i]
+    var current_val = input[global_i]
 
     # Phase 1: Create warp-level predicates
-    predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
-    predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
+    var predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
+    var predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
 
     # Phase 2: Warp-level prefix sum to get positions within warp
-    warp_left_pos = prefix_sum[exclusive=True](predicate_left)
-    warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+    var warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+    var warp_right_pos = prefix_sum[exclusive=True](predicate_right)
 
     # Phase 3: Get total left count using shuffle_xor reduction
-    warp_left_total = predicate_left
+    var warp_left_total = predicate_left
 
     # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
-    offset = WARP_SIZE // 2
+    var offset = WARP_SIZE // 2
     while offset &gt; 0:
         warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
         offset //= 2
@@ -852,16 +869,16 @@ calls. Through these two problems, you’ve learned:</p>
 </ul>
 <p><strong>Multi-Primitive Coordination:</strong></p>
 <pre><code class="language-mojo"># Phase 1: Create predicates for partition membership
-predicate = 1.0 if condition else 0.0
+var predicate = 1.0 if condition else 0.0
 
 # Phase 2: Use prefix_sum for local positions
-local_pos = prefix_sum[exclusive=True](predicate)
+var local_pos = prefix_sum[exclusive=True](predicate)
 
 # Phase 3: Use shuffle_xor for global totals
-global_total = butterfly_reduce(predicate)
+var global_total = butterfly_reduce(predicate)
 
 # Phase 4: Combine for final positioning
-final_pos = local_pos + partition_offset
+var final_pos = local_pos + partition_offset
 </code></pre>
 <p><strong>Performance Advantages:</strong></p>
 <ul>

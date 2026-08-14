@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="theme/css/custom.css">
         <link rel="stylesheet" href="theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -214,7 +228,7 @@
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
+  <a href="https://mojolang.org/docs/manual/" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
@@ -231,7 +245,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://docs.modular.com/max/get-started/#stay-in-touch"
+    <a href="https://docs.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">
@@ -243,12 +257,13 @@
 <p><em>“For the things we have to learn before we can do them, we learn by doing
 them.”</em> Aristotle (Nicomachean Ethics)</p>
 </blockquote>
-<p>Welcome to our hands-on guide to GPU programming using
-<a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥, the programming language that
-combines Python syntax with systems-level performance.</p>
+<p>Welcome to our hands-on guide to GPU programming with
+<a href="https://mojolang.org/docs/manual/">Mojo</a> 🔥, the programming language that
+combines Python syntax with systems-level performance, and the MAX accelerator
+library, which provides most of the GPU APIs these puzzles use.</p>
 <p>Start with this overview video, or continue reading below.</p>
 <div class="video-container full-width">
-<iframe src="https://www.youtube.com/embed/-VsP4kT6DjA" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/-VsP4kT6DjA" allowfullscreen></iframe>
 </div>
 <h2 id="why-gpu-programming"><a class="header" href="#why-gpu-programming">Why GPU programming?</a></h2>
 <p>GPU programming has evolved from a specialized skill into fundamental
@@ -335,7 +350,7 @@ for i in range(data_size):
 sequentially through data, we assign thousands of parallel threads to process
 data elements simultaneously:</p>
 <pre><code class="language-mojo"># GPU approach (conceptual)
-thread_id = get_global_id()
+var thread_id = get_global_id()
 if thread_id &lt; data_size:
     result[thread_id] = process(data[thread_id])
 </code></pre>
@@ -389,6 +404,7 @@ versatility to tackle any GPU programming challenge.</p>
 <tr><td>Advanced memory operations</td><td>✅ <strong>Available</strong></td><td>Part IX (28-29)</td></tr>
 <tr><td>Performance analysis</td><td>✅ <strong>Available</strong></td><td>Part X (30-32)</td></tr>
 <tr><td>Modern GPU features</td><td>✅ <strong>Available</strong></td><td>Part XI (33-34)</td></tr>
+<tr><td>Memory alignment</td><td>✅ <strong>Available</strong></td><td>Part XII (35)</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed learning objectives</a></h3>
@@ -468,6 +484,12 @@ support.</p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
 <li>Learn cluster programming in modern GPUs</li>
+</ul>
+<p><strong>Part XII: Memory alignment (Puzzle 35) ✅</strong></p>
+<ul>
+<li>Understand why alignment governs memory throughput</li>
+<li>Write aligned vectorized loads and stores</li>
+<li>Benchmark and profile the difference alignment makes</li>
 </ul>
 <p>The book uniquely challenges the status quo approach by first building
 understanding with low-level memory manipulation, then gradually transitioning

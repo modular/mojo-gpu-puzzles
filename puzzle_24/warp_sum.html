@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -215,7 +229,7 @@ function calls. Each warp lane will process one element and use <code>warp.sum()
 combine results automatically, demonstrating how warp programming transforms GPU
 synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/sum">warp.sum()</a>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/sum/">warp.sum()</a>
 operation leverages SIMT execution to replace shared memory + barriers + tree
 reduction with a single hardware-accelerated instruction.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -356,7 +370,7 @@ solution line-for-line — that contrast is the point.</p>
 <p>You need to complete the <code>simple_warp_dot_product</code> function with
 <strong>6 lines or fewer</strong>:</p>
 <pre><code class="language-mojo">def simple_warp_dot_product[...](output, a, b):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 </code></pre>
 <p><strong>Pattern to follow:</strong></p>
@@ -368,15 +382,18 @@ solution line-for-line — that contrast is the point.</p>
 <h3 id="2-computing-partial-products"><a class="header" href="#2-computing-partial-products">2. <strong>Computing partial products</strong></a></h3>
 <pre><code class="language-mojo">var partial_product: Scalar[dtype] = 0
 if global_i &lt; size:
-    partial_product = (a[global_i] * b[global_i]).reduce_add()
+    partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        Scalar[dtype]
+    ](b_lt[global_i])
 </code></pre>
-<p><strong>Why <code>.reduce_add()</code>?</strong> Values in Mojo are SIMD-based, so
-<code>a[global_i] * b[global_i]</code> returns a SIMD vector. Use <code>.reduce_add()</code> to sum
-the vector into a scalar.</p>
+<p><strong>Why <code>rebind</code>?</strong> Indexing a <code>LayoutTensor</code> yields a SIMD value, so each element
+is narrowed to <code>Scalar[dtype]</code> with <code>rebind</code> before the multiply. Note the
+receivers are <code>a_lt</code> and <code>b_lt</code>—the <code>LayoutTensor</code> handles obtained from
+<code>to_layout_tensor()</code> inside the kernel, not the <code>TileTensor</code> parameters.</p>
 <p><strong>Bounds checking:</strong> Essential because not all threads may have valid data to
 process.</p>
 <h3 id="3-warp-reduction-magic"><a class="header" href="#3-warp-reduction-magic">3. <strong>Warp reduction magic</strong></a></h3>
-<pre><code class="language-mojo">total = warp_sum(partial_product)
+<pre><code class="language-mojo">var total = warp_sum(partial_product)
 </code></pre>
 <p><strong>What <code>warp_sum()</code> does:</strong></p>
 <ul>
@@ -387,7 +404,7 @@ process.</p>
 </ul>
 <h3 id="4-writing-the-result"><a class="header" href="#4-writing-the-result">4. <strong>Writing the result</strong></a></h3>
 <pre><code class="language-mojo">if lane_id() == 0:
-    output[global_i // WARP_SIZE] = total
+    out_lt.store[1](Index(global_i // WARP_SIZE), total)
 </code></pre>
 <p><strong>Why only lane 0?</strong> All lanes have the same <code>total</code> value after <code>warp_sum()</code>,
 but we only want to write once to avoid race conditions.</p>
@@ -529,8 +546,10 @@ patterns:</p>
 <strong>10 lines or fewer</strong>:</p>
 <pre><code class="language-mojo">@parameter
 @always_inline
-def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
-    idx = indices[0]
+def compute_dot_product[
+    simd_width: Int, alignment: Int = align_of[dtype]()
+](indices: Coord) capturing -&gt; None:
+    var idx = Int(indices[0].value())
     # FILL IN (10 lines at most)
 </code></pre>
 <p><strong>Functional pattern differences:</strong></p>
@@ -542,24 +561,25 @@ def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) ca
 <h3 id="2-computing-partial-products-1"><a class="header" href="#2-computing-partial-products-1">2. <strong>Computing partial products</strong></a></h3>
 <pre><code class="language-mojo">var partial_product: Scalar[dtype] = 0.0
 if idx &lt; size:
-    a_val = a.load[1](idx, 0)
-    b_val = b.load[1](idx, 0)
-    partial_product = (a_val * b_val).reduce_add()
+    var a_val = a_lt.load[1](Index(idx))
+    var b_val = b_lt.load[1](Index(idx))
+    partial_product = a_val * b_val
 else:
     partial_product = 0.0
 </code></pre>
-<p><strong>Loading pattern:</strong> <code>a.load[1](idx, 0)</code> loads exactly 1 element at position
-<code>idx</code> (not SIMD vectorized).</p>
+<p><strong>Loading pattern:</strong> <code>a_lt.load[1](Index(idx))</code> loads exactly 1 element at
+position <code>idx</code> (not SIMD vectorized). The tensor is 1-D, so the index is a
+single <code>Index(idx)</code>.</p>
 <p><strong>Bounds handling:</strong> Set <code>partial_product = 0.0</code> for out-of-bounds threads so
 they don’t contribute to the sum.</p>
 <h3 id="3-warp-operations-and-storing"><a class="header" href="#3-warp-operations-and-storing">3. <strong>Warp operations and storing</strong></a></h3>
-<pre><code class="language-mojo">total = warp_sum(partial_product)
+<pre><code class="language-mojo">var total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    output.store[1](Index(idx // WARP_SIZE), total)
+    out_lt.store[1](Index(idx // WARP_SIZE), total)
 </code></pre>
-<p><strong>Storage pattern:</strong> <code>output.store[1](Index(idx // WARP_SIZE), 0, total)</code> stores
-1 element at position <code>(idx // WARP_SIZE, 0)</code> in the output tensor.</p>
+<p><strong>Storage pattern:</strong> <code>out_lt.store[1](Index(idx // WARP_SIZE), total)</code> stores
+1 element at position <code>idx // WARP_SIZE</code> in the 1-D output tensor.</p>
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in
 functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
@@ -567,9 +587,9 @@ functional approach.</p>
 from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
-my_lane = lane_id()           # 0 to WARP_SIZE-1
-total = warp_sum(my_value)    # Hardware-accelerated reduction
-warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
+var my_lane = lane_id()           # 0 to WARP_SIZE-1
+var total = warp_sum(my_value)    # Hardware-accelerated reduction
+var warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
 </code></pre>
 </div>
 </details>

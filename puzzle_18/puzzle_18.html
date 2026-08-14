@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -268,7 +282,7 @@ requires <code>BLOCK_DIM_X</code> to be the next power of two <code>&gt;= SIZE</
 <ul>
 <li>Input tensor: <code>row_major[SIZE]()</code></li>
 <li>Output tensor: <code>row_major[SIZE]()</code></li>
-<li>Custom op parameters: <code>{"input_size": input_tensor.shape[0]}</code></li>
+<li>Custom op parameters: <code>{"target": ..., "input_size": input_tensor.shape[0], "dtype": dtype}</code></li>
 </ul>
 <p>Key aspects of this puzzle include:</p>
 <ol>
@@ -422,7 +436,7 @@ def softmax(
 <li>Pass the input tensor as a value to the custom operation</li>
 <li>Specify the output type to match the input shape</li>
 <li>Include the “input_size” parameter which is required by the kernel</li>
-<li>Set <code>graph.outputs</code> to a list containing your operation’s output tensor</li>
+<li>Call <code>graph.output()</code> with your operation’s output tensor</li>
 </ol>
 </div>
 </details>
@@ -550,12 +564,11 @@ between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities
 Our GPU kernel implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
 <h4 id="kernel-signature-and-memory-management"><a class="header" href="#kernel-signature-and-memory-management">Kernel signature and memory management</a></h4>
 <pre><code class="language-mojo">def softmax_gpu_kernel[
-    layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: TileTensor[mut=True, dtype, layout],
-    input: TileTensor[mut=False, dtype, layout],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 )
 </code></pre>
 <p>The kernel is parameterized with:</p>
@@ -567,8 +580,8 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 <li>Non-mutable input tensor (mut=False)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
-<pre><code class="language-mojo">shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
-shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+<pre><code class="language-mojo">var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
 </code></pre>
 <p>The kernel allocates two shared memory buffers:</p>
 <ul>
@@ -578,16 +591,16 @@ shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](ro
 <li>Shared memory provides fast access for all threads within a block</li>
 </ul>
 <h4 id="thread-indexing"><a class="header" href="#thread-indexing">Thread indexing</a></h4>
-<pre><code class="language-mojo">global_i = thread_idx.x
+<pre><code class="language-mojo">var global_i = thread_idx.x
 </code></pre>
 <p>This implementation of softmax operates on a single 1d thread block. i.e. The
 global and local index are the same.</p>
 <h4 id="maximum-finding-phase"><a class="header" href="#maximum-finding-phase">Maximum-finding phase</a></h4>
 <pre><code class="language-mojo">var val: Scalar[dtype] = min_finite[dtype]()
 if global_i &lt; input_size:
-    val = rebind[Scalar[dtype]](input[global_i])
+    val = input[global_i]
 
-shared_max[local_i] = val
+shared_max[global_i] = val
 barrier()
 </code></pre>
 <p>This initializes each thread with:</p>
@@ -598,10 +611,10 @@ barrier()
 <li>A barrier synchronization to ensure all threads complete memory writes</li>
 </ul>
 <h4 id="parallel-max-reduction"><a class="header" href="#parallel-max-reduction">Parallel max reduction</a></h4>
-<pre><code class="language-mojo">stride = BLOCK_DIM_X // 2
+<pre><code class="language-mojo">var stride = BLOCK_DIM_X // 2
 while stride &gt; 0:
-    if local_i &lt; stride:
-        shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
+    if global_i &lt; stride:
+        shared_max[global_i] = max(shared_max[global_i], shared_max[global_i + stride])
     barrier()
     stride = stride // 2
 </code></pre>
@@ -618,11 +631,11 @@ global maximum</li>
 <p>This logarithmic reduction is significantly faster than a linear scan on large
 inputs.</p>
 <h4 id="exponentiation-with-numerical-stability"><a class="header" href="#exponentiation-with-numerical-stability">Exponentiation with numerical stability</a></h4>
-<pre><code class="language-mojo">block_max = shared_max[0]
+<pre><code class="language-mojo">var block_max = shared_max[0]
 
 var exp_val: Scalar[dtype] = 0.0
 if global_i &lt; input_size:
-    exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+    exp_val = exp(val - block_max)
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -633,13 +646,13 @@ if global_i &lt; input_size:
 \(e^{negative} &lt; 1\)</li>
 </ol>
 <h4 id="parallel-sum-reduction"><a class="header" href="#parallel-sum-reduction">Parallel sum reduction</a></h4>
-<pre><code class="language-mojo">shared_sum[local_i] = exp_val
+<pre><code class="language-mojo">shared_sum[global_i] = exp_val
 barrier()
 
-stride = BLOCK_DIM_X // 2
+var stride = BLOCK_DIM_X // 2
 while stride &gt; 0:
-    if local_i &lt; stride:
-        shared_sum[local_i] += shared_sum[local_i + stride]
+    if global_i &lt; stride:
+        shared_sum[global_i] += shared_sum[global_i + stride]
     barrier()
     stride = stride // 2
 </code></pre>
@@ -652,7 +665,7 @@ while stride &gt; 0:
 total sum of all exponentials</li>
 </ol>
 <h4 id="final-normalization"><a class="header" href="#final-normalization">Final normalization</a></h4>
-<pre><code class="language-mojo">block_sum = shared_sum[0]
+<pre><code class="language-mojo">var block_sum = shared_sum[0]
 
 if global_i &lt; input_size:
     output[global_i] = exp_val / block_sum
@@ -715,7 +728,7 @@ Our CPU implementation provides a sequential fallback that follows the same math
 <p><strong>Maximum Finding</strong>:</p>
 <pre><code class="language-mojo">var max_val: Scalar[dtype] = min_finite[dtype]()
 for i in range(input_size):
-    max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+    max_val = max(max_val, input[i])
 </code></pre>
 <p>We initialize with the minimum finite value and perform a linear scan through
 the array, keeping track of the maximum value encountered. This has
@@ -726,7 +739,7 @@ cores to parallelize across.</p>
 <p><strong>Exponential Computation and Summation</strong>:</p>
 <pre><code class="language-mojo">var sum_exp: Scalar[dtype] = 0.0
 for i in range(input_size):
-    var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+    var exp_val = exp(input[i] - max_val)
     output[i] = exp_val
     sum_exp += exp_val
 </code></pre>
@@ -820,6 +833,7 @@ implementation</li>
 <pre><code class="language-python">output = ops.custom(
     name="softmax",
     values=[input_value],
+    device=DeviceRef.from_device(device),
     out_types=[
         TensorType(
             dtype=input_value.tensor.dtype,

@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -214,8 +228,8 @@
 <strong>warp-level communication operations</strong> - hardware-accelerated primitives that
 enable efficient data exchange and coordination patterns within warps. You’ll
 learn about using
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down</a>
-and <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast</a>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/">shuffle_down</a>
+and <a href="https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/">broadcast</a>
 to implement neighbor communication and collective coordination without complex
 shared memory patterns.</p>
 <p><strong>Part VII: GPU Warp Communication</strong> introduces warp-level data movement
@@ -247,26 +261,26 @@ registers</li>
 <li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
-<p>Learn the core communication primitives from <code>gpu.primitives.warp</code>:</p>
+<p>Learn the core communication primitives from <code>std.gpu.primitives.warp</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>:
+<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/"><code>shuffle_down(value, offset)</code></a></strong>:
 Get value from lane at higher index (neighbor access)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast"><code>broadcast(value)</code></a></strong>:
+<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/"><code>broadcast(value)</code></a></strong>:
 Share lane 0’s value with all other lanes (one-to-many)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>:
+<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_idx/"><code>shuffle_idx(value, lane)</code></a></strong>:
 Get value from specific lane (random access)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>:
+<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_up/"><code>shuffle_up(value, offset)</code></a></strong>:
 Get value from lane at lower index (reverse neighbor)</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong> This puzzle focuses on <code>shuffle_down()</code> and <code>broadcast()</code> as the
 most commonly used communication patterns. For complete coverage of all warp
 operations, see the
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/">Mojo GPU Warp Documentation</a>.</p>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/">Mojo GPU Warp Documentation</a>.</p>
 </blockquote>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
-shared = TileTensor[
+var shared = TileTensor[
     dtype,
     row_major[WARP_SIZE](),
     MutAnyOrigin,
@@ -275,15 +289,15 @@ shared = TileTensor[
 shared[local_i] = input[global_i]
 barrier()
 if local_i &lt; WARP_SIZE - 1:
-    next_value = shared[local_i + 1]  # Neighbor access
-    result = next_value - shared[local_i]
+    var next_value = shared[local_i + 1]  # Neighbor access
+    var result = next_value - shared[local_i]
 else:
     result = 0  # Boundary handling
 barrier()
 
 # Warp communication eliminates all this complexity:
-current_val = input[global_i]
-next_val = shuffle_down(current_val, 1)  # Direct neighbor access
+var current_val = input[global_i]
+var next_val = shuffle_down(current_val, 1)  # Direct neighbor access
 if lane &lt; WARP_SIZE - 1:
     result = next_val - current_val
 else:
@@ -320,10 +334,10 @@ differences.</p>
 <li>Multi-offset shuffling for extended neighbor access</li>
 </ul>
 <p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">current_val = input[global_i]
-next_val = shuffle_down(current_val, 1)
+<pre><code class="language-mojo">var current_val = input[global_i]
+var next_val = shuffle_down(current_val, 1)
 if lane &lt; WARP_SIZE - 1:
-    result = compute_with_neighbors(current_val, next_val)
+    var result = compute_with_neighbors(current_val, next_val)
 </code></pre>
 <h3 id="2-collective-coordination-with-broadcast"><a class="header" href="#2-collective-coordination-with-broadcast"><strong>2. Collective coordination with broadcast</strong></a></h3>
 <p><strong>→ <a href="./warp_broadcast.html">Warp Broadcast</a></strong></p>
@@ -341,7 +355,7 @@ collective decision-making.</p>
 if lane == 0:
     shared_value = compute_block_statistic()
 shared_value = broadcast(shared_value)
-result = use_shared_value(shared_value, local_data)
+var result = use_shared_value(shared_value, local_data)
 </code></pre>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <h3 id="communication-patterns"><a class="header" href="#communication-patterns"><strong>Communication patterns</strong></a></h3>

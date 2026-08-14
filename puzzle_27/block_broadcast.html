@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -210,14 +224,14 @@
                     <main>
                         <h1 id="blockbroadcast-vector-normalization"><a class="header" href="#blockbroadcast-vector-normalization">block.broadcast() Vector Normalization</a></h1>
 <p>Implement vector mean normalization by combining
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a> and
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum</a> and
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast</a>
 operations to demonstrate the complete block-level communication workflow. Each
 thread will contribute to computing the mean, then receive the broadcast mean to
 normalize its element, showcasing how block operations work together to solve
 real parallel algorithms.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a>
 operation enables one-to-all communication, completing the fundamental block
 communication patterns: reduction (all→one), scan (all→each), and broadcast
 (one→all).</em></p>
@@ -266,7 +280,7 @@ barrier()
 
 # Phase 2: Thread 0 computes mean
 if local_i == 0:
-    mean = shared_sum[0] / size
+    var mean = shared_sum[0] / size
     shared_mean[0] = mean
 
 barrier()
@@ -286,7 +300,7 @@ operations toolkit:</p>
 ](
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
@@ -297,6 +311,7 @@ operations toolkit:</p>
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -343,7 +358,7 @@ if global_i &lt; size:
     my_value = input_data[global_i][0]  # SIMD extraction
 </code></pre>
 <p>Then use <code>block.sum()</code> exactly like the dot product earlier:</p>
-<pre><code class="language-mojo">total_sum = block.sum[block_size=tpb, broadcast=False](...)
+<pre><code class="language-mojo">var total_sum = block.sum[block_size=tpb, broadcast=False](...)
 </code></pre>
 <h3 id="3-mean-computation-thread-0-only"><a class="header" href="#3-mean-computation-thread-0-only">3. <strong>Mean computation (thread 0 only)</strong></a></h3>
 <p>Only thread 0 should compute the mean:</p>
@@ -353,14 +368,14 @@ if local_i == 0:
 </code></pre>
 <p><strong>Why thread 0?</strong> Consistent with <code>block.sum()</code> pattern where thread 0 receives
 the result.</p>
-<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
+<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>Template parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
 <li>Runtime parameters: <code>val</code> (SIMD value to broadcast), <code>src_thread</code> (default=0)</li>
 </ul>
 <p>The call pattern follows the established template style:</p>
-<pre><code class="language-mojo">result = block.broadcast[
+<pre><code class="language-mojo">var result = block.broadcast[
     dtype = DType.float32,
     width = 1,
     block_size = tpb
@@ -379,7 +394,7 @@ to ALL threads:</p>
 <h3 id="6-final-normalization-step"><a class="header" href="#6-final-normalization-step">6. <strong>Final normalization step</strong></a></h3>
 <p>Once every thread has the broadcast mean, normalize your element:</p>
 <pre><code class="language-mojo">if global_i &lt; size:
-    normalized_value = my_value / broadcasted_mean[0]  # Extract SIMD
+    var normalized_value = my_value / broadcasted_mean[0]  # Extract SIMD
     output_data[global_i] = normalized_value
 </code></pre>
 <p><strong>SIMD extraction</strong>: Remember that <code>block.broadcast()</code> returns SIMD, so use
@@ -442,7 +457,7 @@ Output mean: 1.0
 ](
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
@@ -453,6 +468,7 @@ Output mean: 1.0
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -562,7 +578,7 @@ Result: Perfect synchronization - all threads have identical mean value!
   ...
 
 Mathematical verification:
-  Output sum = (0.222... + 0.444... + ... + 1.777...) × 16 = 4.5 × 16 × 2 = 128.0
+  Output sum = (0.222... + 0.444... + ... + 1.777...) × 16 = 8.0 × 16 = 128.0
   Output mean = 128.0 / 128 = 1.0  Perfect normalization!
 
 Each value divided by original mean gives output with mean = 1.0

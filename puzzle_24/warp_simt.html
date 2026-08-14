@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -335,7 +349,7 @@ on <strong>different data</strong>.</p>
 from std.gpu.primitives.warp import WARP_SIZE
 
 # Within a kernel function:
-my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
+var my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 </code></pre>
 <p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware
 register, not computing a value.</p>
@@ -360,7 +374,7 @@ same time. When <code>sum()</code> starts, all lanes have already computed their
 <h3 id="what-happens-with-conditional-code"><a class="header" href="#what-happens-with-conditional-code">What happens with conditional code?</a></h3>
 <pre><code class="language-mojo">if lane_id() % 2 == 0:
     # Even lanes execute this path
-    result = compute_even()
+    var result = compute_even()
 else:
     # Odd lanes execute this path
     result = compute_odd()
@@ -407,7 +421,7 @@ if lane_id() == 0:
 <p><strong>🔶 CAUTION: Structured divergence (~50-75% efficiency)</strong></p>
 <pre><code class="language-mojo"># Regular patterns can be optimized by compiler
 if (global_i / 4) % 2 == 0:
-    result = method_a()
+    var result = method_a()
 else:
     result = method_b()
 </code></pre>
@@ -415,7 +429,7 @@ else:
 <p><strong>❌ AVOID: Data-dependent divergence (~25-50% efficiency)</strong></p>
 <pre><code class="language-mojo"># Different lanes may take different paths based on data
 if input[global_i] &gt; threshold:  # Unpredictable branching
-    result = expensive_computation()
+    var result = expensive_computation()
 else:
     result = simple_computation()
 </code></pre>
@@ -424,7 +438,7 @@ else:
 <pre><code class="language-mojo"># Multiple levels of unpredictable branching
 if input[global_i] &gt; threshold1:
     if input[global_i] &gt; threshold2:
-        result = very_expensive()
+        var result = very_expensive()
     else:
         result = expensive()
 else:

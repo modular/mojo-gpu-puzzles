@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -214,7 +228,7 @@ pattern. Each thread automatically processes multiple SIMD elements, showing how
 modern GPU programming abstracts low-level details while preserving high
 performance.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://mojolang.org/docs/std/algorithm/functional/elementwise/">elementwise</a>
+<a href="https://docs.modular.com/api/mojo/max/algorithm/functional/elementwise/">elementwise</a>
 function automatically handles thread management, SIMD vectorization, and memory
 coalescing for you.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -294,7 +308,7 @@ tensors)</li>
 <code>indices[0]</code> for 1D operations</li>
 </ul>
 <h3 id="2-index-extraction-and-simd-processing"><a class="header" href="#2-index-extraction-and-simd-processing">2. <strong>Index extraction and SIMD processing</strong></a></h3>
-<pre><code class="language-mojo">idx = Int(indices[0].value())  # Extract linear index for 1D operations
+<pre><code class="language-mojo">var idx = Int(indices[0].value())  # Extract linear index for 1D operations
 </code></pre>
 <p>This <code>idx</code> represents the <strong>starting position</strong> for a SIMD vector, not a single
 element. If <code>SIMD_WIDTH=4</code> (GPU-dependent), then:</p>
@@ -305,14 +319,16 @@ element. If <code>SIMD_WIDTH=4</code> (GPU-dependent), then:</p>
 <li>And so on…</li>
 </ul>
 <h3 id="3-simd-loading-pattern"><a class="header" href="#3-simd-loading-pattern">3. <strong>SIMD loading pattern</strong></a></h3>
-<pre><code class="language-mojo">a_simd = a.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
-b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+<pre><code class="language-mojo">var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
-<p>The second parameter <code>0</code> is the dimension offset (always 0 for 1D vectors). This
-loads a <strong>vectorized chunk</strong> of data in a single operation. The exact number of
-elements loaded depends on your GPU’s SIMD capabilities.</p>
+<p><code>aligned_load</code> is a <code>LayoutTensor</code> method, so the receivers are the <code>a_lt</code> /
+<code>b_lt</code> handles produced by <code>to_layout_tensor()</code> inside the kernel—not the
+<code>TileTensor</code> parameters. This loads a <strong>vectorized chunk</strong> of data in a single
+operation. The exact number of elements loaded depends on your GPU’s SIMD
+capabilities.</p>
 <h3 id="4-vector-arithmetic"><a class="header" href="#4-vector-arithmetic">4. <strong>Vector arithmetic</strong></a></h3>
-<pre><code class="language-mojo">result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
+<pre><code class="language-mojo">var result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
 </code></pre>
 <p>This performs element-wise addition across the entire SIMD vector (if supported)
 in parallel - much faster than 4 separate scalar additions.</p>
@@ -416,9 +432,9 @@ concepts for modern GPU programming:</p>
 programming:</p>
 <p><strong>Traditional CUDA/HIP approach:</strong></p>
 <pre><code class="language-mojo"># Manual thread management
-idx = thread_idx.x + block_idx.x * block_dim.x
+var idx = thread_idx.x + block_idx.x * block_dim.x
 if idx &lt; size:
-    output[idx] = a[idx] + b[idx];  // Scalar operation
+    output[idx] = a[idx] + b[idx]  # Scalar operation
 </code></pre>
 <p><strong>Mojo functional approach:</strong></p>
 <pre><code class="language-mojo"># Automatic management + SIMD vectorization
@@ -452,10 +468,10 @@ variables from the outer scope without explicit parameter passing.</li>
 processed; <code>indices[0]</code> is the linear start position for 1D operations.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">idx = Int(indices[0].value())                     # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
+<pre><code class="language-mojo">var idx = Int(indices[0].value())                     # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+var a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+var b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+var ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
 output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
@@ -479,7 +495,7 @@ output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously 
 <p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for
 RTX 4090, 16 for A100).</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
-<pre><code class="language-mojo">a.aligned_load[simd_width](Index(idx))  // Coalesced memory access
+<pre><code class="language-mojo">a.aligned_load[simd_width](Index(idx))  # Coalesced memory access
 </code></pre>
 <p><strong>Memory Coalescing Benefits:</strong></p>
 <ul>
@@ -538,15 +554,15 @@ This elementwise pattern is the building block for:</p>
 <li><strong>Multi-dimensional operations</strong>: Matrix operations, convolutions</li>
 </ul>
 <p><strong>Compared to Traditional Approaches:</strong></p>
-<pre><code class="language-mojo">// Traditional: Error-prone, verbose, hardware-specific
+<pre><code class="language-cpp">// Traditional: error-prone, verbose, hardware-specific
 __global__ void add_kernel(float* output, float* a, float* b, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx &lt; size) {
         output[idx] = a[idx] + b[idx];  // No vectorization
     }
 }
-
-// Mojo: Safe, concise, automatically vectorized
+</code></pre>
+<pre><code class="language-mojo"># Mojo: safe, concise, automatically vectorized
 elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 </code></pre>
 <p><strong>Benefits of Functional Approach:</strong></p>

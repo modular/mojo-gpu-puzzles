@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -222,7 +236,7 @@ computation happens). We’ll use real examples, actual debugger output, and
 step-by-step workflows that you can immediately apply to your own projects.</p>
 <p><strong>Note</strong>: The following content focuses on command-line debugging for universal
 IDE compatibility. If you prefer VS Code debugging, refer to the
-<a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a>
+<a href="https://mojolang.org/docs/tools/debugging/">Mojo debugging documentation</a>
 for VS Code-specific setup and workflows.</p>
 <h2 id="why-gpu-debugging-is-different"><a class="header" href="#why-gpu-debugging-is-different">Why GPU debugging is different</a></h2>
 <p>Before diving into tools, consider what makes GPU debugging unique:</p>
@@ -241,7 +255,7 @@ spaces, race conditions</li>
 </ul>
 <h2 id="your-debugging-toolkit"><a class="header" href="#your-debugging-toolkit">Your debugging toolkit</a></h2>
 <p>Mojo’s GPU debugging capabilities currently is limited to NVIDIA GPUs. The
-<a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a>
+<a href="https://mojolang.org/docs/tools/debugging/">Mojo debugging documentation</a>
 explains that the Mojo package includes:</p>
 <ul>
 <li><strong>LLDB debugger</strong> with Mojo plugin for CPU-side debugging</li>
@@ -249,7 +263,7 @@ explains that the Mojo package includes:</p>
 <li><strong>Command-line interface</strong> via <code>mojo debug</code> for universal IDE compatibility</li>
 </ul>
 <p>For GPU-specific debugging, the
-<a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU debugging guide</a>
+<a href="https://docs.modular.com/gpu/debugging/">GPU debugging guide</a>
 provides additional technical details.</p>
 <p>This architecture provides the best of both worlds: familiar debugging commands
 with GPU-specific capabilities.</p>
@@ -337,7 +351,7 @@ your setup code, then switch to Source + CUDA-GDB to debug the actual kernel.</p
 debugging toolkit.</p>
 <p>When you use <code>--cuda-gdb</code>, Mojo integrates with NVIDIA’s
 <a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">CUDA-GDB debugger</a>. This
-isn’t just another debugger - it’s specifically designed for the parallel,
+isn’t just another debugger: it’s specifically designed for the parallel,
 multi-threaded world of GPU computing.</p>
 <h3 id="what-makes-cuda-gdb-special"><a class="header" href="#what-makes-cuda-gdb-special">What makes CUDA-GDB special</a></h3>
 <p><strong>Regular GDB</strong> debugs one thread at a time, stepping through sequential code.
@@ -363,11 +377,11 @@ you inspect all of them at runtime:</p>
 <h4 id="thread-hierarchy-debugging"><a class="header" href="#thread-hierarchy-debugging">Thread hierarchy debugging</a></h4>
 <p>Back in puzzles 1-8, you wrote code like this:</p>
 <pre><code class="language-mojo"># From puzzle 1: Basic thread indexing
-i = thread_idx.x  # Each thread gets a unique index
+var i = thread_idx.x  # Each thread gets a unique index
 
 # From puzzle 7: 2D thread indexing
-row = thread_idx.y  # 2D grid of threads
-col = thread_idx.x
+var row = thread_idx.y  # 2D grid of threads
+var col = thread_idx.x
 </code></pre>
 <p>With CUDA-GDB, you can <strong>actually see these thread coordinates in action</strong>:</p>
 <pre><code class="language-gdb">(cuda-gdb) info cuda threads
@@ -1183,8 +1197,8 @@ hierarchies, and specialized tools. You now have:</p>
 <hr />
 <h2 id="additional-resources"><a class="header" href="#additional-resources">Additional resources</a></h2>
 <ul>
-<li><a href="https://docs.modular.com/mojo/tools/debugging">Mojo Debugging Documentation</a></li>
-<li><a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU Debugging Guide</a></li>
+<li><a href="https://mojolang.org/docs/tools/debugging/">Mojo debugging documentation</a></li>
+<li><a href="https://docs.modular.com/gpu/debugging/">GPU debugging guide</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">NVIDIA CUDA-GDB User Guide</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference">CUDA-GDB Command Reference</a></li>
 </ul>

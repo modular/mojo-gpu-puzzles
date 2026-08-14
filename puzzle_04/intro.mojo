@@ -3,7 +3,7 @@
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
 
@@ -25,11 +25,11 @@ def kernel(
 
 
 def main() raises:
-    ctx = DeviceContext()
+    var ctx = DeviceContext()
 
-    a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
+    var a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
     a.enqueue_fill(0)
-    tensor = TileTensor(a, layout)
+    var tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
     ctx.enqueue_function[kernel](tensor, grid_dim=1, block_dim=1)
 

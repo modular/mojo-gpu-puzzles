@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -211,7 +225,7 @@
                         <h1 id="introduction-to-tiletensor"><a class="header" href="#introduction-to-tiletensor">Introduction to TileTensor</a></h1>
 <p>Let’s take a quick break from solving puzzles to preview a powerful abstraction
 that will make our GPU programming journey more enjoyable: 🥁… the
-<strong><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
+<strong><a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
 <blockquote>
 <p>💡 <em>This is a motivational overview of TileTensor’s capabilities. Don’t worry
 about understanding everything now - we’ll explore each feature in depth as we
@@ -231,7 +245,7 @@ if i &lt; size:
 </code></pre>
 <p>As dimensions grow, code becomes more complex:</p>
 <pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
-idx = row * WIDTH + col
+var idx = row * WIDTH + col
 if row &lt; height and col &lt; width:
     output[idx] = a[idx] + 10.0
 </code></pre>
@@ -260,17 +274,17 @@ comptime layout = row_major[HEIGHT, WIDTH]()
 comptime LayoutType = type_of(layout)
 
 # Create tensor
-tensor = TileTensor(buffer, layout)
+var tensor = TileTensor(buffer, layout)
 
 # Access elements naturally
 tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 </code></pre>
-<p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides from the
-<a href="https://docs.modular.com/mojo/manual/">Mojo manual</a>:</p>
+<p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides in the
+<a href="https://docs.modular.com/tile-tensor/">MAX documentation</a>:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
-<li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
+<li><a href="https://docs.modular.com/tile-tensor/layouts/">TileTensor layouts</a></li>
+<li><a href="https://docs.modular.com/tile-tensor/tensors/">Using TileTensor</a></li>
 </ul>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
 <p>Let’s put everything together with a simple example that demonstrates the basics
@@ -280,7 +294,7 @@ of TileTensor:</p>
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
 
@@ -302,11 +316,11 @@ def kernel(
 
 
 def main() raises:
-    ctx = DeviceContext()
+    var ctx = DeviceContext()
 
-    a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
+    var a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
     a.enqueue_fill(0)
-    tensor = TileTensor(a, layout)
+    var tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
     ctx.enqueue_function[kernel](tensor, grid_dim=1, block_dim=1)
 

@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -208,7 +222,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+                        <!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="타일링-버전"><a class="header" href="#타일링-버전">타일링 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>TileTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \(A\) 와 \(B\) 를 곱하는
@@ -584,7 +598,7 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 <p><strong>연산</strong>:</p>
 <ul>
 <li>레지스터 기반 누적, 즉 <code>var acc: output.element_type = 0</code></li>
-<li><code>@parameter</code>를 통한 컴파일 타임 루프 전개</li>
+<li><code>comptime for</code>를 통한 컴파일 타임 루프 전개</li>
 </ul>
 </li>
 </ol>
@@ -600,7 +614,7 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 <h2 id="솔루션-관용적-tiletensor-타일링"><a class="header" href="#솔루션-관용적-tiletensor-타일링">솔루션: 관용적 TileTensor 타일링</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">from std.gpu.memory import async_copy_wait_all
+<pre><code class="language-mojo">from max.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 from layout import Layout as IntTupleLayout
 
@@ -786,8 +800,7 @@ row_major[1, TPB]()로 두 패턴 모두 병합
 </li>
 <li>
 <p><strong>완벽한 타일링으로 경계 검사 불필요</strong></p>
-<pre><code class="language-mojo">@parameter
-for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
+<pre><code class="language-mojo">comptime for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
 </code></pre>
 <p>\((9 \times 9)\) 행렬과 \((3 \times 3)\) 타일에서는 모든 타일이 정확히 꽉
 차기 때문에 경계 검사가 필요 없습니다!</p>

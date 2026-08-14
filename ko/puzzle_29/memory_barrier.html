@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -208,7 +222,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: d09bc3fbdd4bf6b2a44793f0208b6ba7800ed4c0 -->
+                        <!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="더블-버퍼링-스텐실-연산"><a class="header" href="#더블-버퍼링-스텐실-연산">더블 버퍼링 스텐실 연산</a></h1>
 <p><strong>중요 사항</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요합니다.
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
@@ -378,7 +392,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <pre><code class="language-mojo">def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
 
@@ -405,6 +419,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
         dtype=DType.uint64, address_space=AddressSpace.SHARED
     ](row_major[1]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -486,7 +501,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <h3 id="반복-제어"><a class="header" href="#반복-제어"><strong>반복 제어</strong></a></h3>
 <ul>
 <li>컴파일 타임 루프 전개를 위해
-<code>@parameter for iteration in range(STENCIL_ITERATIONS)</code> 사용</li>
+<code>comptime for iteration in range(STENCIL_ITERATIONS)</code> 사용</li>
 <li><code>iteration % 2</code>를 사용하여 읽기/쓰기 할당을 교대하면서 버퍼 역할 결정</li>
 <li>이웃 검사를 통해 유효한 범위 내에서만 스텐실 연산 적용</li>
 </ul>
@@ -562,7 +577,7 @@ GPU output sample: 1.0 1.0 1.0
 <pre><code class="language-mojo">def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
 
@@ -589,6 +604,7 @@ GPU output sample: 1.0 1.0 1.0
         dtype=DType.uint64, address_space=AddressSpace.SHARED
     ](row_major[1]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -624,7 +640,7 @@ GPU output sample: 1.0 1.0 1.0
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    sample_idx = local_i + offset
+                    var sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
                         stencil_sum += buffer_A[sample_idx]
                         stencil_count += 1
@@ -644,7 +660,7 @@ GPU output sample: 1.0 1.0 1.0
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    sample_idx = local_i + offset
+                    var sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
                         stencil_sum += buffer_B[sample_idx]
                         stencil_count += 1
@@ -819,8 +835,7 @@ stencil_input = buffer_B[neighbor_index]  # 항상 올바른 값을 읽음
 <li><strong>출력 소스</strong>: buffer_B에서 전역 메모리로 복사</li>
 </ul>
 <p><strong>구현 패턴</strong>:</p>
-<pre><code class="language-mojo">@parameter
-if STENCIL_ITERATIONS % 2 == 0:
+<pre><code class="language-mojo">comptime if STENCIL_ITERATIONS % 2 == 0:
     # 짝수 총 반복 횟수는 buffer_A에서 종료
     output[global_i] = buffer_A[local_i]
 else:
@@ -875,7 +890,7 @@ else:
 </ul>
 <p><strong>반복 관리:</strong></p>
 <ul>
-<li><strong>컴파일 타임 루프 전개</strong>: <code>@parameter for</code>가 최적화 기회를 제공</li>
+<li><strong>컴파일 타임 루프 전개</strong>: <code>comptime for</code>가 최적화 기회를 제공</li>
 <li><strong>상태 추적</strong>: 버퍼 역할 교대가 결정적이어야 함</li>
 <li><strong>경계 처리</strong>: 적응적 스텐실 연산이 엣지 케이스를 매끄럽게 처리</li>
 </ul>

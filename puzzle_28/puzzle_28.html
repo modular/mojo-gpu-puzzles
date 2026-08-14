@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -258,7 +272,7 @@ for this optimization</li>
 <li>Basic understanding of memory latency vs. bandwidth</li>
 </ul>
 <p><strong>API familiarity:</strong>
-<a href="https://docs.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<a href="https://docs.modular.com/api/mojo/max/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
 <p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations
 (<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that may require modern GPU
@@ -289,9 +303,9 @@ computation</li>
 <a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16’s idiomatic matmul</a>,
 you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
 Launch background DRAM→SRAM transfers using dedicated copy engines</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 Synchronize transfer completion before accessing shared memory</li>
 </ul>
 <p><strong>What’s different from Puzzle 16?</strong> While Puzzle 16 used async copy for clean
@@ -613,22 +627,23 @@ overlapping expensive DRAM transfers with useful computation:</p>
 <h4 id="phase-by-phase-breakdown"><a class="header" href="#phase-by-phase-breakdown"><strong>Phase-by-phase breakdown</strong></a></h4>
 <p><strong>Phase 1: Async Copy Launch</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
-input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
+var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
+comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
 <li>
 <p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a
 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo
-<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a>
+<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a>
 does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds
 indices results in undefined behavior. The implementation must ensure the tile
 size and offset remain within valid array bounds.</p>
 </li>
 <li>
-<p><strong>Thread Layout</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC, 1]()</code> creates a
-<code>256 x 1</code> layout that matches our block organization. This is <strong>critical</strong> -
+<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC)</code> creates a
+256-element 1-D layout, one entry per thread in the block. This is
+<strong>critical</strong> -
 the layout must match the physical thread arrangement for optimal coalesced
 memory access. When layouts mismatch, threads may access non-contiguous memory
 addresses, breaking coalescing and severely degrading performance.</p>
@@ -673,14 +688,14 @@ transfer before proceeding to computation.</p>
 </ul>
 <p><strong>Phase 4: Computation</strong></p>
 <pre><code class="language-mojo"># Phase 4: Compute convolution
-global_i = block_idx.x * CONV_TILE_SIZE + local_i
-if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
-    var result: output.element_type = 0
+var global_i = block_idx.x * CONV_TILE_SIZE + local_i
+if local_i &lt; CONV_TILE_SIZE and global_i &lt; Int(output.dim[0]()):
+    var result: output.ElementType = 0
 
     if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
         # Full convolution for center elements
         for k in range(KERNEL_SIZE):
-            input_idx = local_i + k - HALO_SIZE
+            var input_idx = local_i + k - HALO_SIZE
             if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
                 result += input_shared[input_idx] * kernel_shared[k]
     else:
@@ -729,9 +744,9 @@ scenarios with larger overlaps, speedups can be much more significant.</p>
 <h4 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h4>
 <ol>
 <li>
-<p><strong>Thread Layout Matching</strong>: The <code>row_major[256, 1]()</code> layout precisely
-matches the block’s <code>(256, 1)</code> thread organization, enabling optimal memory
-coalescing.</p>
+<p><strong>Thread Layout Matching</strong>: The 1-D <code>Layout.row_major(256)</code> layout supplies
+one entry per thread in the block’s <code>(256, 1)</code> organization, enabling optimal
+memory coalescing.</p>
 </li>
 <li>
 <p><strong>Race Condition Avoidance</strong>: Proper sequencing (async copy → kernel load →

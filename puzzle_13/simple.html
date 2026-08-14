@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -209,8 +223,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="simple-case-with-single-block"><a class="header" href="#simple-case-with-single-block">Simple Case with Single Block</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D TileTensor <code>a</code> and
-1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code>.</p>
+<p>Implement a GPU kernel that computes a 1D convolution between input 1D
+TileTensor <code>a</code> and filter 1D TileTensor <code>b</code>, storing the result in 1D
+TileTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and
 1 global write per thread.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -225,15 +240,15 @@ while maintaining correct boundary conditions.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Input array size: <code>SIZE = 6</code> elements</li>
-<li>Kernel size: <code>CONV = 3</code> elements</li>
+<li>Filter size: <code>CONV = 3</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
 <li>Number of blocks: 1</li>
 <li>Shared memory: Two arrays of size <code>SIZE</code> and <code>CONV</code></li>
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Data loading</strong>: Each thread loads one element from input and kernel</li>
-<li><strong>Memory pattern</strong>: Shared arrays for input and convolution kernel</li>
+<li><strong>Data loading</strong>: Each thread loads one element from input and filter</li>
+<li><strong>Memory pattern</strong>: Shared arrays for input and filter</li>
 <li><strong>Thread sync</strong>: Coordination before computation</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
@@ -256,7 +271,7 @@ while maintaining correct boundary conditions.</p>
 <li>Use
 <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code>
 for shared memory allocation</li>
-<li>Load input to <code>shared_a[local_i]</code> and kernel to <code>shared_b[local_i]</code></li>
+<li>Load input to <code>shared_a[local_i]</code> and filter to <code>shared_b[local_i]</code></li>
 <li>Call <code>barrier()</code> after loading</li>
 <li>Sum products within bounds: <code>if local_i + j &lt; SIZE</code></li>
 <li>Write result if <code>global_i &lt; SIZE</code></li>
@@ -332,8 +347,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
         # `out.ElementType` is available in TileTensor
         var local_sum: output.ElementType = 0
 
-        # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
-        # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
+        # Note: `comptime for` unrolls the loop at compile time given `CONV` is a compile-time constant
         comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j &lt; SIZE:
@@ -348,14 +362,14 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 access to overlapping elements. Here’s a detailed breakdown:</p>
 <h3 id="memory-layout"><a class="header" href="#memory-layout">Memory layout</a></h3>
 <pre><code class="language-txt">Input array a:   [0  1  2  3  4  5]
-Kernel b:        [0  1  2]
+Filter b:        [0  1  2]
 </code></pre>
 <h3 id="computation-steps"><a class="header" href="#computation-steps">Computation steps</a></h3>
 <ol>
 <li>
 <p><strong>Data Loading</strong>:</p>
 <pre><code class="language-txt">shared_a: [0  1  2  3  4  5]  // Input array
-shared_b: [0  1  2]           // Convolution kernel
+shared_b: [0  1  2]           // Filter
 </code></pre>
 </li>
 <li>
@@ -376,7 +390,7 @@ output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 <li>
 <p>The inefficient approach without proper thread guard:</p>
 <pre><code class="language-mojo"># Inefficient version - all threads compute even when results won't be used
-local_sum = Scalar[dtype](0)
+var local_sum = Scalar[dtype](0)
 for j in range(CONV):
     if local_i + j &lt; SIZE:
         local_sum += shared_a[local_i + j] * shared_b[j]
@@ -388,9 +402,8 @@ if global_i &lt; SIZE:
 <li>
 <p>The efficient and correct implementation:</p>
 <pre><code class="language-mojo">if global_i &lt; SIZE:
-    var local_sum: output.element_type = 0  # Using var allows type inference
-    @parameter  # Unrolls loop at compile time since CONV is constant
-    for j in range(CONV):
+    var local_sum: output.ElementType = 0  # Using var allows type inference
+    comptime for j in range(CONV):  # Unrolls loop at compile time since CONV is constant
         if local_i + j &lt; SIZE:
             local_sum += shared_a[local_i + j] * shared_b[j]
     output[global_i] = local_sum
@@ -415,8 +428,8 @@ perform any computation, making better use of GPU resources.</p>
 <li>
 <p><strong>Key Implementation Features</strong>:</p>
 <ul>
-<li>Uses <code>var</code> for proper type inference with <code>output.element_type</code></li>
-<li>Employs <code>@parameter</code> decorator to unroll the convolution loop at compile
+<li>Uses <code>var</code> for proper type inference with <code>output.ElementType</code></li>
+<li>Employs <code>comptime for</code> to unroll the convolution loop at compile
 time</li>
 <li>Maintains strict bounds checking for memory safety</li>
 <li>Leverages TileTensor’s type system for better code safety</li>
@@ -425,7 +438,7 @@ time</li>
 <li>
 <p><strong>Memory Management</strong>:</p>
 <ul>
-<li>Uses shared memory for both input array and kernel</li>
+<li>Uses shared memory for both input array and filter</li>
 <li>Single load per thread from global memory</li>
 <li>Efficient reuse of loaded data</li>
 </ul>
@@ -444,7 +457,7 @@ time</li>
 <li>Minimizes global memory access</li>
 <li>Uses shared memory for fast data access</li>
 <li>Avoids thread divergence in main computation loop</li>
-<li>Loop unrolling through <code>@parameter</code> decorator</li>
+<li>Loop unrolling through <code>comptime for</code></li>
 </ul>
 </li>
 </ol>

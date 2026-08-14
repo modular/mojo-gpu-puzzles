@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -214,7 +228,7 @@ sophisticated tree-based communication patterns within a warp. This powerful
 primitive enables efficient parallel reductions, sorting networks, and advanced
 coordination algorithms without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor()</a>
+<a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/">shuffle_xor()</a>
 operation leverages SIMT execution to create XOR-based communication trees,
 enabling efficient butterfly networks and parallel algorithms that scale with
 \(O(\log n)\) complexity relative to warp size.</em></p>
@@ -245,9 +259,10 @@ patterns, enabling efficient tree reductions and sorting networks without
 explicit coordination.</p>
 <blockquote>
 <p><strong>Scope:</strong> <code>shuffle_xor()</code> exchanges data <em>within a single warp</em>. Every
-reduction and butterfly here is per-warp; the results are global only because
-each section runs a single warp over the data. There is no cross-warp or
-cross-block communication.</p>
+reduction and butterfly here is per-warp. Sections 1 and 2 run a single warp,
+so their per-warp results are also the global ones; section 3 launches two
+blocks of <code>WARP_SIZE</code> threads, and each warp reduces its own half
+independently. There is no cross-warp or cross-block communication.</p>
 </blockquote>
 <h2 id="1-basic-butterfly-pair-swap"><a class="header" href="#1-basic-butterfly-pair-swap">1. Basic butterfly pair swap</a></h2>
 <h3 id="configuration"><a class="header" href="#configuration">Configuration</a></h3>
@@ -264,11 +279,11 @@ cross-block communication.</p>
 shared_memory[lane] = input[global_i]
 barrier()
 if lane % 2 == 0:
-    partner = lane + 1
+    var partner = lane + 1
 else:
     partner = lane - 1
 if partner &lt; WARP_SIZE:
-    swapped_val = shared_memory[partner]
+    var swapped_val = shared_memory[partner]
 </code></pre>
 <p><strong>Problems with traditional approach:</strong></p>
 <ul>
@@ -279,8 +294,8 @@ if partner &lt; WARP_SIZE:
 </ul>
 <p>With <code>shuffle_xor()</code>, pair swapping becomes elegant:</p>
 <pre><code class="language-mojo"># Butterfly XOR approach - simple and hardware-optimized
-current_val = input[global_i]
-swapped_val = shuffle_xor(current_val, 1)  # XOR with 1 creates pairs
+var current_val = input[global_i]
+var swapped_val = shuffle_xor(current_val, 1)  # XOR with 1 creates pairs
 output[global_i] = swapped_val
 </code></pre>
 <p><strong>Benefits of shuffle_xor:</strong></p>
@@ -378,7 +393,8 @@ lane ID with 1?</p>
 SIZE:  32
 output: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
 expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
-✅ Butterfly pair swap test passed!
+Butterfly pair swap test: passed
+Puzzle 26 complete ✅
 </code></pre>
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
@@ -415,8 +431,8 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 through XOR communication patterns.</p>
 <p><strong>Algorithm breakdown:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
-    current_val = input[global_i]              # Each lane reads its element
-    swapped_val = shuffle_xor(current_val, 1)  # XOR creates pair exchange
+    var current_val = input[global_i]              # Each lane reads its element
+    var swapped_val = shuffle_xor(current_val, 1)  # XOR creates pair exchange
 
     # For demonstration, store the swapped value
     output[global_i] = swapped_val
@@ -604,7 +620,8 @@ Result: All lanes have global maximum = 7
 SIZE:  32
 output: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
 expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
-✅ Butterfly parallel max test passed!
+Butterfly parallel max test: passed
+Puzzle 26 complete ✅
 </code></pre>
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
@@ -643,10 +660,10 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 reduction trees with \(O(\log n)\) complexity.</p>
 <p><strong>Complete algorithm analysis:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
-    max_val = input[global_i]  # Start with local value
+    var max_val = input[global_i]  # Start with local value
 
     # Butterfly reduction tree: dynamic for any WARP_SIZE
-    offset = WARP_SIZE // 2
+    var offset = WARP_SIZE // 2
     while offset &gt; 0:
         max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
         offset //= 2
@@ -817,7 +834,8 @@ same butterfly communication pattern.</p>
 SIZE_2:  64
 output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
 expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
-✅ Butterfly conditional max test passed!
+Butterfly conditional max test: passed
+Puzzle 26 complete ✅
 </code></pre>
 <h3 id="solution-2"><a class="header" href="#solution-2">Solution</a></h3>
 <details class="solution-details">
@@ -864,16 +882,16 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 conditional output.</p>
 <p><strong>Complete algorithm analysis:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
-    current_val = input[global_i]
-    min_val = current_val  # Track minimum separately
+    var current_val = input[global_i]
+    var min_val = current_val  # Track minimum separately
 
     # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
-    offset = WARP_SIZE // 2
+    var offset = WARP_SIZE // 2
     while offset &gt; 0:
-        neighbor_val = shuffle_xor(current_val, UInt32(offset))
+        var neighbor_val = shuffle_xor(current_val, UInt32(offset))
         current_val = max(current_val, neighbor_val)    # Max reduction
 
-        min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
+        var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
         min_val = min(min_val, min_neighbor_val)        # Min reduction
 
         offset //= 2
@@ -906,12 +924,12 @@ Step 2: shuffle_xor(current_val, 1) and shuffle_xor(min_val, 1) - Pairs exchange
 Final result: All lanes have current_val=7 (global max) and min_val=1 (global min)
 </code></pre>
 <p><strong>Dynamic algorithm</strong> (works for any WARP_SIZE):</p>
-<pre><code class="language-mojo">offset = WARP_SIZE // 2
+<pre><code class="language-mojo">var offset = WARP_SIZE // 2
 while offset &gt; 0:
-    neighbor_val = shuffle_xor(current_val, UInt32(offset))
+    var neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = max(current_val, neighbor_val)
 
-    min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
+    var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
     min_val = min(min_val, min_neighbor_val)
 
     offset //= 2
@@ -980,9 +998,9 @@ problems, you’ve learned:</p>
 <li>Butterfly networks emerge naturally from binary XOR patterns</li>
 </ul>
 <p><strong>Dynamic Algorithm Design:</strong></p>
-<pre><code class="language-mojo">offset = WARP_SIZE // 2
+<pre><code class="language-mojo">var offset = WARP_SIZE // 2
 while offset &gt; 0:
-    neighbor_val = shuffle_xor(current_val, UInt32(offset))
+    var neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = operation(current_val, neighbor_val)
     offset //= 2
 </code></pre>

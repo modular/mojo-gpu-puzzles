@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -258,20 +272,20 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 </code></pre>
 <h3 id="tensor-core-approach"><a class="header" href="#tensor-core-approach">Tensor core approach</a></h3>
 <pre><code class="language-mojo"># Entire warp cooperates on matrix fragments
-a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
-b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
-c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
-d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
+var a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
+var b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
+var c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
+var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
 mma_op.store_d(C_mma_tile, d_reg)           # Store result
 </code></pre>
 <h2 id="tensor-core-api-in-mojo"><a class="header" href="#tensor-core-api-in-mojo">Tensor core API in Mojo</a></h2>
 <p>Mojo provides a clean interface to Tensor Cores through the
-<a href="https://docs.modular.com/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
+<a href="https://docs.modular.com/api/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
 type:</p>
 <pre><code class="language-mojo">from layout.tensor_core import TensorCore
 
 # Create a Tensor Core operator for specific tile sizes
-mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
 # Core operations:
 # - load_a(): Load matrix A fragment from shared memory
@@ -284,7 +298,7 @@ mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 different swizzle patterns for memory access optimization, and mixed-precision
 arithmetic. For complete documentation of all supported shapes, data types, and
 methods, see the
-<a href="https://docs.modular.com/mojo/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
+<a href="https://docs.modular.com/api/mojo/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
 <h3 id="matrix-fragment-sizes"><a class="header" href="#matrix-fragment-sizes">Matrix fragment sizes</a></h3>
 <p>The TensorCore API supports different shapes and data types depending on the GPU
 hardware:</p>
@@ -329,14 +343,14 @@ fragments, perform the MMA operation, and store results.</p>
 <p>Since Tensor Cores operate at warp-level, we need to organize our threads
 differently:</p>
 <pre><code class="language-mojo"># Calculate warp coordinates within the block
-warp_id = thread_idx.x // WARP_SIZE
-warps_in_n = BN // WN  # Number of warps along N dimension
-warps_in_m = BM // WM  # Number of warps along M dimension
-warp_y = warp_id // warps_in_n  # Warp's row
-warp_x = warp_id % warps_in_n   # Warp's column
+var warp_id = thread_idx.x // WARP_SIZE
+var warps_in_n = BN // WN  # Number of warps along N dimension
+var warps_in_m = BM // WM  # Number of warps along M dimension
+var warp_y = warp_id // warps_in_n  # Warp's row
+var warp_x = warp_id % warps_in_n   # Warp's column
 
 # Each warp handles a WM×WN tile of the output
-C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 </code></pre>
 <p><strong>Warp organization example</strong> (with BM=128, BN=64, WM=32, WN=32):</p>
 <pre><code class="language-txt">Block (128×64) contains 8 warps arranged as:
@@ -513,16 +527,15 @@ compute</li>
 <li><strong>8 warps</strong>: BM÷WM × BN÷WN = 128÷32 × 64÷32 = 4×2 = 8 warps per block</li>
 </ul>
 <p><strong>How warps map to MMA fragments:</strong></p>
-<pre><code class="language-txt">Each 32×32 warp tile contains multiple 16×8 MMA fragments:
+<pre><code class="language-txt">Each 32×32 warp tile contains multiple 16×8 MMA fragments
+(MMA_M = 16 rows, MMA_N = 8 cols):
 
-    16 cols   16 cols
-     |         |
-[ MMA 0,0 ][ MMA 0,1 ]  ← 8 rows each (32÷8=4 fragments down)
-[ MMA 1,0 ][ MMA 1,1 ]  ← 8 rows each
-[ MMA 2,0 ][ MMA 2,1 ]  ← 8 rows each
-[ MMA 3,0 ][ MMA 3,1 ]  ← 8 rows each
+  8 cols    8 cols    8 cols    8 cols
+    |         |         |         |
+[ MMA 0,0 ][ MMA 0,1 ][ MMA 0,2 ][ MMA 0,3 ]  ← 16 rows each
+[ MMA 1,0 ][ MMA 1,1 ][ MMA 1,2 ][ MMA 1,3 ]  ← 16 rows each
 
-2 fragments across (32÷16=2) × 4 fragments down (32÷8=4) = 8 MMA operations per warp per K-tile
+4 fragments across (32÷8=4) × 2 fragments down (32÷16=2) = 8 MMA operations per warp per K-slice
 </code></pre>
 <h3 id="step-4-code-to-complete"><a class="header" href="#step-4-code-to-complete">Step 4: Code to complete</a></h3>
 <pre><code class="language-mojo">def tensor_core_matrix_multiplication[
@@ -644,12 +657,9 @@ synchronization</li>
 <li>Each iteration processes one 16×8×8 matrix fragment</li>
 </ul>
 <p><strong>Understanding the triple nested loops:</strong></p>
-<pre><code class="language-mojo">@parameter
-for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
-    @parameter
-    for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
-        @parameter
-        for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
+<pre><code class="language-mojo">comptime for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
+    comptime for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
+        comptime for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
             # YOUR CODE HERE: Process one 16×8×8 MMA fragment
 </code></pre>
 <p><strong>What each loop does:</strong></p>
@@ -830,7 +840,7 @@ ALL TESTS PASSED!
                         var B_mma_tile = B_warp_tile.tile[MMA_K, MMA_N](
                             mma_k, mma_n
                         )
-                        C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
+                        var C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
                             mma_m, mma_n
                         )
 

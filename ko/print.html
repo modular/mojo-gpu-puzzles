@@ -8,12 +8,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="theme/css/custom.css">
         <link rel="stylesheet" href="theme/css/highlight.css">
@@ -29,11 +40,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -233,7 +247,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://docs.modular.com/max/get-started/#stay-in-touch"
+    <a href="https://docs.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">
@@ -250,7 +264,7 @@
 프로그래밍 언어입니다.</p>
 <p>아래 개요 영상을 먼저 시청하거나, 계속 읽어주세요.</p>
 <div class="video-container full-width">
-<iframe src="https://www.youtube.com/embed/-VsP4kT6DjA" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/-VsP4kT6DjA" allowfullscreen></iframe>
 </div>
 <h2 id="왜-gpu-프로그래밍인가"><a class="header" href="#왜-gpu-프로그래밍인가">왜 GPU 프로그래밍인가?</a></h2>
 <p>GPU 프로그래밍은 전문 기술에서 현대 컴퓨팅의 핵심 인프라로 발전했습니다. 수십억
@@ -478,11 +492,11 @@ Mojo의 TileTensor 추상화로 전환합니다. 이를 통해 GPU 메모리 패
 <h2 id="사전-준비"><a class="header" href="#사전-준비">사전 준비</a></h2>
 <h3 id="시스템-요구사항"><a class="header" href="#시스템-요구사항">시스템 요구사항</a></h3>
 <p>먼저 시스템이
-<a href="https://docs.modular.com/max/packages#system-requirements">시스템 요구사항</a>을
+<a href="https://docs.modular.com/packages#system-requirements">시스템 요구사항</a>을
 충족하는지 확인하세요.</p>
 <h3 id="지원되는-gpu"><a class="header" href="#지원되는-gpu">지원되는 GPU</a></h3>
 <p>퍼즐을 실행하려면
-<a href="https://docs.modular.com/max/faq#gpu-requirements">지원되는 GPU</a>가 필요합니다.
+<a href="https://docs.modular.com/faq#gpu-requirements">지원되는 GPU</a>가 필요합니다.
 환경 설정을 마친 뒤 아래 환경 설정의 <code>gpu-specs</code> 명령어로 GPU 호환성을 확인할 수
 있습니다.</p>
 <h2 id="운영체제"><a class="header" href="#운영체제">운영체제</a></h2>
@@ -935,7 +949,7 @@ Fork합니다</li>
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-1-map"><a class="header" href="#puzzle-1-map">Puzzle 1: Map</a></h1>
 <div class="video-container breakpoint-lg">
-<iframe src="https://www.youtube.com/embed/rLhjprX8Nck" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/rLhjprX8Nck" allowfullscreen></iframe>
 </div>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>이 퍼즐에서는 GPU 병렬 처리의 기본 개념을 다룹니다. 각 스레드가 데이터 요소
@@ -943,7 +957,7 @@ Fork합니다</li>
 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
 <p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 배정됩니다.</em></p>
 <div class="video-container breakpoint-sm">
-<iframe src="https://www.youtube.com/embed/rLhjprX8Nck" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/rLhjprX8Nck" allowfullscreen></iframe>
 </div>
 <img src="puzzle_01//puzzle_01/media/01.png" alt="Map" class="light-mode-img">
 <img src="puzzle_01//puzzle_01/media/01d.png" alt="Map" class="dark-mode-img">
@@ -998,8 +1012,8 @@ comptime dtype = DType.float32
 
 
 def add_10(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
     # FILL ME IN (roughly 1 line)
@@ -1051,11 +1065,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def add_10(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
-    output[i] = a[i] + 10.0
+    output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 
 </code></pre>
@@ -1110,13 +1124,13 @@ output[b, i, j] = a[b, i, j] + 10.0  # 3D 인덱싱
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-2-zip"><a class="header" href="#puzzle-2-zip">Puzzle 2: Zip</a></h1>
 <div class="video-container breakpoint-lg">
-<iframe src="https://www.youtube.com/embed/SlpgR685oGA" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/SlpgR685oGA" allowfullscreen></iframe>
 </div>
 <h2 id="개요-1"><a class="header" href="#개요-1">개요</a></h2>
 <p>벡터 <code>a</code>와 벡터 <code>b</code>의 각 위치를 더해 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
 <p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 배정됩니다.</em></p>
 <div class="video-container breakpoint-sm">
-<iframe src="https://www.youtube.com/embed/SlpgR685oGA" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/SlpgR685oGA" allowfullscreen></iframe>
 </div>
 <img src="puzzle_02//puzzle_02/media/02.png" alt="Zip" class="light-mode-img">
 <img src="puzzle_02//puzzle_02/media/02d.png" alt="Zip" class="dark-mode-img">
@@ -1145,9 +1159,9 @@ comptime dtype = DType.float32
 
 
 def add(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    b: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
     # FILL ME IN (roughly 1 line)
@@ -1199,12 +1213,12 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def add(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    b: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
-    output[i] = a[i] + b[i]
+    output[unsafe_offset=i] = a[unsafe_offset=i] + b[unsafe_offset=i]
 
 
 </code></pre>
@@ -1228,14 +1242,14 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-3-가드"><a class="header" href="#puzzle-3-가드">Puzzle 3: 가드</a></h1>
 <div class="video-container breakpoint-lg">
-<iframe src="https://www.youtube.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
 </div>
 <h2 id="개요-2"><a class="header" href="#개요-2">개요</a></h2>
 <p>벡터 <code>a</code>의 각 위치에 10을 더해 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
 <p><strong>참고</strong>: <em>스레드 수가 데이터 개수보다 많아서, 일부 스레드는 처리할 데이터가
 없습니다. 이런 스레드가 범위를 벗어난 메모리에 접근하지 않도록 방지해야 합니다.</em></p>
 <div class="video-container breakpoint-sm">
-<iframe src="https://www.youtube.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
 </div>
 <img src="puzzle_03//puzzle_03/media/03.png" alt="Guard" class="light-mode-img">
 <img src="puzzle_03//puzzle_03/media/03d.png" alt="Guard" class="dark-mode-img">
@@ -1272,10 +1286,11 @@ comptime dtype = DType.float32
 
 
 def add_10_guard(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
@@ -1326,13 +1341,14 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def add_10_guard(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = thread_idx.x
     if i &lt; size:
-        output[i] = a[i] + 10.0
+        output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 
 </code></pre>
@@ -1375,14 +1391,14 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
 <div class="video-container breakpoint-lg">
-<iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
 </div>
 <h2 id="개요-3"><a class="header" href="#개요-3">개요</a></h2>
 <p>2D 정사각 행렬 <code>a</code>의 각 위치에 10을 더해 2D 정사각 행렬 <code>output</code>에 저장하는
 커널을 구현해 보세요.</p>
 <p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다</em>.</p>
 <div class="video-container breakpoint-sm">
-<iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
 </div>
 <img src="puzzle_04//puzzle_04/media/04a.png" alt="2D 행렬 매핑" class="light-mode-img">
 <img src="puzzle_04//puzzle_04/media/04ad.png" alt="2D 행렬 매핑" class="dark-mode-img">
@@ -1461,10 +1477,11 @@ comptime dtype = DType.float32
 
 
 def add_10_2d(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -1516,14 +1533,17 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def add_10_2d(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     if row &lt; size and col &lt; size:
-        output[row * size + col] = a[row * size + col] + 10.0
+        output[unsafe_offset=row * size + col] = (
+            a[unsafe_offset=row * size + col] + 10.0
+        )
 
 
 </code></pre>
@@ -1605,7 +1625,7 @@ tensor[1, 2] = 2.0  # 마지막 요소
 # This file is Modular Inc proprietary.
 #
 # ===----------------------------------------------------------------------=== #
-from std.gpu.host import DeviceContext
+from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
 
@@ -1627,11 +1647,11 @@ def kernel(
 
 
 def main() raises:
-    ctx = DeviceContext()
+    var ctx = DeviceContext()
 
-    a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
+    var a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
     a.enqueue_fill(0)
-    tensor = TileTensor(a, layout)
+    var tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
     ctx.enqueue_function[kernel](tensor, grid_dim=1, block_dim=1)
 
@@ -1728,8 +1748,9 @@ comptime LayoutType = type_of(layout)
 def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -1783,8 +1804,9 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     if col &lt; size and row &lt; size:
@@ -1846,8 +1868,9 @@ def broadcast_add(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -1902,8 +1925,9 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     if row &lt; size and col &lt; size:
@@ -1970,10 +1994,11 @@ comptime dtype = DType.float32
 
 
 def add_10_blocks(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
@@ -2027,13 +2052,14 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def add_10_blocks(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
-        output[i] = a[i] + 10.0
+        output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 
 </code></pre>
@@ -2163,8 +2189,9 @@ comptime ALayout = type_of(a_layout)
 def add_10_blocks_2d(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -2219,8 +2246,9 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <pre><code class="language-mojo">def add_10_blocks_2d(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
     if row &lt; size and col &lt; size:
@@ -2356,9 +2384,12 @@ comptime LayoutType = type_of(layout)
 def add_10_shared_tile_tensor(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
-    # Allocate shared memory using stack_allocation
+    var size = Int(size_dev)
+    # Allocate shared memory. Unlike most kernel variables, which are private to
+    # each thread, shared memory (`AddressSpace.SHARED`) is scoped per-block.
+    # So, each thread in a block can use the same "scratchpad" to store data.
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
@@ -2428,9 +2459,12 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <pre><code class="language-mojo">def add_10_shared_tile_tensor(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
-    # Allocate shared memory using stack_allocation
+    var size = Int(size_dev)
+    # Allocate shared memory. Unlike most kernel variables, which are private to
+    # each thread, shared memory (`AddressSpace.SHARED`) is scoped per-block.
+    # So, each thread in a block can use the same "scratchpad" to store data.
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
@@ -3638,11 +3672,11 @@ CUDA-GDB 설정과 기본 디버깅 명령어를 익혀두세요. 아래 명령�
 <h2 id="코드-실행-9"><a class="header" href="#코드-실행-9">코드 실행</a></h2>
 <p>먼저 전체 코드를 보지 않고 커널만 살펴봅시다:</p>
 <pre><code class="language-mojo">def add_10(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: Pointer[Scalar[dtype], MutAnyOrigin],
+    a: Pointer[Scalar[dtype], MutAnyOrigin],
 ):
     var i = thread_idx.x
-    output[i] = a[i] + 10.0
+    output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 
 </code></pre>
@@ -4655,7 +4689,7 @@ CUDA toolkit에 포함되어 있어 <code>pixi</code>를 통해서만 사용할 
 <p><strong>알아야 할 것</strong>:</p>
 <ul>
 <li>Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (메모리 관리, 스레드 조율, 배리어)</li>
-<li><strong><a href="https://docs.modular.com/max/faq#gpu-requirements">호환 NVIDIA GPU 하드웨어</a></strong></li>
+<li><strong><a href="https://docs.modular.com/faq#gpu-requirements">호환 NVIDIA GPU 하드웨어</a></strong></li>
 <li><code>compute-sanitizer</code> 접근을 위한 <code>pixi</code> 패키지 매니저 환경 설정</li>
 <li><strong>선행 퍼즐</strong>: <a href="puzzle_10/../puzzle_04/introduction_tile_tensor.html">Puzzle 4</a>와
 <a href="puzzle_10/../puzzle_08/puzzle_08.html">Puzzle 8</a> 숙지 권장</li>
@@ -4685,8 +4719,10 @@ CUDA toolkit에 포함되어 있어 <code>pixi</code>를 통해서만 사용할 
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
+    _ = size
     var row = thread_idx.y
     var col = thread_idx.x
     output[row, col] = a[row, col] + 10.0
@@ -4834,8 +4870,9 @@ Running memory bug example (bounds checking issue)...
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
     if col &lt; size and row &lt; size:
@@ -4918,8 +4955,9 @@ comptime LayoutType = type_of(layout)
 def shared_memory_race(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
 
@@ -5082,9 +5120,10 @@ comptime LayoutType = type_of(layout)
 def shared_memory_race(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
+    var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
 
@@ -5261,8 +5300,9 @@ comptime LayoutType = type_of(layout)
 def pooling(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     # Allocate shared memory using stack_allocation
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -5323,8 +5363,9 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <pre><code class="language-mojo">def pooling(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     # Allocate shared memory using stack_allocation
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -5518,8 +5559,9 @@ def dot_product(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     # FILL ME IN (roughly 13 lines)
     ...
 
@@ -5574,8 +5616,9 @@ expected: HostBuffer([140.0])
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
@@ -5715,14 +5758,14 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: f1ede433f4a483e4078e50fe24ed566a15ad90e6 -->
 <h1 id="puzzle-13-1d-합성곱"><a class="header" href="#puzzle-13-1d-합성곱">Puzzle 13: 1D 합성곱</a></h1>
 <blockquote>
 <h2 id="tiletensor로-전환하기"><a class="header" href="#tiletensor로-전환하기">TileTensor로 전환하기</a></h2>
 <p>지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께
 살펴보았습니다:</p>
 <ol>
-<li><a href="https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
+<li><a href="https://docs.modular.com/mojo/std/memory/pointer/Pointer/">Pointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
 <li>강력한 <code>address_space</code> 파라미터로 메모리를 할당하는, 보다 구조화된 <a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></li>
 </ol>
 <p>이 퍼즐부터는 <code>TileTensor</code>로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을
@@ -5740,16 +5783,16 @@ Thread 1: shared[1] = 26 + 58 = 84
 </blockquote>
 <h2 id="개요-17"><a class="header" href="#개요-17">개요</a></h2>
 <p>신호 처리와 이미지 분석에서 합성곱(convolution)은 두 시퀀스를 결합해 새로운
-시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 커널을
+시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 필터를
 슬라이딩하면서 각 출력 원소를 계산하는 1D 합성곱을 GPU에서 구현해 봅니다.</p>
-<p><code>TileTensor</code> 추상화를 사용하여 벡터 <code>a</code>와 벡터 <code>b</code>의 1D 합성곱을 계산하고,
-결과를 <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><code>TileTensor</code> 추상화를 사용하여 입력 벡터 <code>a</code>와 필터 벡터 <code>b</code>의 1D 합성곱을
+계산하고, 결과를 <code>output</code>에 저장하는 GPU 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다.</em></p>
 <img src="puzzle_13//puzzle_13/media/13-w.png" alt="1D 합성곱 시각화" class="light-mode-img">
 <img src="puzzle_13//puzzle_13/media/13-b.png" alt="1D 합성곱 시각화" class="dark-mode-img">
 <p>합성곱이 처음이라면, 가중치가 적용된 슬라이딩 윈도우 연산이라고 생각하면 됩니다.
-각 위치에서 커널 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는
+각 위치에서 필터 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는
 다음과 같습니다:</p>
 <p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>의사 코드로 표현한 1D 합성곱:</p>
@@ -5773,10 +5816,10 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>각 버전은 메모리 접근 패턴과 스레드 간 협력 측면에서 서로 다른 도전 과제를
 제시합니다. 기본 버전에서 합성곱 연산의 원리를 익힌 다음, 블록 경계 버전에서는
 실제 GPU 프로그래밍에서 마주치는 복잡한 상황을 다루는 능력을 시험해 봅니다.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: f1ede433f4a483e4078e50fe24ed566a15ad90e6 -->
 <h1 id="단일-블록을-사용한-기본-버전"><a class="header" href="#단일-블록을-사용한-기본-버전">단일 블록을 사용한 기본 버전</a></h1>
-<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
-<code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>입력 1D TileTensor <code>a</code>와 필터 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D
+TileTensor <code>output</code>에 저장하는 GPU 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다.</em></p>
 <h2 id="핵심-개념-16"><a class="header" href="#핵심-개념-16">핵심 개념</a></h2>
@@ -5791,15 +5834,15 @@ Thread 1: shared[1] = 26 + 58 = 84
 <h2 id="구성-5"><a class="header" href="#구성-5">구성</a></h2>
 <ul>
 <li>입력 배열 크기: <code>SIZE = 6</code></li>
-<li>커널 크기: <code>CONV = 3</code></li>
+<li>필터 크기: <code>CONV = 3</code></li>
 <li>블록당 스레드 수: <code>TPB = 8</code></li>
 <li>블록 수: 1</li>
 <li>공유 메모리: <code>SIZE</code>와 <code>CONV</code> 크기의 배열 2개</li>
 </ul>
 <p>참고:</p>
 <ul>
-<li><strong>데이터 로딩</strong>: 각 스레드가 입력 배열과 커널에서 원소를 하나씩 로드</li>
-<li><strong>메모리 패턴</strong>: 입력 배열과 합성곱 커널을 저장하는 공유 배열</li>
+<li><strong>데이터 로딩</strong>: 각 스레드가 입력 배열과 필터에서 원소를 하나씩 로드</li>
+<li><strong>메모리 패턴</strong>: 입력 배열과 필터를 저장하는 공유 배열</li>
 <li><strong>스레드 동기화</strong>: 연산 시작 전 스레드 간 조율</li>
 </ul>
 <h2 id="완성할-코드-11"><a class="header" href="#완성할-코드-11">완성할 코드</a></h2>
@@ -5821,7 +5864,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <ol>
 <li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code>으로
 공유 메모리 할당</li>
-<li>입력을 <code>shared_a[local_i]</code>에, 커널을 <code>shared_b[local_i]</code>에 로드</li>
+<li>입력을 <code>shared_a[local_i]</code>에, 필터를 <code>shared_b[local_i]</code>에 로드</li>
 <li>데이터 로드 후 <code>barrier()</code> 호출</li>
 <li>경계 안에서 곱을 합산: <code>if local_i + j &lt; SIZE</code></li>
 <li><code>global_i &lt; SIZE</code>일 때만 결과 기록</li>
@@ -5897,8 +5940,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
         # `out.ElementType` is available in TileTensor
         var local_sum: output.ElementType = 0
 
-        # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
-        # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
+        # Note: `comptime for` unrolls the loop at compile time given `CONV` is a compile-time constant
         comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j &lt; SIZE:
@@ -5913,14 +5955,14 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 단계별로 살펴보겠습니다:</p>
 <h3 id="메모리-레이아웃"><a class="header" href="#메모리-레이아웃">메모리 레이아웃</a></h3>
 <pre><code class="language-txt">입력 배열 a:       [0  1  2  3  4  5]
-커널 b:          [0  1  2]
+필터 b:          [0  1  2]
 </code></pre>
 <h3 id="연산-과정"><a class="header" href="#연산-과정">연산 과정</a></h3>
 <ol>
 <li>
 <p><strong>데이터 로딩</strong>:</p>
 <pre><code class="language-txt">shared_a: [0  1  2  3  4  5]  // 입력 배열
-shared_b: [0  1  2]           // 합성곱 커널
+shared_b: [0  1  2]           // 필터
 </code></pre>
 </li>
 <li>
@@ -5954,8 +5996,7 @@ if global_i &lt; SIZE:
 <p>효율적이고 올바른 구현:</p>
 <pre><code class="language-mojo">if global_i &lt; SIZE:
     var local_sum: output.element_type = 0  # var로 타입 추론 활용
-    @parameter  # CONV가 상수이므로 컴파일 타임에 루프 전개
-    for j in range(CONV):
+    comptime for j in range(CONV):  # CONV가 상수이므로 컴파일 타임에 루프 전개
         if local_i + j &lt; SIZE:
             local_sum += shared_a[local_i + j] * shared_b[j]
     output[global_i] = local_sum
@@ -5979,7 +6020,7 @@ if global_i &lt; SIZE:
 <p><strong>주요 구현 특징</strong>:</p>
 <ul>
 <li><code>var</code>와 <code>output.element_type</code>으로 적절한 타입 추론</li>
-<li><code>@parameter</code> 데코레이터로 합성곱 루프를 컴파일 타임에 전개</li>
+<li><code>comptime for</code>로 합성곱 루프를 컴파일 타임에 전개</li>
 <li>엄격한 경계 검사로 메모리 안전성 확보</li>
 <li>TileTensor의 타입 시스템으로 코드 안전성 향상</li>
 </ul>
@@ -5987,7 +6028,7 @@ if global_i &lt; SIZE:
 <li>
 <p><strong>메모리 관리</strong>:</p>
 <ul>
-<li>입력 배열과 커널 모두 공유 메모리 사용</li>
+<li>입력 배열과 필터 모두 공유 메모리 사용</li>
 <li>스레드당 전역 메모리에서 1회 로드</li>
 <li>로드한 데이터의 효율적 재사용</li>
 </ul>
@@ -6006,22 +6047,22 @@ if global_i &lt; SIZE:
 <li>전역 메모리 접근 최소화</li>
 <li>공유 메모리로 빠른 데이터 접근</li>
 <li>메인 연산 루프에서 스레드 분기 회피</li>
-<li><code>@parameter</code> 데코레이터를 통한 루프 전개</li>
+<li><code>comptime for</code>를 통한 루프 전개</li>
 </ul>
 </li>
 </ol>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: f1ede433f4a483e4078e50fe24ed566a15ad90e6 -->
 <h1 id="블록-경계-버전"><a class="header" href="#블록-경계-버전">블록 경계 버전</a></h1>
-<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
-<code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>입력 1D TileTensor <code>a</code>와 필터 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D
+TileTensor <code>output</code>에 저장하는 GPU 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다.</em></p>
 <h2 id="구성-6"><a class="header" href="#구성-6">구성</a></h2>
 <ul>
 <li>입력 배열 크기: <code>SIZE_2 = 15</code></li>
-<li>커널 크기: <code>CONV_2 = 4</code></li>
+<li>필터 크기: <code>CONV_2 = 4</code></li>
 <li>블록당 스레드 수: <code>TPB = 8</code></li>
 <li>블록 수: 2</li>
 <li>공유 메모리: 입력용 <code>TPB + CONV_2 - 1</code>개</li>
@@ -6054,7 +6095,7 @@ if global_i &lt; SIZE:
 공유 메모리 할당</li>
 <li>메인 데이터 로드: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>경계 데이터 로드: <code>if local_i &lt; CONV_2 - 1</code>일 때 다음 블록의 데이터 처리</li>
-<li>커널 로드: <code>shared_b[local_i] = b[local_i]</code></li>
+<li>필터 로드: <code>shared_b[local_i] = b[local_i]</code></li>
 <li>입력 범위 안에서 합산: <code>if global_i + j &lt; SIZE_2</code></li>
 </ol>
 </div>
@@ -6145,7 +6186,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 <pre><code class="language-txt">테스트 구성:
 - 전체 배열 크기: SIZE_2 = 15
 - 그리드: 2 블록 × 8 스레드
-- 합성곱 커널: CONV_2 = 4
+- 필터 크기: CONV_2 = 4
 
 Block 0 공유 메모리:  [0 1 2 3 4 5 6 7|8 9 10]  // TPB(8) + (CONV_2-1)(3) 패딩
 Block 1 공유 메모리:  [8 9 10 11 12 13 14 0|0 0 0]  // 두 번째 블록. 데이터(7) + 그리드 채움용 패딩(1) + (CONV_2-1)(3) 패딩
@@ -6191,26 +6232,25 @@ if local_i &lt; CONV_2 - 1:
 </ul>
 </li>
 <li>
-<p><strong>커널 로딩</strong>:</p>
+<p><strong>필터 로딩</strong>:</p>
 <pre><code class="language-mojo">if local_i &lt; b_size:
     shared_b[local_i] = b[local_i]
 </code></pre>
 <ul>
 <li>스레드당 1회 로드</li>
-<li>커널 크기로 범위 제한</li>
+<li>필터 크기로 범위 제한</li>
 </ul>
 </li>
 <li>
 <p><strong>합성곱 연산</strong>:</p>
 <pre><code class="language-mojo">if global_i &lt; SIZE_2:
     var local_sum: output.element_type = 0
-    @parameter
-    for j in range(CONV_2):
+    comptime for j in range(CONV_2):
         if global_i + j &lt; SIZE_2:
             local_sum += shared_a[local_i + j] * shared_b[j]
 </code></pre>
 <ul>
-<li><code>@parameter</code>로 컴파일 타임 루프 전개</li>
+<li><code>comptime for</code>로 컴파일 타임 루프 전개</li>
 <li><code>output.element_type</code>으로 적절한 타입 추론</li>
 <li>의미적으로 올바른 경계 검사: 유효한 입력 위치에서만 합성곱 계산</li>
 </ul>
@@ -6307,12 +6347,23 @@ Thread 7: 건너뜀                      // 모든 j에 대해 global_i + j &lt;
 <p>1D TileTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D TileTensor <code>output</code>에
 저장하는 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em><code>a</code>의 크기가 블록 크기보다 큰 경우, 각 블록의 합계만 저장합니다.</em></p>
-<img src="puzzle_14//puzzle_14/media/videos/720p30/14.1-w.png" alt="누적 합 시각화 - 1단계" class="light-mode-img">
-<img src="puzzle_14//puzzle_14/media/videos/720p30/14.1-b.png" alt="누적 합 시각화 - 1단계" class="dark-mode-img">
-<img src="puzzle_14//puzzle_14/media/videos/720p30/14.2-w.png" alt="누적 합 시각화 - 2단계" class="light-mode-img">
-<img src="puzzle_14//puzzle_14/media/videos/720p30/14.2-b.png" alt="누적 합 시각화 - 2단계" class="dark-mode-img">
-<img src="puzzle_14//puzzle_14/media/videos/720p30/14.3-w.png" alt="누적 합 시각화 - 3단계" class="light-mode-img">
-<img src="puzzle_14//puzzle_14/media/videos/720p30/14.3-b.png" alt="누적 합 시각화 - 3단계" class="dark-mode-img">
+<div class="step-animation">
+  <div class="step-frame">
+    <img src="puzzle_14//puzzle_14/media/videos/720p30/14.1-w.png" alt="누적 합 시각화 - 1단계" class="light-mode-img">
+    <img src="puzzle_14//puzzle_14/media/videos/720p30/14.1-b.png" alt="누적 합 시각화 - 1단계" class="dark-mode-img">
+    <span class="step-label">1 / 3 단계</span>
+  </div>
+  <div class="step-frame">
+    <img src="puzzle_14//puzzle_14/media/videos/720p30/14.2-w.png" alt="누적 합 시각화 - 2단계" class="light-mode-img">
+    <img src="puzzle_14//puzzle_14/media/videos/720p30/14.2-b.png" alt="누적 합 시각화 - 2단계" class="dark-mode-img">
+    <span class="step-label">2 / 3 단계</span>
+  </div>
+  <div class="step-frame">
+    <img src="puzzle_14//puzzle_14/media/videos/720p30/14.3-w.png" alt="누적 합 시각화 - 3단계" class="light-mode-img">
+    <img src="puzzle_14//puzzle_14/media/videos/720p30/14.3-b.png" alt="누적 합 시각화 - 3단계" class="dark-mode-img">
+    <span class="step-label">3 / 3 단계</span>
+  </div>
+</div>
 <h2 id="핵심-개념-17"><a class="header" href="#핵심-개념-17">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
@@ -6386,8 +6437,9 @@ comptime LayoutType = type_of(layout)
 def prefix_sum_simple(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
@@ -6442,8 +6494,9 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <pre><code class="language-mojo">def prefix_sum_simple(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var shared = stack_allocation[
@@ -6623,8 +6676,9 @@ output:       [0    1    3    6    10   15   21   28]
 def prefix_sum_local_phase(
     output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 20 lines)
@@ -6633,8 +6687,9 @@ def prefix_sum_local_phase(
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase(
     output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -6650,7 +6705,7 @@ def prefix_sum_block_sum_phase(
             ctx.enqueue_function[prefix_sum_local_phase](
                 out_tensor,
                 a_tensor,
-                size,
+                Int32(size),
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
@@ -6658,7 +6713,7 @@ def prefix_sum_block_sum_phase(
             # Phase 2: Add block sums
             ctx.enqueue_function[prefix_sum_block_sum_phase](
                 out_tensor,
-                size,
+                Int32(size),
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
@@ -6753,8 +6808,9 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55
 def prefix_sum_local_phase(
     output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var shared = stack_allocation[
@@ -6813,8 +6869,9 @@ def prefix_sum_local_phase(
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase(
     output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -7090,8 +7147,9 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 <pre><code class="language-mojo">def axis_sum(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
@@ -7147,8 +7205,9 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 <pre><code class="language-mojo">def axis_sum(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
@@ -7351,7 +7410,7 @@ n}\)의 각 원소는 다음과 같이 계산됩니다:</p>
 <li>고수준 추상화를 활용하면서도 성능 유지</li>
 </ol>
 <p>원하는 버전을 골라 행렬 곱셈 여정을 시작해 보세요!</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="전역-메모리를-사용한-기본-버전"><a class="header" href="#전역-메모리를-사용한-기본-버전">전역 메모리를 사용한 기본 버전</a></h1>
 <h2 id="개요-21"><a class="header" href="#개요-21">개요</a></h2>
 <p>정방 행렬 \(A\)와 \(B\)를 곱하여 결과를 \(\text{output}\)에 저장하는
@@ -7486,9 +7545,8 @@ col = block_dim.x * block_idx.x + thread_idx.x
 <pre><code class="language-mojo"># var로 가변 누적 변수를 선언하고 텐서의 원소 타입을 사용
 var acc: output.element_type = 0
 
-# @parameter로 컴파일 타임 루프 전개
-@parameter
-for k in range(size):
+# comptime for로 컴파일 타임 루프 전개
+comptime for k in range(size):
     acc += a[row, k] * b[k, col]
 </code></pre>
 </li>
@@ -7506,8 +7564,7 @@ for k in range(size):
 <li>
 <p><strong>루프 최적화</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a>
-데코레이터로 컴파일 타임에 루프 전개</li>
+<li><code>comptime for</code>로 컴파일 타임에 루프 전개</li>
 <li>크기가 작고 미리 알려진 행렬에서 성능 향상</li>
 <li>더 나은 명령어 스케줄링 가능</li>
 </ul>
@@ -7695,7 +7752,7 @@ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\]</p>
 <p>루프라인 모델을 이해하면 GPU 최적화가 추측에서 체계적인 엔지니어링으로 바뀝니다.
 이 책의 모든 최적화 기법은 이 단순하지만 강력한 성능 모델에 대한 효과로 이해할
 수 있습니다.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="공유-메모리-버전"><a class="header" href="#공유-메모리-버전">공유 메모리 버전</a></h1>
 <h2 id="개요-22"><a class="header" href="#개요-22">개요</a></h2>
 <p>정방 행렬 \(A\) 와 \(B\) 의 행렬 곱셈을 구현하고 결과를
@@ -7877,8 +7934,7 @@ if row &lt; size and col &lt; size:
     var acc: output.element_type = 0
 
     # 컴파일 타임에 전개되는 행렬 곱셈 루프
-    @parameter
-    for k in range(size):
+    comptime for k in range(size):
         acc += a_shared[local_row, k] * b_shared[k, local_col]
 
     # 행렬 경계 내의 스레드만 결과 기록
@@ -7903,7 +7959,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>루프 최적화</strong>: <code>@parameter for k in range(size)</code></p>
+<p><strong>루프 최적화</strong>: <code>comptime for k in range(size)</code></p>
 <ul>
 <li>컴파일 타임에 루프 전개</li>
 <li>더 나은 명령어 스케줄링 가능</li>
@@ -8004,7 +8060,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="타일링-버전"><a class="header" href="#타일링-버전">타일링 버전</a></h1>
 <h2 id="개요-23"><a class="header" href="#개요-23">개요</a></h2>
 <p>TileTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \(A\) 와 \(B\) 를 곱하는
@@ -8380,7 +8436,7 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 <p><strong>연산</strong>:</p>
 <ul>
 <li>레지스터 기반 누적, 즉 <code>var acc: output.element_type = 0</code></li>
-<li><code>@parameter</code>를 통한 컴파일 타임 루프 전개</li>
+<li><code>comptime for</code>를 통한 컴파일 타임 루프 전개</li>
 </ul>
 </li>
 </ol>
@@ -8396,7 +8452,7 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 <h2 id="솔루션-관용적-tiletensor-타일링"><a class="header" href="#솔루션-관용적-tiletensor-타일링">솔루션: 관용적 TileTensor 타일링</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">from std.gpu.memory import async_copy_wait_all
+<pre><code class="language-mojo">from max.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 from layout import Layout as IntTupleLayout
 
@@ -8582,8 +8638,7 @@ row_major[1, TPB]()로 두 패턴 모두 병합
 </li>
 <li>
 <p><strong>완벽한 타일링으로 경계 검사 불필요</strong></p>
-<pre><code class="language-mojo">@parameter
-for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
+<pre><code class="language-mojo">comptime for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
 </code></pre>
 <p>\((9 \times 9)\) 행렬과 \((3 \times 3)\) 타일에서는 모든 타일이 정확히 꽉
 차기 때문에 경계 검사가 필요 없습니다!</p>
@@ -8696,7 +8751,7 @@ B^T\) 계산</li>
 <h2 id="개요-24"><a class="header" href="#개요-24">개요</a></h2>
 <p><a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13: 1D 합성곱</a>에서 GPU에서 효율적으로
 동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을
-<a href="https://docs.modular.com/max/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
+<a href="https://docs.modular.com/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
 직접 호출할 수 있는 커스텀 연산으로 변환합니다.</p>
 <p>사용할 1D 합성곱 커널은 이미 구현되어 있습니다:</p>
 <pre><code class="language-mojo">comptime TPB = 15
@@ -8783,8 +8838,7 @@ def conv1d_kernel[
 <pre><code class="language-mojo">import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from std.memory import UnsafePointer
-from std.gpu.host import DeviceBuffer
+from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("conv1d")
@@ -8917,19 +8971,19 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <li>입력과 커널용 NumPy 배열 생성</li>
 <li>MAX 그래프로 연산을 감싸는 <code>conv_1d()</code> 함수 호출</li>
 <li>NumPy 배열을 <code>Buffer.from_numpy(input).to(device)</code>로
-<a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffer로 변환</li>
+<a href="https://docs.modular.com/api/python/driver">MAX driver</a> Buffer로 변환</li>
 <li><code>custom_extensions=[mojo_kernels]</code>로 커스텀 연산 패키지 로드</li>
 </ul>
 </li>
 <li>
 <p><strong>그래프 구축</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
+<li><a href="https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
 입력 및 출력 텐서 타입 정의</li>
 <li><code>parameters={...}</code>를 통해 연산의 파라미터 지정</li>
-<li><a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
+<li><a href="https://docs.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
 연산 그래프 생성</li>
-<li><a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
+<li><a href="https://docs.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
 커스텀 연산 호출</li>
 </ul>
 </li>
@@ -9009,8 +9063,8 @@ gpu_ctx.enqueue_function[...](...) # 커널 예약
 <blockquote>
 <p>더 자세한 내용은 아래 튜토리얼을 참고하세요:</p>
 <ul>
-<li><a href="https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
-<li><a href="https://docs.modular.com/max/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
+<li><a href="https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
+<li><a href="https://docs.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
 </ul>
 </blockquote>
 <h3 id="커스텀-op-등록"><a class="header" href="#커스텀-op-등록">커스텀 op 등록</a></h3>
@@ -10416,7 +10470,7 @@ Mojo GPU 커널을 파이썬과 연동하는 방법을 배웠습니다. 이제�
 <h2 id="개요-27"><a class="header" href="#개요-27">개요</a></h2>
 <p>이 퍼즐에서는 <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17: 1D 합성곱 Op</a>의 1D
 합성곱(convolution) 커널을 그대로 가져와서, MAX 그래프 대신
-<a href="https://docs.modular.com/max/api/python/torch/">CustomOpLibrary</a>를 사용하여
+<a href="https://docs.modular.com/api/python/torch/">CustomOpLibrary</a>를 사용하여
 PyTorch와 통합합니다.</p>
 <p>여기서 핵심은 <strong>동일한 Mojo 커널이 수정 없이 그대로 동작한다</strong>는 것입니다. MAX
 그래프와 PyTorch 방식 사이에서 달라지는 것은 파이썬 통합 레이어뿐입니다.</p>
@@ -10847,8 +10901,7 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <pre><code class="language-mojo">import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from std.memory import UnsafePointer
-from std.gpu.host import DeviceBuffer
+from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("embedding")
@@ -11099,7 +11152,7 @@ struct Embedding2DCustomOp:
 </ol>
 <h3 id="pytorch-통합"><a class="header" href="#pytorch-통합">PyTorch 통합</a></h3>
 <p>등록된 연산은
-<a href="https://docs.modular.com/max/api/python/torch/">CustomOpLibrary</a>를 통해
+<a href="https://docs.modular.com/api/python/torch/">CustomOpLibrary</a>를 통해
 파이썬에서 호출할 수 있습니다:</p>
 <pre><code class="language-python"># Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
@@ -11536,7 +11589,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 성능 모두에 어떤 영향을 미치는지 주의 깊게 살펴보세요. 이 통찰은 LayerNorm +
 Linear를 넘어 다양한 딥러닝 연산에 적용됩니다. 특히 역방향 패스 구현은 학습
 효율과 수치 안정성에 직접적인 영향을 미치므로 매우 중요합니다.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="-퓨전-vs-언퓨전-커널"><a class="header" href="#-퓨전-vs-언퓨전-커널">⚛️ 퓨전 vs 언퓨전 커널</a></h1>
 <h2 id="개요-30"><a class="header" href="#개요-30">개요</a></h2>
 <p>이 퍼즐에서는 <a href="https://arxiv.org/abs/1607.06450">LayerNorm</a>과 Linear 연산에 대한
@@ -12139,8 +12192,7 @@ hidden_idx = thread_idx.x
 <pre><code class="language-mojo">var sum_val: Scalar[dtype] = 0
 var sq_sum: Scalar[dtype] = 0
 
-@parameter
-for h in range(hidden_dim):
+comptime for h in range(hidden_dim):
     val = input[batch_idx, seq_idx, h]
     sum_val += rebind[Scalar[dtype]](val)
     sq_sum += rebind[Scalar[dtype]](val * val)
@@ -12150,7 +12202,7 @@ for h in range(hidden_dim):
 <p>한 번의 패스로 합계와 제곱합을 동시에 계산합니다</p>
 </li>
 <li>
-<p>컴파일 타임 루프 전개를 위해 <code>@parameter</code>를 사용합니다</p>
+<p>컴파일 타임 루프 전개를 위해 <code>comptime for</code>를 사용합니다</p>
 </li>
 <li>
 <p><code>rebind[Scalar[dtype]]</code>로 적절한 타입 캐스팅을 수행합니다</p>
@@ -12627,7 +12679,7 @@ FUSED Algorithm Test Completed!
 <p>💡 <strong>핵심 통찰</strong>: 커널 퓨전은 트랜스포머 아키텍처의 LayerNorm + Linear처럼
 신경망에서 자주 함께 사용되는 연산에 특히 유리합니다. 입력 크기가 크고 모델이
 복잡할수록 성능 이점은 더욱 커집니다.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="-오토그래드-통합과-역방향-패스"><a class="header" href="#-오토그래드-통합과-역방향-패스">⛓️ 오토그래드 통합과 역방향 패스</a></h1>
 <h2 id="개요-31"><a class="header" href="#개요-31">개요</a></h2>
 <p>이 퍼즐에서는 퓨전 LayerNorm + Linear 연산의 역방향 패스(backward pass) 구현을
@@ -12779,15 +12831,17 @@ x} \] 여기서:</p>
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).unsafe_write(0)
-            (grad_ln_bias.ptr + h).unsafe_write(0)
+            grad_ln_weight.ptr.unsafe_offset(h).unsafe_write(0)
+            grad_ln_bias.ptr.unsafe_offset(h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).unsafe_write(0)
+            grad_bias.ptr.unsafe_offset(out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
+                grad_weight.ptr.unsafe_offset(
+                    out_idx * hidden_dim + h
+                ).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -12999,15 +13053,17 @@ BACKWARD PASS Test Completed!
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
         comptime for h in range(hidden_dim):
-            (grad_ln_weight.ptr + h).unsafe_write(0)
-            (grad_ln_bias.ptr + h).unsafe_write(0)
+            grad_ln_weight.ptr.unsafe_offset(h).unsafe_write(0)
+            grad_ln_bias.ptr.unsafe_offset(h).unsafe_write(0)
 
         # Initialize grad_weight and grad_bias
         comptime for out_idx in range(output_dim):
-            (grad_bias.ptr + out_idx).unsafe_write(0)
+            grad_bias.ptr.unsafe_offset(out_idx).unsafe_write(0)
 
             comptime for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).unsafe_write(0)
+                grad_weight.ptr.unsafe_offset(
+                    out_idx * hidden_dim + h
+                ).unsafe_write(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -13027,7 +13083,7 @@ BACKWARD PASS Test Completed!
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
     comptime for out_idx in range(output_dim):
-        var grad_bias_ptr = grad_bias.ptr + out_idx
+        var grad_bias_ptr = grad_bias.ptr.unsafe_offset(out_idx)
         _ = Atomic[dtype].fetch_add(
             grad_bias_ptr,
             rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, out_idx]),
@@ -13046,13 +13102,15 @@ BACKWARD PASS Test Completed!
             var grad_w = (
                 grad_output_lt[batch_idx, seq_idx, out_idx] * ln_output_val
             )
-            var grad_weight_ptr = grad_weight.ptr + out_idx * hidden_dim + h
+            var grad_weight_ptr = grad_weight.ptr.unsafe_offset(
+                out_idx * hidden_dim + h
+            )
             _ = Atomic.fetch_add(grad_weight_ptr, rebind[Scalar[dtype]](grad_w))
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
     comptime for h in range(hidden_dim):
-        input_val = input_lt[batch_idx, seq_idx, h]
-        normalized = (input_val - mean_val) * inv_std
+        var input_val = input_lt[batch_idx, seq_idx, h]
+        var normalized = (input_val - mean_val) * inv_std
 
         # Compute gradient w.r.t. LayerNorm output for this h
         var grad_ln_out: Scalar[dtype] = 0
@@ -13064,8 +13122,8 @@ BACKWARD PASS Test Completed!
             )
 
         # Atomic accumulation of LayerNorm parameter gradients
-        var grad_ln_weight_ptr = grad_ln_weight.ptr + h
-        var grad_ln_bias_ptr = grad_ln_bias.ptr + h
+        var grad_ln_weight_ptr = grad_ln_weight.ptr.unsafe_offset(h)
+        var grad_ln_bias_ptr = grad_ln_bias.ptr.unsafe_offset(h)
         _ = Atomic[dtype].fetch_add(
             grad_ln_weight_ptr, rebind[Scalar[dtype]](grad_ln_out * normalized)
         )
@@ -13079,8 +13137,8 @@ BACKWARD PASS Test Completed!
     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        h_input_val = input_lt[batch_idx, seq_idx, h]
-        h_normalized = (h_input_val - mean_val) * inv_std
+        var h_input_val = input_lt[batch_idx, seq_idx, h]
+        var h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
@@ -13090,7 +13148,7 @@ BACKWARD PASS Test Completed!
                 * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        var h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         sum_grad_normalized = sum_grad_normalized + rebind[Scalar[dtype]](
             h_grad_norm
         )
@@ -13101,8 +13159,8 @@ BACKWARD PASS Test Completed!
 
     # Compute actual input gradients (no race conditions here - each thread writes to different positions)
     comptime for h in range(hidden_dim):
-        h_input_val = input_lt[batch_idx, seq_idx, h]
-        h_normalized = (h_input_val - mean_val) * inv_std
+        var h_input_val = input_lt[batch_idx, seq_idx, h]
+        var h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
@@ -13112,7 +13170,7 @@ BACKWARD PASS Test Completed!
                 * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        var h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
             - (sum_grad_normalized / Scalar[dtype](hidden_dim))
@@ -13237,7 +13295,7 @@ L}{\partial y} \]</li>
 <li>
 <p><strong>구현 세부 사항</strong>:</p>
 <ul>
-<li>컴파일 타임 상수를 위한 <code>@parameter</code> 사용</li>
+<li>컴파일 타임 상수를 위한 <code>comptime</code> 사용</li>
 <li>텐서 차원의 적절한 처리</li>
 <li>효율적인 타입 캐스팅과 변환</li>
 <li>공유 메모리의 신중한 관리</li>
@@ -13827,7 +13885,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <p>💡 <strong>핵심 요약</strong>: <code>elementwise</code> 패턴은 Mojo가 함수형 프로그래밍의 우아함과 GPU
 성능을 어떻게 결합하는지 보여줍니다. 연산에 대한 완전한 제어를 유지하면서
 벡터화와 스레드 관리를 자동으로 처리합니다.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="tile---메모리-효율적인-타일링-처리"><a class="header" href="#tile---메모리-효율적인-타일링-처리">tile - 메모리 효율적인 타일링 처리</a></h1>
 <h2 id="개요-33"><a class="header" href="#개요-33">개요</a></h2>
 <p><strong>elementwise</strong> 패턴을 기반으로, 이 퍼즐에서는 <strong>타일링 처리</strong>를 소개합니다.
@@ -13920,11 +13978,10 @@ b_tile = b.tile[tile_size](tile_id)
 대한 뷰를 생성합니다.</p>
 <h3 id="3-타일-내-순차-처리"><a class="header" href="#3-타일-내-순차-처리">3. <strong>타일 내 순차 처리</strong></a></h3>
 <p>요소별 방식과 달리, 타일을 순차적으로 처리합니다:</p>
-<pre><code class="language-mojo">@parameter
-for i in range(tile_size):
+<pre><code class="language-mojo">comptime for i in range(tile_size):
     # 현재 타일 내의 요소 i를 처리
 </code></pre>
-<p>이 <code>@parameter</code> 루프는 최적의 성능을 위해 컴파일 타임에 전개됩니다.</p>
+<p>이 <code>comptime for</code> 루프는 최적의 성능을 위해 컴파일 타임에 전개됩니다.</p>
 <h3 id="4-타일-요소-내-simd-연산"><a class="header" href="#4-타일-요소-내-simd-연산">4. <strong>타일 요소 내 SIMD 연산</strong></a></h3>
 <pre><code class="language-mojo">a_vec = a_tile.load[simd_width](Index(i))  # 타일 내 위치 i에서 로드
 b_vec = b_tile.load[simd_width](Index(i))  # 타일 내 위치 i에서 로드
@@ -14068,8 +14125,7 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← 요소 992-1023
 <li>타일 경계는 항상 <code>tile_size</code> 단위로 정렬됩니다</li>
 </ul>
 <h3 id="3-순차-처리-심층-분석"><a class="header" href="#3-순차-처리-심층-분석">3. <strong>순차 처리 심층 분석</strong></a></h3>
-<pre><code class="language-mojo">@parameter
-for i in range(tile_size):
+<pre><code class="language-mojo">comptime for i in range(tile_size):
     a_vec = a_tile.load[simd_width](Index(i))
     b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
@@ -14078,7 +14134,7 @@ for i in range(tile_size):
 <p><strong>왜 순차 처리인가?</strong></p>
 <ul>
 <li><strong>캐시 최적화</strong>: 연속적인 메모리 접근이 캐시 히트율을 극대화</li>
-<li><strong>컴파일러 최적화</strong>: <code>@parameter</code> 루프가 컴파일 타임에 완전히 전개됨</li>
+<li><strong>컴파일러 최적화</strong>: <code>comptime for</code> 루프가 컴파일 타임에 완전히 전개됨</li>
 <li><strong>메모리 대역폭</strong>: 순차 접근이 메모리 컨트롤러 설계에 부합</li>
 <li><strong>조정 비용 감소</strong>: SIMD 그룹 간 동기화가 불필요</li>
 </ul>
@@ -14189,7 +14245,7 @@ Tiled:       적당한 병렬성, 지역화된 메모리 접근
 <p>💡 <strong>핵심 요약</strong>: 타일링은 메모리 접근 패턴이 원시 연산 처리량보다 더 중요할 수
 있음을 보여줍니다. 최고의 GPU 코드는 병렬성과 메모리 계층 구조 최적화의 균형을
 맞춥니다.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="vectorize---simd-제어"><a class="header" href="#vectorize---simd-제어">vectorize - SIMD 제어</a></h1>
 <h2 id="개요-34"><a class="header" href="#개요-34">개요</a></h2>
 <p>이 퍼즐에서는 수동 벡터화와
@@ -14398,8 +14454,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 청크 7 (thread 7): [896:1024] ← 마지막 128개 요소
 </code></pre>
 <p><strong>하나의 청크 내 처리:</strong></p>
-<pre><code class="language-mojo">@parameter
-for i in range(tile_size):  # i = 0, 1, 2, ..., 31
+<pre><code class="language-mojo">comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     global_start = tile_id * chunk_size + i * simd_width
     # tile_id=0일 때: global_start = 0, 4, 8, 12, ..., 124
     # tile_id=1일 때: global_start = 128, 132, 136, 140, ..., 252
@@ -18737,8 +18792,9 @@ while offset &gt; 0:
 <pre><code class="language-mojo">def prefix_sum_simple(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var shared = stack_allocation[
@@ -19609,11 +19665,12 @@ LLVM 분석은 <a href="puzzle_27/block_sum.html#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
+    var size = Int(size_dev)
     var shared = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[tpb]())
@@ -19729,11 +19786,12 @@ LLVM 분석은 <a href="puzzle_27/block_sum.html#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -19810,11 +19868,12 @@ Just like warp.sum() but for the entire block
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -20051,9 +20110,9 @@ for element in data:
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
     count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
-    size: Int,
-    target_bin: Int,
-    num_bins: Int,
+    size_dev: Int32,
+    target_bin_dev: Int32,
+    num_bins_dev: Int32,
 ):
     """Parallel histogram using block.prefix_sum() for bin extraction.
 
@@ -20063,6 +20122,9 @@ for element in data:
     3. Extract and pack only elements belonging to target_bin
     """
 
+    var size = Int(size_dev)
+    var target_bin = Int(target_bin_dev)
+    var num_bins = Int(num_bins_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -20228,9 +20290,9 @@ Bin 7 extracted elements:
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
     count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
-    size: Int,
-    target_bin: Int,
-    num_bins: Int,
+    size_dev: Int32,
+    target_bin_dev: Int32,
+    num_bins_dev: Int32,
 ):
     """Parallel histogram using block.prefix_sum() for bin extraction.
 
@@ -20240,6 +20302,9 @@ Bin 7 extracted elements:
     3. Extract and pack only elements belonging to target_bin
     """
 
+    var size = Int(size_dev)
+    var target_bin = Int(target_bin_dev)
+    var num_bins = Int(num_bins_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -20488,7 +20553,7 @@ output[global_i] = my_value / mean
 ](
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
@@ -20499,6 +20564,7 @@ output[global_i] = my_value / mean
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -20644,7 +20710,7 @@ Output mean: 1.0
 ](
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
@@ -20655,6 +20721,7 @@ Output mean: 1.0
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -21780,7 +21847,7 @@ NVIDIA 하드웨어가 필요하며, <code>pixi</code> 작업이 이를 동일�
 <pre><code class="language-mojo">def multi_stage_image_blur_pipeline(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
 
@@ -21797,6 +21864,7 @@ NVIDIA 하드웨어가 필요하며, <code>pixi</code> 작업이 이를 동일�
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -21898,7 +21966,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <pre><code class="language-mojo">def multi_stage_image_blur_pipeline(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
 
@@ -21915,6 +21983,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
         dtype=dtype, address_space=AddressSpace.SHARED
     ](row_major[TPB]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -21939,11 +22008,11 @@ Output sample: 1.6665002 2.3331003 3.3996604
     if local_i &gt;= STAGE1_THREADS:
         var blur_idx = local_i - STAGE1_THREADS
         var blur_sum: Scalar[dtype] = 0.0
-        blur_count = 0
+        var blur_count = 0
 
         # 5-point blur kernel
         for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
-            sample_idx = blur_idx + offset
+            var sample_idx = blur_idx + offset
             if sample_idx &gt;= 0 and sample_idx &lt; TPB:
                 blur_sum += input_shared[sample_idx]
                 blur_count += 1
@@ -21959,7 +22028,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
             blur_sum = 0.0
             blur_count = 0
             for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
-                sample_idx = second_idx + offset
+                var sample_idx = second_idx + offset
                 if sample_idx &gt;= 0 and sample_idx &lt; TPB:
                     blur_sum += input_shared[sample_idx]
                     blur_count += 1
@@ -21973,7 +22042,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 
     # Stage 3: Final smoothing (all threads)
     if global_i &lt; size:
-        final_value = blur_shared[local_i]
+        var final_value = blur_shared[local_i]
 
         # Neighbor smoothing with 0.6 scaling
         if local_i &gt; 0:
@@ -22109,7 +22178,7 @@ Stage 3을 위해 생산</li>
 정교한 GPU 알고리즘을 설계하는 방법을 보여주며, 단순한 병렬 루프를 넘어 실제 GPU
 소프트웨어에서 사용되는 아키텍처적 접근 방식으로 나아갑니다.</p>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: d09bc3fbdd4bf6b2a44793f0208b6ba7800ed4c0 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="더블-버퍼링-스텐실-연산-1"><a class="header" href="#더블-버퍼링-스텐실-연산-1">더블 버퍼링 스텐실 연산</a></h1>
 <p><strong>중요 사항</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요합니다.
 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
@@ -22279,7 +22348,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <pre><code class="language-mojo">def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
 
@@ -22306,6 +22375,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
         dtype=DType.uint64, address_space=AddressSpace.SHARED
     ](row_major[1]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -22387,7 +22457,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <h3 id="반복-제어"><a class="header" href="#반복-제어"><strong>반복 제어</strong></a></h3>
 <ul>
 <li>컴파일 타임 루프 전개를 위해
-<code>@parameter for iteration in range(STENCIL_ITERATIONS)</code> 사용</li>
+<code>comptime for iteration in range(STENCIL_ITERATIONS)</code> 사용</li>
 <li><code>iteration % 2</code>를 사용하여 읽기/쓰기 할당을 교대하면서 버퍼 역할 결정</li>
 <li>이웃 검사를 통해 유효한 범위 내에서만 스텐실 연산 적용</li>
 </ul>
@@ -22463,7 +22533,7 @@ GPU output sample: 1.0 1.0 1.0
 <pre><code class="language-mojo">def double_buffered_stencil_computation(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
 
@@ -22490,6 +22560,7 @@ GPU output sample: 1.0 1.0 1.0
         dtype=DType.uint64, address_space=AddressSpace.SHARED
     ](row_major[1]())
 
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -22525,7 +22596,7 @@ GPU output sample: 1.0 1.0 1.0
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    sample_idx = local_i + offset
+                    var sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
                         stencil_sum += buffer_A[sample_idx]
                         stencil_count += 1
@@ -22545,7 +22616,7 @@ GPU output sample: 1.0 1.0 1.0
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    sample_idx = local_i + offset
+                    var sample_idx = local_i + offset
                     if sample_idx &gt;= 0 and sample_idx &lt; TPB:
                         stencil_sum += buffer_B[sample_idx]
                         stencil_count += 1
@@ -22720,8 +22791,7 @@ stencil_input = buffer_B[neighbor_index]  # 항상 올바른 값을 읽음
 <li><strong>출력 소스</strong>: buffer_B에서 전역 메모리로 복사</li>
 </ul>
 <p><strong>구현 패턴</strong>:</p>
-<pre><code class="language-mojo">@parameter
-if STENCIL_ITERATIONS % 2 == 0:
+<pre><code class="language-mojo">comptime if STENCIL_ITERATIONS % 2 == 0:
     # 짝수 총 반복 횟수는 buffer_A에서 종료
     output[global_i] = buffer_A[local_i]
 else:
@@ -22776,7 +22846,7 @@ else:
 </ul>
 <p><strong>반복 관리:</strong></p>
 <ul>
-<li><strong>컴파일 타임 루프 전개</strong>: <code>@parameter for</code>가 최적화 기회를 제공</li>
+<li><strong>컴파일 타임 루프 전개</strong>: <code>comptime for</code>가 최적화 기회를 제공</li>
 <li><strong>상태 추적</strong>: 버퍼 역할 교대가 결정적이어야 함</li>
 <li><strong>경계 처리</strong>: 적응적 스텐실 연산이 엣지 케이스를 매끄럽게 처리</li>
 </ul>
@@ -23728,8 +23798,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         output[i] = a[i] + b[i]
@@ -23742,8 +23813,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
 
@@ -23760,8 +23832,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
+    var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
 
@@ -23984,9 +24057,10 @@ def minimal_kernel(
     y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
-    size: Int,
+    size_dev: Int32,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
+    var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
@@ -24000,10 +24074,11 @@ def minimal_kernel(
     y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
-    size: Int,
+    size_dev: Int32,
 ):
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
+    var size = Int(size_dev)
     # Maximum shared memory allocation (close to 48KB limit)
     var shared_cache = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -24092,10 +24167,11 @@ def minimal_kernel(
     y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
-    size: Int,
+    size_dev: Int32,
 ):
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
+    var size = Int(size_dev)
     # Reasonable shared memory usage for effective caching (16KB)
     var shared_cache = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -24644,7 +24720,7 @@ ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
 <li>CUDA 툴킷이 설치된 NVIDIA GPU</li>
 <li>NSight Compute 프로파일링 도구</li>
 <li>프로파일링 등의 의존성은 <code>pixi</code>로 관리됩니다</li>
-<li><a href="https://docs.modular.com/max/packages/#gpu-compatibility">호환 가능한 GPU 아키텍처</a></li>
+<li><a href="https://docs.modular.com/packages/#gpu-compatibility">호환 가능한 GPU 아키텍처</a></li>
 </ul>
 <h2 id="최적화의-효과"><a class="header" href="#최적화의-효과">최적화의 효과</a></h2>
 <p><strong>뱅크 충돌이 가장 중요한 경우:</strong></p>
@@ -24864,13 +24940,14 @@ comptime LayoutType = type_of(layout)
 def no_conflict_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Perfect shared memory access - no bank conflicts.
 
     Each thread accesses a different bank: thread_idx.x maps to bank thread_idx.x % 32.
     This achieves optimal shared memory bandwidth utilization.
     """
+    var size = Int(size_dev)
 
     # Shared memory buffer - each thread loads one element
     var shared_buf = stack_allocation[
@@ -24899,13 +24976,14 @@ def no_conflict_kernel(
 <pre><code class="language-mojo">def two_way_conflict_kernel(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
     Threads 0,16 -&gt; Bank 0, Threads 1,17 -&gt; Bank 1, etc.
     Each bank serves 2 threads, doubling access time.
     """
+    var size = Int(size_dev)
 
     # Sized to 2*TPB so stride-2 writes don't alias (threads i and i+TPB/2).
     var shared_buf = stack_allocation[
@@ -25250,7 +25328,7 @@ if thread_idx.x &lt; stride:
 것을 보여줍니다 - 뱅크 충돌은 측정 기반 최적화가 추측보다 나은 대표적인
 사례입니다.</p>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="puzzle-33-텐서-코어-연산"><a class="header" href="#puzzle-33-텐서-코어-연산">Puzzle 33: 텐서 코어 연산</a></h1>
 <h2 id="소개"><a class="header" href="#소개">소개</a></h2>
 <p>GPU 행렬 곱셈 최적화의 최전선에 오신 것을 환영합니다! 이 퍼즐에서는 혼합 정밀도
@@ -25678,12 +25756,9 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 <li>각 반복에서 하나의 16×8×8 행렬 프래그먼트를 처리합니다</li>
 </ul>
 <p><strong>세 겹 중첩 루프 이해하기:</strong></p>
-<pre><code class="language-mojo">@parameter
-for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
-    @parameter
-    for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
-        @parameter
-        for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
+<pre><code class="language-mojo">comptime for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
+    comptime for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
+        comptime for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
             # YOUR CODE HERE: Process one 16×8×8 MMA fragment
 </code></pre>
 <p><strong>각 루프가 하는 일:</strong></p>
@@ -25858,7 +25933,7 @@ ALL TESTS PASSED!
                         var B_mma_tile = B_warp_tile.tile[MMA_K, MMA_N](
                             mma_k, mma_n
                         )
-                        C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
+                        var C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
                             mma_m, mma_n
                         )
 
@@ -26349,9 +26424,10 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 ](
     output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -26470,9 +26546,10 @@ Block coordination results:
 ](
     output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -26676,7 +26753,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -26792,9 +26869,10 @@ Error: 0.0
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
@@ -27034,7 +27112,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 ](
     output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Advanced cluster programming with masks and relaxed sync."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -27159,9 +27237,10 @@ Advanced cluster algorithm results:
 ](
     output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    size: Int,
+    size_dev: Int32,
 ):
     """Advanced cluster programming with masks and relaxed sync."""
+    var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())

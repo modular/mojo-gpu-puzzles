@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -287,30 +301,29 @@ def tiled_elementwise_add[
 <div class="solution-tips">
 <h3 id="1-understanding-tile-organization"><a class="header" href="#1-understanding-tile-organization">1. <strong>Understanding tile organization</strong></a></h3>
 <p>The tiled approach divides your data into fixed-size chunks:</p>
-<pre><code class="language-mojo">num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
+<pre><code class="language-mojo">var num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
 </code></pre>
 <p>For a 1024-element vector with <code>TILE_SIZE=32</code>: <code>1024 ÷ 32 = 32</code> tiles exactly.</p>
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
 <p>Check out the
-<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
-<pre><code class="language-mojo">tile_id = indices[0]  # Each thread gets one tile to process
-out_tile = output.tile[tile_size](tile_id)
-a_tile = a.tile[tile_size](tile_id)
-b_tile = b.tile[tile_size](tile_id)
+<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
+<pre><code class="language-mojo">var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
+var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 </code></pre>
 <p>The <code>tile[size](id)</code> method creates a view of <code>size</code> consecutive elements
 starting at <code>id × size</code>.</p>
 <h3 id="3-sequential-processing-within-tiles"><a class="header" href="#3-sequential-processing-within-tiles">3. <strong>Sequential processing within tiles</strong></a></h3>
 <p>Unlike elementwise, you process the tile sequentially:</p>
-<pre><code class="language-mojo">@parameter
-for i in range(tile_size):
+<pre><code class="language-mojo">comptime for i in range(tile_size):
     # Process element i within the current tile
 </code></pre>
-<p>This <code>@parameter</code> loop unrolls at compile-time for optimal performance.</p>
+<p>This <code>comptime for</code> loop unrolls at compile-time for optimal performance.</p>
 <h3 id="4-simd-operations-within-tile-elements"><a class="header" href="#4-simd-operations-within-tile-elements">4. <strong>SIMD operations within tile elements</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
-b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
-result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
+<pre><code class="language-mojo">var a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
+var b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
+var result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
 out_tile.store[simd_width](Index(i), result)  # Store to position i in tile
 </code></pre>
 <h3 id="5-thread-configuration-difference"><a class="header" href="#5-thread-configuration-difference">5. <strong>Thread configuration difference</strong></a></h3>
@@ -430,10 +443,10 @@ techniques for GPU programming:</p>
 <li><strong>Cache optimization</strong>: Excellent spatial and temporal locality</li>
 </ul>
 <h3 id="2-tile-organization-and-indexing"><a class="header" href="#2-tile-organization-and-indexing">2. <strong>Tile organization and indexing</strong></a></h3>
-<pre><code class="language-mojo">tile_id = indices[0]
-out_tile = output.tile[tile_size](tile_id)
-a_tile = a.tile[tile_size](tile_id)
-b_tile = b.tile[tile_size](tile_id)
+<pre><code class="language-mojo">var tile_id = Int(indices[0].value())
+var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 </code></pre>
 <p><strong>Tile mapping visualization (TILE_SIZE=32):</strong></p>
 <pre><code class="language-text">Original array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
@@ -451,30 +464,31 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 <li>Tile boundaries are always aligned to <code>tile_size</code> boundaries</li>
 </ul>
 <h3 id="3-sequential-processing-deep-dive"><a class="header" href="#3-sequential-processing-deep-dive">3. <strong>Sequential processing deep dive</strong></a></h3>
-<pre><code class="language-mojo">@parameter
-for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](Index(i))
-    b_vec = b_tile.load[simd_width](Index(i))
-    ret = a_vec + b_vec
+<pre><code class="language-mojo">comptime for i in range(tile_size):
+    var a_vec = a_tile.load[simd_width](Index(i))
+    var b_vec = b_tile.load[simd_width](Index(i))
+    var ret = a_vec + b_vec
     out_tile.store[simd_width](Index(i), ret)
 </code></pre>
 <p><strong>Why sequential processing?</strong></p>
 <ul>
 <li><strong>Cache optimization</strong>: Consecutive memory accesses maximize cache hit rates</li>
-<li><strong>Compiler optimization</strong>: <code>@parameter</code> loops unroll completely at
+<li><strong>Compiler optimization</strong>: <code>comptime for</code> loops unroll completely at
 compile-time</li>
 <li><strong>Memory bandwidth</strong>: Sequential access aligns with memory controller design</li>
 <li><strong>Reduced coordination</strong>: No need to synchronize between SIMD groups</li>
 </ul>
 <p><strong>Execution pattern within one tile (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
-<pre><code class="language-text">Thread processes tile sequentially:
-Step 0: Process elements [0:4] with SIMD
-Step 1: Process elements [4:8] with SIMD
-Step 2: Process elements [8:12] with SIMD
+<pre><code class="language-text">Thread processes tile sequentially, one iteration per element:
+Step 0:  Load/store the SIMD window at [0:4]
+Step 1:  Load/store the SIMD window at [1:5]
+Step 2:  Load/store the SIMD window at [2:6]
 ...
-Step 7: Process elements [28:32] with SIMD
-Total: 8 SIMD operations per thread (32 ÷ 4 = 8)
+Step 31: Load/store the SIMD window at [31:35]
+Total: 32 SIMD operations per thread (comptime for i in range(tile_size))
 </code></pre>
+<p>Note that the loop advances by one element per iteration, not by
+<code>SIMD_WIDTH</code>, so consecutive windows overlap.</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
 <p><strong>Cache behavior comparison:</strong></p>
 <p><strong>Elementwise pattern:</strong></p>

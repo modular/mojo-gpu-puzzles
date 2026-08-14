@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -250,13 +264,13 @@ networks</li>
 single-instruction simplicity</li>
 </ul>
 <h3 id="block-operations-in-mojo"><a class="header" href="#block-operations-in-mojo"><strong>Block operations in Mojo</strong></a></h3>
-<p>Learn the complete parallel programming toolkit from <code>gpu.primitives.block</code>:</p>
+<p>Learn the complete parallel programming toolkit from <code>max.gpu.primitives.block</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
 All-to-one reduction for totals, averages, maximum/minimum values</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
 All-to-each scan for parallel filtering and extraction</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
 One-to-all distribution for parameter sharing and coordination</li>
 </ol>
 <blockquote>
@@ -269,7 +283,7 @@ code.</p>
 <pre><code class="language-mojo"># Complex block-wide reduction (traditional approach - from Puzzle 12):
 shared_memory[local_i] = my_value
 barrier()
-stride = 64
+var stride = 64
 while stride &gt; 0:
     if local_i &lt; stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
@@ -279,8 +293,8 @@ if local_i == 0:
     output[block_idx.x] = shared_memory[0]
 
 # Block operations eliminate all this complexity:
-my_partial = compute_local_contribution()
-total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
+var my_partial = compute_local_contribution()
+var total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
 if local_i == 0:
     output[block_idx.x] = total[0]
 </code></pre>
@@ -300,7 +314,7 @@ if local_i == 0:
 shared_memory[local_i] = my_value
 barrier()
 # Tree reduction with stride-based indexing...
-stride = 64
+var stride = 64
 while stride &gt; 0:
     if local_i &lt; stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
@@ -310,12 +324,12 @@ while stride &gt; 0:
 <h3 id="the-intermediate-step-warp-programming-puzzle-24"><a class="header" href="#the-intermediate-step-warp-programming-puzzle-24"><strong>The intermediate step: Warp programming (Puzzle 24)</strong></a></h3>
 <p>Hardware-accelerated but limited scope - <code>warp.sum()</code> within 32-thread warps:</p>
 <pre><code class="language-mojo"># Warp approach: 1 line but single warp only
-total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
+var total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
 </code></pre>
 <h3 id="the-destination-block-programming-this-puzzle"><a class="header" href="#the-destination-block-programming-this-puzzle"><strong>The destination: Block programming (This puzzle)</strong></a></h3>
 <p>Complete toolkit - hardware-optimized primitives across entire blocks:</p>
 <pre><code class="language-mojo"># Block approach: 1 line across multiple warps (128+ threads)
-total = block.sum[block_size=128, broadcast=False](val=partial_product)
+var total = block.sum[block_size=128, broadcast=False](val=partial_product)
 </code></pre>
 <h2 id="the-three-fundamental-communication-patterns"><a class="header" href="#the-three-fundamental-communication-patterns">The three fundamental communication patterns</a></h2>
 <p>Block-level programming provides three essential primitives that cover all

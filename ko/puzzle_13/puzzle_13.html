@@ -7,12 +7,23 @@
 
 
         <!-- Custom HTML head -->
+        <!-- Fonts + lottie-player are fetched from CDN (lottie-player pinned to a
+             fixed version). If a resource fails to load (e.g. no network access),
+             each falls back to a locally vendored copy in theme/vendor-cache/
+             (gitignored; populated by `pixi run fetch-offline-assets`, see
+             scripts/fetch_offline_assets.sh) — no build-time step or
+             version-controlled file swap involved. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-            rel="stylesheet">
+        <link rel="preload" as="style"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            onload="this.onload=null;this.rel='stylesheet'"
+            onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/roboto-mono.css'">
+        <noscript><link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"></noscript>
         
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script defer src="https://unpkg.com/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js"
+            onerror="var s=document.createElement('script');s.src='../theme/vendor-cache/lottie-player.js';document.head.appendChild(s);"></script>
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
@@ -28,11 +39,14 @@
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
         <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
-        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
 
+        <!-- Fetched from CDN; falls back to a locally vendored copy in
+             theme/vendor-cache/ (gitignored; see scripts/fetch_offline_assets.sh)
+             if it fails to load, e.g. no network access. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" onload="this.onload=null;this.rel='stylesheet'" onerror="this.onerror=null;this.rel='stylesheet';this.href='../theme/vendor-cache/fonts/inter.css'">
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"></noscript>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -208,14 +222,14 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
+                        <!-- i18n-source-commit: f1ede433f4a483e4078e50fe24ed566a15ad90e6 -->
 <h1 id="puzzle-13-1d-합성곱"><a class="header" href="#puzzle-13-1d-합성곱">Puzzle 13: 1D 합성곱</a></h1>
 <blockquote>
 <h2 id="tiletensor로-전환하기"><a class="header" href="#tiletensor로-전환하기">TileTensor로 전환하기</a></h2>
 <p>지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께
 살펴보았습니다:</p>
 <ol>
-<li><a href="https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
+<li><a href="https://docs.modular.com/mojo/std/memory/pointer/Pointer/">Pointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
 <li>강력한 <code>address_space</code> 파라미터로 메모리를 할당하는, 보다 구조화된 <a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></li>
 </ol>
 <p>이 퍼즐부터는 <code>TileTensor</code>로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을
@@ -233,16 +247,16 @@
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>신호 처리와 이미지 분석에서 합성곱(convolution)은 두 시퀀스를 결합해 새로운
-시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 커널을
+시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 필터를
 슬라이딩하면서 각 출력 원소를 계산하는 1D 합성곱을 GPU에서 구현해 봅니다.</p>
-<p><code>TileTensor</code> 추상화를 사용하여 벡터 <code>a</code>와 벡터 <code>b</code>의 1D 합성곱을 계산하고,
-결과를 <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><code>TileTensor</code> 추상화를 사용하여 입력 벡터 <code>a</code>와 필터 벡터 <code>b</code>의 1D 합성곱을
+계산하고, 결과를 <code>output</code>에 저장하는 GPU 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
 1회만 필요합니다.</em></p>
 <img src="/puzzle_13/media/13-w.png" alt="1D 합성곱 시각화" class="light-mode-img">
 <img src="/puzzle_13/media/13-b.png" alt="1D 합성곱 시각화" class="dark-mode-img">
 <p>합성곱이 처음이라면, 가중치가 적용된 슬라이딩 윈도우 연산이라고 생각하면 됩니다.
-각 위치에서 커널 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는
+각 위치에서 필터 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는
 다음과 같습니다:</p>
 <p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>의사 코드로 표현한 1D 합성곱:</p>
