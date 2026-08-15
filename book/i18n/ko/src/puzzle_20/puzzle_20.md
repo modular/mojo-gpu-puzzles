@@ -127,7 +127,9 @@ output_tensor = torch.empty_like(input_tensor)
 ### 3. **파라미터 딕셔너리**
 
 ```python
-ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+ops.conv1d[
+    {"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}
+]
 ```
 
 - 파라미터는 딕셔너리 형태로 연산에 전달됩니다

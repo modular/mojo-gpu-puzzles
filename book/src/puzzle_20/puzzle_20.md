@@ -127,7 +127,9 @@ output_tensor = torch.empty_like(input_tensor)
 ### 3. **Parameter Dictionary**
 
 ```python
-ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+ops.conv1d[
+    {"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}
+]
 ```
 
 - Parameters are passed as a dictionary to the operation

@@ -176,14 +176,14 @@
 ops = CustomOpLibrary(mojo_kernels)
 
 # Call the 1D coalesced version
-result_1d = ops.embedding[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}](
-    indices, weights
-)
+result_1d = ops.embedding[
+    {"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}
+](indices, weights)
 
 # Call the 2D non-coalesced version
-result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}](
-    indices, weights
-)
+result_2d = ops.embedding_2d[
+    {"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}
+](indices, weights)
 ```
 
 이 접근법의 장점은 동일한 커널 구현을 다양한 파이썬 프레임워크에서 사용하면서도
