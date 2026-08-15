@@ -48,7 +48,7 @@ x = torch.randn(batch_size, seq_len, hidden_dim)
 
 # LayerNorm parameters
 ln_weight = torch.ones(hidden_dim)  # scale parameter (γ)
-ln_bias = torch.zeros(hidden_dim)   # shift parameter (β)
+ln_bias = torch.zeros(hidden_dim)  # shift parameter (β)
 
 # Linear layer parameters
 linear_weight = torch.randn(output_dim, hidden_dim)
@@ -60,7 +60,9 @@ output = F.linear(ln_output, linear_weight, linear_bias)
 
 # Fused operation (custom implementation)
 # This is what you'll implement in this puzzle
-output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, linear_bias)
+output_fused = fused_layernorm_linear(
+    x, ln_weight, ln_bias, linear_weight, linear_bias
+)
 ```
 
 When fused, these operations are combined into a single efficient kernel that:

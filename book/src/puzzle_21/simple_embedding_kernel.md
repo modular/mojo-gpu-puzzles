@@ -183,11 +183,15 @@ ops = CustomOpLibrary(mojo_kernels)
 
 # Call the 1D coalesced version. The op writes into `output` and returns
 # nothing, so allocate the destination tensor first.
-embedding_op = ops.embedding[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}]
+embedding_op = ops.embedding[
+    {"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}
+]
 embedding_op(output_1d, indices, weights)
 
 # Call the 2D non-coalesced version
-embedding_2d_op = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}]
+embedding_2d_op = ops.embedding_2d[
+    {"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}
+]
 embedding_2d_op(output_2d, indices, weights)
 ```
 

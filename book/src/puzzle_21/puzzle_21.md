@@ -40,10 +40,10 @@ representations:
 
 ```python
 # Input: token indices
-indices = [[1, 5, 2], [7, 1, 9]]           # Shape: [batch_size, seq_len]
+indices = [[1, 5, 2], [7, 1, 9]]  # Shape: [batch_size, seq_len]
 
 # Embedding table (learned parameters)
-embedding_table = [                        # Shape: [vocab_size, embed_dim]
+embedding_table = [  # Shape: [vocab_size, embed_dim]
     [0.1, 0.2, 0.3, 0.4],  # Token 0
     [0.5, 0.6, 0.7, 0.8],  # Token 1
     [0.9, 1.0, 1.1, 1.2],  # Token 2
@@ -51,9 +51,9 @@ embedding_table = [                        # Shape: [vocab_size, embed_dim]
 ]
 
 # Output: embedded vectors
-output[0,0] = embedding_table[1]  # [0.5, 0.6, 0.7, 0.8]
-output[0,1] = embedding_table[5]  # lookup token 5's embedding
-output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
+output[0, 0] = embedding_table[1]  # [0.5, 0.6, 0.7, 0.8]
+output[0, 1] = embedding_table[5]  # lookup token 5's embedding
+output[0, 2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 # ... and so on
 ```
 
