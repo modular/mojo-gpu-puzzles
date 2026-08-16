@@ -59,7 +59,7 @@ ops = CustomOpLibrary(mojo_kernels)
 print("✅ Loaded Mojo operations library")
 
 # Global compilation cache that persists across function calls
-_global_compile_cache = {}
+_global_compile_cache: dict[str, object] = {}
 
 
 def get_cached_compiled_op(op, cache_key):
