@@ -231,8 +231,9 @@ a sequence of numbers into their running totals. While simple to compute
 sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over 1D TileTensor <code>a</code> and stores
 it in 1D TileTensor <code>output</code>.</p>
-<p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum
-of each block.</em></p>
+<p><strong>Note:</strong> <em>When <code>a</code> is larger than the block size, the simple version only
+stores the sum of each block, while the complete version synchronizes across
+blocks to produce the full prefix sum.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>

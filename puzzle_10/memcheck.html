@@ -250,7 +250,7 @@ memory concepts.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
 <p>When you run this program normally, everything looks fine:</p>
 <pre><code class="language-bash">pixi run p10 --memory-bug
 </code></pre>
@@ -306,7 +306,7 @@ Running memory bug example (bounds checking issue)...
 </code></pre>
 <p>The program has <strong>7 total errors</strong> despite passing all tests:</p>
 <ul>
-<li><strong>4 memory violations</strong> (Invalid <strong>global</strong> read)</li>
+<li><strong>4 memory violations</strong> (<code>Invalid __global__ read</code>)</li>
 <li><strong>3 runtime errors</strong> (caused by the memory violations)</li>
 </ul>
 <h2 id="understanding-the-hidden-bug"><a class="header" href="#understanding-the-hidden-bug">Understanding the hidden bug</a></h2>
@@ -324,7 +324,7 @@ dimensions</li>
 <p><strong>4 Memory Violations:</strong></p>
 <ul>
 <li>Each out-of-bounds thread <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> caused an
-“Invalid <strong>global</strong> read”</li>
+<code>Invalid __global__ read</code></li>
 </ul>
 <p><strong>3 CUDA Runtime Errors:</strong></p>
 <ul>
@@ -337,6 +337,9 @@ access causes multiple downstream CUDA API failures.</p>
 <p><strong>Why tests still passed:</strong></p>
 <ul>
 <li>Valid threads <code>(0,0)</code>, <code>(0,1)</code>, <code>(1,0)</code>, <code>(1,1)</code> wrote correct results</li>
+<li>Thread <code>(2,0)</code> stayed in bounds by accident: with <code>row = thread_idx.y</code> and
+<code>col = thread_idx.x</code>, its flat offset is <code>0*2 + 2 = 2</code>, the same element
+thread <code>(0,1)</code> writes. Both write <code>12.0</code>, so the aliasing left no trace</li>
 <li>Test only checked valid output locations</li>
 <li>Out-of-bounds accesses didn’t immediately crash the program</li>
 </ul>
@@ -375,9 +378,11 @@ attacks</li>
 <h3 id="gpu-specific-undefined-behavior-dangers"><a class="header" href="#gpu-specific-undefined-behavior-dangers">GPU-specific undefined behavior dangers</a></h3>
 <p><strong>Massive scale impact:</strong></p>
 <ul>
-<li><strong>Thread divergence</strong>: One thread’s UB can affect entire warps (32 threads)</li>
-<li><strong>Memory coalescing</strong>: Out-of-bounds access can corrupt neighboring threads’
-data</li>
+<li><strong>Lockstep execution</strong>: Threads run in warps of 32, and a memory fault raised
+by one of them tears down the whole launch, not just that thread—that’s the
+<code>CUDA_ERROR_LAUNCH_FAILED</code> cascade above</li>
+<li><strong>Neighboring allocations</strong>: An out-of-bounds write lands in whatever the
+driver happened to place next in device memory, corrupting an unrelated buffer</li>
 <li><strong>Kernel failures</strong>: UB can cause entire GPU kernels to fail catastrophically</li>
 </ul>
 <p><strong>Hardware variations:</strong></p>

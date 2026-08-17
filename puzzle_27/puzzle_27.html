@@ -235,9 +235,9 @@ reduction patterns (Puzzle 12) to elegant single-function-call algorithms that
 leverage hardware-optimized block-wide communication primitives across multiple
 warps.</p>
 <p><strong>Key insight:</strong> <em>GPU thread blocks execute with sophisticated hardware
-coordination - Mojo’s block operations harness cross-warp communication and
-dedicated hardware units to provide complete parallel programming building
-blocks: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
+coordination - Mojo’s block operations combine warp shuffles with shared memory
+and barriers to provide complete parallel programming building blocks:
+reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
 <h3 id="block-level-communication-model"><a class="header" href="#block-level-communication-model"><strong>Block-level communication model</strong></a></h3>
 <p>Understand the three fundamental communication patterns within GPU thread
@@ -257,11 +257,12 @@ Cross-warp coordination:
 <ul>
 <li><strong>Cross-warp synchronization</strong>: Automatic coordination across multiple warps
 within a block</li>
-<li><strong>Dedicated hardware units</strong>: Specialized scan units and butterfly reduction
-networks</li>
-<li><strong>Zero explicit barriers</strong>: Hardware manages all synchronization internally</li>
-<li><strong>Logarithmic complexity</strong>: \(O(\log n)\) algorithms with
-single-instruction simplicity</li>
+<li><strong>Warp shuffle plus shared memory</strong>: A per-warp shuffle scan combined across
+warps through shared memory</li>
+<li><strong>Zero explicit barriers</strong>: The primitives place the required <code>barrier()</code>
+calls for you</li>
+<li><strong>Logarithmic complexity</strong>: \(O(\log n)\) algorithms with single-call
+simplicity</li>
 </ul>
 <h3 id="block-operations-in-mojo"><a class="header" href="#block-operations-in-mojo"><strong>Block operations in Mojo</strong></a></h3>
 <p>Learn the complete parallel programming toolkit from <code>max.gpu.primitives.block</code>:</p>
@@ -322,9 +323,10 @@ while stride &gt; 0:
     stride //= 2
 </code></pre>
 <h3 id="the-intermediate-step-warp-programming-puzzle-24"><a class="header" href="#the-intermediate-step-warp-programming-puzzle-24"><strong>The intermediate step: Warp programming (Puzzle 24)</strong></a></h3>
-<p>Hardware-accelerated but limited scope - <code>warp.sum()</code> within 32-thread warps:</p>
+<p>Hardware-accelerated but limited scope - <code>warp.sum()</code> within a single warp
+(<code>WARP_SIZE</code> threads):</p>
 <pre><code class="language-mojo"># Warp approach: 1 line but single warp only
-var total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
+var total = warp.sum(partial_product)
 </code></pre>
 <h3 id="the-destination-block-programming-this-puzzle"><a class="header" href="#the-destination-block-programming-this-puzzle"><strong>The destination: Block programming (This puzzle)</strong></a></h3>
 <p>Complete toolkit - hardware-optimized primitives across entire blocks:</p>

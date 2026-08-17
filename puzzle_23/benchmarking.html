@@ -226,7 +226,7 @@
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>After learning <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and
 <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance.
-Here’s how to use the built-in benchmarking system in <code>p21.mojo</code> to
+Here’s how to use the built-in benchmarking system in <code>p23.mojo</code> to
 scientifically compare these approaches and understand their performance
 characteristics.</p>
 <blockquote>
@@ -259,7 +259,9 @@ reveals the true performance story on your specific hardware.</em></p>
 </code></pre>
   </div>
 </div>
-<p>Your output will show performance measurements for each pattern:</p>
+<p>Your output will show performance measurements for each pattern (the run below
+is a B200 with MAX 26.5.0 / Mojo 1.0.0 — read the ranking, not the absolute
+times):</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
 Running P21 GPU Benchmarks...
@@ -286,24 +288,26 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0033248             | 100   |
-| tiled_16_4                | 0.00327392            | 100   |
-| manual_vectorized_16_4    | 0.0036169600000000002 | 100   |
-| vectorized_16_4           | 0.0037209599999999997 | 100   |
-| elementwise_128_16        | 0.00351999            | 100   |
-| tiled_128_16              | 0.00370431            | 100   |
-| manual_vectorized_128_16  | 0.0043696             | 100   |
-| vectorized_128_16         | 0.00378048            | 100   |
-| elementwise_1M_1024       | 0.03130143            | 100   |
-| tiled_1M_1024             | 0.6892189000000001    | 100   |
-| manual_vectorized_1M_1024 | 0.5923888             | 100   |
-| vectorized_1M_1024        | 0.1876688             | 100   |
+| elementwise_16_4          | 0.0045024             | 10    |
+| tiled_16_4                | 0.0043072             | 10    |
+| manual_vectorized_16_4    | 0.0041248             | 10    |
+| vectorized_16_4           | 0.0040704             | 10    |
+| elementwise_128_16        | 0.0040926999999999995 | 10    |
+| tiled_128_16              | 0.0041567             | 10    |
+| manual_vectorized_128_16  | 0.0042144             | 10    |
+| vectorized_128_16         | 0.0042014999999999995 | 10    |
+| elementwise_1M_1024       | 0.0054303             | 10    |
+| tiled_1M_1024             | 0.2601023             | 10    |
+| manual_vectorized_1M_1024 | 0.5849376000000001    | 10    |
+| vectorized_1M_1024        | 0.1486304             | 10    |
 
 Benchmarks completed!
 </code></pre>
 <h2 id="benchmark-configuration"><a class="header" href="#benchmark-configuration">Benchmark configuration</a></h2>
 <p>The benchmarking system uses Mojo’s built-in <code>benchmark</code> module:</p>
 <pre><code class="language-mojo">from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from max.benchmark import bencher_iter_custom
+
 var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 </code></pre>
 <ul>
@@ -323,7 +327,7 @@ def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bench
     def pattern_workflow(ctx: DeviceContext) raises:
       # Compute: Execute the algorithm being measured
 
-    b.iter_custom[pattern_workflow](bench_ctx)
+    bencher_iter_custom(b, pattern_workflow, bench_ctx)
     # Prevent optimization: keep(out.unsafe_ptr())
     # Synchronize: ctx.synchronize()
 </code></pre>
@@ -352,33 +356,38 @@ launch asynchronously, so we need:</p>
 <h2 id="test-scenarios-and-thread-analysis"><a class="header" href="#test-scenarios-and-thread-analysis">Test scenarios and thread analysis</a></h2>
 <p>The benchmark suite tests three scenarios to reveal performance characteristics:</p>
 <h3 id="thread-utilization-summary"><a class="header" href="#thread-utilization-summary">Thread utilization summary</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Problem Size</th><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Total SIMD ops</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Problem size</th><th>Pattern</th><th>Threads</th><th>Ops/thread</th><th>Total ops</th></tr></thead><tbody>
 <tr><td><strong>SIZE=16</strong></td><td>Elementwise</td><td>4</td><td>1</td><td>4</td></tr>
-<tr><td></td><td>Tiled</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td></td><td>Tiled</td><td>4</td><td>4</td><td>16</td></tr>
 <tr><td></td><td>Manual</td><td>1</td><td>4</td><td>4</td></tr>
 <tr><td></td><td>Vectorize</td><td>4</td><td>1</td><td>4</td></tr>
 <tr><td><strong>SIZE=128</strong></td><td>Elementwise</td><td>32</td><td>1</td><td>32</td></tr>
-<tr><td></td><td>Tiled</td><td>8</td><td>4</td><td>32</td></tr>
+<tr><td></td><td>Tiled</td><td>8</td><td>16</td><td>128</td></tr>
 <tr><td></td><td>Manual</td><td>2</td><td>16</td><td>32</td></tr>
 <tr><td></td><td>Vectorize</td><td>8</td><td>4</td><td>32</td></tr>
 <tr><td><strong>SIZE=1M</strong></td><td>Elementwise</td><td>262,144</td><td>1</td><td>262,144</td></tr>
-<tr><td></td><td>Tiled</td><td>1,024</td><td>256</td><td>262,144</td></tr>
+<tr><td></td><td>Tiled</td><td>1,024</td><td>1,024</td><td>1,048,576</td></tr>
 <tr><td></td><td>Manual</td><td>256</td><td>1,024</td><td>262,144</td></tr>
 <tr><td></td><td>Vectorize</td><td>1,024</td><td>256</td><td>262,144</td></tr>
 </tbody></table>
 </div>
+<p>All four patterns touch the same number of elements. Elementwise, manual and
+vectorize move <code>SIMD_WIDTH</code> elements per operation, so their op counts agree.
+The tiled pattern is the exception: <code>elementwise</code> launches it with a width of
+1, so each of its <code>tile_size</code> loop iterations moves a single element and it
+issues <code>SIMD_WIDTH</code> times as many memory operations for the same data.</p>
 <h3 id="performance-characteristics-by-problem-size"><a class="header" href="#performance-characteristics-by-problem-size">Performance characteristics by problem size</a></h3>
 <p><strong>Small problems (SIZE=16):</strong></p>
 <ul>
-<li>Launch overhead dominates (~0.003ms baseline)</li>
+<li>Launch overhead dominates (~0.004ms baseline)</li>
 <li>Thread count differences don’t matter</li>
 <li>Tiled/vectorize show slightly lower overhead</li>
 </ul>
 <p><strong>Medium problems (SIZE=128):</strong></p>
 <ul>
-<li>Still overhead-dominated (~0.003ms for all)</li>
+<li>Still overhead-dominated (~0.004ms for all)</li>
 <li>Performance differences nearly disappear</li>
-<li>Transitional behaviour between overhead and computation</li>
+<li>Transitional behavior between overhead and computation</li>
 </ul>
 <p><strong>Large problems (SIZE=1M):</strong></p>
 <ul>
@@ -390,10 +399,10 @@ launch asynchronously, so we need:</p>
 <p>Based on empirical benchmark results across different hardware:</p>
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
-<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.03ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.19ms</td><td>Uncoalesced memory access hurts performance</td></tr>
-<tr><td>🥉</td><td><strong>Manual vectorized</strong></td><td>~0.59ms</td><td>Uncoalesced memory access and manual optimization reduces performance</td></tr>
-<tr><td>4th</td><td><strong>Tiled</strong></td><td>~0.69ms</td><td>Uncoalesced memory access, manual optimization without SIMD loads reduces performance further</td></tr>
+<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.005ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
+<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.15ms</td><td>Uncoalesced memory access hurts performance</td></tr>
+<tr><td>🥉</td><td><strong>Tiled</strong></td><td>~0.26ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
+<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~0.58ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads costs the most</td></tr>
 </tbody></table>
 </div>
 <h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
@@ -408,14 +417,21 @@ outperforms complex memory optimizations at scale.</p>
 <li><strong>Minimal overhead</strong> per thread</li>
 <li><strong>Scales naturally</strong> with GPU core count</li>
 </ul>
-<p><strong>Why tiled and vectorize are competitive:</strong></p>
+<p><strong>Why Mojo vectorize holds up:</strong></p>
 <ul>
+<li><strong>Automatic full-width loads</strong> without hand-written index arithmetic</li>
 <li><strong>Balanced approach</strong> between parallelism and memory locality</li>
-<li><strong>Automatic optimization</strong> (vectorize) performs nearly as well as manual
-tiling</li>
 <li><strong>Good thread utilization</strong> without excessive complexity</li>
 </ul>
-<p><strong>Why manual vectorization struggles:</strong></p>
+<p><strong>Why tiled falls behind:</strong></p>
+<ul>
+<li><strong>Width-1 loads</strong> issue four times as many memory operations for the same
+data</li>
+<li><strong>Uncoalesced access</strong>: adjacent threads read tiles a full <code>tile_size</code> apart,
+so a warp’s loads never merge into one transaction</li>
+<li><strong>Locality within a tile</strong> doesn’t make up for that lost coalescing</li>
+</ul>
+<p><strong>Why manual vectorization comes last:</strong></p>
 <ul>
 <li><strong>Only 256 threads</strong> limit parallelism</li>
 <li><strong>Complex indexing</strong> adds computational overhead</li>
@@ -424,14 +440,14 @@ tiling</li>
 </ul>
 <p><strong>Framework intelligence:</strong></p>
 <ul>
-<li>Automatic iteration count adjustment (91-100 iterations)</li>
+<li>Automatic iteration count adjustment, bounded by <code>max_iters</code></li>
 <li>Statistical reliability across different execution times</li>
 <li>Handles thermal throttling and system variation</li>
 </ul>
 <h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
 <h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
 <pre><code class="language-txt">| name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 0.03130143         | 100   |
+| elementwise_1M_1024      | 0.0054303          | 10    |
 </code></pre>
 <ul>
 <li><strong><code>met (ms)</code></strong>: Execution time for a single iteration</li>
@@ -460,12 +476,20 @@ operations</li>
 <h3 id="custom-test-scenarios"><a class="header" href="#custom-test-scenarios">Custom test scenarios</a></h3>
 <p>Modify parameters to test different conditions:</p>
 <pre><code class="language-mojo"># Different problem sizes
-benchmark_elementwise_parameterized[1024, 32]  # Large problem
-benchmark_elementwise_parameterized[64, 8]     # Small problem
+bench.bench_function[benchmark_elementwise_parameterized[1024, 32]](
+    BenchId("elementwise_1024_32")
+)
+bench.bench_function[benchmark_elementwise_parameterized[64, 8]](
+    BenchId("elementwise_64_8")
+)
 
 # Different tile sizes
-benchmark_tiled_parameterized[256, 8]   # Small tiles
-benchmark_tiled_parameterized[256, 64]  # Large tiles
+bench.bench_function[benchmark_tiled_parameterized[256, 8]](
+    BenchId("tiled_256_8")
+)
+bench.bench_function[benchmark_tiled_parameterized[256, 64]](
+    BenchId("tiled_256_64")
+)
 </code></pre>
 <h3 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h3>
 <p>Your results will vary based on:</p>
@@ -489,7 +513,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Start simple</strong>: Begin with elementwise for memory-bound operations</li>
 <li><strong>Measure don’t guess</strong>: Theoretical analysis guides, empirical data decides</li>
 <li><strong>Scale matters</strong>: Small problem performance doesn’t predict large problem
-behaviour</li>
+behavior</li>
 <li><strong>Total cost optimization</strong>: Balance development time vs runtime performance</li>
 </ul>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
@@ -506,7 +530,7 @@ practical performance optimization. Use empirical data to make informed
 decisions about which patterns work best for your specific hardware and workload
 characteristics.</p>
 <h2 id="looking-ahead-when-you-need-more-control"><a class="header" href="#looking-ahead-when-you-need-more-control">Looking ahead: when you need more control</a></h2>
-<p>The functional patterns in Part V provide excellent performance for most
+<p>The functional patterns in Part VI provide excellent performance for most
 workloads, but some algorithms require <strong>direct thread communication</strong>:</p>
 <h3 id="algorithms-that-benefit-from-warp-programming"><a class="header" href="#algorithms-that-benefit-from-warp-programming"><strong>Algorithms that benefit from warp programming:</strong></a></h3>
 <ul>
@@ -516,7 +540,7 @@ workloads, but some algorithms require <strong>direct thread communication</stro
 <li><strong>Cooperative algorithms</strong>: Where threads must coordinate closely</li>
 </ul>
 <h3 id="performance-preview"><a class="header" href="#performance-preview"><strong>Performance preview:</strong></a></h3>
-<p>In Part VI, we’ll revisit several algorithms from Part II and show how warp
+<p>In Part VII, we’ll revisit several algorithms from Part III and show how warp
 operations can:</p>
 <ul>
 <li><strong>Simplify code</strong>: Replace complex shared memory patterns with single function

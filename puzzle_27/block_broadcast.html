@@ -240,7 +240,7 @@ communication patterns: reduction (all→one), scan (all→each), and broadcast
 <ul>
 <li><strong>Block-level broadcast</strong> with <code>block.broadcast()</code></li>
 <li><strong>One-to-all communication</strong> patterns</li>
-<li><strong>Source thread specification</strong> and parameter control</li>
+<li><strong>Source thread specification</strong> with the <code>src_thread</code> argument</li>
 <li><strong>Complete block operations workflow</strong> combining multiple operations</li>
 <li><strong>Real-world algorithm implementation</strong> using coordinated block primitives</li>
 </ul>
@@ -286,11 +286,12 @@ if local_i == 0:
 barrier()
 
 # Phase 3: All threads read mean and normalize
-mean = shared_mean[0]  # Everyone reads the same value
-output[global_i] = my_value / mean
+var block_mean = shared_mean[0]  # Everyone reads the same value
+output[global_i] = my_value / block_mean
 </code></pre>
 <h2 id="the-advanced-approach-blocksum--blockbroadcast-coordination"><a class="header" href="#the-advanced-approach-blocksum--blockbroadcast-coordination">The advanced approach: <code>block.sum()</code> + <code>block.broadcast()</code> coordination</a></h2>
-<p>Transform the multi-phase coordination into elegant block operations workflow:</p>
+<p>Transform the multi-phase coordination into an elegant block operations
+workflow.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <h3 id="complete-block-operations-workflow"><a class="header" href="#complete-block-operations-workflow">Complete block operations workflow</a></h3>
 <p>Implement sophisticated vector mean normalization using the full block
@@ -338,7 +339,7 @@ operations toolkit:</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -371,15 +372,16 @@ the result.</p>
 <h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
-<li>Template parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
-<li>Runtime parameters: <code>val</code> (SIMD value to broadcast), <code>src_thread</code> (default=0)</li>
+<li>Compile-time parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
+<li>Runtime arguments: <code>val</code> (SIMD value to broadcast) and <code>src_thread</code>, an <code>Int</code>
+that defaults to 0</li>
 </ul>
-<p>The call pattern follows the established template style:</p>
+<p>The call pattern follows the established style:</p>
 <pre><code class="language-mojo">var result = block.broadcast[
     dtype = DType.float32,
     width = 1,
     block_size = tpb
-](val=SIMD[DType.float32, 1](value_to_broadcast), src_thread=UInt(0))
+](val=SIMD[DType.float32, 1](value_to_broadcast), src_thread=0)
 </code></pre>
 <h3 id="5-understanding-the-broadcast-pattern"><a class="header" href="#5-understanding-the-broadcast-pattern">5. <strong>Understanding the broadcast pattern</strong></a></h3>
 <p><strong>Key insight</strong>: <code>block.broadcast()</code> takes a value from ONE thread and gives it
@@ -404,7 +406,7 @@ to ALL threads:</p>
 <li><strong>Thread indexing</strong>: Same <code>global_i</code>, <code>local_i</code> pattern as always</li>
 <li><strong>Bounds checking</strong>: Same <code>if global_i &lt; size</code> validation</li>
 <li><strong>SIMD handling</strong>: Same <code>[0]</code> extraction patterns</li>
-<li><strong>Block operations</strong>: Same template parameter style as <code>block.sum()</code></li>
+<li><strong>Block operations</strong>: Same compile-time parameter style as <code>block.sum()</code></li>
 </ul>
 <p>The beauty is that each block operation follows consistent patterns!</p>
 </div>
@@ -443,11 +445,12 @@ Sum value: 576.0
 Mean value: 4.5
 
 Mean Normalization Results:
-Normalized sample: 0.22222222 0.44444445 0.6666667 0.8888889 1.1111112 1.3333334 1.5555556 1.7777778 ...
+Normalized sample: 0.22222222 0.44444445 0.6666667 0.8888889 1.1111112 1.3333334 1.5555556 1.7777778 0.22222222 0.44444445 0.6666667 0.8888889 1.1111112 1.3333334 1.5555556 1.7777778 ...
 
 Output sum: 128.0
 Output mean: 1.0
 ✅ Success: Output mean is 1.0 (should be close to 1.0)
+Puzzle 27 complete ✅
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
@@ -519,7 +522,8 @@ Parallel element loading using TileTensor pattern:
   Thread 15:  my_value = input_data[15][0] = 8.0   // 15 % 8 = 7, so 8th value
   Thread 127: my_value = input_data[127][0] = 8.0  // 127 % 8 = 7, so 8th value
 
-All 128 threads load simultaneously - perfect parallel efficiency!
+All 128 threads issue their load independently - one warp at a time on the
+hardware, but with no ordering constraint between them.
 </code></pre>
 <h3 id="phase-2-block-wide-sum-reduction-leveraging-earlier-blocksum-knowledge"><a class="header" href="#phase-2-block-wide-sum-reduction-leveraging-earlier-blocksum-knowledge"><strong>Phase 2: Block-wide sum reduction (leveraging earlier block.sum() knowledge)</strong></a></h3>
 <pre><code class="language-text">block.sum() coordination across all 128 threads:
@@ -528,8 +532,8 @@ All 128 threads load simultaneously - perfect parallel efficiency!
     - Thread contributions: 16×1 + 16×2 + 16×3 + 16×4 + 16×5 + 16×6 + 16×7 + 16×8
     - Mathematical sum: 16 × (1+2+3+4+5+6+7+8) = 16 × 36 = 576.0
 
-block.sum() hardware execution:
-  All threads → [reduction tree] → Thread 0
+block.sum() execution:
+  All threads → [per-warp shuffle reduction, then shared memory] → Thread 0
   total_sum = SIMD[DType.float32, 1](576.0)  // Only thread 0 receives this
 
 Threads 1-127: Have no access to total_sum (broadcast=False in block.sum)
@@ -549,7 +553,7 @@ Critical insight: Only thread 0 has the correct mean value at this point!
 </code></pre>
 <h3 id="phase-4-block-wide-broadcast-distribution-one--all-communication"><a class="header" href="#phase-4-block-wide-broadcast-distribution-one--all-communication"><strong>Phase 4: Block-wide broadcast distribution (one → all communication)</strong></a></h3>
 <pre><code class="language-text">block.broadcast() API execution:
-  Source: src_thread = UInt(0) → Thread 0's mean_value = 4.5
+  Source: src_thread = 0 → Thread 0's mean_value = 4.5
   Target: All 128 threads in block
 
 Before broadcast:
@@ -622,7 +626,7 @@ operations</li>
 </ul>
 <h3 id="connection-to-blocksum-perfect-integration"><a class="header" href="#connection-to-blocksum-perfect-integration"><strong>Connection to <a href="./block_sum.html"><code>block.sum()</code></a> (perfect integration):</strong></a></h3>
 <ul>
-<li><strong>API consistency</strong>: Identical template structure
+<li><strong>API consistency</strong>: Identical parameter list structure
 <code>[block_size=tpb, broadcast=False]</code></li>
 <li><strong>Result flow design</strong>: Thread 0 receives sum, naturally computes derived
 parameter</li>
@@ -636,8 +640,8 @@ computation + broadcast</li>
 gives shared values</li>
 <li><strong>Usage scenarios</strong>: <code>prefix_sum</code> for parallel partitioning, <code>broadcast</code> for
 parameter sharing</li>
-<li><strong>Template consistency</strong>: Same <code>dtype</code>, <code>block_size</code> parameter patterns across
-all operations</li>
+<li><strong>Parameter consistency</strong>: Same <code>dtype</code>, <code>block_size</code> parameter patterns
+across all operations</li>
 <li><strong>SIMD handling uniformity</strong>: All block operations return SIMD requiring <code>[0]</code>
 extraction</li>
 </ul>
@@ -650,10 +654,10 @@ extraction</li>
     Total: Multiple synchronization points, error-prone
 
   Block operations approach:
-    1. block.sum():          O(log n) hardware-optimized, automatic barriers
+    1. block.sum():          O(log n) shuffle rounds, 1 library-placed barrier
     2. Computation:          O(1) single thread
-    3. block.broadcast():    O(log n) hardware-optimized, automatic distribution
-    Total: Two primitives, automatic synchronization, provably correct
+    3. block.broadcast():    O(1) shared memory write + read, 1 barrier
+    Total: Two primitives, library-placed synchronization, provably correct
 </code></pre>
 <h3 id="real-world-algorithm-patterns-demonstrated"><a class="header" href="#real-world-algorithm-patterns-demonstrated"><strong>Real-world algorithm patterns demonstrated:</strong></a></h3>
 <pre><code class="language-text">Common parallel algorithm structure:
@@ -707,53 +711,54 @@ all→each communication</li>
 building blocks for sophisticated parallel algorithms, replacing complex manual
 coordination with clean, composable primitives.</p>
 <h2 id="performance-insights-and-technical-analysis"><a class="header" href="#performance-insights-and-technical-analysis">Performance insights and technical analysis</a></h2>
-<h3 id="quantitative-performance-comparison"><a class="header" href="#quantitative-performance-comparison"><strong>Quantitative performance comparison:</strong></a></h3>
-<p><strong><code>block.broadcast()</code> vs Traditional shared memory approach (for
-demonstration):</strong></p>
-<p><strong>Traditional Manual Approach:</strong></p>
-<pre><code class="language-text">Phase 1: Manual reduction
-  • Shared memory allocation: ~5 cycles
-  • Barrier synchronization: ~10 cycles
-  • Tree reduction loop: ~15 cycles
-  • Error-prone manual indexing
+<h3 id="structural-comparison"><a class="header" href="#structural-comparison"><strong>Structural comparison:</strong></a></h3>
+<p><strong><code>block.broadcast()</code> vs traditional shared memory approach:</strong></p>
+<p>Counting operations rather than cycles - cycle counts depend on the GPU, the
+occupancy, and the data type, so measure them on your own hardware rather than
+trusting a table:</p>
+<p><strong>Traditional manual approach:</strong></p>
+<pre><code class="language-text">Phase 1: Manual tree reduction
+  • Shared memory buffer sized to the whole block (tpb elements)
+  • log2(tpb) reduction rounds, each ending in a barrier()
+  • For tpb = 128: 1 initial barrier + 7 loop barriers = 8 barriers
 
-Phase 2: Mean computation: ~2 cycles
+Phase 2: Mean computation on thread 0
 
 Phase 3: Shared memory broadcast
-  • Manual write to shared: ~2 cycles
-  • Barrier synchronization: ~10 cycles
-  • All threads read: ~3 cycles
+  • Thread 0 writes the mean to shared memory
+  • 1 barrier()
+  • All threads read the mean back
 
-Total: ~47 cycles
-  + synchronization overhead
-  + potential race conditions
-  + manual error debugging
+Total: 9 barriers you write and have to place correctly
 </code></pre>
-<p><strong>Block Operations Approach:</strong></p>
+<p><strong>Block operations approach:</strong></p>
 <pre><code class="language-text">Phase 1: block.sum()
-  • Hardware-optimized: ~3 cycles
-  • Automatic barriers: 0 explicit cost
-  • Optimized reduction: ~8 cycles
-  • Verified correct implementation
+  • Per-warp shuffle reduction, then a small shared memory buffer
+    sized to the number of warps (4 slots for tpb = 128, not 128)
+  • 1 barrier() with broadcast=False, placed by the library
 
-Phase 2: Mean computation: ~2 cycles
+Phase 2: Mean computation on thread 0
 
 Phase 3: block.broadcast()
-  • Hardware-optimized: ~4 cycles
-  • Automatic distribution: 0 explicit cost
-  • Verified correct implementation
+  • Thread 0 writes to a 1-element shared buffer
+  • 1 barrier(), placed by the library
 
-Total: ~17 cycles
-  + automatic optimization
-  + guaranteed correctness
-  + composable design
+Total: 2 barriers, none of which you write
 </code></pre>
+<p>The win is not that the barriers disappear - the library still issues them. It
+is that the shared memory footprint drops from <code>tpb</code> elements to a handful, the
+reduction rounds move into warp shuffles, and you cannot get the barrier
+placement wrong.</p>
 <h3 id="memory-hierarchy-advantages"><a class="header" href="#memory-hierarchy-advantages"><strong>Memory hierarchy advantages:</strong></a></h3>
-<p><strong>Cache efficiency:</strong></p>
+<p><strong>Shared memory footprint:</strong></p>
 <ul>
-<li><strong>block.sum()</strong>: Optimized memory access patterns reduce cache misses</li>
-<li><strong>block.broadcast()</strong>: Efficient distribution minimizes memory bandwidth usage</li>
-<li><strong>Combined workflow</strong>: Single kernel reduces global memory round-trips by 100%</li>
+<li><strong><code>block.sum()</code></strong>: Allocates one slot per warp (4 for a 128-thread block)
+rather than one slot per thread, and pads that buffer against bank conflicts
+once a block holds more than <code>WARP_SIZE</code> warps</li>
+<li><strong><code>block.broadcast()</code></strong>: Allocates a single element for a multi-warp block,
+and skips shared memory entirely when the block is one warp</li>
+<li><strong>Combined workflow</strong>: Keeping both phases in one kernel avoids a round-trip
+through global memory between them</li>
 </ul>
 <p><strong>Memory bandwidth utilization:</strong></p>
 <pre><code class="language-text">Traditional multi-kernel approach:

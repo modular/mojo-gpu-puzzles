@@ -265,7 +265,7 @@ def add_10_blocks(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a></p>
 <blockquote>
 <p>Note: The <code>TileTensor</code> variant of this puzzle is very similar so we leave it
 to the reader.</p>
@@ -380,7 +380,8 @@ size</li>
 <p><strong>Memory access pattern</strong></p>
 <ul>
 <li>Coalesced memory access: threads in a block access contiguous memory</li>
-<li>Each thread processes one element: <code>output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0</code></li>
+<li>Each thread processes one element:
+<code>output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0</code></li>
 <li>Block-level parallelism provides efficient memory bandwidth utilization</li>
 </ul>
 </li>

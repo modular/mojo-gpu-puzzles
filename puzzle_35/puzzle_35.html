@@ -235,7 +235,7 @@ the API boundary. If the compiler hasn’t been guaranteed that the data is alig
 it conservatively emits the slow path. Explicitly stating alignment allows for more
 efficient instructions and use of bandwidth.</p>
 <p>In this puzzle, you’ll write the same memory-bound kernel three ways, confirm all
-three produce identical results, and then use benchmarking and NSight Compute to
+three produce identical results, and then use benchmarking and Nsight Compute to
 see why only one of them saturates memory bandwidth.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Modern GPUs move memory in wide transactions. A <code>float32x4</code> (128-bit) load maps
@@ -249,7 +249,7 @@ instructions</li>
 <li>Why three kernels with identical output can have very different bandwidth</li>
 <li>How to communicate alignment through the <code>LayoutTensor</code> API
 (<code>aligned_load</code>, <code>load</code>/<code>store</code> with explicit alignment)</li>
-<li>How to confirm the codegen change with NSight Compute</li>
+<li>How to confirm the codegen change with Nsight Compute</li>
 </ul>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
@@ -272,7 +272,7 @@ the bottleneck.</li>
 and vectorized-and-aligned) that all compute <code>out[i] = a[i] * 2 + 1</code>. Confirm
 they agree, then look at the alignment that separates them.</p>
 <h3 id="-benchmark--profile"><a class="header" href="#-benchmark--profile"><strong><a href="./benchmark_and_profile.html">📊 Benchmark &amp; Profile</a></strong></a></h3>
-<p>Measure the difference. Benchmark all three variants, then use NSight Compute to
+<p>Measure the difference. Benchmark all three variants, then use Nsight Compute to
 prove the aligned kernel issues vectorized loads while the under-aligned one
 does not.</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
@@ -286,7 +286,7 @@ does not.</p>
 <p><strong>Hardware requirements:</strong></p>
 <ul>
 <li>The kernels run and verify on any supported GPU (NVIDIA, AMD, Apple).</li>
-<li>The vectorized-codegen story and the NSight Compute profiling section are
+<li>The vectorized-codegen story and the Nsight Compute profiling section are
 NVIDIA-specific: the <code>ld.global.nc.v4</code> instruction and <code>ncu</code> metrics are
 CUDA concepts.</li>
 </ul>

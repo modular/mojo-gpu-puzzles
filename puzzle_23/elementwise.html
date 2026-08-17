@@ -283,7 +283,7 @@ cross-thread or cross-block communication to reason about here.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -333,23 +333,28 @@ capabilities.</p>
 <p>This performs element-wise addition across the entire SIMD vector (if supported)
 in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
-<pre><code class="language-mojo">output.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
+<pre><code class="language-mojo">out_lt.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
 <p>Writes the entire SIMD vector back to memory in one operation.</p>
 <h3 id="6-calling-the-elementwise-function"><a class="header" href="#6-calling-the-elementwise-function">6. <strong>Calling the elementwise function</strong></a></h3>
 <pre><code class="language-mojo">elementwise[your_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 </code></pre>
 <ul>
-<li><code>total_size</code> should be <code>a.size()</code> to process all elements</li>
-<li>The GPU automatically determines how many threads to launch:
-<code>total_size // SIMD_WIDTH</code></li>
+<li><code>total_size</code> is the <code>size</code> compile-time parameter of the enclosing
+function—the template already passes it</li>
+<li><code>elementwise</code> sizes the grid itself and drives a grid-stride loop, so your
+function is invoked once per <code>SIMD_WIDTH</code>-wide chunk:
+<code>total_size // SIMD_WIDTH</code> invocations, spread over however many threads the
+GPU can keep busy</li>
 </ul>
 <h3 id="7-key-debugging-insight"><a class="header" href="#7-key-debugging-insight">7. <strong>Key debugging insight</strong></a></h3>
-<p>Notice the <code>print("idx:", idx)</code> in the template. When you run it, you’ll see:</p>
+<p>Add <code>print("idx:", idx)</code> to the nested function and re-run. You’ll see values
+like:</p>
 <pre><code class="language-text">idx: 0, idx: 4, idx: 8, idx: 12, ...
 </code></pre>
-<p>This shows that each thread handles a different SIMD chunk, automatically spaced
-by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
+<p>The values are multiples of <code>SIMD_WIDTH</code> (which is GPU-dependent), showing that
+each invocation handles a different SIMD chunk. The order they print in is
+arbitrary, since the threads run concurrently.</p>
 </div>
 </details>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
@@ -381,13 +386,6 @@ by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
-...
-idx: 404
-idx: 408
-idx: 412
-idx: 416
-...
-
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
@@ -443,8 +441,10 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 <p><strong>What <code>elementwise</code> abstracts away:</strong></p>
 <ul>
 <li><strong>Thread grid configuration</strong>: No need to calculate block/grid dimensions</li>
-<li><strong>Bounds checking</strong>: Automatic handling of array boundaries</li>
-<li><strong>Memory coalescing</strong>: Optimal memory access patterns built-in</li>
+<li><strong>Tail handling</strong>: Elements left over when <code>SIMD_WIDTH</code> doesn’t divide the
+shape are re-invoked one at a time, with <code>width=1</code></li>
+<li><strong>Memory coalescing</strong>: Threads walk the array with a grid stride, so
+neighboring threads touch neighboring chunks</li>
 <li><strong>SIMD orchestration</strong>: Vectorization handled transparently</li>
 <li><strong>GPU target selection</strong>: Works across different GPU architectures</li>
 </ul>
@@ -468,17 +468,20 @@ variables from the outer scope without explicit parameter passing.</li>
 processed; <code>indices[0]</code> is the linear start position for 1D operations.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">var idx = Int(indices[0].value())                     # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-var a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-var b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-var ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
+<pre><code class="language-mojo">var idx = Int(indices[0].value())                            # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+var a_lt = a.to_layout_tensor()                              # LayoutTensor views for vectorized access
+var b_lt = b.to_layout_tensor()
+var out_lt = output.to_layout_tensor()
+var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+var ret = a_simd + b_simd                                    # SIMD: 4 additions in parallel (GPU-dependent)
+out_lt.store[simd_width](Index(idx), ret)                    # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code class="language-text">GPU Architecture:
 ├── Grid (entire problem)
 │   ├── Block 1 (multiple warps)
-│   │   ├── Warp 1 (32 threads) --&gt; We'll learn about Warp in the next Part VI
+│   │   ├── Warp 1 (32 threads) --&gt; We'll learn about Warp in Part VII
 │   │   │   ├── Thread 1 → SIMD[4 elements]  ← Our focus (GPU-dependent width)
 │   │   │   ├── Thread 2 → SIMD[4 elements]
 │   │   │   └── ...
@@ -488,14 +491,17 @@ output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously 
 <p><strong>For a 1024-element vector with SIMD_WIDTH=4 (example GPU):</strong></p>
 <ul>
 <li><strong>Total SIMD operations needed</strong>: 1024 ÷ 4 = 256</li>
-<li><strong>GPU launches</strong>: 256 threads (1024 ÷ 4)</li>
-<li><strong>Each thread processes</strong>: Exactly 4 consecutive elements</li>
-<li><strong>Memory bandwidth</strong>: SIMD_WIDTH× improvement over scalar operations</li>
+<li><strong>Body invocations</strong>: 256, one per SIMD chunk</li>
+<li><strong>Each invocation processes</strong>: Exactly 4 consecutive elements</li>
+<li><strong>Threads</strong>: However many <code>elementwise</code> decides it needs to saturate the
+GPU - the 256 chunks are handed out across that grid, so a thread may run the
+body once or several times</li>
 </ul>
-<p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for
-RTX 4090, 16 for A100).</p>
+<p><strong>Note</strong>: SIMD width varies with the target’s vector register width and the data
+type. Current NVIDIA and AMD GPU targets report a 128-bit vector width, which
+gives <code>SIMD_WIDTH = 4</code> for <code>float32</code>.</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
-<pre><code class="language-mojo">a.aligned_load[simd_width](Index(idx))  # Coalesced memory access
+<pre><code class="language-mojo">a_lt.aligned_load[width=simd_width](Index(idx))  # Coalesced memory access
 </code></pre>
 <p><strong>Memory Coalescing Benefits:</strong></p>
 <ul>
@@ -505,11 +511,12 @@ RTX 4090, 16 for A100).</p>
 <li><strong>Hardware efficiency</strong>: GPU memory controllers optimized for this pattern</li>
 </ul>
 <p><strong>Example for SIMD_WIDTH=4 (GPU-dependent):</strong></p>
-<pre><code class="language-text">Thread 0: loads a[0:4]   → Memory bank 0-3
-Thread 1: loads a[4:8]   → Memory bank 4-7
-Thread 2: loads a[8:12]  → Memory bank 8-11
+<pre><code class="language-text">Thread 0: loads a[0:4]   → bytes 0-15
+Thread 1: loads a[4:8]   → bytes 16-31
+Thread 2: loads a[8:12]  → bytes 32-47
 ...
-Result: Optimal memory controller utilization
+Result: A 32-lane warp covers one contiguous 512-byte span, so the memory
+        controller fetches whole cache lines instead of scattered words
 </code></pre>
 <h3 id="5-performance-characteristics--optimization"><a class="header" href="#5-performance-characteristics--optimization">5. <strong>Performance characteristics &amp; optimization</strong></a></h3>
 <p><strong>Computational Intensity Analysis (for SIMD_WIDTH=4):</strong></p>
@@ -530,11 +537,12 @@ Result: Optimal memory controller utilization
 </ul>
 <h3 id="6-scaling-and-adaptability"><a class="header" href="#6-scaling-and-adaptability">6. <strong>Scaling and adaptability</strong></a></h3>
 <p><strong>Automatic Hardware Adaptation:</strong></p>
-<pre><code class="language-mojo">comptime SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
+<pre><code class="language-mojo">comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 </code></pre>
 <ul>
-<li><strong>GPU-specific optimization</strong>: SIMD width adapts to hardware (e.g., 4 for some
-cards, 8 for RTX 4090, 16 for A100)</li>
+<li><strong>GPU-specific optimization</strong>: SIMD width adapts to hardware - it is the
+target’s SIMD register width divided by the size of <code>dtype</code>, so a 128-bit
+vector register gives 4 for <code>float32</code> and 8 for <code>float16</code></li>
 <li><strong>Data type awareness</strong>: Different SIMD widths for float32 vs float16</li>
 <li><strong>Compile-time optimization</strong>: Zero runtime overhead for hardware detection</li>
 </ul>
@@ -567,9 +575,11 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 </code></pre>
 <p><strong>Benefits of Functional Approach:</strong></p>
 <ul>
-<li><strong>Safety</strong>: Automatic bounds checking prevents buffer overruns</li>
+<li><strong>Safety</strong>: The tail is handled for you, so a shape that isn’t a multiple of
+<code>SIMD_WIDTH</code> doesn’t need a hand-written remainder branch</li>
 <li><strong>Portability</strong>: Same code works across GPU vendors/generations</li>
-<li><strong>Performance</strong>: Compiler optimizations often exceed hand-tuned code</li>
+<li><strong>Performance</strong>: Grid sizing and the SIMD width come from the target, so the
+same source adapts instead of being retuned by hand</li>
 <li><strong>Maintainability</strong>: Clean abstractions reduce debugging complexity</li>
 <li><strong>Composability</strong>: Easy to combine with other functional operations</li>
 </ul>

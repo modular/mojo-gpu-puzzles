@@ -283,6 +283,11 @@ memory</li>
    2D Non-coalesced: 3.867 ms
    1D is 1.80x faster than 2D
 </code></pre>
+<p>These are end-to-end wall-clock times per call, measured around the Python
+wrapper. Each trial also allocates a fresh output tensor and re-enters the
+custom-op dispatch, so the absolute numbers include host overhead and are much
+larger than the kernels alone. Treat the ratio as the takeaway, not the
+milliseconds, and expect different numbers on different GPUs.</p>
 <h2 id="memory-access-visualization"><a class="header" href="#memory-access-visualization">Memory access visualization</a></h2>
 <h3 id="coalesced-pattern-1d-kernel"><a class="header" href="#coalesced-pattern-1d-kernel">Coalesced pattern (1D kernel)</a></h3>
 <p><strong>Warp execution for output[0,0,0:32]:</strong></p>
@@ -302,12 +307,15 @@ memory</li>
     X-dim: batch*seq positions (0-15)
     Y-dim: embed dimensions (0-15)
 
-Warp threads might access:
-    Thread 0:  batch=0, seq=0, embed=0  → Address A
-    Thread 1:  batch=0, seq=1, embed=0  → Address B (different row)
-    Thread 2:  batch=0, seq=2, embed=0  → Address C (different row)
+Warp threads access:
+    Thread 0:  batch=0, seq=0,  embed=0 → Address A
+    Thread 1:  batch=0, seq=1,  embed=0 → Address B (different row)
+    Thread 2:  batch=0, seq=2,  embed=0 → Address C (different row)
     ...
-    Thread 31: batch=1, seq=15, embed=0 → Address Z (scattered)
+    Thread 15: batch=0, seq=15, embed=0 → Address P (different row)
+    Thread 16: batch=0, seq=0,  embed=1 → Address Q (next embed column)
+    ...
+    Thread 31: batch=0, seq=15, embed=1 → Address Z (scattered)
 </code></pre>
 <p><strong>Result</strong>: Potentially scattered addresses → <strong>Multiple memory transactions</strong></p>
 <h2 id="key-optimization-strategies"><a class="header" href="#key-optimization-strategies">Key optimization strategies</a></h2>

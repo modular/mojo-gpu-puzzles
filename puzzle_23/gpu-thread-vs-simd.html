@@ -253,7 +253,8 @@ detail in <strong><a href="../puzzle_24/puzzle_24.html">Part VII</a></strong>.</
 <p><strong>What Mojo abstracts for you:</strong></p>
 <ul>
 <li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
-<li><strong>Warp management</strong>: Hardware handles 32-thread groups transparently</li>
+<li><strong>Warp management</strong>: The hardware schedules whole warps for you
+(<code>WARP_SIZE</code> threads: 32 on NVIDIA, RDNA and Apple, 64 on AMD CDNA)</li>
 <li><strong>Thread scheduling</strong>: GPU scheduler manages execution automatically</li>
 <li><strong>Memory hierarchy</strong>: Optimal access patterns built into functional operations</li>
 </ul>
@@ -268,14 +269,16 @@ output.store[simd_width](Index(idx), result) # Store 4 results simultaneously
 </code></pre>
 <h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
 <blockquote>
-<p><strong>Critical insight:</strong> All patterns perform the <strong>same total work</strong> - 256 SIMD
-operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this
-work is distributed across GPU threads.</p>
+<p><strong>Critical insight:</strong> Elementwise, manual vectorization and Mojo vectorize
+perform the <strong>same total work</strong> - 256 SIMD operations for 1024 elements with
+SIMD_WIDTH=4 - and differ only in how that work is distributed across GPU
+threads. Tiled is the exception: <code>elementwise</code> launches it with a width of 1,
+so it issues 1024 single-element operations instead.</p>
 </blockquote>
 <h3 id="thread-organization-comparison-size1024-simd_width4"><a class="header" href="#thread-organization-comparison-size1024-simd_width4">Thread organization comparison (<code>SIZE=1024</code>, <code>SIMD_WIDTH=4</code>)</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Memory pattern</th><th>Trade-off</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Threads</th><th>Ops/thread</th><th>Memory pattern</th><th>Trade-off</th></tr></thead><tbody>
 <tr><td><strong>Elementwise</strong></td><td>256</td><td>1</td><td>Distributed access</td><td>Max parallelism, poor locality</td></tr>
-<tr><td><strong>Tiled</strong></td><td>32</td><td>8</td><td>Small blocks</td><td>Balanced parallelism + locality</td></tr>
+<tr><td><strong>Tiled</strong></td><td>32</td><td>32</td><td>Small blocks</td><td>Balanced parallelism + locality</td></tr>
 <tr><td><strong>Manual vectorized</strong></td><td>8</td><td>32</td><td>Large chunks</td><td>High bandwidth, fewer threads</td></tr>
 <tr><td><strong>Mojo vectorize</strong></td><td>32</td><td>8</td><td>Smart blocks</td><td>Automatic optimization</td></tr>
 </tbody></table>
@@ -286,8 +289,8 @@ work is distributed across GPU threads.</p>
 256 threads × 1 SIMD op = 256 total SIMD operations
 </code></pre>
 <p><strong>Tiled pattern:</strong></p>
-<pre><code class="language-text">Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
-32 threads × 8 SIMD ops = 256 total SIMD operations
+<pre><code class="language-text">Thread 0: [0:32] (32 scalar) → Thread 1: [32:64] (32 scalar) → ... → Thread 31: [992:1024] (32 scalar)
+32 threads × 32 scalar ops = 1024 total operations
 </code></pre>
 <p><strong>Manual vectorized pattern:</strong></p>
 <pre><code class="language-text">Thread 0: [0:128] (32 SIMD) → Thread 1: [128:256] (32 SIMD) → ... → Thread 7: [896:1024] (32 SIMD)

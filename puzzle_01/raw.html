@@ -235,7 +235,7 @@
 <p>Simple parallel operations</p>
 </li>
 <li>
-<p><strong>Parallelism</strong>: Each thread executes independently</p>
+<p><strong>Parallelism</strong>: Every thread runs the same kernel body concurrently</p>
 </li>
 <li>
 <p><strong>Thread indexing</strong>: Access element at position <code>i = thread_idx.x</code></p>
@@ -263,7 +263,14 @@ def add_10(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p01/p01.mojo" class="filename">View full file: problems/p01/p01.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p01/p01.mojo" class="filename">View full file: problems/p01/p01.mojo</a></p>
+<blockquote>
+<p><strong>Note</strong>: The skeleton declares <code>var i = thread_idx.x</code> for you, but nothing
+uses <code>i</code> until you fill in the kernel. Until then the compiler warns
+<code>assignment to 'i' was never used; assign to '_' instead?</code>. That’s expected,
+and it clears as soon as your line reads from <code>a[i]</code> and writes to
+<code>output[i]</code>. Later puzzles scaffold their variables the same way.</p>
+</blockquote>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">

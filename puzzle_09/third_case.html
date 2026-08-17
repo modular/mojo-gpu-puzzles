@@ -499,13 +499,13 @@ if thread_id &lt; SIZE - 1:        # ← Only threads 0, 1, 2 enter this block
 <p><strong>💀 Deadlock Mechanism</strong>:</p>
 <ol>
 <li><strong>Thread 0</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line
-69)</li>
+78)</li>
 <li><strong>Thread 1</strong>: <code>1 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line
-69)</li>
+78)</li>
 <li><strong>Thread 2</strong>: <code>2 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line
-69)</li>
+78)</li>
 <li><strong>Thread 3</strong>: <code>3 &lt; 3</code> → <strong>False</strong> → <strong>NEVER enters block</strong> →
-<strong>Continues to line 72</strong></li>
+<strong>Continues to line 81</strong></li>
 </ol>
 <p><strong>Result</strong>: 3 threads wait forever for the 4th thread, but thread 3 never
 arrives at the barrier.</p>
@@ -522,7 +522,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 # ✅ CORRECT: Barrier outside conditional
 if thread_id &lt; SIZE - 1:    # Not all threads enter
     # ... some computation ...
- barrier()                # ALL threads reach this
+barrier()                   # ALL threads reach this
 </code></pre>
 <p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
 <pre><code class="language-mojo">def collaborative_filter(
@@ -570,10 +570,12 @@ others reach</li>
 <li><strong>Deadlocks are silent killers</strong> - programs just hang with no error messages</li>
 <li><strong>Thread coordination debugging requires patience</strong> - systematic analysis of
 each thread’s path</li>
-<li><strong>Conditional barriers are the #1 deadlock cause</strong> - always verify all threads
-reach the same sync points</li>
-<li><strong>CUDA-GDB thread inspection is essential</strong> - the only way to see thread
-coordination failures</li>
+<li><strong>Conditional barriers are the classic deadlock cause</strong> - always verify all
+threads reach the same sync points</li>
+<li><strong>CUDA-GDB thread inspection pinpoints the stall</strong> - it shows exactly where
+each thread stopped; <code>compute-sanitizer --tool synccheck</code>
+(<a href="../puzzle_10/racecheck.html">Puzzle 10</a>) can flag the same divergent barrier
+without a debugger</li>
 </ul>
 <p><strong>Advanced GPU synchronization</strong>:</p>
 <ul>

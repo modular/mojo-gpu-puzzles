@@ -263,12 +263,12 @@ and compute dot products in parallel.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Calculate <code>row</code> and <code>col</code> from thread indices</li>
+<li>Use the <code>row</code> and <code>col</code> the stub already computes from the thread indices</li>
 <li>Check if indices are within <code>size</code></li>
 <li>Accumulate products in a local variable</li>
 <li>Write final sum to correct output position</li>
@@ -346,8 +346,9 @@ var col = block_dim.x * block_idx.x + thread_idx.x
 <li>
 <p><strong>Memory access pattern</strong>:</p>
 <ul>
-<li>Direct 2D indexing: <code>a[row, k]</code></li>
-<li>Transposed access: <code>b[k, col]</code></li>
+<li>Row-wise access: <code>a[row, k]</code> walks along one row of \(A\)</li>
+<li>Column-wise access: <code>b[k, col]</code> walks down one column of \(B\), which in
+a row-major layout strides by <code>SIZE</code> on every step</li>
 <li>Output writing: <code>output[row, col]</code></li>
 </ul>
 </li>
@@ -367,14 +368,14 @@ comptime for k in range(size):
 <li>
 <p><strong>Variable declaration</strong>:</p>
 <ul>
-<li>The use of <code>var</code> in <code>var acc: output.ElementType = 0</code> allows for type
-inference with <code>output.ElementType</code> ensures type compatibility with the
-output tensor</li>
+<li>Annotating the accumulator in <code>var acc: output.ElementType = 0</code> ties its
+type to the output tensor’s element type, so the accumulation and the
+final store agree</li>
 <li>Initialized to zero before accumulation</li>
 </ul>
 </li>
 <li>
-<p><strong>Loop pptimization</strong>:</p>
+<p><strong>Loop optimization</strong>:</p>
 <ul>
 <li><code>comptime for</code> unrolls the loop at compile time</li>
 <li>Improves performance for small, known matrix sizes</li>

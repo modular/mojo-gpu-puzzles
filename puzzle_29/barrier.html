@@ -259,7 +259,7 @@ algorithm with three mathematical operations:</p>
 <p>\[P[i] = I[i] \times 1.1\]</p>
 <p>where \(P[i]\) is the preprocessed data and \(I[i]\) is the input data.</p>
 <p><strong>Stage 2 - Horizontal Blur Filter:</strong></p>
-<p>\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where} i+k \in
+<p>\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where } i+k \in
 [0, 255]\]</p>
 <p>where \(B[i]\) is the blur result, and \(N_i\) is the count of valid
 neighbors within the tile boundary.</p>
@@ -398,7 +398,7 @@ block)</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -639,7 +639,8 @@ required for real-world GPU algorithms.</p>
 <p><strong>Shared memory architecture:</strong></p>
 <ul>
 <li>Two specialized buffers handle data flow between stages</li>
-<li>Global memory access minimized to boundary operations only</li>
+<li>Global memory is accessed only for the Stage 1 input load and the Stage 3
+output store</li>
 <li>All intermediate processing uses fast shared memory</li>
 </ul>
 <p><strong>Access pattern benefits:</strong></p>
@@ -698,6 +699,7 @@ specialized, efficient components</li>
 leverage thread specialization and strategic synchronization for complex
 multi-stage computations, moving beyond simple parallel loops to architectural
 approaches used in production GPU software.</p>
+</div>
 </details>
 
                     </main>

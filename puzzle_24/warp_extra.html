@@ -289,13 +289,28 @@ if input[global_i] &gt; threshold:
     var result = expensive_computation()  # Causes warp divergence
 </code></pre>
 <h2 id="performance-measurement"><a class="header" href="#performance-measurement">Performance measurement</a></h2>
-<pre><code class="language-bash"># Always benchmark both approaches
-mojo p22.mojo --benchmark
-
-# Look for scaling patterns:
-# traditional_1x:  X.XX ms
-# warp_1x:         Y.YY ms  # Should be faster
-# warp_32x:        Z.ZZ ms  # Advantage should increase
+<p>Always benchmark both approaches:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --benchmark
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --benchmark
+</code></pre>
+  </div>
+</div>
+<p>Then look for scaling patterns across the reported rows:</p>
+<pre><code class="language-text">traditional_1x:       X.XX ms
+simple_warp_1x:       Y.YY ms  # Should be faster
+functional_warp_1x:   Y.YY ms
+traditional_32x:      A.AA ms
+simple_warp_32x:      Z.ZZ ms  # Advantage should increase
+functional_warp_32x:  Z.ZZ ms
 </code></pre>
 <h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
 <p><strong>Start with warp operations for:</strong></p>

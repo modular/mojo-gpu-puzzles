@@ -222,7 +222,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="simple-case-with-single-block"><a class="header" href="#simple-case-with-single-block">Simple Case with Single Block</a></h1>
+                        <h1 id="simple-version-with-single-block"><a class="header" href="#simple-version-with-single-block">Simple Version with Single Block</a></h1>
 <p>Implement a GPU kernel that computes a 1D convolution between input 1D
 TileTensor <code>a</code> and filter 1D TileTensor <code>b</code>, storing the result in 1D
 TileTensor <code>output</code>.</p>
@@ -247,7 +247,8 @@ while maintaining correct boundary conditions.</p>
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Data loading</strong>: Each thread loads one element from input and filter</li>
+<li><strong>Data loading</strong>: Each thread loads one input element; the first <code>CONV</code>
+threads also load one filter element</li>
 <li><strong>Memory pattern</strong>: Shared arrays for input and filter</li>
 <li><strong>Thread sync</strong>: Coordination before computation</li>
 </ul>
@@ -263,7 +264,7 @@ while maintaining correct boundary conditions.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -385,7 +386,8 @@ output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 </ol>
 <h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation details</a></h3>
 <ol>
-<li><strong>Thread Participation and Efficiency Considerations</strong>:
+<li>
+<p><strong>Thread Participation and Efficiency Considerations</strong>:</p>
 <ul>
 <li>
 <p>The inefficient approach without proper thread guard:</p>
@@ -400,7 +402,7 @@ if global_i &lt; SIZE:
 </code></pre>
 </li>
 <li>
-<p>The efficient and correct implementation:</p>
+<p>The efficient approach with a single thread guard:</p>
 <pre><code class="language-mojo">if global_i &lt; SIZE:
     var local_sum: output.ElementType = 0  # Using var allows type inference
     comptime for j in range(CONV):  # Unrolls loop at compile time since CONV is constant
@@ -410,21 +412,18 @@ if global_i &lt; SIZE:
 </code></pre>
 </li>
 </ul>
+<p>The key difference is that the inefficient version lets
+<strong>every thread run the convolution loop</strong> (including those where
+<code>global_i &gt;= SIZE</code>) and guards only the final write. Here the per-element
+check <code>local_i + j &lt; SIZE</code> already zeroes out the work for threads 6 and 7,
+so the two versions do the same arithmetic; what the outer guard buys is a
+single, explicit statement of which threads are in play, rather than a
+bounds condition smeared across the loop body and the write.</p>
+<p>Don’t expect the guard to buy back time on the hardware, though. Threads in
+a warp issue instructions in lockstep, so masking off two threads out of
+eight neither costs nor saves the warp anything. A guard like this starts to
+pay only when whole warps fall outside the valid range.</p>
 </li>
-</ol>
-<p>The key difference is that the inefficient version has
-<strong>all threads perform the convolution computation</strong> (including those where
-<code>global_i &gt;= SIZE</code>), and only the final write is guarded. This leads to:</p>
-<ul>
-<li><strong>Wasteful computation</strong>: Threads beyond the valid range still perform
-unnecessary work</li>
-<li><strong>Reduced efficiency</strong>: Extra computations that won’t be used</li>
-<li><strong>Poor resource utilization</strong>: GPU cores working on meaningless
-calculations</li>
-</ul>
-<p>The efficient version ensures that only threads with valid <code>global_i</code> values
-perform any computation, making better use of GPU resources.</p>
-<ol start="2">
 <li>
 <p><strong>Key Implementation Features</strong>:</p>
 <ul>
@@ -456,7 +455,6 @@ time</li>
 <ul>
 <li>Minimizes global memory access</li>
 <li>Uses shared memory for fast data access</li>
-<li>Avoids thread divergence in main computation loop</li>
 <li>Loop unrolling through <code>comptime for</code></li>
 </ul>
 </li>

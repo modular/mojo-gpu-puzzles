@@ -227,12 +227,11 @@
 <p>Implement a kernel that broadcast adds 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code>
 and stores it in 2D TileTensor <code>output</code>.</p>
 <p><strong>Broadcasting</strong> in parallel programming refers to the operation where
-lower-dimensional arrays are automatically expanded to match the shape of
-higher-dimensional arrays during element-wise operations. Instead of physically
-replicating data in memory, values are logically repeated across the additional
-dimensions. For example, adding a 1D vector to each row (or column) of a 2D
-matrix applies the same vector elements repeatedly without creating multiple
-copies.</p>
+lower-dimensional arrays are expanded to match the shape of higher-dimensional
+arrays during element-wise operations. Instead of physically replicating data in
+memory, values are logically repeated across the additional dimensions. For
+example, adding a 1D vector to each row (or column) of a 2D matrix applies the
+same vector elements repeatedly without creating multiple copies.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <img src="./media/05.png" alt="Broadcast visualization" class="light-mode-img">
 <img src="./media/05d.png" alt="Broadcast visualization" class="dark-mode-img">
@@ -244,9 +243,11 @@ copies.</p>
 <li>Working with different tensor shapes for mixed-dimension operations</li>
 <li>Handling boundary conditions in broadcast patterns</li>
 </ul>
-<p>The key insight is that <code>TileTensor</code> allows natural broadcasting through
-different tensor shapes: \((1, n)\) and \((n, 1)\) to \((n,n)\), while
-still requiring bounds checking.</p>
+<p>The key insight is that you write the broadcast yourself, one index at a time.
+<code>TileTensor</code> gives each input its own shape, \((1, n)\) and \((n, 1)\), and
+you pin the degenerate axis to <code>0</code> when you read it, so a single value is reused
+across the \((n,n)\) output. Nothing expands on its own, and you still need
+bounds checking.</p>
 <ul>
 <li><strong>Tensor shapes</strong>: Input vectors have shapes \((1, n)\) and \((n, 1)\)</li>
 <li><strong>Broadcasting</strong>: Each element of <code>a</code> combines with each element of <code>b</code>;
@@ -283,7 +284,7 @@ def broadcast_add(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -322,7 +323,8 @@ TileTensors</li>
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+<pre><code class="language-txt">out shape: 2 x 2
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
@@ -366,11 +368,12 @@ thread mapping:</p>
 </code></pre>
 </li>
 <li>
-<p><strong>Bounds Checking</strong></p>
+<p><strong>Bounds checking</strong></p>
 <ul>
 <li>Guard condition <code>row &lt; size and col &lt; size</code> prevents out-of-bounds access</li>
-<li>Handles both matrix bounds and excess threads efficiently</li>
-<li>No need for separate checks for <code>a</code> and <code>b</code> due to broadcasting</li>
+<li>Covers the matrix bounds and the excess threads in one test</li>
+<li><code>a</code> and <code>b</code> need no separate checks: <code>col</code> and <code>row</code> already index them
+within their own shapes</li>
 </ul>
 </li>
 </ol>

@@ -231,7 +231,8 @@ synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
 <a href="https://mojolang.org/docs/std/gpu/primitives/warp/sum/">warp.sum()</a>
 operation leverages SIMT execution to replace shared memory + barriers + tree
-reduction with a single hardware-accelerated instruction.</em></p>
+reduction with a <code>log2(WARP_SIZE)</code>-step shuffle reduction behind one function
+call.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
@@ -362,7 +363,7 @@ solution line-for-line — that contrast is the point.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -398,7 +399,7 @@ process.</p>
 <p><strong>What <code>warp_sum()</code> does:</strong></p>
 <ul>
 <li>Takes each lane’s <code>partial_product</code> value</li>
-<li>Sums them across all lanes in the warp (hardware-accelerated)</li>
+<li>Sums them across all lanes in the warp with <code>log2(WARP_SIZE)</code> shuffle steps</li>
 <li>Returns the same total to <strong>all lanes</strong> (not just lane 0)</li>
 <li>Requires <strong>zero explicit synchronization</strong> (SIMT handles it)</li>
 </ul>
@@ -411,8 +412,8 @@ but we only want to write once to avoid race conditions.</p>
 <p><strong>Why not write to <code>output[0]</code>?</strong> Flexibility, function can be used in cases
 where there is more than one warp. i.e. The result from each warp is written to
 the unique location <code>global_i // WARP_SIZE</code>.</p>
-<p><strong><code>lane_id()</code>:</strong> Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane
-within the warp.</p>
+<p><strong><code>lane_id()</code>:</strong> Returns 0 to <code>WARP_SIZE - 1</code> (0-31 on NVIDIA, AMD RDNA and
+Apple; 0-63 on AMD CDNA) - identifies which lane within the warp.</p>
 </div>
 </details>
 <p><strong>Test the simple warp kernel:</strong></p>
@@ -435,10 +436,9 @@ within the warp.</p>
 WARP_SIZE: 32
 SIMD_WIDTH: 8
 === RESULT ===
-out: 10416.0
-expected: 10416.0
-🚀 Notice how simple the warp version is compared to p12.mojo!
-   Same kernel structure, but warp_sum() replaces all the complexity!
+actual: HostBuffer([10416.0])
+expected: HostBuffer([10416.0])
+Puzzle 24 complete ✅
 </code></pre>
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
@@ -472,34 +472,37 @@ expected: 10416.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>The simple warp kernel demonstrates the fundamental transformation from complex
-synchronization to hardware-accelerated primitives:</p>
+<p>The simple warp kernel demonstrates the fundamental transformation from explicit
+shared-memory synchronization to a single warp primitive:</p>
 <p><strong>What disappeared from the traditional approach:</strong></p>
 <ul>
 <li><strong>15+ lines → 6 lines</strong>: Dramatic code reduction</li>
 <li><strong>Shared memory allocation</strong>: Zero memory management required</li>
-<li><strong>3+ barrier() calls</strong>: Zero explicit synchronization</li>
+<li><strong><code>1 + log2(WARP_SIZE)</code> barrier() calls</strong>: Zero explicit synchronization</li>
 <li><strong>Complex tree reduction</strong>: Single function call</li>
 <li><strong>Stride-based indexing</strong>: Eliminated entirely</li>
 </ul>
 <p><strong>SIMT execution model:</strong></p>
 <pre><code class="language-text">Warp lanes (SIMT execution):
 Lane 0: partial_product = a[0] * b[0]    = 0.0
-Lane 1: partial_product = a[1] * b[1]    = 4.0
-Lane 2: partial_product = a[2] * b[2]    = 16.0
+Lane 1: partial_product = a[1] * b[1]    = 1.0
+Lane 2: partial_product = a[2] * b[2]    = 4.0
 ...
-Lane 31: partial_product = a[31] * b[31] = 3844.0
+Lane 31: partial_product = a[31] * b[31] = 961.0
 
-warp_sum() hardware operation:
-All lanes → 0.0 + 4.0 + 16.0 + ... + 3844.0 = 10416.0
+warp_sum() shuffle reduction:
+All lanes → 0.0 + 1.0 + 4.0 + ... + 961.0 = 10416.0
 All lanes receive → total = 10416.0 (broadcast result)
 </code></pre>
 <p><strong>Why this works without barriers:</strong></p>
 <ol>
 <li><strong>SIMT execution</strong>: All lanes execute each instruction simultaneously</li>
-<li><strong>Hardware synchronization</strong>: When <code>warp_sum()</code> begins, all lanes have
+<li><strong>Implicit synchronization</strong>: When <code>warp_sum()</code> begins, all lanes have
 computed their <code>partial_product</code></li>
-<li><strong>Built-in communication</strong>: GPU hardware handles the reduction operation</li>
+<li><strong>Register-to-register exchange</strong>: Lanes trade values through shuffle
+instructions instead of shared memory, so no barrier is needed. The
+reduction itself is a <code>log2(WARP_SIZE)</code>-step loop over those shuffles, not a
+single hardware reduction unit</li>
 <li><strong>Broadcast result</strong>: All lanes receive the same <code>total</code> value</li>
 </ol>
 </div>
@@ -588,8 +591,8 @@ from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 var my_lane = lane_id()           # 0 to WARP_SIZE-1
-var total = warp_sum(my_value)    # Hardware-accelerated reduction
-var warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
+var total = warp_sum(my_value)    # Shuffle-based reduction
+var warp_size = WARP_SIZE         # 32 on NVIDIA, AMD RDNA, Apple; 64 on CDNA
 </code></pre>
 </div>
 </details>
@@ -613,10 +616,9 @@ var warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
 WARP_SIZE: 32
 SIMD_WIDTH: 8
 === RESULT ===
-out: 10416.0
-expected: 10416.0
-🔧 Functional approach shows modern Mojo style with warp operations!
-   Clean, composable, and still leverages warp hardware primitives!
+actual: HostBuffer([10416.0])
+expected: HostBuffer([10416.0])
+Puzzle 24 complete ✅
 </code></pre>
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
@@ -689,7 +691,8 @@ warp operations:</p>
 <p><strong>Same warp benefits:</strong></p>
 <ul>
 <li><strong>Zero synchronization</strong>: <code>warp_sum()</code> works identically</li>
-<li><strong>Hardware acceleration</strong>: Same performance as kernel approach</li>
+<li><strong>Same reduction</strong>: <code>warp_sum()</code> expands to the same shuffle sequence in both
+approaches; only the launch mechanism differs</li>
 <li><strong>Cross-architecture</strong>: <code>WARP_SIZE</code> adapts automatically</li>
 </ul>
 </div>
@@ -789,11 +792,14 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 </code></pre>
 <p><strong>Performance insights from this example:</strong></p>
 <ul>
-<li><strong>Small scales (1x-4x)</strong>: Warp operations show modest improvements (~10-15%
-faster)</li>
-<li><strong>Medium scale (32x-256x)</strong>: Functional approach often performs best</li>
-<li><strong>Large scales (16K-65K)</strong>: All approaches converge as memory bandwidth
-dominates</li>
+<li><strong>Small scales (1x-256x)</strong>: All three land within a few microseconds of each
+other and the ordering flips between runs - the grid is too small for the
+measurement to separate them, which is why the analysis text says so</li>
+<li><strong>Medium scale (2048x)</strong>: The warp approaches start to pull ahead of the
+traditional tree reduction</li>
+<li><strong>Large scales (16K-65K)</strong>: The gap widens rather than closing - in this run
+the functional warp approach finishes about 4x faster than the traditional
+one at 65536x</li>
 <li><strong>Variability</strong>: Performance depends heavily on specific GPU architecture and
 memory subsystem</li>
 </ul>
@@ -809,13 +815,13 @@ framework for warp vs traditional approaches</li>
 <code>prefix_sum()</code> for complex communication patterns</li>
 <li><strong>Multi-warp algorithms</strong>: Combining warp operations with block-level
 synchronization</li>
-<li><strong>Part VII: Memory Coalescing</strong>: Optimizing memory access patterns for maximum
-bandwidth</li>
+<li><strong>Part VIII: Block-Level Programming</strong>: Scaling these patterns from one warp
+to a whole block</li>
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: Warp operations transform GPU programming by replacing
-complex synchronization patterns with hardware-accelerated primitives,
-demonstrating how understanding the execution model enables dramatic
-simplification without sacrificing performance.</p>
+complex synchronization patterns with lane-to-lane shuffles, demonstrating how
+understanding the execution model enables dramatic simplification without
+sacrificing performance.</p>
 
                     </main>
 

@@ -320,7 +320,7 @@ the Mojo file and complete the graph definition in the Python code.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -352,7 +352,7 @@ input array</li>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -425,7 +425,7 @@ def softmax(
         pass
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -573,11 +573,11 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 </code></pre>
 <p>The kernel is parameterized with:</p>
 <ul>
-<li>Common layout parameter for both input and output tensors</li>
 <li>Vector size as an Integer parameter</li>
 <li>Configurable data type with float32 as default</li>
-<li>Mutable output tensor for in-place computation</li>
-<li>Non-mutable input tensor (mut=False)</li>
+<li>Layout supplied by the module-level <code>LayoutType</code> binding, shared by both
+tensors</li>
+<li>Both tensors mutable (<code>mut=True</code>)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
 <pre><code class="language-mojo">var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
@@ -678,15 +678,18 @@ if global_i &lt; input_size:
 <li>This produces a valid probability distribution that sums to 1</li>
 </ol>
 <h4 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h4>
-<p>The implementation has excellent performance characteristics:</p>
+<p>The implementation has these performance characteristics:</p>
 <ul>
 <li><strong>Complexity</strong>: \(O(\log n)\) for both max and sum calculations vs
 \(O(n)\) in a sequential approach</li>
 <li><strong>Memory efficiency</strong>: Uses only \(2 \times BLOCK\_DIM\_X~\) elements of
 shared memory</li>
-<li><strong>Work efficiency</strong>: Each thread performs approximately \(2 \times
-\log_2(BLOCK\_DIM\_X)~\) operations</li>
-<li><strong>Load balancing</strong>: Each thread handles the same amount of work</li>
+<li><strong>Work efficiency</strong>: The two reductions together perform about \(2 \times
+(BLOCK\_DIM\_X - 1)<del>\) max/add operations, the same total work a sequential
+pass would do, but spread across \(\log_2(BLOCK\_DIM\_X)</del>\) steps</li>
+<li><strong>Load balancing</strong>: The number of active threads halves at every reduction
+step, so the upper half of the block goes idle after the first step. That
+imbalance is inherent to a tree reduction</li>
 <li><strong>Synchronization</strong>: Uses minimal barriers, only where necessary</li>
 <li><strong>Memory access</strong>: Coalesced global memory access pattern for optimal
 bandwidth</li>

@@ -273,7 +273,7 @@ for element in data:
 <li><strong>Complex synchronization</strong>: Need barriers and atomic operations</li>
 </ul>
 <h2 id="the-advanced-approach-blockprefix_sum-coordination"><a class="header" href="#the-advanced-approach-blockprefix_sum-coordination">The advanced approach: <code>block.prefix_sum()</code> coordination</a></h2>
-<p>Transform the complex parallel partitioning into coordinated extraction:</p>
+<p>Transform the complex parallel partitioning into coordinated extraction.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
 <p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
@@ -324,7 +324,7 @@ for element in data:
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -552,16 +552,24 @@ Element loading (like TileTensor pattern):
   Thread 1:  belongs_to_target = 1  (bin 0 == target 0)
   Thread 13: belongs_to_target = 0  (bin 1 != target 0)
   Thread 25: belongs_to_target = 0  (bin 2 != target 0)
+  Thread 80: belongs_to_target = 1  (input values wrap: 80 % 80 = 0, so 0.00)
   ...
 
 This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+                            (threads 0-12 are the leading run of 1s)
+
+The input data is generated as (i % 80) / 100.0, so the values restart at
+thread 80. Threads 80-92 also land in bin 0, which is why the final count is
+26 and not 13.
 </code></pre>
 <h3 id="phase-4-parallel-prefix-sum-the-magic"><a class="header" href="#phase-4-parallel-prefix-sum-the-magic"><strong>Phase 4: Parallel prefix sum (the magic!)</strong></a></h3>
 <pre><code class="language-text">block.prefix_sum[exclusive=True] on predicates:
 Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
-Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
-                                                      ^
-                                                 doesn't matter
+Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,13,13, ...]
+
+Every thread receives a value, but only threads with belongs_to_target = 1
+use it. Threads 13-79 all carry 13 here, and thread 80 - the next match -
+carries 13 as well, so it writes at position 13.
 
 Key insight: Each thread gets its WRITE POSITION in the output array!
 </code></pre>
@@ -572,15 +580,22 @@ Key insight: Each thread gets its WRITE POSITION in the output array!
   Thread 12: bin_output[12] = 0.12  // Uses write_offset[12] = 12
   Thread 13: (no write)             // belongs_to_target = 0
   Thread 25: (no write)             // belongs_to_target = 0
+  Thread 80: bin_output[13] = 0.00  // Uses write_offset[80] = 13
+  Thread 92: bin_output[25] = 0.12  // Uses write_offset[92] = 25
   ...
 
-Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
+Result: [0.00, 0.01, ..., 0.12, 0.00, 0.01, ..., 0.12] // Perfectly packed!
+        (26 elements, no gaps, in thread order)
 </code></pre>
 <h3 id="phase-6-count-computation-like-blocksum-pattern"><a class="header" href="#phase-6-count-computation-like-blocksum-pattern"><strong>Phase 6: Count computation (like block.sum() pattern)</strong></a></h3>
 <pre><code class="language-text">Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
       total = write_offset[0] + Int32(belongs_to_target)  // Inclusive sum formula
       count_output[0] = total
+
+For bin 0: thread 127 holds 0.47, which lands in bin 3, so its predicate is 0
+and its exclusive scan value is 26 - giving 26 + 0 = 26, the count printed for
+bin 0.
 </code></pre>
 <h2 id="why-this-advanced-algorithm-works"><a class="header" href="#why-this-advanced-algorithm-works"><strong>Why this advanced algorithm works:</strong></a></h2>
 <h3 id="connection-to-puzzle-12-traditional-dot-product"><a class="header" href="#connection-to-puzzle-12-traditional-dot-product"><strong>Connection to <a href="../puzzle_12/puzzle_12.html">Puzzle 12</a> (Traditional dot product):</strong></a></h3>
@@ -613,9 +628,10 @@ reorganization</li>
 </ul>
 <h3 id="vs-multi-pass-algorithms"><a class="header" href="#vs-multi-pass-algorithms"><strong>vs. Multi-pass algorithms:</strong></a></h3>
 <ul>
-<li><strong>Single kernel</strong>: Complete histogram extraction in one GPU launch</li>
+<li><strong>Single pass per bin</strong>: Extracting one bin takes one kernel launch, with no
+separate count pass followed by a scatter pass. The demo loops over the eight
+bins, so it launches the kernel eight times - once per bin</li>
 <li><strong>Full utilization</strong>: All threads work regardless of data distribution</li>
-<li><strong>Optimal memory bandwidth</strong>: Pattern optimized for GPU memory hierarchy</li>
 </ul>
 <p>This demonstrates how <code>block.prefix_sum()</code> enables sophisticated parallel
 algorithms that would be complex or impossible with simpler primitives like
@@ -628,7 +644,8 @@ algorithms that would be complex or impossible with simpler primitives like
 <li><strong>Algorithm sophistication</strong>: Advanced parallel partitioning vs sequential
 processing</li>
 <li><strong>Memory efficiency</strong>: Coalesced writes vs scattered random access</li>
-<li><strong>Synchronization</strong>: Built-in coordination vs manual barriers and atomics</li>
+<li><strong>Synchronization</strong>: <code>block.prefix_sum()</code> places the two <code>barrier()</code> calls it
+needs for you, instead of leaving you to place barriers and atomics by hand</li>
 <li><strong>Scalability</strong>: Works with any block size and bin count</li>
 </ul>
 <p><strong><code>block.prefix_sum()</code> vs <code>block.sum()</code>:</strong></p>

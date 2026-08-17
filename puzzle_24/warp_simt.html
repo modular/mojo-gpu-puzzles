@@ -360,7 +360,7 @@ register, not computing a value.</p>
 # 1. Traditional shared memory approach:
 shared[thread_idx.x] = partial_result
 barrier()  # Explicit synchronization required
-var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
+var total = shared[0] + shared[1] + ... + shared[WARP_SIZE - 1] # Sum reduction
 
 # 2. Warp approach:
 from std.gpu.primitives.warp import sum
@@ -372,9 +372,10 @@ same time. When <code>sum()</code> starts, all lanes have already computed their
 <code>partial_result</code>.</p>
 <h2 id="warp-divergence-and-convergence"><a class="header" href="#warp-divergence-and-convergence">Warp divergence and convergence</a></h2>
 <h3 id="what-happens-with-conditional-code"><a class="header" href="#what-happens-with-conditional-code">What happens with conditional code?</a></h3>
-<pre><code class="language-mojo">if lane_id() % 2 == 0:
+<pre><code class="language-mojo">var result: Float32
+if lane_id() % 2 == 0:
     # Even lanes execute this path
-    var result = compute_even()
+    result = compute_even()
 else:
     # Odd lanes execute this path
     result = compute_odd()
@@ -420,25 +421,28 @@ if lane_id() == 0:
 <p><em>Performance: Brief single-lane operation, predictable pattern</em></p>
 <p><strong>🔶 CAUTION: Structured divergence (~50-75% efficiency)</strong></p>
 <pre><code class="language-mojo"># Regular patterns can be optimized by compiler
+var result: Float32
 if (global_i / 4) % 2 == 0:
-    var result = method_a()
+    result = method_a()
 else:
     result = method_b()
 </code></pre>
 <p><em>Performance: Predictable groups, some optimization possible</em></p>
 <p><strong>❌ AVOID: Data-dependent divergence (~25-50% efficiency)</strong></p>
 <pre><code class="language-mojo"># Different lanes may take different paths based on data
+var result: Float32
 if input[global_i] &gt; threshold:  # Unpredictable branching
-    var result = expensive_computation()
+    result = expensive_computation()
 else:
     result = simple_computation()
 </code></pre>
 <p><em>Performance: Random divergence kills warp efficiency</em></p>
 <p><strong>💀 TERRIBLE: Nested data-dependent divergence (~10-25% efficiency)</strong></p>
 <pre><code class="language-mojo"># Multiple levels of unpredictable branching
+var result: Float32
 if input[global_i] &gt; threshold1:
     if input[global_i] &gt; threshold2:
-        var result = very_expensive()
+        result = very_expensive()
     else:
         result = expensive()
 else:
@@ -446,12 +450,13 @@ else:
 </code></pre>
 <p><em>Performance: Warp efficiency destroyed</em></p>
 <h2 id="cross-architecture-compatibility"><a class="header" href="#cross-architecture-compatibility">Cross-architecture compatibility</a></h2>
-<h3 id="nvidia-vs-amd-warp-sizes"><a class="header" href="#nvidia-vs-amd-warp-sizes">NVIDIA vs AMD warp sizes</a></h3>
+<h3 id="warp-sizes-across-architectures"><a class="header" href="#warp-sizes-across-architectures">Warp sizes across architectures</a></h3>
 <pre><code class="language-mojo">from std.gpu.primitives.warp import WARP_SIZE
 
 # NVIDIA GPUs:     WARP_SIZE = 32
 # AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 mode)
 # AMD CDNA GPUs:   WARP_SIZE = 64 (traditional wavefront64)
+# Apple GPUs:      WARP_SIZE = 32 (SIMD-group width)
 </code></pre>
 <p><strong>Why this matters:</strong></p>
 <ul>
@@ -465,7 +470,7 @@ else:
 <pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
 comptime ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 </code></pre>
-<p><em>Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)</em></p>
+<p><em>Result: Code works optimally on NVIDIA/RDNA/Apple (32) and CDNA (64)</em></p>
 <p><strong>❌ BROKEN: Never hardcode warp size</strong></p>
 <pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
 comptime REDUCTION_SIZE = 32           # Wrong on AMD!
@@ -473,7 +478,7 @@ comptime REDUCTION_SIZE = 32           # Wrong on AMD!
 <p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
 <h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real hardware impact</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>GPU Architecture</th><th>WARP_SIZE</th><th>Memory per Warp</th><th>Reduction Steps</th><th>Lane Pattern</th></tr></thead><tbody>
-<tr><td><strong>NVIDIA/AMD RDNA</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5 steps: 32→16→8→4→2→1</td><td>Lanes 0-31</td></tr>
+<tr><td><strong>NVIDIA/AMD RDNA/Apple</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5 steps: 32→16→8→4→2→1</td><td>Lanes 0-31</td></tr>
 <tr><td><strong>AMD CDNA</strong></td><td>64</td><td>256 bytes (4×64)</td><td>6 steps: 64→32→16→8→4→2→1</td><td>Lanes 0-63</td></tr>
 </tbody></table>
 </div>

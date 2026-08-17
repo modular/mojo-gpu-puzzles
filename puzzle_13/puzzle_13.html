@@ -225,14 +225,16 @@
                         <h1 id="puzzle-13-1d-convolution"><a class="header" href="#puzzle-13-1d-convolution">Puzzle 13: 1D Convolution</a></h1>
 <blockquote>
 <h2 id="moving-to-tiletensor"><a class="header" href="#moving-to-tiletensor">Moving to TileTensor</a></h2>
-<p>So far in our GPU puzzle journey, we’ve been exploring two parallel approaches
-to GPU memory management:</p>
+<p>Earlier in our GPU puzzle journey, we explored two parallel approaches to GPU
+memory management:</p>
 <ol>
 <li>Raw memory management with direct pointer manipulation using <a href="https://mojolang.org/docs/std/memory/pointer/Pointer/">Pointer</a></li>
 <li>The more structured <a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a> with its powerful address_space parameter for memory allocation</li>
 </ol>
-<p>Starting from this puzzle, we’re transitioning exclusively to using
-<code>TileTensor</code>. This abstraction provides several benefits:</p>
+<p>From Puzzle 7 onward the puzzles use <code>TileTensor</code> almost exclusively (Puzzle 9
+keeps a raw-pointer kernel to demonstrate a debugging scenario), and
+everything from here on builds on it. This abstraction provides several
+benefits:</p>
 <ul>
 <li>Type-safe memory access patterns</li>
 <li>Clear representation of data layouts</li>

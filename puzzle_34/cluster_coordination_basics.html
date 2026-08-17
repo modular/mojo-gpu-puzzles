@@ -227,7 +227,7 @@
 <p>Welcome to your first <strong>cluster programming challenge</strong>! This section introduces
 the fundamental building blocks of inter-block coordination using SM90+ cluster
 APIs.</p>
-<p><strong>The Challenge</strong>: Implement a multi-block histogram algorithm where
+<p><strong>The Challenge</strong>: Implement a multi-block scaled reduction where
 <strong>4 thread blocks coordinate</strong> to process different ranges of data and store
 results in a shared output array.</p>
 <p><strong>Key Learning</strong>: Learn the essential cluster synchronization pattern:
@@ -236,15 +236,15 @@ results in a shared output array.</p>
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>,
 extending the synchronization concepts from
 <a href="../puzzle_29/barrier.html">barrier() in Puzzle 29</a>.</p>
-<h2 id="the-problem-multi-block-histogram-binning"><a class="header" href="#the-problem-multi-block-histogram-binning">The problem: multi-block histogram binning</a></h2>
+<h2 id="the-problem-multi-block-scaled-reduction"><a class="header" href="#the-problem-multi-block-scaled-reduction">The problem: multi-block scaled reduction</a></h2>
 <p>Traditional single-block algorithms like those in
 <a href="../puzzle_27/puzzle_27.html">Puzzle 27</a> can only process data that fits within
 one block’s thread capacity (e.g., 256 threads). For larger datasets exceeding
 <a href="../puzzle_08/puzzle_08.html">shared memory capacity from Puzzle 8</a>, we need
 <strong>multiple blocks to cooperate</strong>.</p>
-<p><strong>Your task</strong>: Implement a histogram where each of 4 blocks processes a
-different data range, scales values by its unique block rank, and coordinates
-with other blocks using
+<p><strong>Your task</strong>: Implement a reduction where each of 4 blocks scales its own
+256-element slice of the input by its block index + 1, sums that slice into
+<code>output[block_id]</code>, and coordinates with other blocks using
 <a href="../puzzle_29/barrier.html">synchronization patterns from Puzzle 29</a> to ensure all
 processing completes before any block reads the final results.</p>
 <h3 id="problem-specification"><a class="header" href="#problem-specification">Problem specification</a></h3>
@@ -327,7 +327,7 @@ processing completes before any block reads the final results.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -336,7 +336,7 @@ processing completes before any block reads the final results.</p>
 <li>Use
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>
 to get the cluster rank (0-3)</li>
-<li>Use <code>Int(block_idx.x)</code> for reliable block indexing in grid launch</li>
+<li>Use <code>block_idx.x</code> for reliable block indexing in grid launch</li>
 <li>Scale data processing by block position for distinct results</li>
 </ul>
 <h3 id="shared-memory-coordination"><a class="header" href="#shared-memory-coordination"><strong>Shared memory coordination</strong></a></h3>
@@ -358,7 +358,7 @@ announces processing completion</li>
 <li><strong>Compute</strong>: Block-local operations (reduction, aggregation)</li>
 <li><strong>Wait</strong>:
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
-ensures all blocks complete before proceeding</li>
+blocks until every block has arrived</li>
 </ol>
 <h3 id="thread-coordination-within-blocks"><a class="header" href="#thread-coordination-within-blocks"><strong>Thread coordination within blocks</strong></a></h3>
 <ul>
@@ -389,10 +389,14 @@ ensures all blocks complete before proceeding</li>
 <pre><code class="language-text">Testing Multi-Block Coordination
 SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
 Block coordination results:
-  Block 0 : 127.5
-  Block 1 : 255.0
-  Block 2 : 382.5
-  Block 3 : 510.0
+  Block 0 : 114.0
+  Block 1 : 231.2
+  Block 2 : 345.6
+  Block 3 : 459.2
+✅ Block 0 produced result: 114.0
+✅ Block 1 produced result: 231.2
+✅ Block 2 produced result: 345.6
+✅ Block 3 produced result: 459.2
 Puzzle 34 complete ✅
 </code></pre>
 <p><strong>Success Criteria:</strong></p>
@@ -462,14 +466,14 @@ synchronization pattern using a carefully orchestrated two-phase approach:</stro
 <pre><code class="language-mojo">var global_i = block_dim.x * block_idx.x + thread_idx.x  # Global thread index
 var local_i = thread_idx.x                               # Local thread index within block
 var my_block_rank = Int(block_rank_in_cluster())         # Cluster rank (0-3)
-var block_id = Int(block_idx.x)                          # Block index for reliable addressing
+var block_id = block_idx.x                               # Block index for reliable addressing
 </code></pre>
 <p><strong>Shared memory allocation and data processing:</strong></p>
 <ul>
 <li>Each block allocates its own shared memory workspace:
 <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())</code></li>
-<li><strong>Scaling strategy</strong>: <code>data_scale = Float32(block_id + 1)</code> ensures each block
-processes data differently
+<li><strong>Scaling strategy</strong>: <code>data_scale = Scalar[dtype](block_id + 1)</code> ensures each
+block processes data differently
 <ul>
 <li>Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by
 4.0</li>
@@ -492,8 +496,8 @@ coordination</li>
 <ul>
 <li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 signals that this block has completed its local processing phase</li>
-<li>This is a <strong>non-blocking</strong> operation that registers completion with the
-cluster hardware</li>
+<li>This is a <strong>non-blocking</strong> operation, and it makes this block’s earlier writes
+visible to the rest of the cluster</li>
 </ul>
 <p><strong>Local aggregation (Thread 0 only):</strong></p>
 <pre><code class="language-mojo">if local_i == 0:
@@ -510,15 +514,16 @@ location</li>
 <p><strong>Final synchronization:</strong></p>
 <ul>
 <li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
-blocks until ALL blocks in the cluster have completed their work</li>
-<li>This ensures deterministic completion order across the entire cluster</li>
+blocks until every block in the cluster has called <code>cluster_arrive()</code></li>
+<li>No block runs past this point until the whole cluster has signaled arrival</li>
 </ul>
 <h2 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h2>
 <p><strong>Why use <code>block_id</code> instead of <code>my_block_rank</code>?</strong></p>
 <ul>
 <li><code>block_idx.x</code> provides reliable grid-launch indexing (0, 1, 2, 3)</li>
 <li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>
-may behave differently depending on cluster configuration</li>
+returns the rank <em>within</em> the cluster, so several blocks share a rank as soon
+as the grid holds more than one cluster</li>
 <li>Using <code>block_id</code> guarantees each block gets unique data portions and output
 positions</li>
 </ul>
@@ -534,7 +539,7 @@ positions</li>
 <li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 Signals completion to other blocks (inter-block, non-blocking)</li>
 <li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
-Waits for all blocks to complete (inter-block, blocking)</li>
+Waits for all blocks to arrive (inter-block, blocking)</li>
 </ol>
 <p><strong>Performance characteristics:</strong></p>
 <ul>
@@ -554,11 +559,12 @@ structure:</p>
 <li><strong>Signal</strong>:
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 announces completion of processing</li>
-<li><strong>Phase 2</strong>: Blocks can safely perform operations that depend on other
-blocks’ results</li>
+<li><strong>Phase 2</strong>: Each block carries on with block-local work while the others are
+still arriving</li>
 <li><strong>Synchronize</strong>:
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
-ensures all blocks finish before proceeding</li>
+blocks until every block has arrived, and only past this point is another
+block’s result safe to read</li>
 </ol>
 <p><strong>Next step</strong>: Ready for more advanced coordination? Continue to
 <strong><a href="./cluster_collective_ops.html">Cluster-Wide Collective Operations</a></strong> to learn

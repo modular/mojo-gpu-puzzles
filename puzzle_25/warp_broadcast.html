@@ -229,9 +229,9 @@ block-level computations, conditional logic coordination, and one-to-many
 communication patterns without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
 <a href="https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/">broadcast()</a>
-operation leverages SIMT execution to let one lane (typically lane 0) share its
-computed value with all other lanes in the same warp, enabling efficient
-coordination patterns and collective decision-making.</em></p>
+operation leverages SIMT execution to let lane 0 share its computed value with
+all other lanes in the same warp, enabling efficient coordination patterns and
+collective decision-making.</em></p>
 <blockquote>
 <p><strong>What are broadcast operations?</strong> Broadcast operations are communication
 patterns where one thread computes a value and shares it with all other
@@ -251,17 +251,17 @@ parameters across all threads in a warp.</p>
 <p>The <code>broadcast</code> operation enables lane 0 to share its value with all other
 lanes. The source lane is always lane 0—there is no parameter to change it:
 \[\Large \text{broadcast}(\text{value}) =
-\text{value_from_lane_0_to_all_lanes}\]</p>
+\text{value from lane 0, given to every lane}\]</p>
 <p>This transforms complex coordination patterns into simple warp-level operations,
 enabling efficient collective computations without explicit synchronization.</p>
 <h2 id="the-broadcast-concept"><a class="header" href="#the-broadcast-concept">The broadcast concept</a></h2>
 <p>Traditional coordination requires complex shared memory patterns:</p>
 <pre><code class="language-mojo"># Traditional approach - complex and error-prone
 shared_memory[lane] = local_computation()
-sync_threads()  # Expensive synchronization
+barrier()  # Expensive synchronization
 if lane == 0:
-    var result = compute_from_shared_memory()
-sync_threads()  # Another expensive synchronization
+    shared_memory[0] = compute_from_shared_memory()
+barrier()  # Another expensive synchronization
 var final_result = shared_memory[0]  # All threads read
 </code></pre>
 <p><strong>Problems with traditional approach:</strong></p>
@@ -282,7 +282,8 @@ var result = use_collective_value(collective_value)
 <p><strong>Benefits of broadcast:</strong></p>
 <ul>
 <li><strong>Zero memory overhead</strong>: No shared memory required</li>
-<li><strong>Automatic synchronization</strong>: SIMT execution guarantees correctness</li>
+<li><strong>No barrier needed</strong>: <code>broadcast()</code> lowers to a single warp shuffle
+instruction, which synchronizes the participating lanes itself</li>
 <li><strong>Simple pattern</strong>: One lane computes, all lanes receive</li>
 <li><strong>Composable</strong>: Easy to combine with other warp operations</li>
 </ul>
@@ -329,7 +330,7 @@ computation, but all lanes can use the result in their individual operations?</p
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -339,8 +340,8 @@ to all lanes in the warp.</p>
 <p><strong>Key insight:</strong> Only lane 0’s value matters for the broadcast. Other lanes’
 values are ignored, but all lanes receive lane 0’s value.</p>
 <p><strong>Visualization:</strong></p>
-<pre><code class="language-text">Before broadcast: Lane 0 has \(\text{val}_0\), Lane 1 has \(\text{val}_1\), Lane 2 has \(\text{val}_2\), ...
-After broadcast:  Lane 0 has \(\text{val}_0\), Lane 1 has \(\text{val}_0\), Lane 2 has \(\text{val}_0\), ...
+<pre><code class="language-text">Before broadcast: Lane 0 has val_0, Lane 1 has val_1, Lane 2 has val_2, ...
+After broadcast:  Lane 0 has val_0, Lane 1 has val_0, Lane 2 has val_0, ...
 </code></pre>
 <p><strong>Think about:</strong> How can you ensure only lane 0 computes the value you want to
 broadcast?</p>
@@ -458,21 +459,21 @@ coordination.</p>
     output[global_i] = broadcast_value + input[global_i]
 </code></pre>
 <p><strong>SIMT execution trace:</strong></p>
-<pre><code class="language-text">Cycle 1: Lane-specific computation
+<pre><code class="language-text">Step 1: Lane-specific computation
   Lane 0: Computes sum of input[0] + input[1] + input[2] + input[3] = 1+2+3+4 = 10
   Lane 1: broadcast_value remains 0.0 (not lane 0)
   Lane 2: broadcast_value remains 0.0 (not lane 0)
   ...
   Lane 31: broadcast_value remains 0.0 (not lane 0)
 
-Cycle 2: broadcast(broadcast_value) executes
+Step 2: broadcast(broadcast_value) executes
   Lane 0: Keeps its value → broadcast_value = 10.0
   Lane 1: Receives lane 0's value → broadcast_value = 10.0
   Lane 2: Receives lane 0's value → broadcast_value = 10.0
   ...
   Lane 31: Receives lane 0's value → broadcast_value = 10.0
 
-Cycle 3: Individual computation with broadcast value
+Step 3: Individual computation with broadcast value
   Lane 0: output[0] = 10.0 + input[0] = 10.0 + 1.0 = 11.0
   Lane 1: output[1] = 10.0 + input[1] = 10.0 + 2.0 = 12.0
   Lane 2: output[2] = 10.0 + input[2] = 10.0 + 3.0 = 13.0
@@ -483,14 +484,16 @@ Cycle 3: Individual computation with broadcast value
 <ol>
 <li><strong>Coordination efficiency</strong>: Single operation coordinates all lanes</li>
 <li><strong>Memory efficiency</strong>: No shared memory allocation required</li>
-<li><strong>Synchronization-free</strong>: SIMT execution handles coordination automatically</li>
+<li><strong>Barrier-free</strong>: The shuffle instruction synchronizes the lanes it reads
+from, so no <code>barrier()</code> is needed</li>
 <li><strong>Scalable pattern</strong>: Works identically regardless of warp size</li>
 </ol>
 <p><strong>Performance characteristics:</strong></p>
 <ul>
-<li><strong>Latency</strong>: 1 cycle for broadcast operation</li>
+<li><strong>Instruction count</strong>: One shuffle instruction - <code>broadcast(val)</code> is
+<code>shuffle_idx(val, 0)</code></li>
 <li><strong>Bandwidth</strong>: 0 bytes (register-to-register communication)</li>
-<li><strong>Coordination</strong>: All 32 lanes synchronized automatically</li>
+<li><strong>Coordination</strong>: Every lane in the warp receives the value</li>
 </ul>
 </div>
 </details>
@@ -593,6 +596,7 @@ else:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -601,6 +605,10 @@ else:
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p25 --broadcast-conditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p25 --broadcast-conditional
 </code></pre>
   </div>
   <div class="tab-content">
@@ -840,6 +848,7 @@ neighbor access.</p>
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -848,6 +857,10 @@ neighbor access.</p>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p25 --broadcast-shuffle-coordination
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p25 --broadcast-shuffle-coordination
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1011,7 +1024,7 @@ var result = use_shared_value(shared_value, local_data)
 <p><strong>Key benefits:</strong></p>
 <ul>
 <li><strong>One-to-many coordination</strong>: Single lane computes, all lanes benefit</li>
-<li><strong>Zero synchronization overhead</strong>: SIMT execution handles coordination</li>
+<li><strong>No barriers to place</strong>: The shuffle instruction carries the synchronization</li>
 <li><strong>Composable patterns</strong>: Easily combines with shuffle and other warp
 operations</li>
 </ul>

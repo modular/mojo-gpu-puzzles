@@ -323,8 +323,8 @@ and GPU</li>
 <p>When you complete this puzzle, you’ll have created a seamless bridge between
 Python’s rich ecosystem and Mojo’s powerful GPU performance.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<p>To complete this puzzle, you only need to fill one line in <code>conv1d.mojo</code> to call
-the <code>conv1d_kernel</code>:</p>
+<p>To complete this puzzle, you only need to fill in the call to <code>conv1d_kernel</code> in
+<code>conv1d.mojo</code>:</p>
 <pre><code class="language-mojo">import extensibility
 
 from extensibility import InputTensor, OutputTensor
@@ -385,7 +385,7 @@ struct Conv1DCustomOp:
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p17/op/conv1d.mojo" class="filename">View full file: problems/p17/op/conv1d.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/op/conv1d.mojo" class="filename">View full file: problems/p17/op/conv1d.mojo</a></p>
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -441,15 +441,15 @@ method in the <code>Conv1DCustomOp</code> struct.</p>
             )
 </code></pre>
 <div class="solution-explanation">
-This single line does several important things:
+These two statements do several important things:
 <ol>
 <li>Calls
 <a href="https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>
 on the GPU context (<code>gpu_ctx</code> is of type
 <a href="https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/">DeviceContext</a>)
 to schedule our kernel execution</li>
-<li>Passes the necessary layout and size information as <strong>compile-time</strong>
-parameters</li>
+<li>Binds the layout and size information as <strong>compile-time</strong> parameters through
+the <code>comptime kernel = conv1d_kernel[...]</code> binding</li>
 <li>Provides the output, input, and kernel tensors as runtime arguments</li>
 <li>Configures the execution grid with the appropriate dimensions</li>
 </ol>
@@ -457,7 +457,7 @@ parameters</li>
 <h3 id="python-mojo-integration-flow"><a class="header" href="#python-mojo-integration-flow">Python-Mojo integration flow</a></h3>
 <ol>
 <li>
-<p><strong>Python side (<a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p17/p17.py"
+<p><strong>Python side (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py"
 class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>Creates NumPy arrays for input and kernel</li>
@@ -485,7 +485,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>The <code>@extensibility.register("conv1d")</code> decorator exposes our operation to MAX
 Graph. See
-<a href="https://mojolang.org/docs/reference/decorators/extensibility-register/">@extensibility.register</a></li>
+<a href="https://docs.modular.com/api/mojo/extensibility/decorators/register/">@extensibility.register</a></li>
 <li>The <code>execute</code> method parameters define the interface (inputs, outputs,
 context)</li>
 <li>Input/output tensors are converted to TileTensors for use in our kernel</li>
@@ -541,9 +541,10 @@ var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
 tensors are built from raw pointers—they are not extracted from the
 <code>OutputTensor</code>/<code>InputTensor</code> arguments.</p>
 <ul>
-<li>MAX Graph tensors are converted to Mojo TileTensors</li>
+<li>MAX Graph tensors are wrapped as Mojo TileTensors over the same memory</li>
 <li>This allows our kernel to work with them directly</li>
-<li>The layouts are extracted for compile-time optimization</li>
+<li>Because the layouts are compile-time values, the kernel’s indexing
+arithmetic is resolved statically</li>
 </ul>
 </li>
 <li>
@@ -578,9 +579,9 @@ and the associated structure:</p>
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
-        output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
+        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         ctx: DeviceContext,
     ) raises:
         # Implementation here

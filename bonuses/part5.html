@@ -233,8 +233,8 @@ simple idiomatic tiled version from <a href="../puzzle_16/tiled.html">Puzzle 16<
 <h3 id="what-went-wrong"><a class="header" href="#what-went-wrong">What went wrong?</a></h3>
 <p>Your profiling with (NVIDIA only) <code>ncu</code> revealed the brutal truth (if you need a
 refresher on profiling techniques, see
-<a href="../puzzle_10/puzzle_10.html">Puzzle 10’s memory error detection</a> and
-<a href="../puzzle_30/puzzle_30.html">Puzzle 30’s GPU profiling</a>):</p>
+<a href="../puzzle_30/puzzle_30.html">Puzzle 30’s GPU profiling</a> and its
+<a href="../puzzle_30/nvidia_profiling_basics.html">NVIDIA profiling basics</a>):</p>
 <p><strong>Tensor Core version (the disappointment):</strong></p>
 <ul>
 <li><strong>Duration</strong>: ~13.9 ms</li>
@@ -301,8 +301,8 @@ accumulation patterns</li>
 <li>Tune block sizes for better warp utilization</li>
 <li>Balance shared memory vs register usage</li>
 <li>Optimize warp-to-SM mapping</li>
-<li>Apply thread coordination lessons from
-<a href="../puzzle_11/puzzle_11.html">Puzzle 11-20 series</a></li>
+<li>Apply the occupancy lessons from
+<a href="../puzzle_31/puzzle_31.html">Puzzle 31</a></li>
 </ul>
 </li>
 <li>
@@ -311,8 +311,8 @@ accumulation patterns</li>
 <li>Improve data reuse patterns</li>
 <li>Optimize tile sizes for cache hierarchy</li>
 <li>Consider data layout transformations</li>
-<li>Build on memory hierarchy concepts from
-<a href="../puzzle_05/puzzle_05.html">puzzle progression</a></li>
+<li>Build on the cache behavior analyzed in
+<a href="../puzzle_30/profile_kernels.html">Puzzle 30’s cache hit paradox</a></li>
 </ul>
 </li>
 <li>
@@ -321,8 +321,9 @@ accumulation patterns</li>
 <li>Implement double buffering to overlap memory and compute</li>
 <li>Use software pipelining</li>
 <li>Explore async execution patterns</li>
-<li>Apply advanced coordination from
-<a href="../puzzle_10/puzzle_10.html">sanitization puzzles</a></li>
+<li>Apply the overlap and double-buffering patterns from
+<a href="../puzzle_28/puzzle_28.html">Puzzle 28</a> and
+<a href="../puzzle_29/memory_barrier.html">Puzzle 29’s double-buffered stencil</a></li>
 </ul>
 </li>
 </ol>

@@ -625,7 +625,7 @@ memory tiling:</p>
 </code></pre>
 <p><strong>Implementation steps:</strong></p>
 <ol>
-<li>First, compute mean and variance using parallel reduction</li>
+<li>First, compute mean and variance over the hidden dimension</li>
 <li>Then normalize the input using these statistics</li>
 <li>Finally, apply the scale and shift parameters</li>
 </ol>
@@ -825,6 +825,15 @@ var hidden_idx = thread_idx.x
     return
 </code></pre>
 </li>
+<li>
+<p>Convert each <code>TileTensor</code> argument with <code>to_layout_tensor()</code> before
+indexing it:</p>
+<pre><code class="language-mojo">var output_lt = output.to_layout_tensor()
+var input_lt = input.to_layout_tensor()
+var ln_weight_lt = ln_weight.to_layout_tensor()
+var ln_bias_lt = ln_bias.to_layout_tensor()
+</code></pre>
+</li>
 </ul>
 </li>
 <li>
@@ -858,11 +867,11 @@ var inv_std = 1.0 / sqrt(var_val + 1e-5)
 </li>
 <li>
 <p><strong>Normalization and Scaling</strong>:</p>
-<pre><code class="language-mojo">var input_val = input[batch_idx, seq_idx, hidden_idx]
+<pre><code class="language-mojo">var input_val = input_lt[batch_idx, seq_idx, hidden_idx]
 var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
-    ln_weight[hidden_idx]
-) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
-output[batch_idx, seq_idx, hidden_idx] = normalized
+    ln_weight_lt[hidden_idx]
+) + rebind[Scalar[dtype]](ln_bias_lt[hidden_idx])
+output_lt[batch_idx, seq_idx, hidden_idx] = normalized
 </code></pre>
 <ul>
 <li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x -
@@ -884,11 +893,12 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 <li>Parameters: <code>[hidden_idx]</code></li>
 </ul>
 </li>
-<li>Numerical stability ensured by:
+<li>Numerical handling:
 <ul>
-<li>Adding epsilon (1e-5) before square root</li>
+<li>Adding epsilon (1e-5) before the square root</li>
 <li>Using proper type casting</li>
-<li>Computing variance in a numerically stable way</li>
+<li>Variance from \(E[x^2] - \mu^2\), which is cheap but loses precision
+when the mean is large relative to the spread</li>
 </ul>
 </li>
 </ul>
@@ -937,7 +947,7 @@ benchmark results where it’s slightly slower than the CPU version. The fused
 implementation will address these performance limitations by:</p>
 <ul>
 <li>Computing statistics once per sequence</li>
-<li>Reusing normalized values</li>
+<li>Keeping those statistics in registers instead of recomputing them per thread</li>
 <li>Reducing memory traffic</li>
 <li>Eliminating intermediate tensor allocations</li>
 </ul>
@@ -993,12 +1003,14 @@ kernel:</p>
 </code></pre>
 <p><strong>Key optimizations:</strong></p>
 <ul>
-<li>Single kernel launch instead of two</li>
-<li>Shared memory for intermediate results</li>
-<li>Coalesced memory access patterns</li>
+<li>Single kernel launch instead of the four-kernel unfused pipeline</li>
+<li>LayerNorm statistics computed once and held in registers</li>
 <li>Reduced memory bandwidth usage</li>
 <li>No intermediate tensor allocations</li>
 </ul>
+<p>Note what this kernel does <em>not</em> do: it allocates no shared memory, and it
+launches one thread per block, so there is no coalescing to speak of. It is
+deliberately the simplest fusion that works, not a tuned one.</p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -1023,7 +1035,8 @@ kernel:</p>
 <p><strong>Computation flow</strong>:</p>
 <ul>
 <li>Compute LayerNorm statistics once per sequence</li>
-<li>Reuse normalized values for all output dimensions</li>
+<li>Recompute normalized values from those statistics for each output
+dimension</li>
 <li>Combine normalization and linear transformation</li>
 </ul>
 </li>
@@ -1220,12 +1233,13 @@ FUSED Algorithm Test Completed!
 <li>Reuse computed statistics</li>
 <li>Minimize memory traffic</li>
 <li>No intermediate tensor allocations</li>
-<li>Efficient memory access patterns</li>
+<li>Statistics held in registers rather than written back to memory</li>
 </ul>
 </li>
 </ol>
-<p>This implementation achieves better performance than the unfused version by
-reducing memory bandwidth usage and kernel launch overhead.</p>
+<p>Fusing the two operations removes the intermediate tensors and three of the four
+kernel launches the unfused path needs. At this puzzle’s size that shows up as a
+small margin - see the benchmark note below.</p>
 </div>
 </details>
 <h2 id="advantages-of-kernel-fusion"><a class="header" href="#advantages-of-kernel-fusion">Advantages of kernel fusion</a></h2>
@@ -1246,13 +1260,16 @@ operations:</p>
 <p><strong>Fused implementation</strong>:</p>
 <ul>
 <li>Single kernel combining both operations</li>
-<li>More complex but significantly more efficient</li>
+<li>More complex, and modestly faster at this size</li>
 <li>Reduced memory bandwidth usage</li>
 <li>Single kernel launch</li>
 <li>Benchmark results: 3116.11ms (GPU)</li>
 </ul>
 </li>
 </ol>
+<p>At <code>[4, 4, 8] -&gt; [4, 4, 16]</code> the two are about 2% apart, which is inside the
+noise of a run dominated by Python and dispatch overhead. Fusion is the right
+structural choice, but this configuration is far too small to show it.</p>
 <h3 id="memory-bandwidth-optimization"><a class="header" href="#memory-bandwidth-optimization">Memory bandwidth optimization</a></h3>
 <ol>
 <li>
@@ -1260,7 +1277,7 @@ operations:</p>
 <ul>
 <li>No intermediate tensor allocations between operations</li>
 <li>Reduced global memory reads/writes</li>
-<li>Reuse of normalized values for linear transformation</li>
+<li>Reuse of LayerNorm statistics across all output dimensions</li>
 <li>Memory bandwidth reduction: \[\Large \text{reduction} =
 \frac{\text{unfused_bandwidth} -
 \text{fused_bandwidth}}{\text{unfused_bandwidth}}\]</li>
@@ -1290,10 +1307,10 @@ operations:</p>
 <li>
 <p><strong>Resource management</strong>:</p>
 <ul>
-<li>Shared memory reuse between operations</li>
-<li>Better register utilization</li>
-<li>Improved thread occupancy</li>
-<li>Higher GPU utilization</li>
+<li>Values stay in registers instead of round-tripping through global memory</li>
+<li>No intermediate buffers to allocate or free</li>
+<li>Occupancy is the trade-off, not a win: one thread per block leaves most of
+each SM idle, which is why the measured margin here is small</li>
 </ul>
 </li>
 </ol>

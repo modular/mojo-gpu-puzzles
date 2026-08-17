@@ -238,7 +238,7 @@ indexing + boundary checking patterns with efficient warp communication calls
 that leverage hardware-optimized data movement.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp communication
 operations use this synchronization to provide efficient data exchange
-primitives with automatic boundary handling and zero explicit synchronization.</em></p>
+primitives with zero explicit synchronization.</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
 <h3 id="warp-communication-model"><a class="header" href="#warp-communication-model"><strong>Warp communication model</strong></a></h3>
 <p>Understand the fundamental communication patterns within GPU warps:</p>
@@ -257,7 +257,8 @@ Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 <li><strong>Register-to-register communication</strong>: Data moves directly between thread
 registers</li>
 <li><strong>Zero memory overhead</strong>: No shared memory allocation required</li>
-<li><strong>Automatic boundary handling</strong>: Hardware manages warp edge cases</li>
+<li><strong>Explicit boundary handling</strong>: <code>shuffle_down</code> returns undefined values for
+the top <code>offset</code> lanes, so guard those lanes with a lane check</li>
 <li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
@@ -280,22 +281,22 @@ operations, see the
 </blockquote>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
-var shared = TileTensor[
-    dtype,
-    row_major[WARP_SIZE](),
-    MutAnyOrigin,
-    address_space = AddressSpace.SHARED,
-].stack_allocation()
+var shared = stack_allocation[
+    dtype=dtype, address_space=AddressSpace.SHARED
+](row_major[WARP_SIZE]())
 shared[local_i] = input[global_i]
 barrier()
+var result: Scalar[dtype]
 if local_i &lt; WARP_SIZE - 1:
     var next_value = shared[local_i + 1]  # Neighbor access
-    var result = next_value - shared[local_i]
+    result = next_value - shared[local_i]
 else:
     result = 0  # Boundary handling
 barrier()
 
-# Warp communication eliminates all this complexity:
+# Warp communication removes the shared memory and the barriers, but the
+# boundary check stays: shuffle_down is undefined past the warp edge.
+var lane = Int(lane_id())
 var current_val = input[global_i]
 var next_val = shuffle_down(current_val, 1)  # Direct neighbor access
 if lane &lt; WARP_SIZE - 1:
@@ -309,7 +310,7 @@ else:
 <tr><td>Neighbor access</td><td>Shared memory</td><td>Register-to-register</td></tr>
 <tr><td>Stencil operations</td><td>Complex indexing</td><td>Simple shuffle patterns</td></tr>
 <tr><td>Block coordination</td><td>Barriers + shared</td><td>Single broadcast</td></tr>
-<tr><td>Boundary handling</td><td>Manual checks</td><td>Hardware automatic</td></tr>
+<tr><td>Boundary handling</td><td>Manual checks</td><td>Single lane-ID check</td></tr>
 </tbody></table>
 </div>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
@@ -330,11 +331,12 @@ differences.</p>
 <ul>
 <li>Using <code>shuffle_down()</code> for accessing adjacent lane data</li>
 <li>Implementing finite differences and moving averages</li>
-<li>Handling warp boundaries automatically</li>
+<li>Guarding warp boundaries with a lane check</li>
 <li>Multi-offset shuffling for extended neighbor access</li>
 </ul>
 <p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">var current_val = input[global_i]
+<pre><code class="language-mojo">var lane = Int(lane_id())
+var current_val = input[global_i]
 var next_val = shuffle_down(current_val, 1)
 if lane &lt; WARP_SIZE - 1:
     var result = compute_with_neighbors(current_val, next_val)
@@ -379,7 +381,7 @@ var result = use_shared_value(shared_value, local_data)
 <ul>
 <li><strong>Array neighbor access</strong> → <code>shuffle_down()</code></li>
 <li><strong>Shared memory coordination</strong> → <code>broadcast()</code></li>
-<li><strong>Complex boundary logic</strong> → Hardware-handled edge cases</li>
+<li><strong>Complex boundary logic</strong> → A single lane-ID guard</li>
 <li><strong>Multi-stage synchronization</strong> → Single communication operations</li>
 </ul>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>

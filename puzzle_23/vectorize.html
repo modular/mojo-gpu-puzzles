@@ -232,21 +232,21 @@ implement two different approaches to vectorized computation:</p>
 <ol>
 <li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index
 calculations</li>
-<li><strong>Mojo’s vectorize function</strong>: High-level vectorization with automatic bounds
-checking</li>
+<li><strong>Mojo’s vectorize function</strong>: High-level vectorization with automatic
+remainder handling</li>
 </ol>
 <p>Both approaches build on tiling concepts but with different trade-offs between
-control, safety, and performance optimization.</p>
+control, convenience, and performance optimization.</p>
 <p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance
 requirements and complexity levels.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Manual SIMD operations</strong> with explicit index management</li>
-<li><strong>Mojo’s vectorize function</strong> for safe, automatic vectorization</li>
+<li><strong>Mojo’s vectorize function</strong> for automatic chunk and remainder handling</li>
 <li><strong>Chunk-based memory organization</strong> for optimal SIMD alignment</li>
 <li><strong>Bounds checking strategies</strong> for edge cases</li>
-<li><strong>Performance trade-offs</strong> between manual control and safety</li>
+<li><strong>Performance trade-offs</strong> between manual control and generated loops</li>
 </ul>
 <p>The same mathematical operation as before:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
@@ -304,7 +304,7 @@ The focus is SIMD control inside a tile, not coordination across them.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -326,7 +326,7 @@ out_lt.store[simd_width](Index(global_start), ret)  # Store to global tensor
 <ul>
 <li>More control, more complexity, global tensor access</li>
 <li>Perfect SIMD alignment with hardware</li>
-<li>Manual bounds checking required</li>
+<li>No bounds check at all: <code>size</code> must divide evenly into <code>chunk_size</code></li>
 </ul>
 </div>
 </details>
@@ -359,14 +359,6 @@ out_lt.store[simd_width](Index(global_start), ret)  # Store to global tensor
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
 tile size: 32
-tile_id: 0
-tile_id: 1
-tile_id: 2
-tile_id: 3
-tile_id: 4
-tile_id: 5
-tile_id: 6
-tile_id: 7
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
@@ -450,19 +442,21 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 <li><strong>Work per thread</strong>: 128 elements (32 SIMD operations of 4 elements each)</li>
 <li><strong>Memory pattern</strong>: Large chunks with perfect SIMD alignment</li>
 <li><strong>Overhead</strong>: Minimal - direct hardware mapping</li>
-<li><strong>Safety</strong>: Manual bounds checking required</li>
+<li><strong>Safety</strong>: No bounds check; correct only because <code>size</code> divides evenly into
+<code>chunk_size</code></li>
 </ul>
 <p><strong>Key advantages:</strong></p>
 <ul>
 <li><strong>Predictable indexing</strong>: Exact control over memory access patterns</li>
 <li><strong>Optimal alignment</strong>: SIMD operations perfectly aligned to hardware</li>
-<li><strong>Maximum throughput</strong>: No overhead from safety checks</li>
+<li><strong>No per-element guard</strong>: The chunk loop runs unconditionally</li>
 <li><strong>Hardware optimization</strong>: Direct mapping to GPU SIMD units</li>
 </ul>
 <p><strong>Key challenges:</strong></p>
 <ul>
 <li><strong>Index complexity</strong>: Manual calculation of global positions</li>
-<li><strong>Bounds responsibility</strong>: Must handle edge cases explicitly</li>
+<li><strong>Bounds responsibility</strong>: A ragged tail is yours to handle, and this solution
+assumes there isn’t one</li>
 <li><strong>Debugging difficulty</strong>: More complex to verify correctness</li>
 </ul>
 </div>
@@ -507,7 +501,7 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -515,7 +509,8 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 <p>Start by writing the addition as a plain scalar loop over a tile, then convert it
 to <code>vectorize</code>. The transformation is mechanical: replace the per-element loop
 body with a SIMD load/add/store, and hand the loop to <code>vectorize</code>, which calls
-your body in <code>width</code>-sized steps and processes the leftover remainder for you.</p>
+your body in <code>width</code>-sized steps and then calls it once per leftover element
+with <code>width=1</code>.</p>
 <pre><code class="language-mojo"># Before: scalar loop over the tile (one element at a time)
 for i in range(actual_tile_size):
     var global_idx = tile_start + i
@@ -553,9 +548,10 @@ var actual_tile_size = tile_end - tile_start
 <p>This automatically handles the vectorization loop with the provided SIMD width.</p>
 <h3 id="4-key-characteristics-1"><a class="header" href="#4-key-characteristics-1">4. <strong>Key characteristics</strong></a></h3>
 <ul>
-<li>Automatic remainder handling, built-in safety, tile-based access</li>
+<li>Automatic remainder handling, tile-based access</li>
 <li>Takes explicit SIMD width parameter</li>
-<li>Built-in bounds checking and automatic remainder element processing</li>
+<li>Drives the loop and the remainder for you; the bounds check inside
+<code>vectorized_add</code> is still yours to write</li>
 </ul>
 </div>
 </details>
@@ -578,14 +574,6 @@ var actual_tile_size = tile_end - tile_start
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
 tile size: 32
-tile_id: 0 tile_start: 0 tile_end: 32 actual_tile_size: 32
-tile_id: 1 tile_start: 32 tile_end: 64 actual_tile_size: 32
-tile_id: 2 tile_start: 64 tile_end: 96 actual_tile_size: 32
-tile_id: 3 tile_start: 96 tile_end: 128 actual_tile_size: 32
-...
-tile_id: 29 tile_start: 928 tile_end: 960 actual_tile_size: 32
-tile_id: 30 tile_start: 960 tile_end: 992 actual_tile_size: 32
-tile_id: 31 tile_start: 992 tile_end: 1024 actual_tile_size: 32
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
@@ -643,12 +631,12 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
 <div class="solution-explanation">
 <h3 id="mojo-vectorize-deep-dive"><a class="header" href="#mojo-vectorize-deep-dive">Mojo vectorize deep dive</a></h3>
-<p><strong>Mojo’s vectorize function</strong> provides automatic vectorization with built-in
-safety:</p>
+<p><strong>Mojo’s vectorize function</strong> drives the loop and its remainder for you:</p>
 <ul>
 <li><strong>Explicit SIMD width parameter</strong>: You provide the simd_width to use</li>
-<li><strong>Built-in bounds checking</strong>: Prevents buffer overruns automatically</li>
 <li><strong>Automatic remainder handling</strong>: Processes leftover elements automatically</li>
+<li><strong>Explicit bounds check</strong>: <code>vectorize</code> doesn’t validate indices, which is why
+<code>vectorized_add</code> keeps its own <code>if global_idx + width &lt;= size</code> guard</li>
 <li><strong>Nested function pattern</strong>: Clean separation of vectorization logic</li>
 </ul>
 <p><strong>Tile-based organization:</strong></p>
@@ -668,9 +656,8 @@ var actual_tile_size = tile_end - tile_start
 <ul>
 <li><strong>Automatic chunking</strong>: Divides <code>actual_tile_size</code> into chunks of your
 provided <code>simd_width</code></li>
-<li><strong>Remainder handling</strong>: Automatically processes leftover elements with smaller
-widths</li>
-<li><strong>Bounds safety</strong>: Automatically prevents buffer overruns</li>
+<li><strong>Remainder handling</strong>: Calls your body once per leftover element with
+<code>width=1</code></li>
 <li><strong>Loop management</strong>: Handles the vectorization loop automatically</li>
 </ul>
 <p><strong>Execution visualization (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
@@ -686,8 +673,9 @@ widths</li>
 <li><strong>Thread count</strong>: 32 threads (1024 ÷ 32 = 32)</li>
 <li><strong>Work per thread</strong>: 32 elements (automatic SIMD chunking)</li>
 <li><strong>Memory pattern</strong>: Smaller tiles with automatic vectorization</li>
-<li><strong>Overhead</strong>: Slight - automatic optimization and bounds checking</li>
-<li><strong>Safety</strong>: Built-in bounds checking and edge case handling</li>
+<li><strong>Overhead</strong>: Slight - the loop and remainder are generated for you</li>
+<li><strong>Safety</strong>: Edge cases handled by the generated remainder loop plus your own
+bounds guard</li>
 </ul>
 </div>
 </details>
@@ -703,11 +691,11 @@ widths</li>
 </ul>
 <p><strong>Choose Mojo vectorize when:</strong></p>
 <ul>
-<li><strong>Development speed</strong> and safety are priorities</li>
+<li><strong>Development speed</strong> and fewer hand-written loops are priorities</li>
 <li>Working with <strong>irregular or dynamic data sizes</strong></li>
 <li>You want <strong>automatic remainder handling</strong> instead of manual edge case
 management</li>
-<li><strong>Bounds checking</strong> complexity would be error-prone</li>
+<li>Hand-written <strong>chunk and remainder loops</strong> would be error-prone</li>
 <li>You prefer <strong>cleaner vectorization patterns</strong> over manual loop management</li>
 </ul>
 <h3 id="advanced-optimization-insights"><a class="header" href="#advanced-optimization-insights">Advanced optimization insights</a></h3>
@@ -741,11 +729,12 @@ management</li>
 <li>Choose appropriate SIMD width for your data and hardware</li>
 <li>Focus on algorithm clarity over micro-optimizations</li>
 <li>Use nested parameter functions for clean vectorization logic</li>
-<li>Trust automatic bounds checking and remainder handling for edge cases</li>
+<li>Let <code>vectorize</code> handle the remainder, but keep your own bounds guard in the
+body</li>
 </ul>
 <p>Both approaches represent valid strategies in the GPU performance optimization
 toolkit, with manual vectorization offering maximum control and Mojo’s vectorize
-providing safety and automatic remainder handling.</p>
+handling the loop and its remainder for you.</p>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Now that you understand all three fundamental patterns:</p>
 <ul>
@@ -756,7 +745,7 @@ optimization</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different
 performance requirements. Manual vectorization gives maximum control, while
-Mojo’s vectorize function provides safety and automatic remainder handling.
+Mojo’s vectorize function generates the chunk loop and its remainder for you.
 Choose based on your specific performance needs and development constraints.</p>
 
                     </main>

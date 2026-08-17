@@ -252,9 +252,11 @@ the final output</li>
 </ol>
 <blockquote>
 <p><strong>Scope:</strong> This puzzle composes existing kernels (transpose, tiled matmul,
-softmax) into one attention op for a single query vector. Cross-block
-coordination lives inside each reused kernel — your focus is the transpose
-kernel and the host-side orchestration that connects the pieces.</p>
+softmax) into one attention op for a single query vector. The launches are
+enqueued on one device context, so each kernel finishes before the next
+starts and the only synchronization you write is the <code>barrier()</code> inside the
+transpose—your focus is that kernel and the host-side orchestration that
+connects the pieces.</p>
 </blockquote>
 <h2 id="understanding-attention-a-step-by-step-breakdown"><a class="header" href="#understanding-attention-a-step-by-step-breakdown">Understanding attention: a step-by-step breakdown</a></h2>
 <p>Think of attention as a <strong>smart lookup mechanism</strong>. Given a query (what you’re
@@ -405,7 +407,7 @@ orchestration that calls it.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -548,7 +550,7 @@ in the right order.</p>
             # FILL ME IN 2 lines
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
 <h3 id="test-the-kernels"><a class="header" href="#test-the-kernels">Test the kernels</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -662,17 +664,21 @@ implementation.</p>
 <details class="solution-details">
 <summary></summary>
 <p>To solve this puzzle, we need to implement the transpose kernel in Mojo and
-wire up the attention orchestration that drives it. This
-puzzle builds upon concepts from previous puzzles, combining
+wire up the attention orchestration that drives it. This puzzle builds upon
+concepts from previous puzzles, combining
 <strong>tiled matrix multiplication from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> and
 <strong>softmax from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></strong> into a complete
 attention mechanism.</p>
 <h3 id="reused-kernels"><a class="header" href="#reused-kernels">Reused kernels</a></h3>
-<p>Our implementation directly incorporates these proven kernels:</p>
+<p>Our implementation adapts these proven kernels:</p>
 <ol>
 <li><strong><code>matmul_idiomatic_tiled</code></strong> from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> -
 Powers both \(Q \times K^T\) and \(\text{weights} \times V\)
-operations</li>
+operations. The attention version keeps the tiling structure but takes
+separate layouts for the two inputs and the output, loads each tile with a
+plain per-thread copy instead of the asynchronous copy, and bounds-checks
+every access, because these matrices are not square and their inner
+dimension need not be a multiple of the tile size</li>
 <li><strong><code>softmax_gpu_kernel</code></strong> from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a> -
 Provides numerically stable attention weight computation</li>
 </ol>

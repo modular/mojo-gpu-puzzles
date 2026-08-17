@@ -234,30 +234,30 @@ progress through the puzzles</em>.</p>
 <h2 id="the-challenge-growing-complexity"><a class="header" href="#the-challenge-growing-complexity">The challenge: Growing complexity</a></h2>
 <p>Let’s look at the challenges we’ve faced so far:</p>
 <pre><code class="language-mojo"># Puzzle 1: Simple indexing
-output[i] = a[i] + 10.0
+output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 # Puzzle 2: Multiple array management
-output[i] = a[i] + b[i]
+output[unsafe_offset=i] = a[unsafe_offset=i] + b[unsafe_offset=i]
 
 # Puzzle 3: Bounds checking
 if i &lt; size:
-    output[i] = a[i] + 10.0
+    output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 </code></pre>
 <p>As dimensions grow, code becomes more complex:</p>
 <pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
 var idx = row * WIDTH + col
 if row &lt; height and col &lt; width:
-    output[idx] = a[idx] + 10.0
+    output[unsafe_offset=idx] = a[unsafe_offset=idx] + 10.0
 </code></pre>
 <h2 id="the-solution-a-peek-at-tiletensor"><a class="header" href="#the-solution-a-peek-at-tiletensor">The solution: A peek at TileTensor</a></h2>
 <p>TileTensor will help us tackle these challenges with elegant solutions. Here’s a
 glimpse of what’s coming:</p>
 <ol>
-<li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset
+<li><strong>Natural indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset
 calculations</li>
-<li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled
+<li><strong>Flexible memory layouts</strong>: Support for row-major, column-major, and tiled
 organizations</li>
-<li><strong>Performance Optimization</strong>: Efficient memory access patterns for GPU</li>
+<li><strong>Performance optimization</strong>: Efficient memory access patterns for GPU</li>
 </ol>
 <h2 id="a-taste-of-whats-ahead"><a class="header" href="#a-taste-of-whats-ahead">A taste of what’s ahead</a></h2>
 <p>Let’s look at a few examples of what TileTensor can do. Don’t worry about
@@ -352,12 +352,13 @@ def main() raises:
   </div>
 </div>
 <pre><code class="language-txt">Before:
-0.0 0.0 0.0
-0.0 0.0 0.0
+[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 After:
-1.0 0.0 0.0
-0.0 0.0 0.0
+[[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 </code></pre>
+<p>A <code>TileTensor</code> whose dimensions are all known at compile time prints as nested
+rows on a single line. Give it a runtime dimension and it prints flat instead,
+element by element.</p>
 <p>Let’s break down what’s happening:</p>
 <ol>
 <li>We create a <code>2 x 3</code> tensor with row-major layout</li>

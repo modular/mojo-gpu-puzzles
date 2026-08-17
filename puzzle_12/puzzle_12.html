@@ -269,7 +269,7 @@ efficient parallel reduction patterns.</p>
 <ul>
 <li><strong>TileTensor allocation</strong>: Use
 <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code></li>
-<li><strong>Element access</strong>: Natural indexing with bounds checking</li>
+<li><strong>Element access</strong>: Natural indexing with explicit bounds guards</li>
 <li><strong>Layout handling</strong>: Separate layouts for input and output</li>
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
 </ul>
@@ -297,7 +297,7 @@ def dot_product(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -380,11 +380,11 @@ expected: HostBuffer([140.0])
 <div class="solution-explanation">
 <p>The solution implements a parallel reduction for dot product using TileTensor.
 Here’s the detailed breakdown:</p>
-<h3 id="phase-1-element-wise-multiplication"><a class="header" href="#phase-1-element-wise-multiplication">Phase 1: Element-wise Multiplication</a></h3>
+<h3 id="phase-1-element-wise-multiplication"><a class="header" href="#phase-1-element-wise-multiplication">Phase 1: element-wise multiplication</a></h3>
 <p>Each thread performs one multiplication with natural indexing:</p>
 <pre><code class="language-mojo">shared[local_i] = a[global_i] * b[global_i]
 </code></pre>
-<h3 id="phase-2-parallel-reduction"><a class="header" href="#phase-2-parallel-reduction">Phase 2: Parallel Reduction</a></h3>
+<h3 id="phase-2-parallel-reduction"><a class="header" href="#phase-2-parallel-reduction">Phase 2: parallel reduction</a></h3>
 <p>Tree-based reduction with layout-aware operations:</p>
 <pre><code class="language-txt">Initial:  [0*0  1*1  2*2  3*3  4*4  5*5  6*6  7*7]
         = [0    1    4    9    16   25   36   49]
@@ -405,7 +405,8 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 <ul>
 <li>Clean shared memory allocation with TileTensor address_space parameter</li>
 <li>Type-safe operations with TileTensor</li>
-<li>Automatic bounds checking</li>
+<li>Explicit bounds guards in the kernel, since TileTensor indexing is
+unchecked</li>
 <li>Layout-aware indexing</li>
 </ul>
 </li>
@@ -432,7 +433,7 @@ while stride &gt; 0:
 <ul>
 <li>\(O(\log n)\) time complexity</li>
 <li>Coalesced memory access</li>
-<li>Minimal thread divergence</li>
+<li>Contiguous active threads at each step</li>
 <li>Efficient shared memory usage</li>
 </ul>
 </li>
@@ -457,9 +458,9 @@ Thread 2 reads: shared[2] = 4, shared[6] = 36
 Thread 3 reads: shared[3] = 9, shared[7] = 49
 
 Without barrier:
-- Thread 0 writes: shared[0] = 0 + 16 = 16
-- Thread 1 starts next step (stride = 2) before Thread 0 finishes
-  and reads old value shared[0] = 0 instead of 16!
+- Thread 2 writes: shared[2] = 4 + 36 = 40
+- Thread 0 runs ahead to the next step (stride = 2) before Thread 2
+  finishes and reads the stale shared[2] = 4 instead of 40!
 </code></pre>
 <p>With <code>barrier()</code>:</p>
 <pre><code class="language-text">Step 1 (stride = 4):

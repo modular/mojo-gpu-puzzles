@@ -269,7 +269,7 @@ def shared_memory_race(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <pre><code class="language-bash">pixi run p10 --race-condition
 </code></pre>
@@ -279,11 +279,11 @@ Running race condition example...
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
 stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:122:33: AssertionError: `left == right` comparison failed:
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:148:33: AssertionError: `left == right` comparison failed:
    left: 0.0
   right: 6.0
 </code></pre>
-<p>Let’s see how <code>compute-sanitizer</code> can help us detection issues in our GPU code.</p>
+<p>Let’s see how <code>compute-sanitizer</code> can help us detect issues in our GPU code.</p>
 <h2 id="debugging-with-compute-sanitizer"><a class="header" href="#debugging-with-compute-sanitizer">Debugging with <code>compute-sanitizer</code></a></h2>
 <h3 id="step-1-identify-the-race-condition-with-racecheck"><a class="header" href="#step-1-identify-the-race-condition-with-racecheck">Step 1: Identify the race condition with <code>racecheck</code></a></h3>
 <p>Use <code>compute-sanitizer</code> with the <code>racecheck</code> tool to identify race conditions:</p>
@@ -325,9 +325,10 @@ AssertionError: `left == right` comparison failed:
   right: 6.0
 ========= ERROR SUMMARY: 0 errors
 </code></pre>
-<p><strong>Key insight</strong>: <code>synccheck</code> found <strong>0 errors</strong> - there are no synchronization
-issues like deadlocks. The problem is <strong>race conditions</strong>, not synchronization
-bugs.</p>
+<p><strong>Key insight</strong>: <code>synccheck</code> found <strong>0 errors</strong>. It checks that synchronization
+primitives are used correctly—that every thread in a block reaches the same
+<code>barrier()</code>—and nothing in this kernel violates that. The problem is a
+<strong>data race</strong>, not a synchronization bug.</p>
 <h2 id="deadlock-vs-race-condition-understanding-the-difference"><a class="header" href="#deadlock-vs-race-condition-understanding-the-difference">Deadlock vs Race Condition: Understanding the Difference</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Deadlock</th><th>Race Condition</th></tr></thead><tbody>
 <tr><td><strong>Symptom</strong></td><td>Program hangs forever</td><td>Program produces wrong results</td></tr>
@@ -353,7 +354,7 @@ synchronization, thread coordination</li>
 operations, data dependencies</li>
 </ul>
 <h2 id="challenge"><a class="header" href="#challenge">Challenge</a></h2>
-<p>Equipped with these tools, fix the kernel failing kernel.</p>
+<p>Equipped with these tools, fix the failing kernel.</p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -374,24 +375,27 @@ others’ work</li>
 <li><strong>Non-atomic operation</strong> → The <code>+=</code> compound assignment isn’t atomic in GPU
 shared memory</li>
 </ul>
-<p><strong>Why we get exactly 9 hazards:</strong></p>
+<p><strong>Where the 9 hazards come from:</strong></p>
 <ul>
-<li>Each thread tries to perform read-modify-write</li>
-<li>4 threads × 2-3 hazards per thread = 9 total hazards</li>
-<li><code>compute-sanitizer</code> tracks every conflicting memory access pair</li>
+<li>Each of the 4 active threads performs a read-modify-write on <code>shared_sum[0]</code></li>
+<li><code>compute-sanitizer</code> counts conflicting access <em>pairs</em>, not threads, so the
+total depends on how those reads and writes interleaved on this particular run</li>
+<li>Here that came to 4 write-versus-read pairs and 5 write-versus-write pairs</li>
 </ul>
 <h3 id="race-condition-debugging-tips"><a class="header" href="#race-condition-debugging-tips">Race condition debugging tips</a></h3>
 <ol>
-<li><strong>Use racecheck for data races</strong>: Detects shared memory hazards and data
-corruption</li>
-<li><strong>Use synccheck for deadlocks</strong>: Detects synchronization bugs (barrier
-issues, deadlocks)</li>
+<li><strong>Use racecheck for data races</strong>: Detects hazards on <em>shared</em> memory; it
+does not inspect global memory</li>
+<li><strong>Use synccheck for synchronization misuse</strong>: Detects threads that fail to
+reach the same synchronization primitive together, which is what turns a
+conditional <code>barrier()</code> into a deadlock</li>
 <li><strong>Focus on shared memory access</strong>: Look for unsynchronized <code>+=</code>, <code>=</code>
 operations to shared variables</li>
 <li><strong>Identify the pattern</strong>: Read-modify-write operations are common race
 condition sources</li>
-<li><strong>Check barrier placement</strong>: Barriers must be placed BEFORE conflicting
-operations, not after</li>
+<li><strong>Know what a barrier can fix</strong>: A barrier orders one phase of the kernel
+against the next, so it fixes a read that must see another thread’s earlier
+write—it cannot serialize concurrent read-modify-writes to one address</li>
 </ol>
 <p><strong>Why this distinction matters for debugging:</strong></p>
 <ul>
@@ -404,7 +408,8 @@ operations, data dependencies</li>
 <ul>
 <li>Multiple threads writing to the same shared memory location</li>
 <li>Unsynchronized read-modify-write operations (<code>+=</code>, <code>++</code>, etc.)</li>
-<li>Barriers placed after the race condition instead of before</li>
+<li>Reaching for a barrier to protect a read-modify-write, when a barrier only
+orders one phase against the next</li>
 </ul>
 </div>
 </details>
@@ -461,17 +466,20 @@ def shared_memory_race(
 <p>This single line creates multiple hazards among the 4 valid threads:</p>
 <ol>
 <li><strong>Thread (0,0) reads</strong> <code>shared_sum[0]</code> (value: 0.0)</li>
-<li><strong>Thread (0,1) reads</strong> <code>shared_sum[0]</code> (value: 0.0) ←
-<strong>Read-after-write hazard!</strong></li>
-<li><strong>Thread (0,0) writes</strong> back <code>0.0 + 0</code></li>
-<li><strong>Thread (1,0) writes</strong> back <code>0.0 + 2</code> ← <strong>Write-after-write hazard!</strong></li>
+<li><strong>Thread (0,1) reads</strong> <code>shared_sum[0]</code> (value: 0.0)—both threads now hold
+the same stale value</li>
+<li><strong>Thread (0,0) writes</strong> back <code>0.0 + 0</code> ← this write races with thread
+(0,1)’s read: <strong>write-versus-read hazard!</strong></li>
+<li><strong>Thread (1,0) writes</strong> back <code>0.0 + 2</code> ← <strong>write-versus-write hazard!</strong></li>
 </ol>
 <h4 id="why-the-test-failed"><a class="header" href="#why-the-test-failed">Why the test failed</a></h4>
 <ul>
 <li>Multiple threads corrupt each other’s writes during the <code>+=</code> operation</li>
 <li>The <code>+=</code> operation gets interrupted, causing lost updates</li>
 <li>Expected sum of 6.0 (0+1+2+3), but race conditions resulted in 0.0</li>
-<li>The <code>barrier()</code> comes too late - after the race condition already occurred</li>
+<li>Moving the <code>barrier()</code> wouldn’t help: it orders one phase of the kernel
+against the next, and cannot make a single thread’s read-modify-write
+indivisible with respect to the other three</li>
 </ul>
 <h4 id="what-are-race-conditions"><a class="header" href="#what-are-race-conditions">What are race conditions?</a></h4>
 <p><strong>Race conditions</strong> occur when multiple threads access shared data concurrently,
@@ -486,10 +494,11 @@ different runs</li>
 <h4 id="gpu-specific-dangers"><a class="header" href="#gpu-specific-dangers">GPU-specific dangers</a></h4>
 <p><strong>Massive parallelism impact:</strong></p>
 <ul>
-<li><strong>Warp-level corruption</strong>: Race conditions can affect entire warps (32
-threads)</li>
-<li><strong>Memory coalescing issues</strong>: Races can disrupt efficient memory access
-patterns</li>
+<li><strong>Warp-wide lockstep</strong>: The 32 threads of a warp issue the same instruction
+together, so a read-modify-write on one address collides across the whole warp
+at once</li>
+<li><strong>Repeated per block</strong>: Shared memory is private to a block, so the same
+unsynchronized pattern re-runs independently in every block of the grid</li>
 <li><strong>Kernel-wide failures</strong>: Shared memory corruption can affect the entire GPU
 kernel</li>
 </ul>

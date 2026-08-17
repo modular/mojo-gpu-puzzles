@@ -273,7 +273,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -393,7 +393,12 @@ var local_col = thread_idx.x
 if row &lt; size and col &lt; size:
     a_shared[local_row, local_col] = a[row, col]
     b_shared[local_row, local_col] = b[row, col]
+
+# Every thread reaches this, including the ones the guard skipped
+barrier()
 </code></pre>
+<p>The <code>barrier()</code> sits outside the guard on purpose: a barrier that only some
+threads in the block reach is undefined behavior.</p>
 </li>
 <li>
 <p><strong>Computation with Shared Memory</strong>:</p>
@@ -472,7 +477,7 @@ if row &lt; size and col &lt; size:
 <p><strong>TileTensor benefits</strong>:</p>
 <ul>
 <li>Direct 2D indexing simplifies code</li>
-<li>Type safety through <code>element_type</code></li>
+<li>Type safety through <code>ElementType</code></li>
 <li>Efficient memory layout handling</li>
 </ul>
 </li>
@@ -481,7 +486,7 @@ if row &lt; size and col &lt; size:
 <ul>
 <li>TileTensor with address_space for structured allocation</li>
 <li>Row-major layout matching input tensors</li>
-<li>Proper alignment for efficient access</li>
+<li>Aligned to the element type’s natural alignment by default</li>
 </ul>
 </li>
 <li>
@@ -515,13 +520,12 @@ if row &lt; size and col &lt; size:
 <p><strong>Computational benefits</strong>:</p>
 <ul>
 <li>Reduced global memory traffic</li>
-<li>Better cache utilization</li>
-<li>Improved instruction throughput</li>
+<li>Dot-product operands come from on-chip shared memory rather than global
+memory</li>
 </ul>
 </li>
 </ol>
-<p>This implementation significantly improves performance over the naive version
-by:</p>
+<p>This implementation improves on the naive version by:</p>
 <ul>
 <li>Reducing global memory accesses</li>
 <li>Enabling data reuse through shared memory</li>

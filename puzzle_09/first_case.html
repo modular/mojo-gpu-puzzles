@@ -294,16 +294,16 @@ doesn’t, focus on the broken one</li>
 <details class="solution-details">
 <summary><strong>💡 Investigation & Solution</strong></summary>
 <div class="solution-explanation">
-<h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-Step Investigation with CUDA-GDB</a></h2>
-<h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the Debugger</a></h3>
+<h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-step investigation with CUDA-GDB</a></h2>
+<h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the debugger</a></h3>
 <pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 </code></pre>
-<h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
+<h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the breakpoint information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
 <pre><code class="language-text">(cuda-gdb) run
 CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
-31          i = thread_idx.x
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:37
+37          var i = thread_idx.x
 </code></pre>
 <p><strong>🔍 First Clue</strong>: The function signature shows <code>(output=0x302000000, a=0x0)</code></p>
 <ul>
@@ -312,7 +312,7 @@ CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
 </ul>
 <h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
 <pre><code class="language-text">(cuda-gdb) next
-32          output[i] = a[i] + 10.0
+38          output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 (cuda-gdb) print i
 $1 = 0
 (cuda-gdb) print output
@@ -326,7 +326,7 @@ $3 = (!kgen.scalar&lt;f32&gt; * @register) 0x0
 <li>✅ Result pointer <code>0x302000000</code> is a proper GPU address</li>
 <li>❌ Input pointer <code>0x0</code> is null</li>
 </ul>
-<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the Problem</a></h3>
+<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the problem</a></h3>
 <pre><code class="language-text">(cuda-gdb) print a[i]
 Cannot access memory at address 0x0
 </code></pre>
@@ -334,26 +334,29 @@ Cannot access memory at address 0x0
 cause!</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a>
-for <code>--first-crash</code>, we see that the host code creates a null pointer instead of
+for <code>--first-case</code>, we see that the host code creates a null pointer instead of
 allocating proper GPU memory:</p>
-<pre><code class="language-mojo"> var input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
+<pre><code class="language-mojo"># A `DeviceBuffer` with 0 elements. Nothing is allocated, so the buffer hands
+# the kernel a NULL pointer.
+var input_buf = ctx.enqueue_create_buffer[dtype](0)
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
 <li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0)
 elements.</li>
-<li>since there are no elements for which to allocate memory, this returns a null
-pointer.</li>
-<li>This null pointer gets passed to the GPU kernel</li>
-<li>When kernel tries <code>a[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
+<li>Since there are no elements for which to allocate memory, this returns a
+null pointer.</li>
+<li>This null pointer gets passed to the GPU kernel.</li>
+<li>When the kernel evaluates <code>a[unsafe_offset=i]</code>, it dereferences null →
+<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>.</li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
-<pre><code class="language-mojo"># Wrong: Creates null pointer
+<pre><code class="language-mojo"># Wrong: creates a null pointer
 var input_buf = ctx.enqueue_create_buffer[dtype](0)
 
-# Correct: Allocates and initialize actual GPU memory for safe processing
-input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+# Correct: allocate and initialize actual GPU memory for safe processing
+var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
 input_buf.enqueue_fill(0)
 </code></pre>
 <h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>

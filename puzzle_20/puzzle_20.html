@@ -230,8 +230,8 @@
 <p>In <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a>, we learned how to integrate Mojo
 GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
 <ul>
-<li>Use the same Mojo kernel with PyTorch’s CustomOpLibrary</li>
-<li>Integrate with PyTorch’s tensor system and autograd</li>
+<li>Use the same Mojo kernel through MAX’s <code>CustomOpLibrary</code> for PyTorch</li>
+<li>Integrate with PyTorch’s tensor system</li>
 <li>Compare MAX Graph vs PyTorch approaches for custom operations</li>
 <li>Understand the critical pattern of explicit output tensor allocation</li>
 </ul>
@@ -241,8 +241,8 @@ different Python integration approaches.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>In this puzzle, we’ll take the exact same 1D convolution kernel from
 <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the
-<a href="https://docs.modular.com/api/python/torch/">CustomOpLibrary</a> instead of MAX
-Graph.</p>
+<a href="https://docs.modular.com/api/python/generated/max.experimental.torch.CustomOpLibrary/">CustomOpLibrary</a>
+instead of MAX Graph.</p>
 <p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only
 the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
@@ -283,7 +283,7 @@ def conv1d_pytorch(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a></p>
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -318,7 +318,7 @@ PyTorch custom op result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 1
 ✅ PyTorch custom op verification PASSED
 
 Comparing with MAX Graph approach (like p15)
---------------------------------------------
+----------------------------------------
 MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 ✅ MAX Graph verification PASSED
 ✅ PyTorch and MAX Graph results MATCH
@@ -374,7 +374,7 @@ signature</li>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>This puzzle illustrates several important patterns for PyTorch custom
 operations:</p>
-<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p15)</th><th>PyTorch CustomOpLibrary (p18)</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p17)</th><th>PyTorch CustomOpLibrary (p20)</th></tr></thead><tbody>
 <tr><td><strong>Output Allocation</strong></td><td>Automatic</td><td>Manual (<code>torch.empty_like()</code>)</td></tr>
 <tr><td><strong>Operation Call</strong></td><td><code>ops.custom(...)</code></td><td><code>torch.compile(op)(...)</code></td></tr>
 <tr><td><strong>Parameter Passing</strong></td><td><code>parameters={...}</code></td><td><code>op[{...}]</code></td></tr>
@@ -399,19 +399,17 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 <li>The Mojo kernel can write directly to the output buffer</li>
 </ul>
 <h3 id="torchcompile-integration"><a class="header" href="#torchcompile-integration">torch.compile() integration</a></h3>
-<p><code>torch.compile()</code> is essential because it:</p>
-<ul>
-<li>Handles memory layout conversion between PyTorch and Mojo</li>
-<li>Manages device synchronization (CPU ↔ GPU)</li>
-<li>Optimizes tensor format conversion</li>
-<li>Provides proper error handling for memory operations</li>
-</ul>
-<p><em>Note: Without <code>torch.compile()</code>, you might encounter <code>std::bad_alloc</code> errors
-because the raw operation can’t handle PyTorch’s tensor memory management.</em></p>
+<p><code>torch.compile()</code> traces the call and hands it to PyTorch’s Inductor backend,
+so the custom op is compiled into the surrounding PyTorch graph instead of
+being dispatched on its own at every call. Operations produced by
+<code>CustomOpLibrary</code> are ordinary PyTorch custom ops and can also be invoked
+eagerly, so this is an integration choice rather than a requirement of the
+API.</p>
 <h2 id="debugging-custom-operations"><a class="header" href="#debugging-custom-operations">Debugging custom operations</a></h2>
 <p>Common issues and solutions:</p>
 <ol>
-<li><strong>Memory Allocation Errors</strong>: Always use <code>torch.compile()</code></li>
+<li><strong>Missing Output Tensor</strong>: The op writes in place, so allocate the output
+first and pass it as the leading argument</li>
 <li><strong>Wrong Output Shape</strong>: Ensure output tensor matches expected dimensions</li>
 <li><strong>Device Mismatch</strong>: All tensors must be on the same device</li>
 <li><strong>Parameter Errors</strong>: Verify parameter names match Mojo operation signature</li>

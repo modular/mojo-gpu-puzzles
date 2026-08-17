@@ -241,13 +241,13 @@ it in 2D TileTensor <code>output</code>.</p>
 requiring proper block coordination for large matrices.</p>
 <blockquote>
 <p>🔑 <strong>2D thread indexing convention</strong></p>
-<p>We extend the block-based indexing from <a href="../puzzle_04/puzzle_04.html">puzzle 4</a>
+<p>We extend the block-based indexing from <a href="../puzzle_06/puzzle_06.html">puzzle 6</a>
 to 2D:</p>
 <pre><code class="language-txt">Global position calculation:
 row = block_dim.y * block_idx.y + thread_idx.y
 col = block_dim.x * block_idx.x + thread_idx.x
 </code></pre>
-<p>For example, with 2×2 blocks in a 4×4 grid:</p>
+<p>For example, with 2×2 thread blocks covering a 4×4 matrix:</p>
 <pre><code class="language-txt">Block (0,0):   Block (1,0):
 [0,0  0,1]     [0,2  0,3]
 [1,0  1,1]     [1,2  1,3]
@@ -296,7 +296,7 @@ def add_10_blocks_2d(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p07/p07.mojo" class="filename">View full file: problems/p07/p07.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p07/p07.mojo" class="filename">View full file: problems/p07/p07.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -392,7 +392,8 @@ Block (0,1)         Block (1,1)
 calculation</p>
 </li>
 <li>
-<p>Automatic memory layout optimization</p>
+<p>The row-major layout travels with the tensor, so the offset arithmetic
+stays out of the kernel</p>
 </li>
 <li>
 <p>Example access pattern:</p>
@@ -406,33 +407,26 @@ row * size + col    tensor[row, col]
 <li>
 <p><strong>Bounds checking</strong></p>
 <ul>
-<li>Guard <code>row &lt; size and col &lt; size</code> handles:
-<ul>
-<li>Excess threads in partial blocks</li>
-<li>Edge cases at tensor boundaries</li>
-<li>Automatic memory layout handling by TileTensor</li>
-<li>36 threads (2×2 blocks of 3×3) for 25 elements</li>
-</ul>
-</li>
+<li>The grid launches 36 threads (2×2 blocks of 3×3) for 25 elements</li>
+<li>Guard <code>row &lt; size and col &lt; size</code> switches off the 11 threads that land
+outside the tensor</li>
+<li>Without the guard, those threads would read and write past the end of the
+buffer—the exact bug <a href="../puzzle_10/memcheck.html">puzzle 10</a> hunts down</li>
 </ul>
 </li>
 <li>
 <p><strong>Block coordination</strong></p>
 <ul>
-<li>Each 3×3 block processes part of 5×5 tensor</li>
-<li>TileTensor handles:
-<ul>
-<li>Memory layout optimization</li>
-<li>Efficient access patterns</li>
-<li>Block boundary coordination</li>
-<li>Cache-friendly data access</li>
-</ul>
-</li>
+<li>Each 3×3 block covers one tile of the 5×5 tensor</li>
+<li>The block indices decide which tile a block touches; the guard decides
+which of its threads do any work</li>
+<li><code>TileTensor</code> maps <code>(row, col)</code> to a flat offset the same way from every
+block, so no block needs to know where its tile starts</li>
 </ul>
 </li>
 </ol>
-<p>This pattern shows how TileTensor simplifies 2D block processing while
-maintaining optimal memory access patterns and thread coordination.</p>
+<p>This pattern shows how TileTensor simplifies 2D block processing while keeping
+thread coordination explicit.</p>
 </div>
 </details>
 

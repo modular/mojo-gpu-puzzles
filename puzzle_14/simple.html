@@ -265,7 +265,7 @@ def prefix_sum_simple(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -304,7 +304,7 @@ def prefix_sum_simple(
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
@@ -346,7 +346,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 </code></pre>
 <div class="solution-explanation">
 <p>The parallel (inclusive) prefix-sum algorithm works as follows:</p>
-<h3 id="setup--configuration"><a class="header" href="#setup--configuration">Setup &amp; Configuration</a></h3>
+<h3 id="setup-and-configuration"><a class="header" href="#setup-and-configuration">Setup and configuration</a></h3>
 <ul>
 <li><code>TPB</code> (Threads Per Block) = 8</li>
 <li><code>SIZE</code> (Array Size) = 8</li>
@@ -383,7 +383,7 @@ shared:       [0    1    2    3    4    5    6    7]
                ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
-<h3 id="offset--1-first-parallel-step"><a class="header" href="#offset--1-first-parallel-step">Offset = 1: First Parallel Step</a></h3>
+<h3 id="offset--1-first-parallel-step"><a class="header" href="#offset--1-first-parallel-step">Offset = 1: first parallel step</a></h3>
 <p>Active threads: \(T_1 \ldots T_7\) (where <code>local_i ≥ 1</code>)</p>
 <p><strong>Read Phase</strong>: Each thread reads the value it needs:</p>
 <pre><code class="language-txt">T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
@@ -400,7 +400,7 @@ Result:      [0    1    3    5    7    9    11   13]
                    ↑    ↑    ↑    ↑    ↑    ↑    ↑
                   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
-<h3 id="offset--2-second-parallel-step"><a class="header" href="#offset--2-second-parallel-step">Offset = 2: Second Parallel Step</a></h3>
+<h3 id="offset--2-second-parallel-step"><a class="header" href="#offset--2-second-parallel-step">Offset = 2: second parallel step</a></h3>
 <p>Active threads: \(T_2 \ldots T_7\) (where <code>local_i ≥ 2</code>)</p>
 <p><strong>Read Phase</strong>: Each thread reads the value it needs:</p>
 <pre><code class="language-txt">T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
@@ -416,7 +416,7 @@ Result:      [0    1    3    6    10   14   18   22]
                         ↑    ↑    ↑    ↑    ↑    ↑
                        T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
-<h3 id="offset--4-third-parallel-step"><a class="header" href="#offset--4-third-parallel-step">Offset = 4: Third Parallel Step</a></h3>
+<h3 id="offset--4-third-parallel-step"><a class="header" href="#offset--4-third-parallel-step">Offset = 4: third parallel step</a></h3>
 <p>Active threads: \(T_4 \ldots T_7\) (where <code>local_i ≥ 4</code>)</p>
 <p><strong>Read Phase</strong>: Each thread reads the value it needs:</p>
 <pre><code class="language-txt">T₄ reads shared[0] = 0    T₆ reads shared[2] = 3

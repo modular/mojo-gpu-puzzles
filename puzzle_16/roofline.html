@@ -271,20 +271,19 @@ Architecture</a></em></p>
 <p>This means kernels with arithmetic intensity below 12.5 FLOP/B are memory-bound,
 while those above are compute-bound.</p>
 <h2 id="3-visualizing-our-matrix-multiplication-implementations"><a class="header" href="#3-visualizing-our-matrix-multiplication-implementations">3. Visualizing our matrix multiplication implementations</a></h2>
-<p>The animation below shows how our puzzle implementations map onto the A100’s
+<p>The visualization below shows how our puzzle implementations map onto the A100’s
 roofline model:</p>
 <img src="./media/roofline-w.png" alt="Roofline visualization" class="light-mode-img">
 <img src="./media/roofline-b.png" alt="Roofline visualization" class="dark-mode-img">
-<p>The visualization demonstrates the optimization journey we’ll take in this
-puzzle:</p>
+<p>It lays out the optimization journey we’ll take in this puzzle:</p>
 <ol>
 <li><strong>Hardware constraints</strong> – The red memory roof and blue compute roof define
 performance limits</li>
-<li><strong>Our starting point</strong> – The naive implementation (orange dot) sitting firmly
-on the memory roof</li>
-<li><strong>Optimization target</strong> – The shared memory version (teal dot) with improved
-arithmetic intensity</li>
-<li><strong>Ultimate goal</strong> – The golden arrow pointing toward the critical intensity
+<li><strong>Our starting point</strong> – The naive implementation (teal dot), firmly in the
+memory-bound region</li>
+<li><strong>Optimization target</strong> – The shared memory version (orange dot) with
+improved arithmetic intensity</li>
+<li><strong>Ultimate goal</strong> – The orange curve pointing toward the critical intensity
 where kernels become compute-bound</li>
 </ol>
 <h2 id="4-analyzing-our-naive-implementation"><a class="header" href="#4-analyzing-our-naive-implementation">4. Analyzing our naive implementation</a></h2>
@@ -311,8 +310,8 @@ that our naive kernel is <strong>severely memory-bound</strong>.</p>
 <p><strong>Expected performance</strong>: \[\Large P \approx B_{\text{peak}} \times
 I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\]</p>
 <p>This represents only \(\frac{292}{19{,}500} \approx 1.5\%\) of the GPU’s
-computational potential! The visualization clearly shows this as the yellow dot
-sitting squarely on the memory roof—we’re nowhere near the compute ceiling.</p>
+computational potential! The visualization plots this as the teal dot, deep in
+the memory-bound region—we’re nowhere near the compute ceiling.</p>
 <h2 id="5-the-path-forward-shared-memory-optimization"><a class="header" href="#5-the-path-forward-shared-memory-optimization">5. The path forward: shared memory optimization</a></h2>
 <p>The roofline model reveals our optimization strategy:
 <strong>increase arithmetic intensity</strong> by reducing redundant memory accesses. This is
@@ -376,7 +375,7 @@ expected direction</li>
 <h2 id="connection-to-our-shared-memory-puzzle"><a class="header" href="#connection-to-our-shared-memory-puzzle">Connection to our shared memory puzzle</a></h2>
 <p>In the next section, we’ll implement the <strong>shared memory optimization</strong> that
 begins moving our kernel up the roofline. As the visualization shows, this takes
-us from the orange dot (naive) to the teal dot (shared memory)—a clear
+us from the teal dot (naive) to the orange dot (shared memory)—a clear
 performance improvement through better data reuse.</p>
 <p>While our \(2 \times 2\) example won’t reach the compute roof, you’ll see how
 the same principles scale to larger matrices where shared memory becomes crucial

@@ -245,10 +245,9 @@ computing.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>GPU synchronization is the foundation that enables complex parallel algorithms
-to work correctly and efficiently. This chapter explores three fundamental
+to work correctly and efficiently. This chapter explores two fundamental
 synchronization patterns that appear throughout high-performance GPU computing:
-<strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and
-<strong>streaming computation</strong>.</p>
+<strong>pipeline coordination</strong> and <strong>memory barrier management</strong>.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
 <li><strong>Understand when and why</strong> different synchronization primitives are needed</li>
@@ -258,8 +257,7 @@ synchronization patterns that appear throughout high-performance GPU computing:
 </ul>
 <p><strong>Architectural progression:</strong> These puzzles follow a carefully designed
 progression from basic pipeline coordination to advanced memory barrier
-management, culminating in streaming computation patterns used in
-high-throughput applications.</p>
+management.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p><strong>Thread coordination paradigms:</strong></p>
 <ul>
@@ -278,8 +276,6 @@ relationships</li>
 Simple thread synchronization within blocks</li>
 <li><strong>Advanced <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a></strong>:
 Fine-grained memory barrier control with state tracking</li>
-<li><strong>Streaming coordination</strong>: Asynchronous copy and bulk transfer
-synchronization</li>
 </ul>
 <p><strong>Memory consistency models:</strong></p>
 <ul>
@@ -304,8 +300,6 @@ memory</li>
 <li><strong>Multi-stage pipelines</strong>: Thread specialization with barrier coordination</li>
 <li><strong>Double-buffered iterations</strong>: Memory barrier management for iterative
 algorithms</li>
-<li><strong>Streaming computation</strong>: Asynchronous copy coordination for high-throughput
-processing</li>
 </ol>
 <p><strong>Performance considerations:</strong></p>
 <ul>
@@ -315,7 +309,7 @@ types</li>
 <li><strong>Thread utilization</strong>: Balancing specialized roles with overall efficiency</li>
 </ul>
 <h2 id="puzzle-structure"><a class="header" href="#puzzle-structure">Puzzle structure</a></h2>
-<p>This chapter contains three interconnected puzzles that build upon each other:</p>
+<p>This chapter contains two interconnected puzzles that build upon each other:</p>
 <h3 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination"><strong><a href="barrier.html">Multi-Stage Pipeline Coordination</a></strong></a></h3>
 <p><strong>Focus</strong>: Thread specialization and pipeline architecture</p>
 <p>Learn how to design GPU kernels where different thread groups execute completely
@@ -353,8 +347,8 @@ automata, simulation time-stepping</p>
 specialization basics</li>
 <li><strong>Progress to <a href="memory_barrier.html">Memory Barriers</a></strong>: Learn fine-grained
 synchronization control</li>
-<li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput
-applications</li>
+<li><strong>Revisit <a href="../puzzle_28/puzzle_28.html">Puzzle 28</a></strong>: Combine these patterns
+with asynchronous copy for high-throughput applications</li>
 </ol>
 <p><strong>Prerequisites:</strong></p>
 <ul>

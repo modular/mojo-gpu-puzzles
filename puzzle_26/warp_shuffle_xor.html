@@ -253,7 +253,7 @@ algorithms like FFT, bitonic sort, and parallel reductions because they enable
 <p>The <code>shuffle_xor</code> operation enables each lane to exchange data with lanes based
 on <a href="https://en.wikipedia.org/wiki/Exclusive_or">XOR</a> patterns: \[\Large
 \text{shuffle_xor}(\text{value}, \text{mask}) =
-\text{value_from_lane}(\text{lane_id} \oplus \text{mask})\]</p>
+\text{value from lane }(\text{lane_id} \oplus \text{mask})\]</p>
 <p>This transforms complex parallel algorithms into elegant butterfly communication
 patterns, enabling efficient tree reductions and sorting networks without
 explicit coordination.</p>
@@ -278,8 +278,9 @@ independently. There is no cross-warp or cross-block communication.</p>
 <pre><code class="language-mojo"># Traditional approach - complex and requires synchronization
 shared_memory[lane] = input[global_i]
 barrier()
+var partner: Int
 if lane % 2 == 0:
-    var partner = lane + 1
+    partner = lane + 1
 else:
     partner = lane - 1
 if partner &lt; WARP_SIZE:
@@ -301,7 +302,8 @@ output[global_i] = swapped_val
 <p><strong>Benefits of shuffle_xor:</strong></p>
 <ul>
 <li><strong>Zero memory overhead</strong>: Direct register-to-register communication</li>
-<li><strong>No synchronization</strong>: SIMT execution guarantees correctness</li>
+<li><strong>No barrier needed</strong>: The shuffle instruction synchronizes the lanes it reads
+from, so no <code>barrier()</code> call is required</li>
 <li><strong>Hardware optimized</strong>: Single instruction for all lanes</li>
 <li><strong>Butterfly foundation</strong>: Building block for complex parallel algorithms</li>
 </ul>
@@ -331,7 +333,7 @@ XOR communication.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -438,7 +440,7 @@ through XOR communication patterns.</p>
     output[global_i] = swapped_val
 </code></pre>
 <p><strong>SIMT execution deep dive:</strong></p>
-<pre><code class="language-text">Cycle 1: All lanes load their values simultaneously
+<pre><code class="language-text">Step 1: All lanes load their values
   Lane 0: current_val = input[0] = 0
   Lane 1: current_val = input[1] = 1
   Lane 2: current_val = input[2] = 2
@@ -446,7 +448,7 @@ through XOR communication patterns.</p>
   ...
   Lane 31: current_val = input[31] = 31
 
-Cycle 2: shuffle_xor(current_val, 1) executes on all lanes
+Step 2: shuffle_xor(current_val, 1) executes on all lanes
   Lane 0: receives from Lane 1 (0⊕1=1) → swapped_val = 1
   Lane 1: receives from Lane 0 (1⊕1=0) → swapped_val = 0
   Lane 2: receives from Lane 3 (2⊕1=3) → swapped_val = 3
@@ -455,7 +457,7 @@ Cycle 2: shuffle_xor(current_val, 1) executes on all lanes
   Lane 30: receives from Lane 31 (30⊕1=31) → swapped_val = 31
   Lane 31: receives from Lane 30 (31⊕1=30) → swapped_val = 30
 
-Cycle 3: Store results
+Step 3: Store results
   Lane 0: output[0] = 1
   Lane 1: output[1] = 0
   Lane 2: output[2] = 3
@@ -476,9 +478,9 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 </ol>
 <p><strong>Performance characteristics:</strong></p>
 <ul>
-<li><strong>Latency</strong>: 1 cycle (hardware register exchange)</li>
+<li><strong>Instruction count</strong>: One shuffle instruction for the whole warp</li>
 <li><strong>Bandwidth</strong>: 0 bytes (no memory traffic)</li>
-<li><strong>Parallelism</strong>: All WARP_SIZE lanes exchange simultaneously</li>
+<li><strong>Parallelism</strong>: All <code>WARP_SIZE</code> lanes exchange in the same instruction</li>
 <li><strong>Scalability</strong>: \(O(1)\) complexity regardless of data size</li>
 </ul>
 </div>
@@ -709,15 +711,15 @@ optimal \(O(\log n)\) complexity.</p>
 reduction</li>
 <li><strong>Perfect load balancing</strong>: Every lane participates equally at each step</li>
 <li><strong>No memory bottlenecks</strong>: Pure register-to-register communication</li>
-<li><strong>Hardware optimized</strong>: Maps directly to GPU butterfly networks</li>
+<li><strong>Hardware optimized</strong>: Each step is a single cross-lane shuffle instruction</li>
 </ol>
 <p><strong>Performance characteristics:</strong></p>
 <ul>
 <li><strong>Steps</strong>: \(\log_2(\text{WARP_SIZE})\) (e.g., 5 for 32-thread, 6 for
 64-thread warp)</li>
-<li><strong>Latency per step</strong>: 1 cycle (register exchange + comparison)</li>
-<li><strong>Total latency</strong>: \(\log_2(\text{WARP_SIZE})\) cycles vs
-\((\text{WARP_SIZE}-1)\) cycles for sequential</li>
+<li><strong>Work per step</strong>: One shuffle plus one comparison</li>
+<li><strong>Dependent steps</strong>: \(\log_2(\text{WARP_SIZE})\) vs
+\((\text{WARP_SIZE}-1)\) for a sequential scan</li>
 <li><strong>Parallelism</strong>: All lanes active throughout the algorithm</li>
 </ul>
 </div>
@@ -831,9 +833,9 @@ same butterfly communication pattern.</p>
 </div>
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">WARP_SIZE:  32
-SIZE_2:  64
-output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
-expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
+SIZE:  64
+output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0]
+expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0]
 Butterfly conditional max test: passed
 Puzzle 26 complete ✅
 </code></pre>
@@ -885,7 +887,7 @@ conditional output.</p>
     var current_val = input[global_i]
     var min_val = current_val  # Track minimum separately
 
-    # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
+    # Butterfly reduction for both max and min: log2(WARP_SIZE) steps
     var offset = WARP_SIZE // 2
     while offset &gt; 0:
         var neighbor_val = shuffle_xor(current_val, UInt32(offset))
@@ -1007,7 +1009,7 @@ while offset &gt; 0:
 <p><strong>Performance Advantages:</strong></p>
 <ul>
 <li><strong>Hardware optimization</strong>: Direct register-to-register communication</li>
-<li><strong>No synchronization</strong>: SIMT execution guarantees correctness</li>
+<li><strong>No barriers to place</strong>: The shuffle instruction carries the synchronization</li>
 <li><strong>Scalable complexity</strong>: \(O(\log n)\) for any WARP_SIZE (32, 64, etc.)</li>
 <li><strong>Memory efficiency</strong>: Zero shared memory requirements</li>
 </ul>

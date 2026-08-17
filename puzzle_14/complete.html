@@ -240,7 +240,7 @@ synchronize across multiple blocks to get the correct result.</em></p>
 multi-phase approach</li>
 <li><strong>Block-level sync</strong>: Within a block, use <code>barrier()</code> to synchronize threads</li>
 <li><strong>Host-level sync</strong>: Between blocks, Mojo’s <code>DeviceContext</code> ensures kernel
-launches are ordered, which means they start in the order they where scheduled
+launches are ordered, which means they start in the order they were scheduled
 and wait for the previous kernel to finish before starting. You may need to
 use <code>ctx.synchronize()</code> to ensure all GPU work is complete before reading
 results back to the host.</li>
@@ -283,7 +283,7 @@ def prefix_sum_block_sum_phase(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that
 <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> only
 synchronizes threads within a block, not across blocks. For cross-block
@@ -350,7 +350,7 @@ should store block sums</li>
 <li><strong>Two kernel synchronization</strong>: It must be ensured that the second kernel runs
 only after the first kernel completes.</li>
 </ul>
-<h3 id="5-debugging-strategy"><a class="header" href="#5-debugging-strategy">5. Debugging Strategy</a></h3>
+<h3 id="5-debugging-strategy"><a class="header" href="#5-debugging-strategy">5. Debugging strategy</a></h3>
 <p>If you encounter issues, try visualizing the intermediate state after the first
 phase:</p>
 <pre><code class="language-text">After first phase: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
@@ -388,7 +388,8 @@ device has completed its work.</p>
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+<pre><code class="language-txt">Note: we print the extended buffer here, but we only need to print the first `size` elements
+out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
@@ -693,10 +694,9 @@ synchronization:</p>
 <ul>
 <li><strong>Intra-block</strong>: <code>barrier()</code> synchronizes threads within each block during
 local prefix sum computation</li>
-<li><strong>Inter-block</strong>: The <code>DeviceContext</code> context manager that launches enqueued
-kernels sequentially to ensure Phase 1 completes before Phase 2 begins. To
-explicitly enforce host-device synchronization before reading results,
-<code>ctx.synchronize()</code> is used.</li>
+<li><strong>Inter-block</strong>: <code>DeviceContext</code> launches enqueued kernels sequentially, so
+Phase 1 completes before Phase 2 begins. <code>ctx.synchronize()</code> then enforces
+host-device synchronization before the results are read back.</li>
 </ul>
 <p><strong>Race condition prevention</strong>: The explicit read-write separation in the local
 phase prevents the race condition that would occur if threads simultaneously
@@ -705,8 +705,9 @@ reduction.</p>
 <ol>
 <li>
 <p><strong>Work efficiency</strong>: This implementation has \(O(n \log n)\) work
-complexity, while the sequential algorithm is \(O(n)\). This is a classic
-space-time tradeoff in parallel algorithms.</p>
+complexity, while the sequential algorithm is \(O(n)\). Trading extra
+total work for a shorter critical path is the classic bargain of parallel
+scans.</p>
 </li>
 <li>
 <p><strong>Memory overhead</strong>: The extra space for block sums is minimal (just one

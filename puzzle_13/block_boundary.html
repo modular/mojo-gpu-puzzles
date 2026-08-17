@@ -255,7 +255,7 @@ TileTensor <code>output</code>.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -397,7 +397,7 @@ if local_i &lt; CONV_2 - 1:
 </code></pre>
 <ul>
 <li>Only threads with <code>local_i &lt; CONV_2 - 1</code> load boundary data</li>
-<li>Prevents unnecessary thread divergence</li>
+<li>Avoids redundant halo loads, at the cost of one short divergent branch</li>
 <li>Maintains memory coalescing for main data load</li>
 <li>Explicitly zeroes out-of-bounds elements to avoid undefined behavior</li>
 </ul>
@@ -440,16 +440,16 @@ Thread 7: [7 8 9 10] × [0 1 2 3]  // Uses overlap data
 </code></pre>
 </li>
 <li>
-<p><strong>Block 1 Access Pattern</strong>:
-Note how starting from thread 4, <code>global_i + j &lt; SIZE_2</code> evaluates to <code>False</code>
-and hence iterations are skipped.</p>
+<p><strong>Block 1 Access Pattern</strong>:</p>
+<p>Note how starting from thread 4, <code>global_i + j &lt; SIZE_2</code> evaluates to
+<code>False</code> and hence iterations are skipped.</p>
 <pre><code class="language-txt">Thread 0: [8  9 10 11] × [0 1 2 3]
 Thread 1: [9 10 11 12] × [0 1 2 3]
 ...
-Thread 4: [12 13 14] × [0 1 2]       // Zero padding at end
+Thread 4: [12 13 14] × [0 1 2]       // Tail of the array
 Thread 5: [13 14]    × [0 1]
 Thread 6: [14]       × [0]
-Thread 7: skipped                    // global_i + j &lt; SIZE_2 evaluates to false for all j, no computation
+Thread 7: skipped                    // global_i = 15 fails global_i &lt; SIZE_2, no output
 </code></pre>
 </li>
 </ol>
@@ -467,7 +467,7 @@ Thread 7: skipped                    // global_i + j &lt; SIZE_2 evaluates to fa
 <p><strong>Thread Divergence Minimization</strong>:</p>
 <ul>
 <li>Clean separation of main and boundary loading</li>
-<li>Uniform computation pattern within warps</li>
+<li>Divergence confined to the halo load and the tail of the array</li>
 <li>Efficient bounds checking</li>
 </ul>
 </li>

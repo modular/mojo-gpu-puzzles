@@ -239,7 +239,7 @@ compute()             # ← Finally, 50 cycles of actual work
 launch_async_load()   # ← Start 500-cycle transfer in background
 load_small_data()     # ← 100 cycles of useful work while waiting
 wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
-# Total: ~550 cycles, 45% better utilization!
+# Total: ~550 cycles, 9.1% compute utilization - 18% faster!
 </code></pre>
 <p><strong>This is the power of async memory operations</strong> - the difference between a
 sluggish algorithm and one that maximizes your GPU’s potential.</p>
@@ -275,17 +275,22 @@ for this optimization</li>
 <a href="https://docs.modular.com/api/mojo/max/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
 <p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations
-(<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that may require modern GPU
-architectures. If you encounter compilation errors related to <code>.async</code>
-modifiers or unsupported operations, your GPU may not support these features.
-The concepts remain valuable for understanding memory optimization patterns.</p>
+(<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that lower to the NVIDIA
+<code>cp.async</code> instruction, so on NVIDIA hardware they need
+<strong>compute capability 8.0 (Ampere) or newer</strong>. If you encounter compilation
+errors related to <code>.async</code> modifiers or unsupported operations, your GPU may
+not support these features. The concepts remain valuable for understanding
+memory optimization patterns.</p>
 <p><strong>Check your GPU compute capability:</strong></p>
 <pre><code class="language-bash">nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
 </code></pre>
 <ul>
-<li><strong>SM_70 and above</strong> (e.g., V100, T4, A10G, RTX 20+ series): Basic async copy supported</li>
-<li><strong>SM_80 and above</strong> (e.g., A100, RTX 30+ series): Full async copy features</li>
-<li><strong>SM_90 and above</strong> (e.g., H100, RTX 40+ series): Advanced TMA operations supported</li>
+<li><strong>Below SM_80</strong> (e.g., V100, T4, RTX 20 series): no <code>cp.async</code> instruction,
+so <code>copy_dram_to_sram_async</code> is unavailable</li>
+<li><strong>SM_80 and above</strong> (e.g., A100, A10G, RTX 30 and 40 series): <code>cp.async</code>
+support, which is what this puzzle needs</li>
+<li><strong>SM_90 and above</strong> (e.g., H100): adds TMA bulk-copy operations on top of
+<code>cp.async</code></li>
 </ul>
 </blockquote>
 <h2 id="what-youll-focus"><a class="header" href="#what-youll-focus">What you’ll focus</a></h2>
@@ -300,11 +305,11 @@ computation</li>
 </ul>
 <h3 id="key-apis-youll-focus"><a class="header" href="#key-apis-youll-focus"><strong>Key APIs you’ll focus</strong></a></h3>
 <p>Building on the async copy operations introduced in
-<a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16’s idiomatic matmul</a>,
+<a href="../puzzle_16/tiled.html#solution-idiomatic-tiletensor-tiling">Puzzle 16’s idiomatic matmul</a>,
 you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
 <li><strong><a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
-Launch background DRAM→SRAM transfers using dedicated copy engines</li>
+Launch background DRAM→SRAM transfers that bypass the register file</li>
 <li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 Synchronize transfer completion before accessing shared memory</li>
 </ul>
@@ -426,9 +431,10 @@ async_copy_wait_all()  # Wait only when both operations complete
 </code></pre>
 <p><strong>Why async copy works so well:</strong></p>
 <ul>
-<li><strong>Dedicated copy engines</strong>: Modern GPUs have specialized hardware that
-bypasses registers and enables true compute-memory overlap (as explained in
-<a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16</a>)</li>
+<li><strong>Register-file bypass</strong>: <code>cp.async</code> moves data from global memory straight
+into shared memory without staging it in registers, so the issuing warp keeps
+executing (as explained in
+<a href="../puzzle_16/tiled.html#solution-idiomatic-tiletensor-tiling">Puzzle 16</a>)</li>
 <li><strong>Latency hiding</strong>: Memory transfers happen while GPU threads execute other
 operations</li>
 <li><strong>Optimal coalescing</strong>: Thread layouts ensure efficient DRAM access patterns</li>
@@ -479,7 +485,7 @@ async copy for efficiency: \[\text{output}[i] =
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p28/p28.mojo" class="filename">View full file: problems/p28/p28.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p28/p28.mojo" class="filename">View full file: problems/p28/p28.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -754,8 +760,9 @@ wait → barrier → compute) eliminates all race conditions that could corrupt
 shared memory.</p>
 </li>
 <li>
-<p><strong>Hardware Optimization</strong>: Modern GPUs have dedicated hardware for async copy
-operations, allowing true parallelism between memory and compute units.</p>
+<p><strong>Hardware Optimization</strong>: <code>cp.async</code> is a hardware instruction on compute
+capability 8.0 and newer, so the transfer proceeds while the issuing warp
+executes other instructions.</p>
 </li>
 <li>
 <p><strong>Memory Hierarchy Exploitation</strong>: The pattern moves data through the

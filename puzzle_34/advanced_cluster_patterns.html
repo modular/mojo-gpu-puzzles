@@ -267,15 +267,18 @@ sums within each block</li>
 /
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 </ol>
-<p><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing
-<strong>Output</strong>: 4 block results showing hierarchical processing effects</p>
+<ul>
+<li><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing</li>
+<li><strong>Output</strong>: 4 block results showing hierarchical processing effects</li>
+</ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li><strong>Problem Size</strong>: <code>SIZE = 1024</code> elements</li>
 <li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
 <li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks <code>(4, 1)</code></li>
-<li><strong>Warp Size</strong>: <code>WARP_SIZE = 32</code> threads per warp (NVIDIA standard)</li>
-<li><strong>Warps per Block</strong>: <code>TPB / WARP_SIZE = 8</code> warps</li>
+<li><strong>Warp Size</strong>: 32 threads per warp (NVIDIA standard); the kernel hardcodes
+<code>32</code> rather than reading a constant</li>
+<li><strong>Warps per Block</strong>: <code>TPB / 32 = 8</code> warps</li>
 <li><strong>Data Type</strong>: <code>DType.float32</code></li>
 <li><strong>Memory Layout</strong>: Input <code>row_major[SIZE]()</code>, Output
 <code>row_major[CLUSTER_SIZE]()</code></li>
@@ -303,7 +306,7 @@ sums within each block</li>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -344,7 +347,7 @@ ensures all blocks complete before termination</li>
 </ol>
 <h3 id="data-scaling-and-bounds-checking"><a class="header" href="#data-scaling-and-bounds-checking"><strong>Data scaling and bounds checking</strong></a></h3>
 <ul>
-<li>Scale input by <code>Float32(block_id + 1)</code> to create distinct block patterns</li>
+<li>Scale input by <code>Scalar[dtype](block_id + 1)</code> to create distinct block patterns</li>
 <li>Always check <code>global_i &lt; size</code> before reading input (from
 <a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
 <li>Use <code>barrier()</code> between processing phases within blocks (from
@@ -404,6 +407,10 @@ Advanced cluster algorithm results:
   Block 1 : 247.04001
   Block 2 : 372.72
   Block 3 : 499.83997
+✅ Advanced Block 0 result: 122.799995
+✅ Advanced Block 1 result: 247.04001
+✅ Advanced Block 2 result: 372.72
+✅ Advanced Block 3 result: 499.83997
 Puzzle 34 complete ✅
 </code></pre>
 <p><strong>Success Criteria:</strong></p>
@@ -480,7 +487,7 @@ three-level hierarchical optimization that combines warp, block, and cluster
 coordination for maximum GPU utilization:</strong></p>
 <h2 id="level-1-warp-level-optimization-thread-election"><a class="header" href="#level-1-warp-level-optimization-thread-election"><strong>Level 1: Warp-Level Optimization (Thread Election)</strong></a></h2>
 <p><strong>Data preparation and scaling:</strong></p>
-<pre><code class="language-mojo">var data_scale = Float32(block_id + 1)  # Block-specific scaling factor
+<pre><code class="language-mojo">var data_scale = Scalar[dtype](block_id + 1)  # Block-specific scaling factor
 if global_i &lt; size:
     shared_data[local_i] = input[global_i] * data_scale
 else:
@@ -497,6 +504,8 @@ barrier()  # Ensure all threads complete data loading
     shared_data[local_i] = warp_sum  # Store result at elected thread's position
 </code></pre>
 <p><strong>Warp boundary calculation explained:</strong></p>
+<p><code>(local_i // 32) * 32</code> rounds any thread index down to the first index of its
+warp:</p>
 <ul>
 <li><strong>Thread 37</strong> (in warp 1): <code>warp_start = (37 // 32) * 32 = 1 * 32 = 32</code></li>
 <li><strong>Thread 67</strong> (in warp 2): <code>warp_start = (67 // 32) * 32 = 2 * 32 = 64</code></li>
@@ -536,7 +545,7 @@ Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-
 <p><strong>Staged synchronization approach:</strong></p>
 <pre><code class="language-mojo">cluster_arrive()  # Non-blocking: signal this block's completion
 # ... Thread 0 computes and stores block result ...
-cluster_wait()    # Blocking: wait for all blocks to complete
+cluster_wait()    # Blocking: wait for all blocks to arrive
 </code></pre>
 <p><strong>Why staged synchronization?</strong></p>
 <ul>
@@ -544,10 +553,10 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 called <strong>before</strong> final computation allows overlapping work</li>
 <li>Block can compute its result while other blocks are still processing</li>
 <li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>
-ensures deterministic completion order</li>
-<li>More efficient than
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
-for independent block computations</li>
+then blocks until every block in the cluster has arrived</li>
+<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+is exactly these two calls back to back, so splitting them is what buys the
+overlap window for independent block computations</li>
 </ul>
 <h2 id="advanced-pattern-characteristics"><a class="header" href="#advanced-pattern-characteristics"><strong>Advanced pattern characteristics</strong></a></h2>
 <p><strong>Hierarchical computation reduction:</strong></p>
@@ -573,7 +582,7 @@ warp processing)</li>
 <li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 Inter-block signaling (non-blocking, enables work overlap)</li>
 <li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
-Inter-block synchronization (blocking, ensures completion order)</li>
+Inter-block synchronization (blocking, no block proceeds until all arrive)</li>
 </ol>
 <p><strong>Why this is “advanced”:</strong></p>
 <ul>
@@ -581,7 +590,8 @@ Inter-block synchronization (blocking, ensures completion order)</li>
 techniques</li>
 <li><strong>Hardware efficiency</strong>: Leverages
 <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
-for optimal warp utilization</li>
+to pick one leader per warp instead of repeating the accumulation in all 32
+lanes</li>
 <li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible
 synchronization</li>
 <li><strong>Production-ready</strong>: Demonstrates patterns used in real-world GPU libraries</li>
@@ -590,7 +600,8 @@ synchronization</li>
 <ul>
 <li><strong>Reduced memory pressure</strong>: Fewer threads accessing shared memory
 simultaneously</li>
-<li><strong>Better warp utilization</strong>: Elected threads perform focused computation</li>
+<li><strong>Less redundant work</strong>: One lane per warp accumulates, rather than all 32
+computing the same sum</li>
 <li><strong>Scalable coordination</strong>: Staged synchronization handles larger cluster sizes</li>
 <li><strong>Algorithm flexibility</strong>: Foundation for complex multi-stage processing
 pipelines</li>
@@ -607,15 +618,15 @@ pipelines</li>
 <h2 id="the-complete-gpu-hierarchy"><a class="header" href="#the-complete-gpu-hierarchy">The complete GPU hierarchy</a></h2>
 <p>Congratulations! By completing this puzzle, you’ve learned
 <strong>the complete GPU programming stack</strong>:</p>
-<p>✅ <strong>Thread-level programming</strong>: Individual execution units</br> ✅
+<p>✅ <strong>Thread-level programming</strong>: Individual execution units<br> ✅
 <strong><a href="../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT
-coordination</br> ✅ <strong><a href="../puzzle_27/puzzle_27.html">Block-level programming</a></strong>:
-Multi-warp coordination and shared memory</br> ✅
-<strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs</br>
+coordination<br> ✅ <strong><a href="../puzzle_27/puzzle_27.html">Block-level programming</a></strong>:
+Multi-warp coordination and shared memory<br> ✅
+<strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs<br>
 ✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization
-primitives</br> ✅ <strong>Scale algorithms beyond single-block limitations</strong> using
-cluster APIs</br> ✅ <strong>Implement hierarchical algorithms</strong> combining warp +
-block + cluster coordination</br> ✅ <strong>Utilize next-generation GPU hardware</strong>
+primitives<br> ✅ <strong>Scale algorithms beyond single-block limitations</strong> using
+cluster APIs<br> ✅ <strong>Implement hierarchical algorithms</strong> combining warp +
+block + cluster coordination<br> ✅ <strong>Utilize next-generation GPU hardware</strong>
 with SM90+ cluster programming</p>
 <h2 id="real-world-applications"><a class="header" href="#real-world-applications">Real-world applications</a></h2>
 <p>The hierarchical coordination patterns from this puzzle are fundamental to:</p>
@@ -642,8 +653,11 @@ nodes</li>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>You’ve now learned the <strong>cutting-edge GPU programming techniques</strong> available on
 modern hardware!</p>
-<p><strong>Ready for more challenges?</strong> Explore other advanced GPU programming topics,
-revisit
+<p><strong>Next step</strong>: Continue to
+<strong><a href="../puzzle_35/puzzle_35.html">Puzzle 35: Memory Alignment</a></strong>, which drops back
+down to a single kernel and shows how much bandwidth the alignment you declare
+on a load or store is worth.</p>
+<p>You can also revisit
 <a href="../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>,
 apply
 <a href="../puzzle_30/nvidia_profiling_basics.html">profiling methodologies from NVIDIA tools</a>,

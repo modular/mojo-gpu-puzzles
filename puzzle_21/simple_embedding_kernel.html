@@ -233,8 +233,8 @@ element. The key insight is that consecutive threads will access consecutive
 memory locations, leading to optimal memory coalescing.</p>
 <p><strong>Thread organization:</strong></p>
 <ul>
-<li><strong>Grid configuration</strong>: <code>[total_elements // 256]</code> blocks, <code>256</code> threads per
-block</li>
+<li><strong>Grid configuration</strong>: <code>ceildiv(total_elements, 256)</code> blocks, <code>256</code> threads
+per block</li>
 <li><strong>Thread mapping</strong>: Each thread handles one <code>(batch, seq, embed)</code> position</li>
 <li><strong>Memory pattern</strong>: Consecutive threads access consecutive embedding
 dimensions</li>
@@ -293,7 +293,7 @@ dimensions</li>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -316,8 +316,8 @@ and the Y dimension spans embedding dimensions. This can lead to non-coalesced
 memory access patterns.</p>
 <p><strong>Thread organization:</strong></p>
 <ul>
-<li><strong>Grid configuration</strong>: <code>[batch x seq // 16, embed_dim // 16]</code> blocks,
-<code>16 x 16</code> threads per block</li>
+<li><strong>Grid configuration</strong>: <code>[ceildiv(batch x seq, 16), ceildiv(embed_dim, 16)]</code>
+blocks, <code>16 x 16</code> threads per block</li>
 <li><strong>Thread mapping</strong>: <code>thread_idx.x</code> maps to batch/sequence, <code>thread_idx.y</code> maps
 to embedding dimension</li>
 <li><strong>Memory pattern</strong>: Threads in a warp may access scattered memory locations</li>
@@ -379,7 +379,7 @@ to embedding dimension</li>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -393,8 +393,8 @@ to embedding dimension</li>
 <code>if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim</code></li>
 <li>The token lookup is the same as 1D, but you’re only handling one embedding
 dimension per thread</li>
-<li>This kernel processes one embedding dimension per thread instead of entire
-vectors</li>
+<li>Like the 1D kernel, each thread handles a single embedding element—only the
+index mapping differs</li>
 </ul>
 </div>
 </details>
@@ -506,8 +506,8 @@ struct EmbeddingCustomOp:
 <ul>
 <li><strong>Simple grid configuration</strong>: Uses a straightforward 1D grid with
 <code>ceildiv(total_elements, THREADS_PER_BLOCK)</code> blocks</li>
-<li><strong>Memory optimization</strong>: Single <code>enqueue_memset</code> call to zero the output
-buffer efficiently</li>
+<li><strong>Output initialization</strong>: A single <code>enqueue_memset</code> zeroes the output buffer
+before the launch</li>
 <li><strong>Compile-time parameters</strong>: All tensor dimensions passed as compile-time
 parameters for optimal performance</li>
 <li><strong>Device abstraction</strong>: Handles both GPU execution and CPU fallback seamlessly</li>
@@ -873,11 +873,13 @@ potentially non-coalesced</li>
 </ul>
 <p>The 2D kernel may perform worse due to:</p>
 <ul>
-<li><strong>Scattered memory accesses</strong>: Threads within a warp may access different
-embedding vectors</li>
+<li><strong>Scattered memory accesses</strong>: Consecutive lanes in a warp vary along
+<code>batch_seq_idx</code>, so they read from different embedding vectors</li>
 <li><strong>Complex grid configuration</strong>: 16×16 blocks may not align optimally with
 memory layout</li>
-<li><strong>Warp divergence</strong>: Different threads may follow different execution paths</li>
+<li><strong>More memory transactions</strong>: A warp’s loads spread across many embedding
+rows instead of one contiguous run, so each transaction returns mostly
+unused bytes</li>
 </ul>
 </div>
 </details>
@@ -885,13 +887,14 @@ memory layout</li>
 <div class="table-wrapper"><table><thead><tr><th>Concept</th><th>1D Coalesced</th><th>2D Non-coalesced</th></tr></thead><tbody>
 <tr><td><strong>Thread organization</strong></td><td>1D flat indexing</td><td>2D grid (batch×seq, embed)</td></tr>
 <tr><td><strong>Memory access</strong></td><td>Consecutive addresses</td><td>Potentially scattered</td></tr>
-<tr><td><strong>Grid configuration</strong></td><td>Simple: <code>[total_elements // 256]</code></td><td>Complex: <code>[batch×seq // 16, embed // 16]</code></td></tr>
+<tr><td><strong>Grid configuration</strong></td><td>Simple: <code>ceildiv(total_elements, 256)</code></td><td>Complex: <code>[ceildiv(batch×seq, 16), ceildiv(embed, 16)]</code></td></tr>
 <tr><td><strong>Performance</strong></td><td>Optimized for memory bandwidth</td><td>Suboptimal memory pattern</td></tr>
 <tr><td><strong>Use case</strong></td><td>Production kernels</td><td>Educational comparison</td></tr>
 </tbody></table>
 </div>
-<p>The core lesson: <strong>memory coalescing</strong> can lead to 2-3x performance differences
-for memory-bound operations like embeddings.</p>
+<p>The core lesson: <strong>memory coalescing</strong> dominates the runtime of memory-bound
+operations like embeddings. Both kernels do identical arithmetic and read the
+same bytes; only the access pattern differs.</p>
 
                     </main>
 

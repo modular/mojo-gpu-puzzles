@@ -228,7 +228,8 @@
 <code>out[i] = a[i] * 2 + 1</code>, over a 1M-element <code>float32</code> buffer. They differ only in
 how they touch memory:</p>
 <ol>
-<li><code>scalar_kernel</code>: one element per thread with no vectorization. This is the baseline.</li>
+<li><code>scalar_kernel</code>: one element per thread with no vectorization. This is the
+baseline.</li>
 <li><code>unaligned_kernel</code>: vectorized by <code>SIMD_WIDTH</code>, but the access alignment
 is <em>under-stated</em> (scalar alignment), so the compiler emits scalar loads.</li>
 <li><code>aligned_kernel</code>: the same vectorized kernel, with the alignment
@@ -293,34 +294,40 @@ happens <em>after</em> you confirm that.</p>
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p35/p35.mojo" class="filename">View full file: problems/p35/p35.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p35/p35.mojo" class="filename">View full file: problems/p35/p35.mojo</a></p>
 <h2 id="key-api"><a class="header" href="#key-api">Key API</a></h2>
 <p>The file defines two alignment constants up front:</p>
 <pre><code class="language-mojo">comptime VEC_ALIGN = align_of[SIMD[dtype, SIMD_WIDTH]]()   # 16 bytes for float32x4
 comptime SCALAR_ALIGN = align_of[dtype]()                  # 4 bytes
 </code></pre>
-<p>The vectorized kernels use <code>LayoutTensor</code>’s <code>load</code> and <code>store</code>, whose alignment
-you set explicitly:</p>
+<p>The vectorized kernels take <code>TileTensor</code> arguments, convert them with
+<code>to_layout_tensor()</code>, and then use <code>LayoutTensor</code>’s <code>load</code> and <code>store</code>, whose
+alignment you set explicitly:</p>
 <pre><code class="language-mojo"># Under-stated: compiler can't prove 16-byte alignment -&gt; scalar codegen
 var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))
-out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](Index(base), v * SCALE + BIAS)
+out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
+    Index(base), v * SCALE + BIAS
+)
 
-# Aligned: 16-byte alignment -&gt; ld.global.nc.v4 / st.global.v4
-var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))   # == load[..., load_alignment=VEC_ALIGN]
-out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](Index(base), v * SCALE + BIAS)
+# Aligned: 16-byte alignment -&gt; ld.global.nc.v4.f32 / st.global.v4.f32
+# `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`
+var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
+out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
+    Index(base), v * SCALE + BIAS
+)
 </code></pre>
 <p><code>aligned_load[w]</code> is the convenience wrapper: it picks
-<code>align_of[SIMD[dtype, w]]()</code> for you. <code>aligned_store</code> exists too; here we pass
-<code>store_alignment=VEC_ALIGN</code> explicitly so the contrast with the unaligned kernel
-is a single changed value.</p>
+<code>align_of[SIMD[dtype, w]]()</code> for you. <code>aligned_store</code> exists too, but only in a
+2D <code>(m, n)</code> form—there is no coordinate-list overload—so this rank-1 kernel
+passes <code>store_alignment=VEC_ALIGN</code> explicitly.</p>
 <h2 id="running-it"><a class="header" href="#running-it">Running it</a></h2>
 <pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --simple
 pixi run mojo solutions/p35/p35.mojo --unaligned
 pixi run mojo solutions/p35/p35.mojo --aligned
 </code></pre>
-<p>Each prints <code>&lt;variant&gt; kernel: passed</code>, confirming all three are correct. The
-performance difference is the subject of the
-<a href="./benchmark_and_profile.html">next section</a>.</p>
+<p><code>--simple</code> runs <code>scalar_kernel</code>. Each command prints <code>&lt;kernel&gt; kernel: passed</code>,
+confirming all three are correct. The performance difference is the subject of
+the <a href="./benchmark_and_profile.html">next section</a>.</p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -336,8 +343,8 @@ guard with <code>if base + SIMD_WIDTH &lt;= size:</code> to avoid reading past t
 <code>load[w, load_alignment=align_of[SIMD[dtype, w]]()]</code>. Use whichever reads
 more clearly.</li>
 <li>Don’t expect a wall-clock gap on a tiny input or on a non-NVIDIA GPU. The
-codegen difference instead shows up in NSight Compute’s instruction/sector metrics.
-We’ll cover this in the next section.</li>
+codegen difference instead shows up in Nsight Compute’s instruction/sector
+metrics. We’ll cover this in the next section.</li>
 </ul>
 </div>
 </details>
@@ -434,7 +441,8 @@ one quarter of the memory instructions for the same work.</li>
 <p>The takeaway: state the alignment explicitly. The data was aligned in
 all three kernels; only the aligned kernel informed the compiler, and only the
 aligned kernel got the vectorized instruction. The
-<a href="./benchmark_and_profile.html">benchmark and profile section</a> demonstrates this in numbers.</p>
+<a href="./benchmark_and_profile.html">benchmark and profile section</a> demonstrates this
+in numbers.</p>
 </details>
 
                     </main>

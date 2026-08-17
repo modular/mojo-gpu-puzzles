@@ -276,7 +276,7 @@ shared[thread_idx.x]  # Thread 0→Bank 0, Thread 1→Bank 1, ..., Thread 31→B
 <p>When N threads access different addresses in the same bank, the hardware
 serializes these accesses:</p>
 <pre><code class="language-mojo"># 2-way conflict: stride-2 access pattern
-shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; Thread 1,17→Bank 1; etc.
+shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; 1,17→Bank 2; even banks only
 </code></pre>
 <p><strong>Result:</strong> 2 accesses per bank, 2 cycles total (50% efficiency)</p>
 <pre><code class="language-mojo"># Worst case: all threads access different addresses in Bank 0
@@ -332,9 +332,9 @@ occupancy.</p>
 # Bank:       0  1  2  3  ...  31  ✅ All different banks
 </code></pre>
 <p><strong>Stride-2 access (2-way conflicts):</strong></p>
-<pre><code class="language-mojo"># Thread ID:  0  1  2  3  ...  15 16 17 18 ... 31
-# Address:    0  8 16 24  ... 120  4 12 20 ... 124
-# Bank:       0  2  4  6  ...  30  1  3  5 ...  31
+<pre><code class="language-mojo"># Thread ID:  0   1   2   3 ...  15  16  17  18 ...  31
+# Address:    0   8  16  24 ... 120 128 136 144 ... 248
+# Bank:       0   2   4   6 ...  30   0   2   4 ...  30
 # Conflict:   Banks 0,2,4... have 2 threads each  ❌
 </code></pre>
 <p><strong>Stride-32 access (32-way conflicts):</strong></p>
@@ -342,7 +342,7 @@ occupancy.</p>
 # Address:    0  128 256 384 ... 3968
 # Bank:       0   0   0   0  ...   0  ❌ All threads→Bank 0
 </code></pre>
-<h3 id="profiling-with-nsight-compute-ncu"><a class="header" href="#profiling-with-nsight-compute-ncu">Profiling with NSight Compute (<code>ncu</code>)</a></h3>
+<h3 id="profiling-with-nsight-compute-ncu"><a class="header" href="#profiling-with-nsight-compute-ncu">Profiling with Nsight Compute (<code>ncu</code>)</a></h3>
 <p>Building on the profiling methodology from
 <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you can measure bank conflicts
 quantitatively:</p>
@@ -351,7 +351,6 @@ ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_b
 
 # Additional context metrics
 ncu --metrics=smsp__sass_average_branch_targets_threads_uniform.pct your_kernel
-ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 </code></pre>
 <p>The <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld</code> and
 <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st</code> metrics directly count

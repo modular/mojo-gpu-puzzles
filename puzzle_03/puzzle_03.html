@@ -254,6 +254,8 @@ Thread 2 (i=2):  if 2 &lt; size:  output[2] = a[2] + 10  ✓ Valid
 Thread 3 (i=3):  if 3 &lt; size:  output[3] = a[3] + 10  ✓ Valid
 Thread 4 (i=4):  if 4 &lt; size:  ❌ Skip (out of bounds)
 Thread 5 (i=5):  if 5 &lt; size:  ❌ Skip (out of bounds)
+Thread 6 (i=6):  if 6 &lt; size:  ❌ Skip (out of bounds)
+Thread 7 (i=7):  if 7 &lt; size:  ❌ Skip (out of bounds)
 </code></pre>
 <p>💡 <strong>Note</strong>: Boundary checking becomes increasingly complex with:</p>
 <ul>
@@ -279,7 +281,7 @@ def add_10_guard(
 
 
 </code></pre>
-<p><a href="<https://github.com/modular/mojo-gpu-puzzles>/blob/main/problems/p03/p03.mojo" class="filename">View full file: problems/p03/p03.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p03/p03.mojo" class="filename">View full file: problems/p03/p03.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -350,7 +352,7 @@ examine such cases and use some tools to catch such soundness bugs.</p>
 </blockquote>
 </div>
 </details>
-<h3 id="looking-ahead"><a class="header" href="#looking-ahead">Looking ahead</a></h3>
+<h2 id="looking-ahead"><a class="header" href="#looking-ahead">Looking ahead</a></h2>
 <p>While simple boundary checks work here, consider these challenges:</p>
 <ul>
 <li>What about 2D/3D array boundaries?</li>
