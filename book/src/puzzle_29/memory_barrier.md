@@ -15,7 +15,7 @@ NVIDIA-only.
 >
 > - **Fire-and-forget**: Single synchronization point with no state tracking
 > - **Block-wide only**: All threads in the block must participate simultaneously
-> - **No reusability**: Each barrier() call creates a new synchronization event
+> - **No reusability**: Each `barrier()` call creates a new synchronization event
 > - **Coarse-grained**: Limited control over memory ordering and timing
 > - **Static coordination**: Cannot adapt to different thread participation patterns
 >
@@ -24,20 +24,22 @@ NVIDIA-only.
 >
 > - **Precise control**: [`mbarrier_init()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init) sets up reusable barrier objects with specific thread counts
 > - **State tracking**: [`mbarrier_arrive()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive) signals individual thread completion and maintains arrival count
-> - **Flexible waiting**: [`mbarrier_test_wait()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait) allows threads to wait for specific completion states
+> - **Flexible waiting**: [`mbarrier_test_wait()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait) polls a completion state without blocking, so you decide what a thread does while waiting
 > - **Reusable objects**: Same barrier can be reinitialized and reused across multiple iterations
 > - **Multiple barriers**: Different barrier objects for different synchronization points (initialization, iteration, finalization)
-> - **Hardware optimization**: Maps directly to GPU hardware synchronization primitives for better performance
+> - **Hardware primitive**: Maps directly to the NVIDIA `mbarrier` instructions rather than to a single block-wide barrier
 > - **Memory semantics**: Explicit control over memory visibility and ordering guarantees
 >
-> **Why this matters for iterative algorithms:** In double-buffering patterns,
-> you need **precise coordination** between buffer swap phases. Basic
-> `barrier()` cannot provide the fine-grained control required for:
+> **Why this matters for iterative algorithms:** A plain `barrier()` would keep
+> this stencil correct—the
+> [companion pipeline puzzle](barrier.md) synchronizes its stages with nothing
+> else. What `mbarrier` adds is an explicit barrier *object* you can name,
+> inspect, and reuse:
 >
-> - **Buffer role alternation**: Ensuring all writes to buffer_A complete before reading from buffer_A begins
-> - **Iteration boundaries**: Coordinating multiple synchronization points within a single kernel
-> - **State management**: Tracking which threads have completed which phase of processing
-> - **Performance optimization**: Minimizing synchronization overhead through reusable barrier objects
+> - **Buffer role alternation**: An arrival count scoped to the threads that wrote the buffer about to be read
+> - **Iteration boundaries**: Separate barrier objects for initialization, the iteration loop, and finalization
+> - **State management**: `mbarrier_arrive()` returns a state token, so arrival can be tracked and not merely awaited
+> - **Composability**: The same primitive tracks `cp.async` and TMA transfer completion on newer hardware
 >
 > This puzzle demonstrates **synchronization patterns** used in real-world GPU
 > computing applications like iterative solvers, simulation frameworks, and
@@ -81,15 +83,15 @@ algorithm with three mathematical operations:
 
 **Iteration Pattern - Buffer Alternation:**
 
-\\[\\text{Iteration} i: \\begin{cases} \\text{Read from buffer\_A, Write to
-buffer\_B} & \\text{if} i \\bmod 2 = 0 \\\\
+\\[\\text{Iteration } i: \\begin{cases} \\text{Read from buffer\_A, Write to
+buffer\_B} & \\text{if } i \\bmod 2 = 0 \\\\
 \\text{Read from buffer\_B, Write to buffer\_A} & \\text{if } i \\bmod 2 = 1
 \\end{cases}\\]
 
 **Stencil Operation - 3-Point Average:**
 
 \\[S^{(i+1)}[j] = \\frac{1}{N_j} \\sum_{k=-1}^{1} S^{(i)}[j+k] \\quad
-\\text{where} j+k \\in [0, 255]\\]
+\\text{where } j+k \\in [0, 255]\\]
 
 where \\(S^{(i)}[j]\\) is the stencil value at position \\(j\\) after iteration
 \\(i\\), and \\(N_j\\) is the count of valid neighbors.
@@ -188,7 +190,8 @@ when memory operations complete, essential for complex memory access patterns.
 - **[mbarrier_arrive()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)**:
   Each thread signals completion of write phase
 - **[mbarrier_test_wait()](https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)**:
-  All threads wait until everyone completes writes
+  Poll until everyone has arrived; the call is non-blocking, so it belongs in a
+  loop
 - **Buffer swap safety**: Prevents reading from buffer while others still
   writing
 - **Barrier reinitialization**: Reset barrier state between iterations
@@ -328,8 +331,6 @@ coordination:
    buffer swaps
 4. **Optimize memory access patterns**: Keep all processing in fast shared
    memory
-
-<details class="solution-details">
 
 <strong>Complete Solution with Detailed Explanation</strong>
 
@@ -504,7 +505,8 @@ else:
 
 **Synchronization overhead:**
 
-- **mbarrier cost**: Higher than basic barrier() but provides essential control
+- **mbarrier cost**: Higher than basic `barrier()`, and this pattern still needs
+  a `barrier()` after every `mbarrier_init` to publish the barrier state
 - **Iteration scaling**: Overhead increases linearly with iteration count
 - **Thread efficiency**: All threads remain active throughout processing
 
@@ -560,4 +562,5 @@ This solution demonstrates how to design iterative GPU algorithms that require
 precise memory access control, moving beyond simple parallel loops to
 sophisticated memory management patterns used in production numerical software.
 
+</div>
 </details>

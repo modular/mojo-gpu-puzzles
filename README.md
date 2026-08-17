@@ -71,8 +71,8 @@ maintaining systems-level performance:
 ### Prerequisites
 
 You'll need a
-[compatible GPU](https://docs.modular.com/faq#gpu-requirements) to run the
-examples.
+[compatible GPU](https://docs.modular.com/packages/#gpu-compatibility) to run
+the examples.
 
 1. Visit [puzzles.modular.com](https://puzzles.modular.com)
 2. Clone this repository
@@ -115,10 +115,6 @@ examples.
 
 ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
-> **Note**: This path is currently broken. The install fails because its
-> dependencies pin Mojo below version 1.0, which no longer resolves against the
-> release that the puzzles target. Use Option 1 (`pixi`) instead.
-
    **Install:**
 
    ```bash
@@ -135,6 +131,15 @@ examples.
 
    ```bash
    uv venv && source .venv/bin/activate
+   ```
+
+   **Install the puzzles and their dependencies**, without which nothing else
+   here runs:
+
+   ```bash
+   uv pip install -e ".[nvidia]"  # For NVIDIA GPUs
+   # OR
+   uv pip install -e ".[amd]"     # For AMD GPUs
    ```
 
 4. Start solving puzzles!

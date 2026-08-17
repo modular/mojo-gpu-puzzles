@@ -14,8 +14,8 @@ simple idiomatic tiled version from [Puzzle 16](../puzzle_16/tiled.md)...
 
 Your profiling with (NVIDIA only) `ncu` revealed the brutal truth (if you need a
 refresher on profiling techniques, see
-[Puzzle 10's memory error detection](../puzzle_10/puzzle_10.md) and
-[Puzzle 30's GPU profiling](../puzzle_30/puzzle_30.md)):
+[Puzzle 30's GPU profiling](../puzzle_30/puzzle_30.md) and its
+[NVIDIA profiling basics](../puzzle_30/nvidia_profiling_basics.md)):
 
 **Tensor Core version (the disappointment):**
 
@@ -78,22 +78,23 @@ implementation into something that actually beats the simple tiled version.
    - Tune block sizes for better warp utilization
    - Balance shared memory vs register usage
    - Optimize warp-to-SM mapping
-   - Apply thread coordination lessons from
-     [Puzzle 11-20 series](../puzzle_11/puzzle_11.md)
+   - Apply the occupancy lessons from
+     [Puzzle 31](../puzzle_31/puzzle_31.md)
 
 4. **Cache optimization**
    - Improve data reuse patterns
    - Optimize tile sizes for cache hierarchy
    - Consider data layout transformations
-   - Build on memory hierarchy concepts from
-     [puzzle progression](../puzzle_05/puzzle_05.md)
+   - Build on the cache behavior analyzed in
+     [Puzzle 30's cache hit paradox](../puzzle_30/profile_kernels.md)
 
 5. **Advanced techniques**
    - Implement double buffering to overlap memory and compute
    - Use software pipelining
    - Explore async execution patterns
-   - Apply advanced coordination from
-     [sanitization puzzles](../puzzle_10/puzzle_10.md)
+   - Apply the overlap and double-buffering patterns from
+     [Puzzle 28](../puzzle_28/puzzle_28.md) and
+     [Puzzle 29's double-buffered stencil](../puzzle_29/memory_barrier.md)
 
 ### Success criteria
 

@@ -32,9 +32,11 @@ The computation involves three main steps:
    the final output
 
 > **Scope:** This puzzle composes existing kernels (transpose, tiled matmul,
-> softmax) into one attention op for a single query vector. Cross-block
-> coordination lives inside each reused kernel — your focus is the transpose
-> kernel and the host-side orchestration that connects the pieces.
+> softmax) into one attention op for a single query vector. The launches are
+> enqueued on one device context, so each kernel finishes before the next
+> starts and the only synchronization you write is the `barrier()` inside the
+> transpose—your focus is that kernel and the host-side orchestration that
+> connects the pieces.
 
 ## Understanding attention: a step-by-step breakdown
 
@@ -374,19 +376,23 @@ implementation.
 <summary></summary>
 
 To solve this puzzle, we need to implement the transpose kernel in Mojo and
-wire up the attention orchestration that drives it. This
-puzzle builds upon concepts from previous puzzles, combining
+wire up the attention orchestration that drives it. This puzzle builds upon
+concepts from previous puzzles, combining
 **tiled matrix multiplication from [Puzzle 16](../puzzle_16/puzzle_16.md)** and
 **softmax from [Puzzle 18](../puzzle_18/puzzle_18.md)** into a complete
 attention mechanism.
 
 ### Reused kernels
 
-Our implementation directly incorporates these proven kernels:
+Our implementation adapts these proven kernels:
 
 1. **`matmul_idiomatic_tiled`** from [Puzzle 16](../puzzle_16/puzzle_16.md) -
    Powers both \\(Q \\times K^T\\) and \\(\\text{weights} \\times V\\)
-   operations
+   operations. The attention version keeps the tiling structure but takes
+   separate layouts for the two inputs and the output, loads each tile with a
+   plain per-thread copy instead of the asynchronous copy, and bounds-checks
+   every access, because these matrices are not square and their inner
+   dimension need not be a multiple of the tile size
 2. **`softmax_gpu_kernel`** from [Puzzle 18](../puzzle_18/puzzle_18.md) -
    Provides numerically stable attention weight computation
 

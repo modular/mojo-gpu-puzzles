@@ -125,7 +125,7 @@ This solution:
 </div>
 </details>
 
-### Looking ahead
+## Looking ahead
 
 While this direct indexing works for simple element-wise operations, consider:
 
@@ -133,5 +133,5 @@ While this direct indexing works for simple element-wise operations, consider:
 - What if we need to broadcast one array to another?
 - How to ensure coalesced access across multiple arrays?
 
-These questions will be addressed when we
+We start answering these when we
 [introduce TileTensor in Puzzle 4](../puzzle_04/introduction_tile_tensor.md).

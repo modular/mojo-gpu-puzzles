@@ -2,7 +2,7 @@
 
 > ## Kernel fusion and autograd integration
 >
-> We're continuing Part IV with a focus on **kernel fusion** and
+> We're continuing Part V with a focus on **kernel fusion** and
 > **autograd integration**.
 >
 > Building on [Puzzle 21](../puzzle_21/puzzle_21.md), you'll now explore how to
@@ -72,8 +72,11 @@ When fused, these operations are combined into a single efficient kernel that:
 - Improves cache utilization
 - Eliminates intermediate allocations
 
-In practice, this fusion can provide up to 1.5-2x speedup in both forward and
-backward passes, which is crucial for transformer training efficiency.
+In production transformer stacks, this kind of fusion is a standard way to cut
+memory traffic and launch overhead in both the forward and backward passes. The
+tensors in this puzzle are deliberately tiny (`[4, 4, 8]` to `[4, 4, 16]`), so
+dispatch cost dominates and the measured gap between fused and unfused is
+small. Focus on the technique rather than the timings you see.
 
 ### Why custom backward passes matter
 
@@ -131,7 +134,6 @@ The puzzle includes a comprehensive testing framework that verifies:
 - Performance comparison between our CPU and GPU implementations
 - Gradient computation accuracy for all parameters (input, LayerNorm
   weights/bias, Linear weights/bias)
-- Memory usage optimization through kernel fusion
 
 💡 **Success tip:** Pay attention to how the different implementations (fused vs
 unfused) affect both forward and backward pass performance - this insight

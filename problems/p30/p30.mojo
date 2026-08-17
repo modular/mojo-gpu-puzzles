@@ -90,28 +90,36 @@ def kernel3(
 @__parameter
 @always_inline
 def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
+    # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
+    # closure. Timing them here dominated the measurement and compressed a
+    # ~6,700x kernel difference into a ~9x wall-clock one.
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = Scalar[dtype](i + 1)
+            b_host[i] = Scalar[dtype](i + 2)
+
+    # Untracked origin so the closure can capture `out` for `keep()` without
+    # aliasing the tensor that also references it.
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
+
     @always_inline
     def kernel1_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var out = ctx.enqueue_create_buffer[dtype](test_size)
-        out.enqueue_fill(0)
-        var a = ctx.enqueue_create_buffer[dtype](test_size)
-        a.enqueue_fill(0)
-        var b_buf = ctx.enqueue_create_buffer[dtype](test_size)
-        b_buf.enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = Scalar[dtype](i + 1)
-                b_host[i] = Scalar[dtype](i + 2)
-
-        var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
-        var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
-
         ctx.enqueue_function[kernel1](
             out_tensor,
             a_tensor,
@@ -123,35 +131,42 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(out)
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom(b, kernel1_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
+    # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
+    # closure. Timing them here dominated the measurement and compressed a
+    # ~6,700x kernel difference into a ~9x wall-clock one.
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = Scalar[dtype](i + 1)
+            b_host[i] = Scalar[dtype](i + 2)
+
+    # Untracked origin so the closure can capture `out` for `keep()` without
+    # aliasing the tensor that also references it.
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
+
     @always_inline
     def kernel2_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var out = ctx.enqueue_create_buffer[dtype](test_size)
-        out.enqueue_fill(0)
-        var a = ctx.enqueue_create_buffer[dtype](test_size)
-        a.enqueue_fill(0)
-        var b_buf = ctx.enqueue_create_buffer[dtype](test_size)
-        b_buf.enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = Scalar[dtype](i + 1)
-                b_host[i] = Scalar[dtype](i + 2)
-
-        var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
-        var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
-
         ctx.enqueue_function[kernel2](
             out_tensor,
             a_tensor,
@@ -163,35 +178,42 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(out)
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom(b, kernel2_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
+    # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
+    # closure. Timing them here dominated the measurement and compressed a
+    # ~6,700x kernel difference into a ~9x wall-clock one.
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = Scalar[dtype](i + 1)
+            b_host[i] = Scalar[dtype](i + 2)
+
+    # Untracked origin so the closure can capture `out` for `keep()` without
+    # aliasing the tensor that also references it.
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
+
     @always_inline
     def kernel3_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var out = ctx.enqueue_create_buffer[dtype](test_size)
-        out.enqueue_fill(0)
-        var a = ctx.enqueue_create_buffer[dtype](test_size)
-        a.enqueue_fill(0)
-        var b_buf = ctx.enqueue_create_buffer[dtype](test_size)
-        b_buf.enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = Scalar[dtype](i + 1)
-                b_host[i] = Scalar[dtype](i + 2)
-
-        var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
-        var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
-
         ctx.enqueue_function[kernel3](
             out_tensor,
             a_tensor,
@@ -203,7 +225,6 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(out)
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom(b, kernel3_workflow, bench_ctx)
 
 

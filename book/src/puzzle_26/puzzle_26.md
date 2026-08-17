@@ -5,22 +5,22 @@
 Welcome to **Puzzle 26: Advanced Warp Communication Primitives**! This puzzle
 introduces you to sophisticated GPU
 **warp-level butterfly communication and parallel scan operations** -
-hardware-accelerated primitives that enable efficient tree-based algorithms and
+shuffle-based primitives that enable efficient tree-based algorithms and
 parallel reductions within warps. You'll learn about using
 [shuffle_xor](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/)
 for butterfly networks and
 [prefix_sum](https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/)
-for hardware-optimized parallel scan without complex multi-phase shared memory
+for shuffle-based parallel scan without complex multi-phase shared memory
 algorithms.
 
 **What you'll achieve:** Transform from complex shared memory + barrier +
 multi-phase reduction patterns to elegant single-function-call algorithms that
-leverage hardware-optimized butterfly networks and parallel scan units.
+leverage butterfly exchange patterns and shuffle-based scan.
 
 **Key insight:** _GPU warps can perform sophisticated tree-based communication
 and parallel scan operations in hardware - Mojo's advanced warp primitives
-harness butterfly networks and dedicated scan units to provide \\(O(\\log n)\\)
-algorithms with single-instruction simplicity._
+harness butterfly networks and shuffle-based scan to provide \\(O(\\log n)\\)
+algorithms with single-call simplicity._
 
 ## What you'll learn
 
@@ -36,7 +36,7 @@ Offset 4:  Lane 0 ↔ Lane 4,  Lane 1 ↔ Lane 5,  ..., Lane 27 ↔ Lane 31
 Offset 2:  Lane 0 ↔ Lane 2,  Lane 1 ↔ Lane 3,  ..., Lane 29 ↔ Lane 31
 Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
 
-Hardware Prefix Sum (parallel scan acceleration)
+Warp Prefix Sum (log2(WARP_SIZE) shuffle steps)
 Input:  [1, 2, 3, 4, 5, 6, 7, 8, ...]
 Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 ```
@@ -45,10 +45,12 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 
 - **Butterfly networks**: XOR-based communication creates optimal tree
   topologies
-- **Dedicated scan units**: Hardware-accelerated parallel prefix operations
+- **Shuffle-based scan**: `prefix_sum` is a `log2(WARP_SIZE)`-step shuffle
+  network (DPP moves on CDNA4+)
 - **Logarithmic complexity**: \\(O(\\log n)\\) algorithms replace \\(O(n)\\)
   sequential patterns
-- **Single-cycle operations**: Complex reductions happen in specialized hardware
+- **Register-only operations**: Reductions stay in registers, with no shared
+  memory and no barriers
 
 ### **Advanced warp operations in Mojo**
 
@@ -58,7 +60,7 @@ Learn the sophisticated communication primitives from `std.gpu.primitives.warp`:
    mask)`](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/)**:
    XOR-based butterfly communication for tree algorithms
 2. **[`prefix_sum(value)`](https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/)**:
-   Hardware-accelerated parallel scan operations
+   Shuffle-based parallel scan operations
 3. **Advanced coordination patterns**: Combining multiple primitives for complex
    algorithms
 
@@ -71,12 +73,9 @@ Learn the sophisticated communication primitives from `std.gpu.primitives.warp`:
 
 ```mojo
 # Complex parallel reduction (traditional approach - from Puzzle 14):
-var shared = TileTensor[
-    dtype,
-    row_major[WARP_SIZE](),
-    MutAnyOrigin,
-    address_space = AddressSpace.SHARED,
-].stack_allocation()
+var shared = stack_allocation[
+    dtype=dtype, address_space=AddressSpace.SHARED
+](row_major[WARP_SIZE]())
 shared[local_i] = input[global_i]
 barrier()
 var offset = 1
@@ -153,12 +152,12 @@ while offset > 0:
 
 **→ [Warp Prefix Sum](./warp_prefix_sum.md)**
 
-Learn hardware-optimized parallel scan operations that replace complex
+Learn shuffle-based parallel scan operations that replace complex
 multi-phase algorithms with single function calls.
 
 **What you'll learn:**
 
-- Using `prefix_sum()` for hardware-accelerated cumulative operations
+- Using `prefix_sum()` for shuffle-based cumulative operations
 - Implementing stream compaction and parallel partitioning
 - Combining `prefix_sum` with `shuffle_xor` for advanced coordination
 - Understanding inclusive vs exclusive scan patterns
@@ -184,12 +183,12 @@ Understanding XOR-based communication topologies:
 
 ### **Hardware-accelerated parallel scan**
 
-Recognizing dedicated scan unit capabilities:
+Recognizing what the warp scan primitive does for you:
 
-- **Prefix sum operations**: Cumulative operations with hardware acceleration
+- **Prefix sum operations**: Cumulative operations built from warp shuffles
 - **Stream compaction**: Parallel filtering and data reorganization
 - **Single-function simplicity**: Complex algorithms become single calls
-- **Zero synchronization**: Hardware handles all coordination internally
+- **Zero synchronization**: Lanes advance in lockstep, so no barrier is needed
 
 ### **Algorithm complexity transformation**
 
@@ -217,14 +216,14 @@ Combining multiple primitives for sophisticated algorithms:
 
 Ready to harness advanced GPU warp-level communication? Start with butterfly
 network operations to understand tree-based communication, then progress to
-hardware-accelerated parallel scan for optimal algorithm performance.
+shuffle-based parallel scan for optimal algorithm performance.
 
 💡 **Success tip**: Think of advanced warp operations as
-**hardware-accelerated parallel algorithm building blocks**. These primitives
+**shuffle-based parallel algorithm building blocks**. These primitives
 replace entire categories of complex shared memory algorithms with single,
 optimized function calls.
 
-**Learning objective**: By the end of Puzzle 24, you'll recognize when advanced
+**Learning objective**: By the end of Puzzle 26, you'll recognize when advanced
 warp primitives can replace complex multi-phase algorithms, enabling you to
 write dramatically simpler and faster tree-based reductions, parallel scans, and
 coordination patterns.
@@ -232,5 +231,5 @@ coordination patterns.
 **Ready to begin?** Start with
 **[Warp Shuffle XOR Operations](./warp_shuffle_xor.md)** to learn butterfly
 communication, then advance to
-**[Warp Prefix Sum Operations](./warp_prefix_sum.md)** for hardware-accelerated
+**[Warp Prefix Sum Operations](./warp_prefix_sum.md)** for shuffle-based
 parallel scan patterns!

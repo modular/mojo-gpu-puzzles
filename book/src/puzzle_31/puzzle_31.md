@@ -8,7 +8,7 @@ differences. Now you're ready for the next level: **resource optimization**.
 
 **The Learning Journey:**
 
-- **Puzzle 30** taught you to **diagnose** performance problems using NSight
+- **Puzzle 30** taught you to **diagnose** performance problems using Nsight
   profiling (`nsys` and `ncu`)
 - **Puzzle 31** teaches you to **predict and control** performance through
   resource management
@@ -26,9 +26,8 @@ is crucial for:
 - **Optimization strategy**: Knowing when to focus on occupancy vs other factors
 
 **Why This Matters Beyond GPUs:** The principles you learn here apply to any
-parallel computing system where resources are shared among many execution units
-
-- from CPUs with hyperthreading to distributed computing clusters.
+parallel computing system where resources are shared among many execution
+units—from CPUs with hyperthreading to distributed computing clusters.
 
 ## Overview
 
@@ -37,8 +36,8 @@ SM. It determines how well your GPU can hide memory latency through warp
 switching.
 
 **SAXPY** is a mnemonic for Single-precision Alpha times X plus Y. This puzzle
-explores three SAXPY kernels (`y[i] = alpha * x[i] + y[i]`) with identical math
-but different resource usage:
+explores three SAXPY kernels (`y[i] = alpha * x[i] + y[i]`) with nearly
+equivalent math but very different resource usage:
 
 ```mojo
 {{#include ../../../problems/p31/p31.mojo:minimal_kernel}}
@@ -62,28 +61,37 @@ but different resource usage:
 
 Use profiling tools to investigate three kernels and answer analysis questions
 about occupancy optimization. The kernels compute equivalent results (to within
-test tolerance) but use resources very differently - your job is to discover why performance and
-occupancy behave counterintuitively!
+test tolerance) but use resources very differently - your job is to discover
+why performance and occupancy behave counterintuitively!
 
-> The specific numerical results shown in this puzzle are based on
-> **NVIDIA A10G (Ampere 8.6)** hardware. Your results will vary depending on
-> your GPU vendor and architecture (NVIDIA: Pascal/Turing/Ampere/Ada/Hopper,
-> AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5), but the **fundamental concepts,
-> methodology, and insights remain universally applicable** across modern GPUs.
-> Use `pixi run gpu-specs` to get your specific hardware values.
+> The worked occupancy calculation in this puzzle is based on
+> **NVIDIA A10G (Ampere 8.6)** hardware; the measured resource and timing
+> figures come from a **B200 (Blackwell 10.0)**. Your results will vary
+> depending on your GPU vendor and architecture (NVIDIA:
+> Pascal/Turing/Ampere/Ada/Hopper/Blackwell, AMD: RDNA/GCN, Apple:
+> M1/M2/M3/M4/M5), but the **fundamental concepts, methodology, and insights
+> remain universally applicable** across modern GPUs. Use `pixi run gpu-specs`
+> to get your specific hardware values.
+>
+> **Hardware is not the only variable — the build is too.** Register counts and
+> timings differ between a `--debug-level=full` build and a release one, and
+> occupancy follows the registers. Shared memory per block does not move. Any
+> number below that you intend to compare against your own must say which build
+> it came from; see
+> [the debug-build trade-off](../puzzle_30/nvidia_profiling_basics.md#step-1-prepare-your-code-for-profiling).
 
 ## Configuration
 
 **Requirements:**
 
 - NVIDIA GPU with CUDA toolkit
-- NSight Compute from [Puzzle 30](../puzzle_30/puzzle_30.md)
+- Nsight Compute from [Puzzle 30](../puzzle_30/puzzle_30.md)
 
 > **⚠️ GPU compatibility note:** The default configuration uses aggressive
 > settings that may fail on older or lower-capability GPUs:
 >
 > ```mojo
-> comptime SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
+> comptime SIZE = 32 * 1024 * 1024  # 32M elements (~128MB per array)
 > comptime THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
 > comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
 > ```
@@ -91,7 +99,7 @@ occupancy behave counterintuitively!
 > **If you encounter launch failures, reduce these values in
 > `problems/p31/p31.mojo`:**
 >
-> - **For older GPUs (Compute Capability < 3.0):** Use `THREADS_PER_BLOCK = (512, 1)` and `SIZE = 16 * 1024 * 1024`
+> - **For older GPUs:** Use `THREADS_PER_BLOCK = (512, 1)` and `SIZE = 16 * 1024 * 1024`
 > - **For limited memory GPUs (< 2GB):** Use `SIZE = 8 * 1024 * 1024` or `SIZE = 4 * 1024 * 1024`
 > - **For grid dimension limits:** The `BLOCKS_PER_GRID` will automatically adjust with `SIZE`
 
@@ -125,24 +133,29 @@ do they have different performance?
 mojo problems/p31/p31.mojo --benchmark
 ```
 
-All three compute the same SAXPY result to within test tolerance—the
-sophisticated and balanced kernels add small correction terms, so the tests
-compare with `rtol=1e-3` and `rtol=1e-4` rather than exactly. The mystery: why
-do they have different performance?
+Record the reported time for each kernel. Step 4 is where you connect those
+numbers to the resources each kernel consumes.
 
 ### Step 3: Build for profiling
 
 ```bash
-mojo build --debug-level=full problems/p31/p31.mojo -o problems/p31/p31_profiler
+mojo build problems/p31/p31.mojo -o problems/p31/p31_profiler
 ```
+
+**No `--debug-level=full` here**, unlike the profiling walkthrough in
+[Puzzle 30](../puzzle_30/nvidia_profiling_basics.md). This puzzle's subject
+*is* resource usage, and debug metadata inflates register counts — enough, on a
+B200, to drag the sophisticated kernel's measured occupancy from 82% down to
+50% and invert the comparison you are about to make. Profile a release build
+whenever the numbers you want are the resource numbers.
 
 ### Step 4: Profile resource usage
 
 ```bash
 # Profile each kernel's resource usage
-ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --minimal
-ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --sophisticated
-ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
+ncu --set basic --section=LaunchStats problems/p31/p31_profiler --minimal
+ncu --set basic --section=LaunchStats problems/p31/p31_profiler --sophisticated
+ncu --set basic --section=LaunchStats problems/p31/p31_profiler --balanced
 ```
 
 Record the resource usage for occupancy analysis.
@@ -164,10 +177,16 @@ tables needed!
 | Architecture                      | Compute Cap | Registers/SM | Shared Mem/SM | Max Threads/SM | Max Blocks/SM |
 |-----------------------------------|-------------|--------------|---------------|----------------|---------------|
 | **Hopper (H100)**                 | 9.0         | 65,536       | 228KB         | 2,048          | 32            |
-| **Ada (RTX 40xx)**                | 8.9         | 65,536       | 128KB         | 2,048          | 32            |
-| **Ampere (RTX 30xx, A100, A10G)** | 8.0, 8.6    | 65,536       | 164KB         | 2,048          | 32            |
-| **Turing (RTX 20xx)**             | 7.5         | 65,536       | 96KB          | 1,024          | 16            |
+| **Ada (RTX 40xx)**                | 8.9         | 65,536       | 100KB         | 1,536          | 24            |
+| **Ampere (RTX 30xx, A10G)**       | 8.6         | 65,536       | 100KB         | 1,536          | 16            |
+| **Ampere (A100)**                 | 8.0         | 65,536       | 164KB         | 2,048          | 32            |
+| **Turing (RTX 20xx)**             | 7.5         | 65,536       | 64KB          | 1,024          | 16            |
 | **Pascal (GTX 10xx)**             | 6.1         | 65,536       | 96KB          | 2,048          | 32            |
+
+Note that the two Ampere compute capabilities differ: the data-center 8.0 part
+(A100) has 164KB of shared memory and 2,048 threads per SM, while the 8.6 parts
+(RTX 30xx, A10G) have 100KB and 1,536. That distinction drives the worked
+solution below.
 
 **📚 Official Documentation:**
 
@@ -234,10 +253,10 @@ questions to solve the occupancy mystery:**
 
 **The Occupancy Mystery:**
 
-5. Why do all three kernels achieve similar occupancy (~64-66% results may vary
-   depending on gpu architecture) despite dramatically different resource usage?
-6. Why is performance nearly identical (<2% difference) when resource usage
-   varies so dramatically (19 vs 40 registers, 0KB vs 49KB shared memory)?
+5. Why do all three kernels land in a similar occupancy band (the exact figures
+   vary by GPU architecture) despite dramatically different resource usage?
+6. Why does performance vary so little — about 14% between fastest and slowest
+   on a B200 — when shared memory usage varies from 0KB to 49KB?
 7. What does this reveal about the relationship between theoretical occupancy
    calculations and real-world GPU behavior?
 8. For this SAXPY workload, what is the actual performance bottleneck if it's
@@ -250,7 +269,7 @@ questions to solve the occupancy mystery:**
 
 **Your detective toolkit:**
 
-- **NSight Compute (`ncu`)** - Measure occupancy and resource usage
+- **Nsight Compute (`ncu`)** - Measure occupancy and resource usage
 - **GPU architecture specs** - Calculate theoretical limits using
   `pixi run gpu-specs`
 - **Occupancy formula** - Predict resource bottlenecks
@@ -268,13 +287,13 @@ questions to solve the occupancy mystery:**
   other performance factors
 - **Think in terms of thresholds:** 25-50% occupancy is often sufficient for
   latency hiding
-- **Profile resource usage:** Use NSight Compute to understand actual register
+- **Profile resource usage:** Use Nsight Compute to understand actual register
   and shared memory consumption
 
 **Investigation approach:**
 
 1. **Start with benchmarking** - See the performance differences first
-2. **Profile with NSight Compute** - Get actual resource usage and occupancy
+2. **Profile with Nsight Compute** - Get actual resource usage and occupancy
    data
 3. **Calculate theoretical occupancy** - Use your GPU specs and the occupancy
    formula
@@ -294,46 +313,66 @@ This occupancy detective case demonstrates how resource usage affects GPU
 performance and reveals the complex relationship between theoretical occupancy
 and actual performance.
 
-> The specific calculations below are for **NVIDIA A10G (Ampere 8.6)** - the GPU
-> used for testing. Your results will vary based on your GPU architecture, but
-> the methodology and insights apply universally. Use `pixi run gpu-specs` to
-> get your specific hardware values.
+> The worked calculations below are for **NVIDIA A10G (Ampere 8.6)**. The
+> measurements are from a **B200 (Blackwell 10.0)**, driver 595.71.05, MAX
+> 26.5.0 / Mojo 1.0.0, release build. Your results will vary based on your GPU
+> architecture, but the methodology and insights apply universally. Use
+> `pixi run gpu-specs` to get your specific hardware values.
 
 ## **Profiling evidence from resource analysis**
 
-**NSight Compute Resource Analysis:**
+**Nsight Compute Resource Analysis:**
 
-**Actual Profiling Results (NVIDIA A10G - your results will vary by GPU):**
+**Actual Profiling Results (NVIDIA B200, release build - your results will vary
+by GPU):**
 
-- **Minimal:** 19 registers, ~0KB shared → **63.87%** occupancy, **327.7ms**
-- **Balanced:** 25 registers, 16.4KB shared → **65.44%** occupancy, **329.4ms**
-- **Sophisticated:** 40 registers, 49.2KB shared → **65.61%** occupancy,
-  **330.9ms**
+- **Minimal:** 16 registers, 0KB shared → **74.66%** occupancy, **0.1399ms**
+- **Balanced:** 16 registers, 16.38KB shared → **83.51%** occupancy,
+  **0.1497ms**
+- **Sophisticated:** 16 registers, 49.15KB shared → **81.95%** occupancy,
+  **0.1589ms**
 
 **Performance Evidence from Benchmarking:**
 
-- **All kernels perform nearly identically** (~327-331ms, <2% difference)
-- **All achieve similar occupancy** (~64-66%) despite huge resource differences
+- **All kernels perform within about 14% of each other** despite one using no
+  shared memory and another using 49KB
+- **All land in a similar occupancy band** (75-84%) despite those resource
+  differences
 - **Memory bandwidth becomes the limiting factor** for all kernels
+
+> **Registers are not the interesting variable here, and the build is why.**
+> Profile the same three kernels with `--debug-level=full` and the register
+> counts spread out — 16 minimal, 24 balanced, 40 sophisticated on this B200 —
+> which drags sophisticated's occupancy down to 49.70%, below both others, and
+> breaks the very pattern this puzzle teaches. The
+> release build shows the compiler assigning all three the same 16 registers.
+> Shared memory per block is identical in both builds, which is what makes it
+> the honest resource contrast.
 
 ## **Occupancy calculations revealed**
 
 **Theoretical Occupancy Analysis (NVIDIA A10G, Ampere 8.6):**
 
+This is a worked example of the formula on one card, so you can see each limit
+computed before running the arithmetic for your own. The per-kernel register
+counts it feeds in (19 / 25 / 40) are from a debug build, which is why they
+differ from the 16 / 16 / 16 measured above — watch what that changes in the
+result, which is nothing: the register limit never becomes the binding one.
+
 **GPU Specifications (from `pixi run gpu-specs`):**
 
 - **Registers Per SM:** 65,536
-- **Shared Memory Per SM:** 164KB (architectural maximum)
+- **Shared Memory Per SM:** 100KB (compute capability 8.6)
 - **Max Threads Per SM:** 1,536 (hardware limit on A10G)
 - **Threads Per Block:** 1,024 (our configuration)
-- **Max Blocks Per SM:** 32
+- **Max Blocks Per SM:** 16
 
 **Minimal Kernel Calculation:**
 
 ```text
 Register Limit = 65,536 / (19 × 1,024) = 3.36 blocks per SM
-Shared Memory Limit = 164KB / 0KB = ∞ blocks per SM
-Hardware Block Limit = 32 blocks per SM
+Shared Memory Limit = 100KB / 0KB = ∞ blocks per SM
+Hardware Block Limit = 16 blocks per SM
 
 Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
 Actual Blocks = min(3, ∞, 1) = 1 block per SM
@@ -344,68 +383,72 @@ Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
 
 ```text
 Register Limit = 65,536 / (25 × 1,024) = 2.56 blocks per SM
-Shared Memory Limit = 164KB / 16.4KB = 10 blocks per SM
-Hardware Block Limit = 32 blocks per SM
+Shared Memory Limit = 100KB / 16.4KB = 6.10 blocks per SM
+Hardware Block Limit = 16 blocks per SM
 
 Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
-Actual Blocks = min(2, 10, 1) = 1 block per SM
+Actual Blocks = min(2, 6, 1) = 1 block per SM
 Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
 ```
 
 **Sophisticated Kernel Calculation:**
 
 ```text
-Register Limit = 65,536 / (40 × 1,024) = 1.64 blocks per SM
-Shared Memory Limit = 164KB / 49.2KB = 3.33 blocks per SM
-Hardware Block Limit = 32 blocks per SM
+Register Limit = 65,536 / (40 × 1,024) = 1.6 blocks per SM
+Shared Memory Limit = 100KB / 49.2KB = 2.03 blocks per SM
+Hardware Block Limit = 16 blocks per SM
 
 Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
-Actual Blocks = min(1, 3, 1) = 1 block per SM
+Actual Blocks = min(1, 2, 1) = 1 block per SM
 Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
 ```
 
-**Key Discovery: Theory Matches Reality!**
+**Key Discovery: One Limit Binds, and It Isn't the Interesting One**
 
-- **Theoretical**: All kernels ~66.7% (limited by A10G's thread capacity)
-- **Actual Measured**: All ~64-66% (very close match!)
+- **Theoretical**: all three kernels 66.7% on the A10G, limited by its thread
+  capacity — not by registers and not by shared memory
+- **The 0KB and the 49KB kernel land on the same answer**, which is the whole
+  point: a resource only matters when it is the one that runs out first
 
-This reveals that **A10G's thread limit dominates** - you can only fit 1 block
-of 1,024 threads per SM when the maximum is 1,536 threads. The small difference
-(66.7% theoretical vs ~65% actual) comes from hardware scheduling overhead and
-driver limitations.
+You can only fit 1 block of 1,024 threads per SM when the maximum is 1,536, so
+the thread limit decides the outcome and the dramatic resource differences never
+get to. Run the same arithmetic with your own card's specs before assuming a
+resource is your problem.
 
-## **Why theory closely matches reality**
+## **Why measured occupancy falls short of theoretical**
 
-**Why the small gap between theoretical (66.7%) and actual (~65%) occupancy:**
+Measured occupancy always lands somewhat under the theoretical figure:
 
 1. **Hardware Scheduling Overhead**: Real warp schedulers have practical
    limitations beyond theoretical calculations
 2. **CUDA Runtime Reservations**: Driver and runtime overhead reduce available
    SM resources slightly
-3. **Memory Controller Pressure**: A10G's memory subsystem creates slight
+3. **Memory Controller Pressure**: The memory subsystem creates slight
    scheduling constraints
 4. **Power and Thermal Management**: Dynamic frequency scaling affects peak
    performance
 5. **Instruction Cache Effects**: Real kernels have instruction fetch overhead
    not captured in occupancy calculations
 
-**Key Insight**: The close match (66.7% theoretical vs ~65% actual) shows that
-**A10G's thread limit truly dominates** all three kernels, regardless of their
-register and shared memory differences. This is an excellent example of
-identifying the real bottleneck!
+**Key Insight**: the gap is small enough that the calculation is worth doing.
+Identifying *which* limit binds is what the formula buys you — and here it is
+thread capacity, for every kernel, regardless of their register and shared
+memory differences.
 
 ## **The occupancy mystery explained**
 
 **The Real Mystery Revealed:**
 
-- **All kernels achieve nearly identical occupancy** (~64-66%) despite dramatic
-  resource differences
-- **Performance is essentially identical** (<2% variation) across all kernels
-- **Theory correctly predicts occupancy** (66.7% theoretical ≈ 65% actual)
-- **The mystery isn't occupancy mismatch** - it's why identical occupancy and
-  performance despite huge resource differences!
+- **All kernels land in the same occupancy band** despite dramatic resource
+  differences
+- **Performance varies by about 14%** across all three, where shared memory
+  usage varies by a factor of infinity (0KB) to 49KB
+- **Theory correctly identifies the binding limit** - thread capacity, not
+  registers or shared memory
+- **The mystery isn't occupancy mismatch** - it's why similar occupancy and
+  near-identical performance despite huge resource differences!
 
-**Why Identical Performance Despite Different Resource Usage:**
+**Why Near-Identical Performance Despite Different Resource Usage:**
 
 **SAXPY Workload Characteristics:**
 
@@ -414,7 +457,7 @@ identifying the real bottleneck!
 - **High memory traffic:** Reading 2 values, writing 1 value per thread
 - **Low arithmetic intensity:** Only 2 FLOPS per 12 bytes of memory traffic
 
-**Memory Bandwidth Analysis (A10G):**
+**Memory Bandwidth Analysis:**
 
 ```text
 Single Kernel Pass Analysis:
@@ -422,18 +465,24 @@ Single Kernel Pass Analysis:
 - Output array: 32M × 4 bytes × 1 array = 128MB write
 - Total per kernel: 384MB memory traffic
 
-Peak Bandwidth (A10G): 600 GB/s
-Single-pass time: 384MB / 600 GB/s ≈ 0.64ms theoretical minimum
-Benchmark time: ~328ms (includes multiple iterations + overhead)
+Measured (B200, minimal kernel): 0.1399ms per iteration
+Implied bandwidth: 384MB / 0.1399ms ≈ 2.7 TB/s
 ```
+
+Divide your own card's peak bandwidth (`pixi run gpu-specs`) into that 384MB to
+get the floor this kernel could ever reach, then compare it with what you
+measured. All three kernels move the same 384MB, which is why none of them can
+get far from the others.
 
 **The Real Performance Factors:**
 
 1. **Memory Bandwidth Utilization**: All kernels saturate available memory
    bandwidth
-2. **Computational Overhead**: Sophisticated kernel does extra work (register
-   pressure effects)
-3. **Shared Memory Benefits**: Balanced kernel gets some caching advantages
+2. **Computational Overhead**: the sophisticated kernel does extra work — more
+   instructions and more shared memory traffic, not more registers
+3. **Shared Memory Without Reuse**: the balanced kernel writes each value into
+   shared memory and reads it straight back, so the allocation buys no data
+   reuse—only extra instructions
 4. **Compiler Optimizations**: Modern compilers minimize register usage when
    possible
 
@@ -477,7 +526,7 @@ pixi run gpu-specs
 
 ```bash
 # Measure resource consumption
-ncu --set=@occupancy --section=LaunchStats your_kernel
+ncu --set basic --section=LaunchStats your_kernel
 
 # Measure achieved occupancy
 ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active your_kernel
@@ -487,7 +536,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active your_kernel
 
 ```bash
 # Always validate with actual performance measurements
-ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
+ncu --set roofline --section=MemoryWorkloadAnalysis your_kernel
 ```
 
 **Evidence-to-Decision Framework:**
@@ -529,21 +578,22 @@ Low occupancy (<30%) + Good performance:
 - **Consider warp utilization**: Avoid partial warps when possible
 - **Balance occupancy vs resource usage**: Larger blocks may hit resource limits
 
-## **Key takeaways: From A10G mystery to universal principles**
+## **Key takeaways: From one occupancy mystery to universal principles**
 
-This A10G occupancy investigation reveals a clear progression of insights that
-apply to all GPU optimization:
+This occupancy investigation reveals a clear progression of insights that apply
+to all GPU optimization:
 
-**The A10G Discovery Chain:**
+**The Discovery Chain:**
 
-1. **Thread limits dominated everything** - Despite 19 vs 40 registers and 0KB
-   vs 49KB shared memory differences, all kernels hit the same 1-block-per-SM
-   limit due to A10G's 1,536-thread capacity
-2. **Theory matched reality closely** - 66.7% theoretical vs ~65% measured
-   occupancy shows our calculations work when we identify the right bottleneck
-3. **Memory bandwidth ruled performance** - With identical 66.7% occupancy,
-   SAXPY's memory-bound nature (600 GB/s saturated) explained identical
-   performance despite resource differences
+1. **Thread limits dominated everything** - Despite 0KB vs 49KB shared memory
+   differences, all kernels hit the same 1-block-per-SM limit on the A10G, set
+   by its 1,536-thread capacity
+2. **Theory identified the binding limit** - the calculation is worth doing not
+   because it predicts occupancy to the decimal, but because it tells you which
+   resource is actually deciding
+3. **Memory bandwidth ruled performance** - all three kernels move the same
+   384MB, and SAXPY's memory-bound nature explains why performance stayed
+   within about 14% despite the resource differences
 
 **Universal GPU Optimization Principles:**
 
@@ -562,12 +612,12 @@ apply to all GPU optimization:
   simulations) that need latency hiding for ALU pipeline stalls
 - **Occupancy less critical**: Memory-bound operations (BLAS Level 1, memory
   copies) where bandwidth saturation occurs before occupancy becomes limiting
-- **Sweet spot**: 60-70% occupancy often sufficient for latency hiding - beyond
+- **Sweet spot**: 25-50% occupancy is often enough for latency hiding - beyond
   that, focus on the real bottleneck
 
 **Practical Optimization Workflow:**
 
-1. **Profile first** (`ncu --set=@occupancy`) - measure actual resource usage
+1. **Profile first** (`ncu --set basic`) - measure actual resource usage
    and occupancy
 2. **Calculate theoretical limits** using your GPU's specs
    (`pixi run gpu-specs`)
@@ -577,10 +627,10 @@ apply to all GPU optimization:
 5. **Validate with end-to-end performance** - occupancy is a means to
    performance, not the goal
 
-The A10G case perfectly demonstrates why
+This case demonstrates why
 **systematic bottleneck analysis beats intuition** - the sophisticated kernel's
-high register pressure was irrelevant because thread capacity dominated, and
-identical occupancy plus memory bandwidth saturation explained the performance
+49KB of shared memory was irrelevant because thread capacity dominated, and
+similar occupancy plus memory bandwidth saturation explained the performance
 mystery completely.
 
 </details>

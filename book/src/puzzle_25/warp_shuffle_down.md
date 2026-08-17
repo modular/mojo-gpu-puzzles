@@ -83,7 +83,8 @@ if lane < WARP_SIZE - 1:
 **Benefits of shuffle_down:**
 
 - **Zero memory overhead**: No additional memory accesses
-- **Automatic bounds**: Hardware handles warp boundaries
+- **Explicit bounds**: One lane check guards the top `offset` lanes, where
+  `shuffle_down` returns undefined values
 - **No synchronization**: SIMT execution guarantees correctness
 - **Composable**: Easy to combine with other warp operations
 
@@ -148,7 +149,7 @@ For neighbor difference with `WARP_SIZE = 32`:
 ### 3. **Lane identification**
 
 ```mojo
-var lane = lane_id()  # Returns 0 to WARP_SIZE-1
+var lane = Int(lane_id())  # Returns 0 to WARP_SIZE-1
 ```
 
 **Lane numbering:** Within each warp, lanes are numbered 0, 1, 2,...,
@@ -225,7 +226,7 @@ indexing into efficient warp-level communication.
 ```mojo
 if global_i < size:
     var current_val = input[global_i]           # Each lane reads its element
-    var next_val = shuffle_down(current_val, 1) # Hardware shifts data right
+    var next_val = shuffle_down(current_val, 1) # Value from lane+1
 
     if lane < WARP_SIZE - 1:
         output[global_i] = next_val - current_val  # Compute difference
@@ -251,7 +252,7 @@ Cycle 2: shuffle_down(current_val, 1) executes on all lanes
   Lane 30: receives current_val from Lane 31 → next_val = 961
   Lane 31: receives undefined (no Lane 32) → next_val = ?
 
-Cycle 3: Difference computation (lanes 0-30 only)
+Cycle 3: Difference computation (the lane check picks the branch)
   Lane 0: output[0] = 1 - 0 = 1
   Lane 1: output[1] = 4 - 1 = 3
   Lane 2: output[2] = 9 - 4 = 5
@@ -269,8 +270,8 @@ For our quadratic input \\(f(i) = i^2\\):
 
 1. **Memory efficiency**: Traditional approach requires `input[global_i + 1]`
    load, potentially causing cache misses
-2. **Bounds safety**: No risk of out-of-bounds access; hardware handles warp
-   boundaries
+2. **Bounds safety**: No risk of out-of-bounds memory access; the lane check
+   guards the warp edge, where `shuffle_down` is undefined
 3. **SIMT optimization**: Single instruction processes all lanes simultaneously
 4. **Register communication**: Data moves between registers, not through memory
    hierarchy
@@ -279,7 +280,7 @@ For our quadratic input \\(f(i) = i^2\\):
 
 - **Latency**: 1 cycle (vs 100+ cycles for memory access)
 - **Bandwidth**: 0 bytes (vs 4 bytes per thread for traditional)
-- **Parallelism**: All 32 lanes process simultaneously
+- **Parallelism**: All lanes in the warp process simultaneously
 
 </div>
 </details>
@@ -310,8 +311,8 @@ consecutive elements: \\[\\Large \\text{output}[i] =
 - **1-point window**: \\(\\text{output}[i] = \\text{input}[i]\\) when no
   neighbors available
 
-This demonstrates how `shuffle_down()` enables efficient stencil operations with
-automatic boundary handling within warp limits.
+This demonstrates how `shuffle_down()` enables efficient stencil operations once
+you handle the warp boundary explicitly with lane checks.
 
 ```mojo
 {{#include ../../../problems/p25/p25.mojo:moving_average_3}}
@@ -481,27 +482,27 @@ if global_i < size:
 **Multi-offset execution trace (`WARP_SIZE = 32`):**
 
 ```text
-Initial state (Block 0, elements 0-31):
+Initial state (Block 0, elements 0-31), input is the triangular numbers:
   Lane 0: current_val = input[0] = 1
-  Lane 1: current_val = input[1] = 2
-  Lane 2: current_val = input[2] = 4
+  Lane 1: current_val = input[1] = 3
+  Lane 2: current_val = input[2] = 6
   ...
-  Lane 31: current_val = input[31] = X
+  Lane 31: current_val = input[31] = 528
 
 First shuffle: shuffle_down(current_val, 1)
-  Lane 0: next_val = input[1] = 2
-  Lane 1: next_val = input[2] = 4
-  Lane 2: next_val = input[3] = 7
+  Lane 0: next_val = input[1] = 3
+  Lane 1: next_val = input[2] = 6
+  Lane 2: next_val = input[3] = 10
   ...
-  Lane 30: next_val = input[31] = X
+  Lane 30: next_val = input[31] = 528
   Lane 31: next_val = undefined
 
 Second shuffle: shuffle_down(current_val, 2)
-  Lane 0: next_next_val = input[2] = 4
-  Lane 1: next_next_val = input[3] = 7
-  Lane 2: next_next_val = input[4] = 11
+  Lane 0: next_next_val = input[2] = 6
+  Lane 1: next_next_val = input[3] = 10
+  Lane 2: next_next_val = input[4] = 15
   ...
-  Lane 29: next_next_val = input[31] = X
+  Lane 29: next_next_val = input[31] = 528
   Lane 30: next_next_val = undefined
   Lane 31: next_next_val = undefined
 
@@ -526,10 +527,10 @@ Where the kernel adapts based on position:
 
 ```text
 Block 0 (global indices 0-31):
-  Lane boundaries apply to global indices 29, 30, 31
+  Degraded windows at global indices 30 and 31
 
 Block 1 (global indices 32-63):
-  Lane boundaries apply to global indices 61, 62, 63
+  Degraded windows at global indices 62 and 63
   Lane numbers reset: global_i=32 → lane=0, global_i=63 → lane=31
 ```
 
@@ -563,7 +564,7 @@ if lane < WARP_SIZE - offset:
 **Key benefits:**
 
 - **Hardware efficiency**: Register-to-register communication
-- **Boundary safety**: Automatic warp limit handling
+- **Boundary safety**: One lane check covers the undefined top lanes
 - **SIMT optimization**: Single instruction, all lanes parallel
 
 **Applications**: Finite differences, stencil operations, moving averages,

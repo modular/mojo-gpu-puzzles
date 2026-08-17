@@ -167,7 +167,13 @@ Matrix B:                           b_shared: (similar layout)
    if row < size and col < size:
        a_shared[local_row, local_col] = a[row, col]
        b_shared[local_row, local_col] = b[row, col]
+
+   # Every thread reaches this, including the ones the guard skipped
+   barrier()
    ```
+
+   The `barrier()` sits outside the guard on purpose: a barrier that only some
+   threads in the block reach is undefined behavior.
 
 4. **Computation with Shared Memory**:
 
@@ -223,13 +229,13 @@ Matrix B:                           b_shared: (similar layout)
 
 1. **TileTensor benefits**:
    - Direct 2D indexing simplifies code
-   - Type safety through `element_type`
+   - Type safety through `ElementType`
    - Efficient memory layout handling
 
 2. **Shared memory allocation**:
    - TileTensor with address_space for structured allocation
    - Row-major layout matching input tensors
-   - Proper alignment for efficient access
+   - Aligned to the element type's natural alignment by default
 
 3. **Synchronization**:
    - `barrier()` ensures shared memory consistency
@@ -250,11 +256,10 @@ Matrix B:                           b_shared: (similar layout)
 
 3. **Computational benefits**:
    - Reduced global memory traffic
-   - Better cache utilization
-   - Improved instruction throughput
+   - Dot-product operands come from on-chip shared memory rather than global
+     memory
 
-This implementation significantly improves performance over the naive version
-by:
+This implementation improves on the naive version by:
 
 - Reducing global memory accesses
 - Enabling data reuse through shared memory

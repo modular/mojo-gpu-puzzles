@@ -2,9 +2,9 @@
 
 > **Note: The profiling section is specific to NVIDIA GPUs**
 >
-> The `ld.global.nc.v4` instruction, the `LDG.E.128` SASS form, and the NSight
-> Compute (`ncu`) metrics below are NVIDIA CUDA concepts. The kernels run and
-> verify on any supported GPU, but the codegen evidence is NVIDIA-specific.
+> The `ld.global.nc.v4` instruction and the Nsight Compute (`ncu`) metrics
+> below are NVIDIA CUDA concepts. The kernels run and verify on any supported
+> GPU, but the codegen evidence is NVIDIA-specific.
 
 ## Step 1: Benchmark the three variants
 
@@ -13,26 +13,30 @@ pixi run mojo solutions/p35/p35.mojo --benchmark
 ```
 
 This times all three kernels on a 1M-element buffer. Representative numbers from
-a B200:
+a B200 (compute capability 10.0, driver 595.71.05, MAX 26.5.0 / Mojo 1.0.0):
 
 ```text
 | name      | met (ms)  | iters |
 | --------- | --------- | ----- |
-| scalar    | 0.0248    |  100  |
-| unaligned | 0.0238    |  100  |
-| aligned   | 0.0228    |  100  |
+| scalar    | 0.01332   |  100  |
+| unaligned | 0.01220   |  100  |
+| aligned   | 0.01137   |  100  |
 ```
 
-`aligned` is the fastest and `scalar` the slowest, in the expected order. But
-look how small the gap is (~8% scalar→aligned). The aligned kernel issues a
-quarter of the global memory instructions, yet at this size the kernel is close
-to DRAM-bandwidth-bound, so all three nearly saturate the same memory and the
-wall-clock barely separates them.
+Read the ratios rather than the absolute times — those move with the GPU, the
+driver and the toolchain, but the ordering does not.
 
-While the gap is small in this example, leaving a 4× instruction-count
-inefficiency in the kernel will impact performance bite in a compute-mixed or
-instruction-issue-bound context. The wall-clock test is too coarse to see the
-codegen difference but the profiler is not.
+`aligned` is the fastest and `scalar` the slowest, in the expected order. But
+look how small the gap is (~15% scalar→aligned) even though the aligned kernel
+issues a quarter of the global memory instructions. Buffer allocation and
+initialization sit outside the timed region, so this is the kernel plus its
+launch and synchronization — and at this size that fixed overhead is a large
+share of it. Measured with `ncu`, the kernels alone are 8.83 µs (scalar) versus
+6.05 µs (aligned): a 31% gap, twice what wall-clock reports.
+
+While the gap is small in this example, a 4× instruction-count inefficiency
+will bite in a compute-mixed or instruction-issue-bound kernel. The wall-clock
+test is too coarse to see the codegen difference but the profiler is not.
 
 ## Step 2: Build for profiling
 
@@ -40,7 +44,7 @@ codegen difference but the profiler is not.
 mojo build --debug-level=full solutions/p35/p35.mojo -o solutions/p35/p35_profiler
 ```
 
-`--debug-level=full` keeps source-line mapping so NSight Compute can attribute
+`--debug-level=full` keeps source-line mapping so Nsight Compute can attribute
 instructions back to your kernel.
 
 ## Step 3: Confirm the instruction-count difference
@@ -59,27 +63,27 @@ ncu --metrics \
 ```
 
 The `--unaligned` run executes about four global loads and four global stores
-per chunk (for `float32x4`); the `--aligned` run executes one of each.
+per chunk (for `float32x4`); the `--aligned` run executes one of each. On a
+B200 that reads as 32,768 against 8,192 for each metric — an exact 4:1.
 
-## Step 4: See the vectorized instruction in the SASS
+The counts are per warp, not per thread, which is why they are smaller than
+the element count: 1,048,576 elements ÷ `SIMD_WIDTH` 4 = 262,144 chunks ÷ 32
+lanes = 8,192 warp-level instructions, one per chunk for the aligned kernel.
+Unlike timings, these counts are the same in a debug and a release build.
 
-Confirm the actual machine instruction changed from scalar `LDG.E` to vectorized
-`LDG.E.128`:
+> **Why not read the SASS directly?** `cuobjdump -sass` is the usual way to see
+> that the machine instruction changed, but it does not work here: Mojo
+> JIT-compiles GPU kernels and loads them through the driver at runtime, so an
+> ahead-of-time binary embeds no device code and `cuobjdump` reports
+> `does not contain device code`. The instruction counts above are the evidence
+> to use instead.
 
-```bash
-cuobjdump -sass solutions/p35/p35_profiler | grep -E 'LDG|STG'
-```
-
-The aligned kernel's SASS contains `LDG.E.128` / `STG.E.128` (the 128-bit
-vectorized forms); the unaligned kernel's contains only the 32-bit `LDG.E` /
-`STG.E`.
-
-## Step 5: Memory workload analysis (optional)
+## Step 4: Memory workload analysis (optional)
 
 For the full bandwidth picture:
 
 ```bash
-ncu --set=@roofline --section=MemoryWorkloadAnalysis \
+ncu --set roofline --section=MemoryWorkloadAnalysis \
   solutions/p35/p35_profiler --aligned
 ```
 

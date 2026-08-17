@@ -90,23 +90,23 @@ pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo
 
 <div class="solution-explanation">
 
-## Step-by-Step Investigation with CUDA-GDB
+## Step-by-step investigation with CUDA-GDB
 
-### Launch the Debugger
+### Launch the debugger
 
 ```bash
 pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 ```
 
-### Examine the Breakpoint Information
+### Examine the breakpoint information
 
 When CUDA-GDB stops, it immediately shows valuable clues:
 
 ```text
 (cuda-gdb) run
 CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
-31          i = thread_idx.x
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:37
+37          var i = thread_idx.x
 ```
 
 **🔍 First Clue**: The function signature shows `(output=0x302000000, a=0x0)`
@@ -118,7 +118,7 @@ CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
 
 ```text
 (cuda-gdb) next
-32          output[i] = a[i] + 10.0
+38          output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 (cuda-gdb) print i
 $1 = 0
 (cuda-gdb) print output
@@ -133,7 +133,7 @@ $3 = (!kgen.scalar<f32> * @register) 0x0
 - ✅ Result pointer `0x302000000` is a proper GPU address
 - ❌ Input pointer `0x0` is null
 
-### Confirm the Problem
+### Confirm the problem
 
 ```text
 (cuda-gdb) print a[i]
@@ -146,32 +146,35 @@ cause!
 ## Root cause analysis
 
 **The Problem**: Now if we look at the [code](../../../problems/p09/p09.mojo)
-for `--first-crash`, we see that the host code creates a null pointer instead of
+for `--first-case`, we see that the host code creates a null pointer instead of
 allocating proper GPU memory:
 
 ```mojo
- var input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
+# A `DeviceBuffer` with 0 elements. Nothing is allocated, so the buffer hands
+# the kernel a NULL pointer.
+var input_buf = ctx.enqueue_create_buffer[dtype](0)
 ```
 
 **Why This Crashes**:
 
 1. `ctx.enqueue_create_buffer[dtype](0)` creates a `DeviceBuffer` with zero (0)
    elements.
-2. since there are no elements for which to allocate memory, this returns a null
-   pointer.
-3. This null pointer gets passed to the GPU kernel
-4. When kernel tries `a[i]`, it dereferences null → `CUDA_ERROR_ILLEGAL_ADDRESS`
+2. Since there are no elements for which to allocate memory, this returns a
+   null pointer.
+3. This null pointer gets passed to the GPU kernel.
+4. When the kernel evaluates `a[unsafe_offset=i]`, it dereferences null →
+   `CUDA_ERROR_ILLEGAL_ADDRESS`.
 
 ## The fix
 
 Replace null pointer creation with proper buffer allocation:
 
 ```mojo
-# Wrong: Creates null pointer
+# Wrong: creates a null pointer
 var input_buf = ctx.enqueue_create_buffer[dtype](0)
 
-# Correct: Allocates and initialize actual GPU memory for safe processing
-input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+# Correct: allocate and initialize actual GPU memory for safe processing
+var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
 input_buf.enqueue_fill(0)
 ```
 

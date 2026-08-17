@@ -203,25 +203,34 @@ def balanced_kernel(
 @__parameter
 @always_inline
 def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
+    # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
+    # the figure is about the kernel. SAXPY updates `y` in place, so successive
+    # timed iterations accumulate into it — the arithmetic and memory traffic
+    # per iteration are unchanged, which is what the benchmark measures.
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var y = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    y.enqueue_fill(0)
+    var x = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    x.enqueue_fill(0)
+
+    with y.map_to_host() as y_host, x.map_to_host() as x_host:
+        for i in range(test_size):
+            x_host[i] = Scalar[dtype](i + 1)
+            y_host[i] = Scalar[dtype](i + 2)
+
+    # Untracked origin so the closure can capture `y` for `keep()` without
+    # aliasing the tensor that also references it.
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
+
     @always_inline
     def minimal_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var y = ctx.enqueue_create_buffer[dtype](test_size)
-        y.enqueue_fill(0)
-        var x = ctx.enqueue_create_buffer[dtype](test_size)
-        x.enqueue_fill(0)
-
-        with y.map_to_host() as y_host, x.map_to_host() as x_host:
-            for i in range(test_size):
-                x_host[i] = Scalar[dtype](i + 1)
-                y_host[i] = Scalar[dtype](i + 2)
-
-        var y_tensor = TileTensor(y, layout)
-        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
-
         comptime kernel = minimal_kernel
         ctx.enqueue_function[kernel](
             y_tensor,
@@ -234,7 +243,6 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom(b, minimal_workflow, bench_ctx)
 
 
@@ -243,25 +251,34 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 def benchmark_sophisticated_parameterized[
     test_size: Int
 ](mut b: Bencher) raises:
+    # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
+    # the figure is about the kernel. SAXPY updates `y` in place, so successive
+    # timed iterations accumulate into it — the arithmetic and memory traffic
+    # per iteration are unchanged, which is what the benchmark measures.
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var y = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    y.enqueue_fill(0)
+    var x = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    x.enqueue_fill(0)
+
+    with y.map_to_host() as y_host, x.map_to_host() as x_host:
+        for i in range(test_size):
+            x_host[i] = Scalar[dtype](i + 1)
+            y_host[i] = Scalar[dtype](i + 2)
+
+    # Untracked origin so the closure can capture `y` for `keep()` without
+    # aliasing the tensor that also references it.
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
+
     @always_inline
     def sophisticated_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var y = ctx.enqueue_create_buffer[dtype](test_size)
-        y.enqueue_fill(0)
-        var x = ctx.enqueue_create_buffer[dtype](test_size)
-        x.enqueue_fill(0)
-
-        with y.map_to_host() as y_host, x.map_to_host() as x_host:
-            for i in range(test_size):
-                x_host[i] = Scalar[dtype](i + 1)
-                y_host[i] = Scalar[dtype](i + 2)
-
-        var y_tensor = TileTensor(y, layout)
-        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
-
         comptime kernel = sophisticated_kernel
         ctx.enqueue_function[kernel](
             y_tensor,
@@ -274,32 +291,40 @@ def benchmark_sophisticated_parameterized[
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom(b, sophisticated_workflow, bench_ctx)
 
 
 @__parameter
 @always_inline
 def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
+    # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
+    # the figure is about the kernel. SAXPY updates `y` in place, so successive
+    # timed iterations accumulate into it — the arithmetic and memory traffic
+    # per iteration are unchanged, which is what the benchmark measures.
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var y = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    y.enqueue_fill(0)
+    var x = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    x.enqueue_fill(0)
+
+    with y.map_to_host() as y_host, x.map_to_host() as x_host:
+        for i in range(test_size):
+            x_host[i] = Scalar[dtype](i + 1)
+            y_host[i] = Scalar[dtype](i + 2)
+
+    # Untracked origin so the closure can capture `y` for `keep()` without
+    # aliasing the tensor that also references it.
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
+
     @always_inline
     def balanced_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var y = ctx.enqueue_create_buffer[dtype](test_size)
-        y.enqueue_fill(0)
-        var x = ctx.enqueue_create_buffer[dtype](test_size)
-        x.enqueue_fill(0)
-
-        with y.map_to_host() as y_host, x.map_to_host() as x_host:
-            for i in range(test_size):
-                x_host[i] = Scalar[dtype](i + 1)
-                y_host[i] = Scalar[dtype](i + 2)
-
-        var y_tensor = TileTensor(y, layout)
-        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
-
         comptime kernel = balanced_kernel
         ctx.enqueue_function[kernel](
             y_tensor,
@@ -312,7 +337,6 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom(b, balanced_workflow, bench_ctx)
 
 

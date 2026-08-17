@@ -47,7 +47,7 @@ where \\(P[i]\\) is the preprocessed data and \\(I[i]\\) is the input data.
 
 **Stage 2 - Horizontal Blur Filter:**
 
-\\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where} i+k \in
+\\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where } i+k \in
 [0, 255]\\]
 
 where \\(B[i]\\) is the blur result, and \\(N_i\\) is the count of valid
@@ -328,7 +328,8 @@ required for real-world GPU algorithms.
 **Shared memory architecture:**
 
 - Two specialized buffers handle data flow between stages
-- Global memory access minimized to boundary operations only
+- Global memory is accessed only for the Stage 1 input load and the Stage 3
+  output store
 - All intermediate processing uses fast shared memory
 
 **Access pattern benefits:**
@@ -391,4 +392,5 @@ leverage thread specialization and strategic synchronization for complex
 multi-stage computations, moving beyond simple parallel loops to architectural
 approaches used in production GPU software.
 
+</div>
 </details>

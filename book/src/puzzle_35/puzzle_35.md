@@ -15,7 +15,7 @@ it conservatively emits the slow path. Explicitly stating alignment allows for m
 efficient instructions and use of bandwidth.
 
 In this puzzle, you'll write the same memory-bound kernel three ways, confirm all
-three produce identical results, and then use benchmarking and NSight Compute to
+three produce identical results, and then use benchmarking and Nsight Compute to
 see why only one of them saturates memory bandwidth.
 
 ## Overview
@@ -32,7 +32,7 @@ separate scalar loads, quadrupling the instruction count on the memory pipeline.
 - Why three kernels with identical output can have very different bandwidth
 - How to communicate alignment through the `LayoutTensor` API
   (`aligned_load`, `load`/`store` with explicit alignment)
-- How to confirm the codegen change with NSight Compute
+- How to confirm the codegen change with Nsight Compute
 
 ## Key concepts
 
@@ -61,7 +61,7 @@ they agree, then look at the alignment that separates them.
 
 ### **[📊 Benchmark & Profile](./benchmark_and_profile.md)**
 
-Measure the difference. Benchmark all three variants, then use NSight Compute to
+Measure the difference. Benchmark all three variants, then use Nsight Compute to
 prove the aligned kernel issues vectorized loads while the under-aligned one
 does not.
 
@@ -77,7 +77,7 @@ does not.
 **Hardware requirements:**
 
 - The kernels run and verify on any supported GPU (NVIDIA, AMD, Apple).
-- The vectorized-codegen story and the NSight Compute profiling section are
+- The vectorized-codegen story and the Nsight Compute profiling section are
   NVIDIA-specific: the `ld.global.nc.v4` instruction and `ncu` metrics are
   CUDA concepts.
 

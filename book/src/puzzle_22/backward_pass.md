@@ -14,9 +14,11 @@ The mathematical operations we're implementing are:
 
 1. LayerNorm backward (details of derivation in
    [Detailed derivation of LayerNorm backward pass](#detailed-derivation-of-layernorm-backward-pass)):
-\\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot
-\gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x -
-\mu)^2}{H(\sigma^2 + \epsilon)}) \\]
+\\[\Large \frac{\partial L}{\partial x_i} = \frac{1}{\sqrt{\sigma^2 + \epsilon}}
+\left( g_i - \frac{1}{H} \sum_{j=1}^{H} g_j - \hat{x}_i \frac{1}{H}
+\sum_{j=1}^{H} g_j \hat{x}_j \right) \\]
+   where \\(g_j = \frac{\partial L}{\partial y_{norm,j}} \odot \gamma_j\\) is
+   the gradient with respect to the normalized value \\(\hat{x}_j\\).
 
 2. Linear backward:
 \\[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \\]
@@ -38,7 +40,8 @@ x} \\] where:
   - One thread block per sequence position (grid: `[batch_size, seq_len]`)
   - Single thread per sequence position to avoid redundancy
   - Compute all gradients for each sequence position in one thread
-  - Ensure proper thread synchronization for atomic operations
+  - Accumulate across blocks with atomic adds; `barrier()` only synchronizes
+    within a block
 
 - **Memory access**:
   - Access input tensor with `[batch_idx, seq_idx, h]`
@@ -50,7 +53,7 @@ x} \\] where:
 
 - **Computation flow**:
   - Compute LayerNorm statistics in same order as forward pass
-  - Reuse normalized values for all output dimensions
+  - Recompute normalized values from those statistics for each output dimension
   - Combine normalization and linear transformation
   - Maintain numerical stability throughout
   - Handle edge cases properly
@@ -91,7 +94,6 @@ handling of:
 
 - Single kernel launch for all gradient computations
 - Atomic operations for safe gradient accumulation
-- Coalesced memory access patterns
 - Reduced memory bandwidth usage
 - No intermediate tensor allocations
 
@@ -106,13 +108,13 @@ handling of:
    - Compute all gradients in one thread
 
 2. **Memory access**:
-   - Coalesced access for input/output tensors
+   - Each thread reads and writes only its own sequence position
    - Strided access for weight matrix
    - Proper alignment for atomic operations
 
 3. **Computation flow**:
    - Compute statistics in same order as forward pass
-   - Reuse normalized values
+   - Recompute normalized values from those statistics as each one is needed
    - Maintain numerical stability
 
 4. **Performance**:
@@ -248,22 +250,30 @@ The fused backward implementation combines operations efficiently:
    - Compute normalized values: \\[\Large \hat{x} = \frac{x -
      \mu}{\sqrt{\sigma^2 + \epsilon}} \\]
    - Calculate gradients:
-     - Input gradient: \\[\Large \frac{\partial L}{\partial x} = \frac{\partial
-       L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1
-       - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \\]
-     - Scale gradient: \\[\Large \frac{\partial L}{\partial \gamma} =
-       \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \\]
-     - Shift gradient: \\[\Large \frac{\partial L}{\partial \beta} =
-       \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \\]
+     - Input gradient, with \\(g_j = \frac{\partial L}{\partial y_{norm,j}}
+       \odot \gamma_j\\): \\[\Large \frac{\partial L}{\partial x_i} =
+       \frac{1}{\sqrt{\sigma^2 + \epsilon}} \left( g_i - \frac{1}{H}
+       \sum_{j=1}^{H} g_j - \hat{x}_i \frac{1}{H} \sum_{j=1}^{H} g_j \hat{x}_j
+       \right) \\]
+     - Scale gradient. \\(\gamma\\) has one entry per hidden unit, so the sum
+       runs over batch and sequence positions, not over \\(H\\)—that
+       cross-block sum is what the atomic adds perform: \\[\Large
+       \frac{\partial L}{\partial
+       \gamma_h} = \sum_{b,s} \frac{\partial L}{\partial y_{norm,b,s,h}}
+       \hat{x}_{b,s,h} \\]
+     - Shift gradient, accumulated the same way: \\[\Large \frac{\partial
+       L}{\partial \beta_h} = \sum_{b,s} \frac{\partial L}{\partial
+       y_{norm,b,s,h}} \\]
 
-3. **Linear backward phase**:
-   - For each output dimension:
-     - Bias gradient: \\[\Large \frac{\partial L}{\partial b} = \frac{\partial
-       L}{\partial y} \\]
-     - Weight gradient: \\[\Large \frac{\partial L}{\partial W} = \frac{\partial
-       L}{\partial y}x^T \\]
-     - Input gradient: \\[\Large \frac{\partial L}{\partial x} =
-       W^T\frac{\partial L}{\partial y} \\]
+3. **Linear backward phase**, where \\(x\\) is the LayerNorm output feeding the
+   linear layer. `b` and `W` are shared by every sequence position, so their
+   gradients sum over \\((b, s)\\) too:
+   - Bias gradient: \\[\Large \frac{\partial L}{\partial b_o} = \sum_{b,s}
+     \frac{\partial L}{\partial y_{b,s,o}} \\]
+   - Weight gradient: \\[\Large \frac{\partial L}{\partial W_{o,h}} =
+     \sum_{b,s} \frac{\partial L}{\partial y_{b,s,o}} x_{b,s,h} \\]
+   - Input gradient, computed per position with no accumulation: \\[\Large
+     \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \\]
    - Use atomic operations for gradient accumulation:
      - `Atomic.fetch_add` for bias gradients with proper alignment
      - `Atomic.fetch_add` for weight gradients with proper alignment
@@ -271,10 +281,9 @@ The fused backward implementation combines operations efficiently:
        alignment
 
 4. **Memory access patterns**:
-   - Coalesced access for input/output tensors
+   - Each thread reads and writes only its own sequence position
    - Strided access for weight matrix
    - Atomic operations for gradient accumulation
-   - Shared memory for intermediate results
    - Register usage for frequently accessed values
    - Proper memory alignment for all operations
 
@@ -305,7 +314,8 @@ The fused backward implementation combines operations efficiently:
    - Error handling and boundary checks
    - Integration with PyTorch's autograd system
 
-This implementation achieves better performance than the unfused version by:
+There is no unfused backward kernel in this puzzle to measure against, but
+fusing the LayerNorm and Linear backward passes into one kernel is what buys:
 
 - Reducing memory bandwidth usage through kernel fusion
 - Minimizing kernel launch overhead
@@ -340,11 +350,10 @@ These optimizations are particularly important for the backward pass because:
 - Dynamic shapes are common in backward passes
 - Error handling needs to be robust for gradient computation
 - Cache size helps with repeated backward operations
-- Proper error handling is crucial for gradient computation
 - Compilation overhead can significantly impact training time
 
-The backward pass is compiled with `reduce-overhead` mode to minimize the
-compilation overhead while maintaining correctness. This is especially important
+The ops are compiled with `mode="reduce-overhead"`, which spends extra time at
+compile to cut the per-call launch overhead. This is especially important
 because:
 
 - Backward passes are called frequently during training
@@ -380,25 +389,30 @@ To compute \\(\frac{\partial L}{\partial x}\\), we apply the chain rule:
 
 #### Normalized value to input
 
-The gradient \\(\frac{\partial \hat{x}}{\partial x}\\) has three components:
+Both \\(\mu\\) and \\(\sigma^2\\) depend on every element of the row, so
+\\(x_i\\) reaches the loss along three paths. Writing \\(g_j = \frac{\partial
+L}{\partial y_{norm,j}} \odot \gamma_j\\) for the gradient with respect to
+\\(\hat{x}_j\\), those paths contribute:
 
-- Direct effect through numerator: \\(\frac{1}{\sqrt{\sigma^2 + \epsilon}}\\)
-- Indirect effect through mean: \\(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 +
+- Direct effect through the numerator: \\(\frac{g_i}{\sqrt{\sigma^2 +
   \epsilon}}\\)
-- Indirect effect through variance: \\(-\frac{(x - \mu)}{H(\sigma^2 +
-  \epsilon)^{3/2}} (x - \mu)\\)
+- Indirect effect through the mean: \\(-\frac{1}{H\sqrt{\sigma^2 + \epsilon}}
+  \sum_{j=1}^{H} g_j\\)
+- Indirect effect through the variance: \\(-\frac{\hat{x}_i}{H\sqrt{\sigma^2 +
+  \epsilon}} \sum_{j=1}^{H} g_j \hat{x}_j\\)
 
 ### Combining terms
 
-The gradient through the normalization term can be simplified to: \\[\Large
-\frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 -
-\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
+The mean and variance paths each carry a whole-row sum, so the gradient is not
+element-wise: the kernel first accumulates the two reductions
+\\(\sum_{j=1}^{H} g_j\\) and \\(\sum_{j=1}^{H} g_j \hat{x}_j\\) over the hidden
+dimension, then writes every \\(\frac{\partial L}{\partial x_i}\\) using them.
 
 ### Final gradient expression
 
-Combining all terms: \\[\Large \frac{\partial L}{\partial x} = \frac{\partial
-L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 -
-\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
+Combining all terms: \\[\Large \frac{\partial L}{\partial x_i} =
+\frac{1}{\sqrt{\sigma^2 + \epsilon}} \left( g_i - \frac{1}{H} \sum_{j=1}^{H} g_j
+- \hat{x}_i \frac{1}{H} \sum_{j=1}^{H} g_j \hat{x}_j \right)\\]
 
 ### Key insights
 

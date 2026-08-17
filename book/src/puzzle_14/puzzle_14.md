@@ -11,8 +11,9 @@ sequentially, making this efficient on a GPU requires clever parallel thinking!
 Implement a kernel that computes a prefix-sum over 1D TileTensor `a` and stores
 it in 1D TileTensor `output`.
 
-**Note:** _If the size of `a` is greater than the block size, only store the sum
-of each block._
+**Note:** _When `a` is larger than the block size, the simple version only
+stores the sum of each block, while the complete version synchronizes across
+blocks to produce the full prefix sum._
 
 ## Key concepts
 

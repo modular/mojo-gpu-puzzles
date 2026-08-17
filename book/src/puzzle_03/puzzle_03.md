@@ -38,6 +38,8 @@ Thread 2 (i=2):  if 2 < size:  output[2] = a[2] + 10  ✓ Valid
 Thread 3 (i=3):  if 3 < size:  output[3] = a[3] + 10  ✓ Valid
 Thread 4 (i=4):  if 4 < size:  ❌ Skip (out of bounds)
 Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
+Thread 6 (i=6):  if 6 < size:  ❌ Skip (out of bounds)
+Thread 7 (i=7):  if 7 < size:  ❌ Skip (out of bounds)
 ```
 
 💡 **Note**: Boundary checking becomes increasingly complex with:
@@ -139,7 +141,7 @@ This solution:
 </div>
 </details>
 
-### Looking ahead
+## Looking ahead
 
 While simple boundary checks work here, consider these challenges:
 

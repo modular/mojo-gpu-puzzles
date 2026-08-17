@@ -10,11 +10,11 @@ implement two different approaches to vectorized computation:
 
 1. **Manual vectorization**: Direct SIMD control with explicit index
    calculations
-2. **Mojo's vectorize function**: High-level vectorization with automatic bounds
-   checking
+2. **Mojo's vectorize function**: High-level vectorization with automatic
+   remainder handling
 
 Both approaches build on tiling concepts but with different trade-offs between
-control, safety, and performance optimization.
+control, convenience, and performance optimization.
 
 **Key insight:** _Different vectorization strategies suit different performance
 requirements and complexity levels._
@@ -24,10 +24,10 @@ requirements and complexity levels._
 In this puzzle, you'll learn:
 
 - **Manual SIMD operations** with explicit index management
-- **Mojo's vectorize function** for safe, automatic vectorization
+- **Mojo's vectorize function** for automatic chunk and remainder handling
 - **Chunk-based memory organization** for optimal SIMD alignment
 - **Bounds checking strategies** for edge cases
-- **Performance trade-offs** between manual control and safety
+- **Performance trade-offs** between manual control and generated loops
 
 The same mathematical operation as before:
 \\[\Large \text{output}[i] = a[i] + b[i]\\]
@@ -91,7 +91,7 @@ Note: Access the whole-tensor `LayoutTensor` handles from
 
 - More control, more complexity, global tensor access
 - Perfect SIMD alignment with hardware
-- Manual bounds checking required
+- No bounds check at all: `size` must divide evenly into `chunk_size`
 
 </div>
 </details>
@@ -141,14 +141,6 @@ Your output will look like this when not yet solved:
 SIZE: 1024
 simd_width: 4
 tile size: 32
-tile_id: 0
-tile_id: 1
-tile_id: 2
-tile_id: 3
-tile_id: 4
-tile_id: 5
-tile_id: 6
-tile_id: 7
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
@@ -206,19 +198,21 @@ comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 - **Work per thread**: 128 elements (32 SIMD operations of 4 elements each)
 - **Memory pattern**: Large chunks with perfect SIMD alignment
 - **Overhead**: Minimal - direct hardware mapping
-- **Safety**: Manual bounds checking required
+- **Safety**: No bounds check; correct only because `size` divides evenly into
+  `chunk_size`
 
 **Key advantages:**
 
 - **Predictable indexing**: Exact control over memory access patterns
 - **Optimal alignment**: SIMD operations perfectly aligned to hardware
-- **Maximum throughput**: No overhead from safety checks
+- **No per-element guard**: The chunk loop runs unconditionally
 - **Hardware optimization**: Direct mapping to GPU SIMD units
 
 **Key challenges:**
 
 - **Index complexity**: Manual calculation of global positions
-- **Bounds responsibility**: Must handle edge cases explicitly
+- **Bounds responsibility**: A ragged tail is yours to handle, and this solution
+  assumes there isn't one
 - **Debugging difficulty**: More complex to verify correctness
 
 </div>
@@ -244,7 +238,8 @@ comptime for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 Start by writing the addition as a plain scalar loop over a tile, then convert it
 to `vectorize`. The transformation is mechanical: replace the per-element loop
 body with a SIMD load/add/store, and hand the loop to `vectorize`, which calls
-your body in `width`-sized steps and processes the leftover remainder for you.
+your body in `width`-sized steps and then calls it once per leftover element
+with `width=1`.
 
 ```mojo
 # Before: scalar loop over the tile (one element at a time)
@@ -298,9 +293,10 @@ This automatically handles the vectorization loop with the provided SIMD width.
 
 ### 4. **Key characteristics**
 
-- Automatic remainder handling, built-in safety, tile-based access
+- Automatic remainder handling, tile-based access
 - Takes explicit SIMD width parameter
-- Built-in bounds checking and automatic remainder element processing
+- Drives the loop and the remainder for you; the bounds check inside
+  `vectorized_add` is still yours to write
 
 </div>
 </details>
@@ -334,14 +330,6 @@ Your output will look like this when not yet solved:
 SIZE: 1024
 simd_width: 4
 tile size: 32
-tile_id: 0 tile_start: 0 tile_end: 32 actual_tile_size: 32
-tile_id: 1 tile_start: 32 tile_end: 64 actual_tile_size: 32
-tile_id: 2 tile_start: 64 tile_end: 96 actual_tile_size: 32
-tile_id: 3 tile_start: 96 tile_end: 128 actual_tile_size: 32
-...
-tile_id: 29 tile_start: 928 tile_end: 960 actual_tile_size: 32
-tile_id: 30 tile_start: 960 tile_end: 992 actual_tile_size: 32
-tile_id: 31 tile_start: 992 tile_end: 1024 actual_tile_size: 32
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
@@ -359,12 +347,12 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 ### Mojo vectorize deep dive
 
-**Mojo's vectorize function** provides automatic vectorization with built-in
-safety:
+**Mojo's vectorize function** drives the loop and its remainder for you:
 
 - **Explicit SIMD width parameter**: You provide the simd_width to use
-- **Built-in bounds checking**: Prevents buffer overruns automatically
 - **Automatic remainder handling**: Processes leftover elements automatically
+- **Explicit bounds check**: `vectorize` doesn't validate indices, which is why
+  `vectorized_add` keeps its own `if global_idx + width <= size` guard
 - **Nested function pattern**: Clean separation of vectorization logic
 
 **Tile-based organization:**
@@ -390,9 +378,8 @@ def vectorized_add[
 
 - **Automatic chunking**: Divides `actual_tile_size` into chunks of your
   provided `simd_width`
-- **Remainder handling**: Automatically processes leftover elements with smaller
-  widths
-- **Bounds safety**: Automatically prevents buffer overruns
+- **Remainder handling**: Calls your body once per leftover element with
+  `width=1`
 - **Loop management**: Handles the vectorization loop automatically
 
 **Execution visualization (TILE_SIZE=32, SIMD_WIDTH=4):**
@@ -411,8 +398,9 @@ Tile 0 processing:
 - **Thread count**: 32 threads (1024 ÷ 32 = 32)
 - **Work per thread**: 32 elements (automatic SIMD chunking)
 - **Memory pattern**: Smaller tiles with automatic vectorization
-- **Overhead**: Slight - automatic optimization and bounds checking
-- **Safety**: Built-in bounds checking and edge case handling
+- **Overhead**: Slight - the loop and remainder are generated for you
+- **Safety**: Edge cases handled by the generated remainder loop plus your own
+  bounds guard
 
 </div>
 </details>
@@ -431,11 +419,11 @@ Tile 0 processing:
 
 **Choose Mojo vectorize when:**
 
-- **Development speed** and safety are priorities
+- **Development speed** and fewer hand-written loops are priorities
 - Working with **irregular or dynamic data sizes**
 - You want **automatic remainder handling** instead of manual edge case
   management
-- **Bounds checking** complexity would be error-prone
+- Hand-written **chunk and remainder loops** would be error-prone
 - You prefer **cleaner vectorization patterns** over manual loop management
 
 ### Advanced optimization insights
@@ -475,11 +463,12 @@ Both achieve similar total throughput but with different parallelism strategies.
 - Choose appropriate SIMD width for your data and hardware
 - Focus on algorithm clarity over micro-optimizations
 - Use nested parameter functions for clean vectorization logic
-- Trust automatic bounds checking and remainder handling for edge cases
+- Let `vectorize` handle the remainder, but keep your own bounds guard in the
+  body
 
 Both approaches represent valid strategies in the GPU performance optimization
 toolkit, with manual vectorization offering maximum control and Mojo's vectorize
-providing safety and automatic remainder handling.
+handling the loop and its remainder for you.
 
 ## Next steps
 
@@ -492,5 +481,5 @@ Now that you understand all three fundamental patterns:
 
 💡 **Key takeaway**: Different vectorization strategies suit different
 performance requirements. Manual vectorization gives maximum control, while
-Mojo's vectorize function provides safety and automatic remainder handling.
+Mojo's vectorize function generates the chunk loop and its remainder for you.
 Choose based on your specific performance needs and development constraints.
