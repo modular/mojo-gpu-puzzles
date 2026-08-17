@@ -51,7 +51,7 @@ jobs:
         shell: bash
         run: |
           cd book
-          pixi run build-book
+          pixi run -e book build-book
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@4b09552702d0b65573696410d4707c765da2630b

@@ -64,7 +64,7 @@ operations and memory management on GPU.
 
 ### [🚀 Modern 2D operations](./tile_tensor.md)
 
-Put TileTensor into practice with natural 2D indexing and automatic bounds
+Put TileTensor into practice with natural 2D indexing and explicit bounds
 checking.
 
 💡 **Note**: From this puzzle onward, we'll primarily use TileTensor for

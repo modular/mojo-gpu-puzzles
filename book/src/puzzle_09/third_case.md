@@ -320,13 +320,13 @@ if thread_id < SIZE - 1:        # ← Only threads 0, 1, 2 enter this block
 **💀 Deadlock Mechanism**:
 
 1. **Thread 0**: `0 < 3` → **True** → Enters block → **Waits at barrier** (line
-   69)
+   78)
 2. **Thread 1**: `1 < 3` → **True** → Enters block → **Waits at barrier** (line
-   69)
+   78)
 3. **Thread 2**: `2 < 3` → **True** → Enters block → **Waits at barrier** (line
-   69)
+   78)
 4. **Thread 3**: `3 < 3` → **False** → **NEVER enters block** →
-   **Continues to line 72**
+   **Continues to line 81**
 
 **Result**: 3 threads wait forever for the 4th thread, but thread 3 never
 arrives at the barrier.
@@ -349,7 +349,7 @@ if thread_id < SIZE - 1:    # Not all threads enter
 # ✅ CORRECT: Barrier outside conditional
 if thread_id < SIZE - 1:    # Not all threads enter
     # ... some computation ...
- barrier()                # ALL threads reach this
+barrier()                   # ALL threads reach this
 ```
 
 **The Fix**: Move the barrier outside the conditional block:
@@ -402,10 +402,12 @@ def collaborative_filter(
 - **Deadlocks are silent killers** - programs just hang with no error messages
 - **Thread coordination debugging requires patience** - systematic analysis of
   each thread's path
-- **Conditional barriers are the #1 deadlock cause** - always verify all threads
-  reach the same sync points
-- **CUDA-GDB thread inspection is essential** - the only way to see thread
-  coordination failures
+- **Conditional barriers are the classic deadlock cause** - always verify all
+  threads reach the same sync points
+- **CUDA-GDB thread inspection pinpoints the stall** - it shows exactly where
+  each thread stopped; `compute-sanitizer --tool synccheck`
+  ([Puzzle 10](../puzzle_10/racecheck.md)) can flag the same divergent barrier
+  without a debugger
 
 **Advanced GPU synchronization**:
 

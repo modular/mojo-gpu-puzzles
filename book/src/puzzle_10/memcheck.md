@@ -94,7 +94,7 @@ Running memory bug example (bounds checking issue)...
 
 The program has **7 total errors** despite passing all tests:
 
-- **4 memory violations** (Invalid **global** read)
+- **4 memory violations** (`Invalid __global__ read`)
 - **3 runtime errors** (caused by the memory violations)
 
 ## Understanding the hidden bug
@@ -115,7 +115,7 @@ The program has **7 total errors** despite passing all tests:
 **4 Memory Violations:**
 
 - Each out-of-bounds thread `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` caused an
-  "Invalid **global** read"
+  `Invalid __global__ read`
 
 **3 CUDA Runtime Errors:**
 
@@ -129,6 +129,9 @@ access causes multiple downstream CUDA API failures.
 **Why tests still passed:**
 
 - Valid threads `(0,0)`, `(0,1)`, `(1,0)`, `(1,1)` wrote correct results
+- Thread `(2,0)` stayed in bounds by accident: with `row = thread_idx.y` and
+  `col = thread_idx.x`, its flat offset is `0*2 + 2 = 2`, the same element
+  thread `(0,1)` writes. Both write `12.0`, so the aliasing left no trace
 - Test only checked valid output locations
 - Out-of-bounds accesses didn't immediately crash the program
 
@@ -172,9 +175,11 @@ access is a classic example of undefined behavior.
 
 **Massive scale impact:**
 
-- **Thread divergence**: One thread's UB can affect entire warps (32 threads)
-- **Memory coalescing**: Out-of-bounds access can corrupt neighboring threads'
-  data
+- **Lockstep execution**: Threads run in warps of 32, and a memory fault raised
+  by one of them tears down the whole launch, not just that thread—that's the
+  `CUDA_ERROR_LAUNCH_FAILED` cascade above
+- **Neighboring allocations**: An out-of-bounds write lands in whatever the
+  driver happened to place next in device memory, corrupting an unrelated buffer
 - **Kernel failures**: UB can cause entire GPU kernels to fail catastrophically
 
 **Hardware variations:**

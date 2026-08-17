@@ -6,7 +6,8 @@ You'll implement three kernels that compute the same memory-bound map,
 `out[i] = a[i] * 2 + 1`, over a 1M-element `float32` buffer. They differ only in
 how they touch memory:
 
-1. `scalar_kernel`: one element per thread with no vectorization. This is the baseline.
+1. `scalar_kernel`: one element per thread with no vectorization. This is the
+   baseline.
 2. `unaligned_kernel`: vectorized by `SIMD_WIDTH`, but the access alignment
    is *under-stated* (scalar alignment), so the compiler emits scalar loads.
 3. `aligned_kernel`: the same vectorized kernel, with the alignment
@@ -38,23 +39,29 @@ comptime VEC_ALIGN = align_of[SIMD[dtype, SIMD_WIDTH]]()   # 16 bytes for float3
 comptime SCALAR_ALIGN = align_of[dtype]()                  # 4 bytes
 ```
 
-The vectorized kernels use `LayoutTensor`'s `load` and `store`, whose alignment
-you set explicitly:
+The vectorized kernels take `TileTensor` arguments, convert them with
+`to_layout_tensor()`, and then use `LayoutTensor`'s `load` and `store`, whose
+alignment you set explicitly:
 
 ```mojo
 # Under-stated: compiler can't prove 16-byte alignment -> scalar codegen
 var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))
-out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](Index(base), v * SCALE + BIAS)
+out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
+    Index(base), v * SCALE + BIAS
+)
 
-# Aligned: 16-byte alignment -> ld.global.nc.v4 / st.global.v4
-var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))   # == load[..., load_alignment=VEC_ALIGN]
-out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](Index(base), v * SCALE + BIAS)
+# Aligned: 16-byte alignment -> ld.global.nc.v4.f32 / st.global.v4.f32
+# `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`
+var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
+out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
+    Index(base), v * SCALE + BIAS
+)
 ```
 
 `aligned_load[w]` is the convenience wrapper: it picks
-`align_of[SIMD[dtype, w]]()` for you. `aligned_store` exists too; here we pass
-`store_alignment=VEC_ALIGN` explicitly so the contrast with the unaligned kernel
-is a single changed value.
+`align_of[SIMD[dtype, w]]()` for you. `aligned_store` exists too, but only in a
+2D `(m, n)` form—there is no coordinate-list overload—so this rank-1 kernel
+passes `store_alignment=VEC_ALIGN` explicitly.
 
 ## Running it
 
@@ -64,9 +71,9 @@ pixi run mojo solutions/p35/p35.mojo --unaligned
 pixi run mojo solutions/p35/p35.mojo --aligned
 ```
 
-Each prints `<variant> kernel: passed`, confirming all three are correct. The
-performance difference is the subject of the
-[next section](./benchmark_and_profile.md).
+`--simple` runs `scalar_kernel`. Each command prints `<kernel> kernel: passed`,
+confirming all three are correct. The performance difference is the subject of
+the [next section](./benchmark_and_profile.md).
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -84,8 +91,8 @@ performance difference is the subject of the
   `load[w, load_alignment=align_of[SIMD[dtype, w]]()]`. Use whichever reads
   more clearly.
 - Don't expect a wall-clock gap on a tiny input or on a non-NVIDIA GPU. The
-  codegen difference instead shows up in NSight Compute's instruction/sector metrics.
-  We'll cover this in the next section.
+  codegen difference instead shows up in Nsight Compute's instruction/sector
+  metrics. We'll cover this in the next section.
 
 </div>
 </details>
@@ -126,6 +133,7 @@ memory.
 The takeaway: state the alignment explicitly. The data was aligned in
 all three kernels; only the aligned kernel informed the compiler, and only the
 aligned kernel got the vectorized instruction. The
-[benchmark and profile section](./benchmark_and_profile.md) demonstrates this in numbers.
+[benchmark and profile section](./benchmark_and_profile.md) demonstrates this
+in numbers.
 
 </details>

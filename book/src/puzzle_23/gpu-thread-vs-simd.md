@@ -37,7 +37,8 @@ detail in **[Part VII](../puzzle_24/puzzle_24.md)**.
 **What Mojo abstracts for you:**
 
 - **Grid/Block configuration**: Automatically calculated based on problem size
-- **Warp management**: Hardware handles 32-thread groups transparently
+- **Warp management**: The hardware schedules whole warps for you
+  (`WARP_SIZE` threads: 32 on NVIDIA, RDNA and Apple, 64 on AMD CDNA)
 - **Thread scheduling**: GPU scheduler manages execution automatically
 - **Memory hierarchy**: Optimal access patterns built into functional operations
 
@@ -56,18 +57,20 @@ output.store[simd_width](Index(idx), result) # Store 4 results simultaneously
 
 ## Pattern comparison and thread-to-work mapping
 
-> **Critical insight:** All patterns perform the **same total work** - 256 SIMD
-> operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this
-> work is distributed across GPU threads.
+> **Critical insight:** Elementwise, manual vectorization and Mojo vectorize
+> perform the **same total work** - 256 SIMD operations for 1024 elements with
+> SIMD_WIDTH=4 - and differ only in how that work is distributed across GPU
+> threads. Tiled is the exception: `elementwise` launches it with a width of 1,
+> so it issues 1024 single-element operations instead.
 
 ### Thread organization comparison (`SIZE=1024`, `SIMD_WIDTH=4`)
 
-| Pattern               | Threads | SIMD ops/thread | Memory pattern     | Trade-off                       |
-|-----------------------|---------|-----------------|--------------------|---------------------------------|
-| **Elementwise**       | 256     | 1               | Distributed access | Max parallelism, poor locality  |
-| **Tiled**             | 32      | 8               | Small blocks       | Balanced parallelism + locality |
-| **Manual vectorized** | 8       | 32              | Large chunks       | High bandwidth, fewer threads   |
-| **Mojo vectorize**    | 32      | 8               | Smart blocks       | Automatic optimization          |
+| Pattern               | Threads | Ops/thread | Memory pattern     | Trade-off                       |
+|-----------------------|---------|------------|--------------------|---------------------------------|
+| **Elementwise**       | 256     | 1          | Distributed access | Max parallelism, poor locality  |
+| **Tiled**             | 32      | 32         | Small blocks       | Balanced parallelism + locality |
+| **Manual vectorized** | 8       | 32         | Large chunks       | High bandwidth, fewer threads   |
+| **Mojo vectorize**    | 32      | 8          | Smart blocks       | Automatic optimization          |
 
 ### Detailed execution patterns
 
@@ -81,8 +84,8 @@ Thread 0: [0,1,2,3] → Thread 1: [4,5,6,7] → ... → Thread 255: [1020,1021,1
 **Tiled pattern:**
 
 ```text
-Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
-32 threads × 8 SIMD ops = 256 total SIMD operations
+Thread 0: [0:32] (32 scalar) → Thread 1: [32:64] (32 scalar) → ... → Thread 31: [992:1024] (32 scalar)
+32 threads × 32 scalar ops = 1024 total operations
 ```
 
 **Manual vectorized pattern:**

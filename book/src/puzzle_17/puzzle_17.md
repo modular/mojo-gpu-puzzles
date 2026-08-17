@@ -51,8 +51,8 @@ Python's rich ecosystem and Mojo's powerful GPU performance.
 
 ## Code to complete
 
-To complete this puzzle, you only need to fill one line in `conv1d.mojo` to call
-the `conv1d_kernel`:
+To complete this puzzle, you only need to fill in the call to `conv1d_kernel` in
+`conv1d.mojo`:
 
 ```mojo
 {{#include ../../../problems/p17/op/conv1d.mojo:conv1d_custom_op}}
@@ -130,15 +130,15 @@ The solution is:
 ```
 
 <div class="solution-explanation">
-This single line does several important things:
+These two statements do several important things:
 
 1. Calls
    [enqueue_function](https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
    on the GPU context (`gpu_ctx` is of type
    [DeviceContext](https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))
    to schedule our kernel execution
-2. Passes the necessary layout and size information as **compile-time**
-   parameters
+2. Binds the layout and size information as **compile-time** parameters through
+   the `comptime kernel = conv1d_kernel[...]` binding
 3. Provides the output, input, and kernel tensors as runtime arguments
 4. Configures the execution grid with the appropriate dimensions
 
@@ -168,7 +168,7 @@ Let's break down how this works in the larger context:
 3. **Custom op registration**:
    - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
      Graph. See
-     [@extensibility.register](https://mojolang.org/docs/reference/decorators/extensibility-register/)
+     [@extensibility.register](https://docs.modular.com/api/mojo/extensibility/decorators/register/)
    - The `execute` method parameters define the interface (inputs, outputs,
      context)
    - Input/output tensors are converted to TileTensors for use in our kernel
@@ -221,9 +221,10 @@ Let's break down how this works in the larger context:
    tensors are built from raw pointers—they are not extracted from the
    `OutputTensor`/`InputTensor` arguments.
 
-   - MAX Graph tensors are converted to Mojo TileTensors
+   - MAX Graph tensors are wrapped as Mojo TileTensors over the same memory
    - This allows our kernel to work with them directly
-   - The layouts are extracted for compile-time optimization
+   - Because the layouts are compile-time values, the kernel's indexing
+     arithmetic is resolved statically
 
 3. **Device Context Usage**:
 
@@ -260,9 +261,9 @@ and the associated structure:
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
-        output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
+        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         ctx: DeviceContext,
     ) raises:
         # Implementation here

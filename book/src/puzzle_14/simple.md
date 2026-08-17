@@ -87,7 +87,7 @@ uv run poe p14 --simple
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
-out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 ```
 
@@ -104,7 +104,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 
 The parallel (inclusive) prefix-sum algorithm works as follows:
 
-### Setup & Configuration
+### Setup and configuration
 
 - `TPB` (Threads Per Block) = 8
 - `SIZE` (Array Size) = 8
@@ -147,7 +147,7 @@ shared:       [0    1    2    3    4    5    6    7]
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 ```
 
-### Offset = 1: First Parallel Step
+### Offset = 1: first parallel step
 
 Active threads: \\(T_1 \ldots T_7\\) (where `local_i ≥ 1`)
 
@@ -173,7 +173,7 @@ Result:      [0    1    3    5    7    9    11   13]
                   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 ```
 
-### Offset = 2: Second Parallel Step
+### Offset = 2: second parallel step
 
 Active threads: \\(T_2 \ldots T_7\\) (where `local_i ≥ 2`)
 
@@ -198,7 +198,7 @@ Result:      [0    1    3    6    10   14   18   22]
                        T₂   T₃   T₄   T₅   T₆   T₇
 ```
 
-### Offset = 4: Third Parallel Step
+### Offset = 4: third parallel step
 
 Active threads: \\(T_4 \ldots T_7\\) (where `local_i ≥ 4`)
 
@@ -258,5 +258,6 @@ The solution ensures correct synchronization between phases using `barrier()`
 and handles array bounds checking with `if global_i < size`. The final result
 produces the inclusive prefix sum where each element \\(i\\) contains
 \\(\sum_{j=0}^{i} a[j]\\).
+
 </div>
 </details>

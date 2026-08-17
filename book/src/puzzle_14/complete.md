@@ -19,7 +19,7 @@ Notes:
   multi-phase approach
 - **Block-level sync**: Within a block, use `barrier()` to synchronize threads
 - **Host-level sync**: Between blocks, Mojo's `DeviceContext` ensures kernel
-  launches are ordered, which means they start in the order they where scheduled
+  launches are ordered, which means they start in the order they were scheduled
   and wait for the previous kernel to finish before starting. You may need to
   use `ctx.synchronize()` to ensure all GPU work is complete before reading
   results back to the host.
@@ -110,7 +110,7 @@ Since blocks can't directly communicate, you need somewhere to store block sums:
 - **Two kernel synchronization**: It must be ensured that the second kernel runs
   only after the first kernel completes.
 
-### 5. Debugging Strategy
+### 5. Debugging strategy
 
 If you encounter issues, try visualizing the intermediate state after the first
 phase:
@@ -172,6 +172,7 @@ uv run poe p14 --complete
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
+Note: we print the extended buffer here, but we only need to print the first `size` elements
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
 ```
@@ -465,10 +466,9 @@ synchronization:
 
 - **Intra-block**: `barrier()` synchronizes threads within each block during
   local prefix sum computation
-- **Inter-block**: The `DeviceContext` context manager that launches enqueued
-  kernels sequentially to ensure Phase 1 completes before Phase 2 begins. To
-  explicitly enforce host-device synchronization before reading results,
-  `ctx.synchronize()` is used.
+- **Inter-block**: `DeviceContext` launches enqueued kernels sequentially, so
+  Phase 1 completes before Phase 2 begins. `ctx.synchronize()` then enforces
+  host-device synchronization before the results are read back.
 
 **Race condition prevention**: The explicit read-write separation in the local
 phase prevents the race condition that would occur if threads simultaneously
@@ -476,8 +476,9 @@ read from and write to the same shared memory locations during parallel
 reduction.
 
 1. **Work efficiency**: This implementation has \\(O(n \log n)\\) work
-   complexity, while the sequential algorithm is \\(O(n)\\). This is a classic
-   space-time tradeoff in parallel algorithms.
+   complexity, while the sequential algorithm is \\(O(n)\\). Trading extra
+   total work for a shorter critical path is the classic bargain of parallel
+   scans.
 
 2. **Memory overhead**: The extra space for block sums is minimal (just one
    element per block).
@@ -486,5 +487,6 @@ This two-kernel approach is a fundamental pattern in GPU programming for
 algorithms that require cross-block communication. The same strategy can be
 applied to other parallel algorithms like radix sort, histogram calculation, and
 reduction operations.
+
 </div>
 </details>

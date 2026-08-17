@@ -18,7 +18,7 @@ that leverage hardware-optimized data movement.
 
 **Key insight:** _GPU warps execute in lockstep - Mojo's warp communication
 operations use this synchronization to provide efficient data exchange
-primitives with automatic boundary handling and zero explicit synchronization._
+primitives with zero explicit synchronization._
 
 ## What you'll learn
 
@@ -43,7 +43,8 @@ Lane 0 ──broadcast──> All lanes (0, 1, 2, ..., 31)
 - **Register-to-register communication**: Data moves directly between thread
   registers
 - **Zero memory overhead**: No shared memory allocation required
-- **Automatic boundary handling**: Hardware manages warp edge cases
+- **Explicit boundary handling**: `shuffle_down` returns undefined values for
+  the top `offset` lanes, so guard those lanes with a lane check
 - **Single-cycle operations**: Communication happens in one instruction cycle
 
 ### **Warp communication operations in Mojo**
@@ -71,22 +72,22 @@ Learn the core communication primitives from `std.gpu.primitives.warp`:
 
 ```mojo
 # Complex neighbor access pattern (traditional approach):
-var shared = TileTensor[
-    dtype,
-    row_major[WARP_SIZE](),
-    MutAnyOrigin,
-    address_space = AddressSpace.SHARED,
-].stack_allocation()
+var shared = stack_allocation[
+    dtype=dtype, address_space=AddressSpace.SHARED
+](row_major[WARP_SIZE]())
 shared[local_i] = input[global_i]
 barrier()
+var result: Scalar[dtype]
 if local_i < WARP_SIZE - 1:
     var next_value = shared[local_i + 1]  # Neighbor access
-    var result = next_value - shared[local_i]
+    result = next_value - shared[local_i]
 else:
     result = 0  # Boundary handling
 barrier()
 
-# Warp communication eliminates all this complexity:
+# Warp communication removes the shared memory and the barriers, but the
+# boundary check stays: shuffle_down is undefined past the warp edge.
+var lane = Int(lane_id())
 var current_val = input[global_i]
 var next_val = shuffle_down(current_val, 1)  # Direct neighbor access
 if lane < WARP_SIZE - 1:
@@ -104,7 +105,7 @@ Learn the performance characteristics:
 | Neighbor access       | Shared memory     | Register-to-register    |
 | Stencil operations    | Complex indexing  | Simple shuffle patterns |
 | Block coordination    | Barriers + shared | Single broadcast        |
-| Boundary handling     | Manual checks     | Hardware automatic      |
+| Boundary handling     | Manual checks     | Single lane-ID check    |
 
 ## Prerequisites
 
@@ -129,12 +130,13 @@ differences.
 
 - Using `shuffle_down()` for accessing adjacent lane data
 - Implementing finite differences and moving averages
-- Handling warp boundaries automatically
+- Guarding warp boundaries with a lane check
 - Multi-offset shuffling for extended neighbor access
 
 **Key pattern:**
 
 ```mojo
+var lane = Int(lane_id())
 var current_val = input[global_i]
 var next_val = shuffle_down(current_val, 1)
 if lane < WARP_SIZE - 1:
@@ -191,7 +193,7 @@ Converting traditional parallel patterns to warp communication:
 
 - **Array neighbor access** → `shuffle_down()`
 - **Shared memory coordination** → `broadcast()`
-- **Complex boundary logic** → Hardware-handled edge cases
+- **Complex boundary logic** → A single lane-ID guard
 - **Multi-stage synchronization** → Single communication operations
 
 ## Getting started

@@ -1,24 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "mojo-gpu-puzzles"
 version = "1.0.0"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "mojo>=0.26.3.0.dev2026042005,<1.0.0",
-    "max==26.3.0.dev2026042005",
+    # Pinned to the release the book targets. Bump both with the release-branch
+    # channel edit in `pixi.toml`; they must not drift apart again.
+    "mojo==1.0.0",
+    "max==26.5.0",
     "poethepoet>=0.34.0",
     "scipy>=1.15.3",
-    "torch==2.13.0",
+    # Matches the version `pixi.toml` pins and the suite is tested against.
+    "torch==2.7.1",
 ]
 
 [project.optional-dependencies]
 nvidia = ["pynvml>=11.5.0"]
 amd = ["pytorch-triton-rocm"]
 
-[[tool.uv.index]]
-name = "modular-nightly"
-url = "https://whl.modular.com/nightly/simple/"
-prerelease = "allow"
+# The repo ships no importable package — it exists to carry dependencies and
+# the `poe` shortcuts. Without an explicit empty set, setuptools' flat-layout
+# discovery finds `book`, `problems` and `solutions` and refuses to build.
+[tool.setuptools]
+py-modules = []
 
 [[tool.uv.index]]
 name = "pytorch-cu128"
@@ -31,30 +39,15 @@ url = "https://download.pytorch.org/whl/rocm6.3"
 explicit = true
 
 [tool.uv.sources]
-mojo = [
-  { index = "modular-nightly" },
-]
-max = [
-  { index = "modular-nightly" },
-]
-mblack = [
-  { index = "modular-nightly" },
-]
-mojo-compiler = [
-  { index = "modular-nightly" },
-]
-mojo-lldb-libs = [
-  { index = "modular-nightly" },
-]
+# `mojo` and `max` release wheels are published to PyPI, so they need no
+# dedicated index. Sourcing them from the nightly index is what pinned this
+# path to an April nightly and broke it.
 torch = [
   { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
 ]
 pytorch-triton-rocm = [
   { index = "pytorch-rocm63" },
 ]
-
-[tool.uv]
-prerelease = "allow"
 
 [tool.poe.tasks]
 tests = "bash solutions/run.sh"
@@ -66,25 +59,24 @@ p02 = "mojo problems/p02/p02.mojo"
 p03 = "mojo problems/p03/p03.mojo"
 
 p04 = "mojo problems/p04/p04.mojo"
-p04_layout_tensor = "mojo problems/p04/p04_layout_tensor.mojo"
-layout_tensor_intro = "mojo book/src/puzzle_04/intro.mojo"
+p04_tile_tensor = "mojo problems/p04/p04_tile_tensor.mojo"
+tile_tensor_intro = "mojo book/src/puzzle_04/intro.mojo"
 
 p05 = "mojo problems/p05/p05.mojo"
-p05_layout_tensor = "mojo problems/p05/p05_layout_tensor.mojo"
 
 p06 = "mojo problems/p06/p06.mojo"
 
 p07 = "mojo problems/p07/p07.mojo"
-p07_layout_tensor = "mojo problems/p07/p07_layout_tensor.mojo"
 
 p08 = "mojo problems/p08/p08.mojo"
-p08_layout_tensor = "mojo problems/p08/p08_layout_tensor.mojo"
+
+p09 = "mojo problems/p09/p09.mojo"
+
+p10 = "mojo problems/p10/p10.mojo"
 
 p11 = "mojo problems/p11/p11.mojo"
-p11_layout_tensor = "mojo problems/p11/p11_layout_tensor.mojo"
 
 p12 = "mojo problems/p12/p12.mojo"
-p12_layout_tensor = "mojo problems/p12/p12_layout_tensor.mojo"
 
 p13 = "mojo problems/p13/p13.mojo"
 
@@ -92,7 +84,7 @@ p14 = "mojo problems/p14/p14.mojo"
 
 p15 = "mojo problems/p15/p15.mojo"
 
-p16 = "mojo problems/p16/p16.mojo"
+p16 = "bash solutions/gate.sh p16 mojo problems/p16/p16.mojo"
 
 p17 = [
     { cmd = "mojo package problems/p17/op -o problems/p17/op.mojoc" },
@@ -104,6 +96,7 @@ p18-test-kernels = { cmd = "mojo run -I problems/p18 problems/p18/test/test_soft
 p18 = { cmd = "python problems/p18/p18.py", deps = ["p18-package"] }
 
 p19 = [
+    { cmd = "bash solutions/gate.sh p19 true" },
     { cmd = "mojo package problems/p19/op -o problems/p19/op.mojoc" },
     { cmd = "python problems/p19/p19.py" }
 ]
@@ -112,7 +105,7 @@ p20 = "python problems/p20/p20.py"
 
 p21 = "python problems/p21/p21.py"
 
-p22 = "python problems/p22/p22.py"
+p22 = "bash solutions/gate.sh p22 python problems/p22/p22.py"
 
 p23 = "mojo problems/p23/p23.mojo"
 
@@ -124,9 +117,9 @@ p26 = "mojo problems/p26/p26.mojo"
 
 p27 = "mojo problems/p27/p27.mojo"
 
-p28 = "mojo problems/p28/p28.mojo"
+p28 = "bash solutions/gate.sh p28 mojo problems/p28/p28.mojo"
 
-p29 = "mojo problems/p29/p29.mojo"
+p29 = "bash solutions/gate.sh p29 mojo problems/p29/p29.mojo"
 
 p30 = "mojo problems/p30/p30.mojo"
 
@@ -134,9 +127,11 @@ p31 = "mojo problems/p31/p31.mojo"
 
 p32 = "mojo problems/p32/p32.mojo"
 
-p33 = "mojo problems/p33/p33.mojo"
+p33 = "bash solutions/gate.sh p33 mojo problems/p33/p33.mojo"
 
-p34 = "mojo problems/p34/p34.mojo"
+p34 = "bash solutions/gate.sh p34 mojo problems/p34/p34.mojo"
+
+p35 = "mojo problems/p35/p35.mojo"
 
 # GPU information
 gpu-info = { cmd = "python3 scripts/gpu_specs.py --summary" }

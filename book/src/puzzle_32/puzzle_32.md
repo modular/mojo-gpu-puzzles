@@ -15,7 +15,7 @@ subtle but impactful performance pitfalls in GPU programming.
 
 **The learning journey:**
 
-- **Puzzle 30** taught you to **measure and diagnose** performance with NSight
+- **Puzzle 30** taught you to **measure and diagnose** performance with Nsight
   profiling
 - **Puzzle 31** taught you to **predict and control** resource usage through
   occupancy analysis
@@ -30,7 +30,7 @@ architectures.
 > **Note: This puzzle is specific to NVIDIA GPUs**
 >
 > Bank conflict analysis uses NVIDIA's 32-bank shared memory architecture and
-> NSight Compute profiling tools. While the optimization principles apply
+> Nsight Compute profiling tools. While the optimization principles apply
 > broadly, the specific techniques and measurements are NVIDIA CUDA-focused.
 
 ## Overview
@@ -68,7 +68,7 @@ eliminate them.
 **Professional optimization skills:**
 
 - **Pattern analysis**: Mathematical prediction of banking behavior
-- **Profiling methodology**: NSight Compute metrics for conflict measurement
+- **Profiling methodology**: Nsight Compute metrics for conflict measurement
 - **Design principles**: Conflict-free algorithm patterns and prevention
   strategies
 - **Performance validation**: Evidence-based optimization using systematic
@@ -100,7 +100,7 @@ Apply your banking knowledge to solve a performance mystery using professional
 profiling techniques.
 
 **The detective challenge:** Two kernels compute identical results but have
-dramatically different shared memory access efficiency. Use NSight Compute to
+dramatically different shared memory access efficiency. Use Nsight Compute to
 uncover why one kernel experiences systematic bank conflicts while the other
 achieves optimal performance.
 
@@ -128,7 +128,7 @@ optimization, and evidence-based performance improvement.
 **Hardware requirements:**
 
 - NVIDIA GPU with CUDA toolkit
-- NSight Compute profiling tools
+- Nsight Compute profiling tools
 - The dependencies such as profiling are managed by `pixi`
 - [Compatible GPU architecture](https://docs.modular.com/packages/#gpu-compatibility)
 

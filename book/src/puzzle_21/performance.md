@@ -79,6 +79,12 @@ Performance Results:
    1D is 1.80x faster than 2D
 ```
 
+These are end-to-end wall-clock times per call, measured around the Python
+wrapper. Each trial also allocates a fresh output tensor and re-enters the
+custom-op dispatch, so the absolute numbers include host overhead and are much
+larger than the kernels alone. Treat the ratio as the takeaway, not the
+milliseconds, and expect different numbers on different GPUs.
+
 ## Memory access visualization
 
 ### Coalesced pattern (1D kernel)
@@ -105,12 +111,15 @@ Block organization (16×16):
     X-dim: batch*seq positions (0-15)
     Y-dim: embed dimensions (0-15)
 
-Warp threads might access:
-    Thread 0:  batch=0, seq=0, embed=0  → Address A
-    Thread 1:  batch=0, seq=1, embed=0  → Address B (different row)
-    Thread 2:  batch=0, seq=2, embed=0  → Address C (different row)
+Warp threads access:
+    Thread 0:  batch=0, seq=0,  embed=0 → Address A
+    Thread 1:  batch=0, seq=1,  embed=0 → Address B (different row)
+    Thread 2:  batch=0, seq=2,  embed=0 → Address C (different row)
     ...
-    Thread 31: batch=1, seq=15, embed=0 → Address Z (scattered)
+    Thread 15: batch=0, seq=15, embed=0 → Address P (different row)
+    Thread 16: batch=0, seq=0,  embed=1 → Address Q (next embed column)
+    ...
+    Thread 31: batch=0, seq=15, embed=1 → Address Z (scattered)
 ```
 
 **Result**: Potentially scattered addresses → **Multiple memory transactions**

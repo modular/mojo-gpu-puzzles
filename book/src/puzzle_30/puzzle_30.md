@@ -12,7 +12,7 @@
 >
 > **What you'll learn:**
 >
-> - **Professional profiling tools**: NSight Systems and NSight Compute for comprehensive performance analysis
+> - **Professional profiling tools**: Nsight Systems and Nsight Compute for comprehensive performance analysis
 > - **Performance detective work**: Using profiler data to identify bottlenecks and optimization opportunities
 > - **Memory system insights**: Understanding how memory access patterns dramatically impact performance
 > - **Counter-intuitive discoveries**: Learning when "good" metrics actually indicate performance problems
@@ -32,8 +32,8 @@ and detective methodologies used in production GPU development.
 
 **Core learning objectives:**
 
-- **Learn profiling tool selection** and understand when to use NSight Systems
-  vs NSight Compute
+- **Learn profiling tool selection** and understand when to use Nsight Systems
+  vs Nsight Compute
 - **Develop performance detective skills** using real profiler output to
   identify bottlenecks
 - **Discover counter-intuitive insights** about GPU memory systems and caching
@@ -45,9 +45,9 @@ and detective methodologies used in production GPU development.
 
 **Professional profiling tools:**
 
-- **[NSight Systems](https://developer.nvidia.com/nsight-systems) (`nsys`)**:
+- **[Nsight Systems](https://developer.nvidia.com/nsight-systems) (`nsys`)**:
   System-wide timeline analysis for CPU-GPU coordination and memory transfers
-- **[NSight Compute](https://developer.nvidia.com/nsight-compute) (`ncu`)**:
+- **[Nsight Compute](https://developer.nvidia.com/nsight-compute) (`ncu`)**:
   Detailed kernel analysis for memory efficiency and compute utilization
 - **Systematic methodology**: Evidence-based bottleneck identification and
   optimization validation
@@ -56,8 +56,8 @@ and detective methodologies used in production GPU development.
 
 - **Counter-intuitive behavior**: When high cache hit rates actually indicate
   poor performance
-- **Memory access patterns**: How coalescing dramatically impacts bandwidth
-  utilization
+- **Work versus access pattern**: How to tell redundant work apart from a poor
+  memory access pattern when both surface as memory-system symptoms
 - **Tool-guided optimization**: Using profiler data to make decisions rather
   than performance assumptions
 
@@ -66,13 +66,13 @@ and detective methodologies used in production GPU development.
 **Requirements:**
 
 - **NVIDIA GPU**: CUDA-compatible hardware with profiling enabled
-- **CUDA Toolkit**: NSight Systems and NSight Compute tools
+- **CUDA Toolkit**: Nsight Systems and Nsight Compute tools
 - **Build setup**: Optimized code with debug info (`--debug-level=full`)
 
 **Methodology:**
 
-1. **System-wide analysis** with NSight Systems to identify major bottlenecks
-2. **Kernel deep-dives** with NSight Compute for memory system analysis
+1. **System-wide analysis** with Nsight Systems to identify major bottlenecks
+2. **Kernel deep-dives** with Nsight Compute for memory system analysis
 3. **Evidence-based conclusions** using profiler data to guide optimization
 
 ## Puzzle structure
@@ -86,8 +86,8 @@ actual profiler output.
 
 **You'll learn:**
 
-- NSight Systems for system-wide timeline analysis and bottleneck identification
-- NSight Compute for detailed kernel analysis and memory system insights
+- Nsight Systems for system-wide timeline analysis and bottleneck identification
+- Nsight Compute for detailed kernel analysis and memory system insights
 - Professional profiling workflows and best practices from production GPU
   development
 
@@ -100,15 +100,17 @@ vector addition kernels have dramatically different performance.
 has the **worst performance** - a counter-intuitive insight that challenges
 traditional CPU-based performance thinking.
 
-**Detective skills:** Use real NSight Systems and NSight Compute data to
-understand memory coalescing effects and evidence-based optimization.
+**Detective skills:** Use real Nsight Systems and Nsight Compute data to
+separate a kernel's memory access pattern from the amount of work it actually
+performs, and to reach evidence-based conclusions instead of pattern-matching
+on cache metrics.
 
 ## Getting started
 
 **Learning path:**
 
-1. **[Profiling Basics Tutorial](nvidia_profiling_basics.md)** - Learn NSight
-   Systems and NSight Compute
+1. **[Profiling Basics Tutorial](nvidia_profiling_basics.md)** - Learn Nsight
+   Systems and Nsight Compute
 2. **[Cache Hit Paradox Detective Case](profile_kernels.md)** - Apply skills to
    solve performance mysteries
 
@@ -128,6 +130,6 @@ optimization requires tool-guided discovery rather than assumptions.
 
 **Additional resources:**
 
-- [NVIDIA CUDA Best Practices Guide - Profiling](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling)
-- [NSight Systems User Guide](https://docs.nvidia.com/nsight-systems/UserGuide/)
-- [NSight Compute CLI User Guide](https://docs.nvidia.com/nsight-compute/NsightComputeCli/)
+- [NVIDIA CUDA Best Practices Guide - Profiling](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#application-profiling)
+- [Nsight Systems User Guide](https://docs.nvidia.com/nsight-systems/UserGuide/)
+- [Nsight Compute CLI User Guide](https://docs.nvidia.com/nsight-compute/NsightComputeCli/)

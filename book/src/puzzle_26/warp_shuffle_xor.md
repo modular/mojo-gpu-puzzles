@@ -32,7 +32,7 @@ In this puzzle, you'll learn:
 The `shuffle_xor` operation enables each lane to exchange data with lanes based
 on [XOR](https://en.wikipedia.org/wiki/Exclusive_or) patterns: \\[\\Large
 \text{shuffle\_xor}(\text{value}, \text{mask}) =
-\text{value_from_lane}(\text{lane\_id} \oplus \text{mask})\\]
+\text{value from lane }(\text{lane\_id} \oplus \text{mask})\\]
 
 This transforms complex parallel algorithms into elegant butterfly communication
 patterns, enabling efficient tree reductions and sorting networks without
@@ -62,8 +62,9 @@ Traditional pair swapping requires complex indexing and coordination:
 # Traditional approach - complex and requires synchronization
 shared_memory[lane] = input[global_i]
 barrier()
+var partner: Int
 if lane % 2 == 0:
-    var partner = lane + 1
+    partner = lane + 1
 else:
     partner = lane - 1
 if partner < WARP_SIZE:
@@ -89,7 +90,8 @@ output[global_i] = swapped_val
 **Benefits of shuffle_xor:**
 
 - **Zero memory overhead**: Direct register-to-register communication
-- **No synchronization**: SIMT execution guarantees correctness
+- **No barrier needed**: The shuffle instruction synchronizes the lanes it reads
+  from, so no `barrier()` call is required
 - **Hardware optimized**: Single instruction for all lanes
 - **Butterfly foundation**: Building block for complex parallel algorithms
 
@@ -230,7 +232,7 @@ if global_i < size:
 **SIMT execution deep dive:**
 
 ```text
-Cycle 1: All lanes load their values simultaneously
+Step 1: All lanes load their values
   Lane 0: current_val = input[0] = 0
   Lane 1: current_val = input[1] = 1
   Lane 2: current_val = input[2] = 2
@@ -238,7 +240,7 @@ Cycle 1: All lanes load their values simultaneously
   ...
   Lane 31: current_val = input[31] = 31
 
-Cycle 2: shuffle_xor(current_val, 1) executes on all lanes
+Step 2: shuffle_xor(current_val, 1) executes on all lanes
   Lane 0: receives from Lane 1 (0⊕1=1) → swapped_val = 1
   Lane 1: receives from Lane 0 (1⊕1=0) → swapped_val = 0
   Lane 2: receives from Lane 3 (2⊕1=3) → swapped_val = 3
@@ -247,7 +249,7 @@ Cycle 2: shuffle_xor(current_val, 1) executes on all lanes
   Lane 30: receives from Lane 31 (30⊕1=31) → swapped_val = 31
   Lane 31: receives from Lane 30 (31⊕1=30) → swapped_val = 30
 
-Cycle 3: Store results
+Step 3: Store results
   Lane 0: output[0] = 1
   Lane 1: output[1] = 0
   Lane 2: output[2] = 3
@@ -270,9 +272,9 @@ i - 1 & \\text{if } i \\bmod 2 = 1
 
 **Performance characteristics:**
 
-- **Latency**: 1 cycle (hardware register exchange)
+- **Instruction count**: One shuffle instruction for the whole warp
 - **Bandwidth**: 0 bytes (no memory traffic)
-- **Parallelism**: All WARP_SIZE lanes exchange simultaneously
+- **Parallelism**: All `WARP_SIZE` lanes exchange in the same instruction
 - **Scalability**: \\(O(1)\\) complexity regardless of data size
 
 </div>
@@ -512,15 +514,15 @@ optimal \\(O(\\log n)\\) complexity.
    reduction
 2. **Perfect load balancing**: Every lane participates equally at each step
 3. **No memory bottlenecks**: Pure register-to-register communication
-4. **Hardware optimized**: Maps directly to GPU butterfly networks
+4. **Hardware optimized**: Each step is a single cross-lane shuffle instruction
 
 **Performance characteristics:**
 
 - **Steps**: \\(\\log_2(\\text{WARP\_SIZE})\\) (e.g., 5 for 32-thread, 6 for
   64-thread warp)
-- **Latency per step**: 1 cycle (register exchange + comparison)
-- **Total latency**: \\(\\log_2(\\text{WARP\_SIZE})\\) cycles vs
-  \\((\\text{WARP\_SIZE}-1)\\) cycles for sequential
+- **Work per step**: One shuffle plus one comparison
+- **Dependent steps**: \\(\\log_2(\\text{WARP\_SIZE})\\) vs
+  \\((\\text{WARP\_SIZE}-1)\\) for a sequential scan
 - **Parallelism**: All lanes active throughout the algorithm
 
 </div>
@@ -648,9 +650,9 @@ Expected output when solved:
 
 ```txt
 WARP_SIZE:  32
-SIZE_2:  64
-output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
-expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
+SIZE:  64
+output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0]
+expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0]
 Butterfly conditional max test: passed
 Puzzle 26 complete ✅
 ```
@@ -676,7 +678,7 @@ if global_i < size:
     var current_val = input[global_i]
     var min_val = current_val  # Track minimum separately
 
-    # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
+    # Butterfly reduction for both max and min: log2(WARP_SIZE) steps
     var offset = WARP_SIZE // 2
     while offset > 0:
         var neighbor_val = shuffle_xor(current_val, UInt32(offset))
@@ -803,7 +805,7 @@ while offset > 0:
 **Performance Advantages:**
 
 - **Hardware optimization**: Direct register-to-register communication
-- **No synchronization**: SIMT execution guarantees correctness
+- **No barriers to place**: The shuffle instruction carries the synchronization
 - **Scalable complexity**: \\(O(\\log n)\\) for any WARP_SIZE (32, 64, etc.)
 - **Memory efficiency**: Zero shared memory requirements
 

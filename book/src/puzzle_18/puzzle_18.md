@@ -297,11 +297,11 @@ def softmax_gpu_kernel[
 
 The kernel is parameterized with:
 
-- Common layout parameter for both input and output tensors
 - Vector size as an Integer parameter
 - Configurable data type with float32 as default
-- Mutable output tensor for in-place computation
-- Non-mutable input tensor (mut=False)
+- Layout supplied by the module-level `LayoutType` binding, shared by both
+  tensors
+- Both tensors mutable (`mut=True`)
 
 #### Shared memory allocation
 
@@ -426,15 +426,18 @@ Each thread:
 
 #### Performance characteristics
 
-The implementation has excellent performance characteristics:
+The implementation has these performance characteristics:
 
 - **Complexity**: \\(O(\log n)\\) for both max and sum calculations vs
   \\(O(n)\\) in a sequential approach
 - **Memory efficiency**: Uses only \\(2 \times BLOCK\\_DIM\\_X~\\) elements of
   shared memory
-- **Work efficiency**: Each thread performs approximately \\(2 \times
-  \log_2(BLOCK\\_DIM\\_X)~\\) operations
-- **Load balancing**: Each thread handles the same amount of work
+- **Work efficiency**: The two reductions together perform about \\(2 \times
+  (BLOCK\\_DIM\\_X - 1)~\\) max/add operations, the same total work a sequential
+  pass would do, but spread across \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps
+- **Load balancing**: The number of active threads halves at every reduction
+  step, so the upper half of the block goes idle after the first step. That
+  imbalance is inherent to a tree reduction
 - **Synchronization**: Uses minimal barriers, only where necessary
 - **Memory access**: Coalesced global memory access pattern for optimal
   bandwidth

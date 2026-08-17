@@ -2,7 +2,7 @@
 
 > ## Memory access patterns and performance
 >
-> We're continuing Part IV with a focus on **memory-bound operations** and
+> We're continuing Part V with a focus on **memory-bound operations** and
 > **GPU memory access optimization**.
 >
 > Building on [Puzzle 20](../puzzle_20/puzzle_20.md), you'll now explore how

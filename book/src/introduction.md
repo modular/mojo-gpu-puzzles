@@ -86,9 +86,10 @@ more accessible:
 - **Improved Safety** over traditional C/C++ GPU programming
 - **Lower Barrier to Entry** for more programmers to access GPU power
 
-> **Mojo🔥 aims to fuel innovation by democratizing GPU programming.** >**By
-> expanding on Python's familiar syntax while adding direct GPU access, Mojo
-> allows programmers with minimal specialized knowledge to build
+> **Mojo🔥 aims to fuel innovation by democratizing GPU programming.**
+>
+> **By expanding on Python's familiar syntax while adding direct GPU access,
+> Mojo allows programmers with minimal specialized knowledge to build
 > high-performance, heterogeneous (CPU, GPU-enabled) applications.**
 
 ## Why learn through puzzles?

@@ -43,7 +43,7 @@ Layout configuration:
 
 <div class="solution-tips">
 
-1. Calculate `row` and `col` from thread indices
+1. Use the `row` and `col` the stub already computes from the thread indices
 2. Check if indices are within `size`
 3. Accumulate products in a local variable
 4. Write final sum to correct output position
@@ -130,8 +130,9 @@ Matrix A:          Matrix B:                   Output C:
    ```
 
 2. **Memory access pattern**:
-   - Direct 2D indexing: `a[row, k]`
-   - Transposed access: `b[k, col]`
+   - Row-wise access: `a[row, k]` walks along one row of \\(A\\)
+   - Column-wise access: `b[k, col]` walks down one column of \\(B\\), which in
+     a row-major layout strides by `SIZE` on every step
    - Output writing: `output[row, col]`
 
 3. **Computation flow**:
@@ -148,12 +149,12 @@ Matrix A:          Matrix B:                   Output C:
 ### Key language features
 
 1. **Variable declaration**:
-   - The use of `var` in `var acc: output.ElementType = 0` allows for type
-     inference with `output.ElementType` ensures type compatibility with the
-     output tensor
+   - Annotating the accumulator in `var acc: output.ElementType = 0` ties its
+     type to the output tensor's element type, so the accumulation and the
+     final store agree
    - Initialized to zero before accumulation
 
-2. **Loop pptimization**:
+2. **Loop optimization**:
    - `comptime for` unrolls the loop at compile time
    - Improves performance for small, known matrix sizes
    - Enables better instruction scheduling

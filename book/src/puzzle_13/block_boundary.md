@@ -159,7 +159,7 @@ Size calculation:
    ```
 
    - Only threads with `local_i < CONV_2 - 1` load boundary data
-   - Prevents unnecessary thread divergence
+   - Avoids redundant halo loads, at the cost of one short divergent branch
    - Maintains memory coalescing for main data load
    - Explicitly zeroes out-of-bounds elements to avoid undefined behavior
 
@@ -201,17 +201,18 @@ Size calculation:
    ```
 
 2. **Block 1 Access Pattern**:
-Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to `False`
-and hence iterations are skipped.
+
+   Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to
+   `False` and hence iterations are skipped.
 
    ```txt
    Thread 0: [8  9 10 11] × [0 1 2 3]
    Thread 1: [9 10 11 12] × [0 1 2 3]
    ...
-   Thread 4: [12 13 14] × [0 1 2]       // Zero padding at end
+   Thread 4: [12 13 14] × [0 1 2]       // Tail of the array
    Thread 5: [13 14]    × [0 1]
    Thread 6: [14]       × [0]
-   Thread 7: skipped                    // global_i + j < SIZE_2 evaluates to false for all j, no computation
+   Thread 7: skipped                    // global_i = 15 fails global_i < SIZE_2, no output
    ```
 
 ### Performance optimizations
@@ -223,7 +224,7 @@ and hence iterations are skipped.
 
 2. **Thread Divergence Minimization**:
    - Clean separation of main and boundary loading
-   - Uniform computation pattern within warps
+   - Divergence confined to the halo load and the tail of the array
    - Efficient bounds checking
 
 3. **Shared Memory Usage**:

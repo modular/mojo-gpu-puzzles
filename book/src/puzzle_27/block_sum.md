@@ -38,7 +38,8 @@ programming in Mojo.
 - Block configuration: `(128, 1)` threads per block (`TPB = 128`)
 - Grid configuration: `(1, 1)` blocks per grid
 - Layout: `row_major[SIZE]()` (1D row-major)
-- Warps per block: `128 / WARP_SIZE` (4 warps on NVIDIA, 2 or 4 warps on AMD)
+- Warps per block: `128 / WARP_SIZE` (4 warps where `WARP_SIZE` is 32, 2 warps
+  on AMD CDNA where `WARP_SIZE` is 64)
 
 ## The traditional complexity (from Puzzle 12)
 
@@ -73,11 +74,13 @@ using `warp.sum()`:
 
 **What `warp.sum()` achieved:**
 
-- **Single warp scope**: Works within 32 threads (NVIDIA) or 32/64 threads (AMD)
-- **Hardware shuffle**: Uses `shfl.sync.bfly.b32` instructions for efficiency
+- **Single warp scope**: Works within `WARP_SIZE` threads (32 on NVIDIA, Apple,
+  and AMD RDNA; 64 on AMD CDNA)
+- **Hardware shuffle**: Built from warp shuffle instructions. The exact
+  instruction depends on the target: a butterfly `shfl.sync.bfly.b32` sequence
+  on most NVIDIA GPUs, DPP cross-lane operations on AMD
 - **Zero shared memory**: No explicit memory management needed
-- **One line reduction**:
-  `total = warp_sum[warp_size=WARP_SIZE](val=partial_product)`
+- **One line reduction**: `total = warp.sum(partial_product)`
 
 **But the limitation:** `warp.sum()` only works within a single warp. For
 problems requiring multiple warps (like our 128-thread block), you'd still need
@@ -138,6 +141,7 @@ Transform the complex traditional approach into a simple block kernel using
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -157,6 +161,13 @@ pixi run -e amd p27 --block-sum-dot-product
   <div class="tab-content">
 
 ```bash
+pixi run -e apple p27 --block-sum-dot-product
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
 uv run poe p27 --block-sum-dot-product
 ```
 
@@ -170,6 +181,7 @@ SIZE: 128
 TPB: 128
 Expected result: 1381760.0
 Block.sum result: 1381760.0
+Puzzle 27 complete ✅
 Block.sum() gives identical results!
 Compare the code: 15+ lines of barriers → 1 line of block.sum()!
 Just like warp.sum() but for the entire block
@@ -203,9 +215,9 @@ values. You'll need to extract the scalar value for arithmetic operations.
 
 Study the function signature - it needs:
 
-- A template parameter specifying the block size
-- A template parameter for result distribution (`broadcast`)
-- A runtime parameter containing the value to reduce
+- A compile-time parameter specifying the block size
+- A compile-time parameter for result distribution (`broadcast`)
+- A runtime argument containing the value to reduce
 
 ### 5. **Thread coordination principles**
 
@@ -234,7 +246,7 @@ complex block synchronization to expertly optimized implementations:
 
 - **15+ lines → 8 lines**: Dramatic code reduction
 - **Shared memory allocation**: Zero memory management required
-- **7+ barrier() calls**: Zero explicit synchronization needed
+- **8 barrier() executions**: Zero explicit synchronization needed
 - **Complex tree reduction**: Single function call
 - **Stride-based indexing**: Eliminated entirely
 - **Cross-warp coordination**: Handled automatically by optimized implementation
@@ -242,7 +254,7 @@ complex block synchronization to expertly optimized implementations:
 **Block-wide execution model:**
 
 ```text
-Block threads (128 threads across 4 warps):
+Block threads (128 threads; 4 warps when WARP_SIZE is 32):
 Warp 0 (threads 0-31):
   Thread 0: partial_product = a[0] * b[0] = 0.0
   Thread 1: partial_product = a[1] * b[1] = 2.0
@@ -261,20 +273,22 @@ Warp 3 (threads 96-127):
   Thread 96: partial_product = a[96] * b[96] = 18432.0
   Thread 127: partial_product = a[127] * b[127] = 32258.0
 
-block.sum() hardware operation:
+block.sum() reduction:
 All threads → 0.0 + 2.0 + 1922.0 + 2048.0 + ... + 32258.0 = 1381760.0
 Thread 0 receives → total = 1381760.0 (when broadcast=False)
 ```
 
-**Why this works without barriers:**
+**Why you don't write any barriers:**
 
-1. **Block-wide execution**: All threads execute each instruction in lockstep
-   within warps
-2. **Built-in synchronization**: `block.sum()` implementation handles
-   synchronization internally
-3. **Cross-warp communication**: Optimized communication between warps in the
-   block
-4. **Coordinated result delivery**: Only thread 0 receives the final result
+1. **Warp-level phase first**: Each warp reduces its own lanes with shuffle
+   instructions, which need no barrier
+2. **Built-in synchronization**: `block.sum()` still needs a barrier to combine
+   the per-warp results through shared memory - the library places that
+   `barrier()` for you rather than removing it
+3. **Cross-warp communication**: The per-warp partials go through a small shared
+   memory buffer that the primitive allocates
+4. **Coordinated result delivery**: Only thread 0 receives the final result when
+   `broadcast=False`
 
 **Comparison to warp.sum() (Puzzle 24):**
 
@@ -330,8 +344,8 @@ bar.sync           0;                        // barrier synchronization
 - **Butterfly shuffles**: More efficient than tree reduction
 - **Automatic barrier placement**: Handles cross-warp synchronization
 - **Optimized memory access**: Uses shared memory strategically
-- **Architecture-aware**: Same API works on NVIDIA (32-thread warps) and AMD (32
-  or 64-thread warps)
+- **Architecture-aware**: Same API works wherever `WARP_SIZE` is 32 (NVIDIA,
+  Apple, AMD RDNA) or 64 (AMD CDNA)
 
 ### **Finding 3: Algorithm complexity analysis**
 
@@ -349,8 +363,8 @@ bar.sync           0;                        // barrier synchronization
 The performance advantage comes from **expertly optimized algorithm choice**
 (butterfly > tree), not from instruction count or magical hardware. Take a look
 at
-[block.mojo](https://github.com/modular/modular/blob/main/mojo/stdlib/std/gpu/primitives/block.mojo)
-in Mojo gpu module for more details about the implementation.
+[block.mojo](https://github.com/modular/modular/blob/main/max/mojo/max/gpu/primitives/block.mojo)
+in the MAX GPU primitives module for more details about the implementation.
 
 ## Performance insights
 
@@ -363,7 +377,7 @@ in Mojo gpu module for more details about the implementation.
 
 **`block.sum()` vs `warp.sum()`:**
 
-- **Scope**: Block-wide (128 threads) vs warp-wide (32 threads)
+- **Scope**: Block-wide (128 threads) vs warp-wide (`WARP_SIZE` threads)
 - **Use case**: When you need reduction across entire block
 - **Convenience**: Same programming model, different scale
 
@@ -380,13 +394,13 @@ in Mojo gpu module for more details about the implementation.
 ```text
 Complex: shared memory + barriers + tree reduction
 ↓
-Simple: block.sum() hardware primitive
+Simple: block.sum() library primitive
 ```
 
 **From Puzzle 24 (`warp.sum()`):**
 
 ```text
-Warp-level: warp.sum() across 32 threads (single warp)
+Warp-level: warp.sum() across WARP_SIZE threads (single warp)
 ↓
 Block-level: block.sum() across 128 threads (multiple warps)
 ```

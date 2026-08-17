@@ -60,7 +60,7 @@ for element in data:
 
 ## The advanced approach: `block.prefix_sum()` coordination
 
-Transform the complex parallel partitioning into coordinated extraction:
+Transform the complex parallel partitioning into coordinated extraction.
 
 ## Code to complete
 
@@ -305,9 +305,15 @@ For target_bin=0, create extraction mask:
   Thread 1:  belongs_to_target = 1  (bin 0 == target 0)
   Thread 13: belongs_to_target = 0  (bin 1 != target 0)
   Thread 25: belongs_to_target = 0  (bin 2 != target 0)
+  Thread 80: belongs_to_target = 1  (input values wrap: 80 % 80 = 0, so 0.00)
   ...
 
 This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+                            (threads 0-12 are the leading run of 1s)
+
+The input data is generated as (i % 80) / 100.0, so the values restart at
+thread 80. Threads 80-92 also land in bin 0, which is why the final count is
+26 and not 13.
 ```
 
 ### **Phase 4: Parallel prefix sum (the magic!)**
@@ -315,9 +321,11 @@ This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
 ```text
 block.prefix_sum[exclusive=True] on predicates:
 Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
-Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
-                                                      ^
-                                                 doesn't matter
+Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,13,13, ...]
+
+Every thread receives a value, but only threads with belongs_to_target = 1
+use it. Threads 13-79 all carry 13 here, and thread 80 - the next match -
+carries 13 as well, so it writes at position 13.
 
 Key insight: Each thread gets its WRITE POSITION in the output array!
 ```
@@ -331,9 +339,12 @@ Only threads with belongs_to_target=1 write:
   Thread 12: bin_output[12] = 0.12  // Uses write_offset[12] = 12
   Thread 13: (no write)             // belongs_to_target = 0
   Thread 25: (no write)             // belongs_to_target = 0
+  Thread 80: bin_output[13] = 0.00  // Uses write_offset[80] = 13
+  Thread 92: bin_output[25] = 0.12  // Uses write_offset[92] = 25
   ...
 
-Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
+Result: [0.00, 0.01, ..., 0.12, 0.00, 0.01, ..., 0.12] // Perfectly packed!
+        (26 elements, no gaps, in thread order)
 ```
 
 ### **Phase 6: Count computation (like block.sum() pattern)**
@@ -343,6 +354,10 @@ Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
       total = write_offset[0] + Int32(belongs_to_target)  // Inclusive sum formula
       count_output[0] = total
+
+For bin 0: thread 127 holds 0.47, which lands in bin 3, so its predicate is 0
+and its exclusive scan value is 26 - giving 26 + 0 = 26, the count printed for
+bin 0.
 ```
 
 ## **Why this advanced algorithm works:**
@@ -378,9 +393,10 @@ Last thread computes total (not thread 0!):
 
 ### **vs. Multi-pass algorithms:**
 
-- **Single kernel**: Complete histogram extraction in one GPU launch
+- **Single pass per bin**: Extracting one bin takes one kernel launch, with no
+  separate count pass followed by a scatter pass. The demo loops over the eight
+  bins, so it launches the kernel eight times - once per bin
 - **Full utilization**: All threads work regardless of data distribution
-- **Optimal memory bandwidth**: Pattern optimized for GPU memory hierarchy
 
 This demonstrates how `block.prefix_sum()` enables sophisticated parallel
 algorithms that would be complex or impossible with simpler primitives like
@@ -396,7 +412,8 @@ algorithms that would be complex or impossible with simpler primitives like
 - **Algorithm sophistication**: Advanced parallel partitioning vs sequential
   processing
 - **Memory efficiency**: Coalesced writes vs scattered random access
-- **Synchronization**: Built-in coordination vs manual barriers and atomics
+- **Synchronization**: `block.prefix_sum()` places the two `barrier()` calls it
+  needs for you, instead of leaving you to place barriers and atomics by hand
 - **Scalability**: Works with any block size and bin count
 
 **`block.prefix_sum()` vs `block.sum()`:**

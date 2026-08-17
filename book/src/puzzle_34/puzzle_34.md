@@ -7,8 +7,8 @@
 > This puzzle requires **NVIDIA Hopper architecture** (H100, H200) or newer GPUs
 > with SM90+ compute capability. The cluster programming APIs are
 > hardware-accelerated and will raise errors on unsupported hardware. If you're
-> unsure about the underlying architecture, run `pixi run gpu-specs` and must
-> have at least `Compute Cap: 9.0` (see
+> unsure about the underlying architecture, run `pixi run gpu-specs` and
+> confirm it reports at least `Compute Capability: 9.0` (see
 > [GPU profiling basics](../puzzle_30/nvidia_profiling_basics.md) for hardware
 > identification)
 
