@@ -34,7 +34,7 @@ by their thread count and
    [`block.sum()` from Puzzle 27](../puzzle_27/block_sum.md))
 2. Blocks coordinate to combine their partial results using
    [synchronization from Puzzle 29](../puzzle_29/barrier.md)
-3. One elected thread computes the final global sum using
+3. An elected thread in the first block computes the final global sum using
    [warp election patterns](../puzzle_24/warp_sum.md)
 
 ### Problem specification
@@ -53,7 +53,8 @@ by their thread count and
 2. **Cluster sync**:
    [`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
    ensures all partial results are ready
-3. **Final aggregation**: One elected thread combines all partial results
+3. **Final aggregation**: An elected thread in the first block combines all
+   partial results
 
 ## Configuration
 
@@ -64,7 +65,7 @@ by their thread count and
 - **Memory Layout**: Input `row_major[SIZE]()`, Output `row_major[1]()`
 - **Temporary Storage**: `row_major[CLUSTER_SIZE]()` for partial results
 
-**Expected Result**: Sum of sequence `0, 0.01, 0.02, ..., 10.23` = **523,776**
+**Expected Result**: Sum of sequence `0, 1, 2, ..., 1023` = **523,776**
 
 ## Code to complete
 
@@ -94,8 +95,9 @@ by their thread count and
 - Store partial results in `temp_storage[block_id]` for reliable indexing
 - Use
   [`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
-  for full cluster synchronization (stronger than arrive/wait)
-- Only one thread should perform the final global aggregation
+  for full cluster synchronization, which is `cluster_arrive()` followed by
+  `cluster_wait()`
+- Restrict the final global aggregation to the first block of the cluster
 
 ### **Election pattern for efficiency**
 
@@ -103,8 +105,9 @@ by their thread count and
   [`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)
   within the first block (`my_block_rank == 0`) (pattern from
   [warp programming](../puzzle_24/warp_sum.md))
-- This ensures only one thread performs the final sum to avoid redundancy
-- The elected thread reads all partial results from `temp_storage` (similar to
+- This keeps the final sum to one thread per warp in that block instead of all
+  1024 threads in the cluster
+- Each elected thread reads all partial results from `temp_storage` (similar to
   [shared memory access from Puzzle 8](../puzzle_08/puzzle_08.md))
 
 ### **Memory access patterns**
@@ -128,7 +131,7 @@ by their thread count and
 module:**
 
 - **[`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)**:
-  Full cluster synchronization - stronger than arrive/wait pattern
+  Full cluster synchronization: `cluster_arrive()` followed by `cluster_wait()`
 - **[`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
   Elects single thread within warp for efficient coordination
 - **[`block_rank_in_cluster()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)**:
@@ -184,14 +187,15 @@ Cluster reduction result: 523776.0
 Expected: 523776.0
 Error: 0.0
 ✅ Passed: Cluster reduction accuracy test
-✅ Cluster-wide collective operations tests passed!
+Puzzle 34 complete ✅
 ```
 
 **Success Criteria:**
 
 - **Perfect accuracy**: Result exactly matches expected sum (523,776)
 - **Cluster coordination**: All 4 blocks contribute their partial sums
-- **Efficient final reduction**: Single elected thread computes final result
+- **Efficient final reduction**: Only the elected threads of the first block
+  compute the final result
 
 ## Solution
 
@@ -255,8 +259,11 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 **Full cluster barrier:**
 
 - [`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
-  provides **stronger guarantees** than
-  [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
+  is a convenience wrapper around
+  [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+  followed immediately by
+  [`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait),
+  with no window between them for other work
 - Ensures **all blocks complete their local reductions** before any block
   proceeds
 - Hardware-accelerated synchronization across all blocks in the cluster
@@ -277,21 +284,21 @@ if elect_one_sync() and my_block_rank == 0:
 
 - **[`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
   Hardware primitive that selects exactly one thread per warp
-- **`my_block_rank == 0`**: Only elect from the first block to ensure single
-  writer
-- **Result**: Only ONE thread across the entire cluster performs the final
-  summation
-- **Efficiency**: Avoids redundant computation across all 1024 threads
+- **`my_block_rank == 0`**: Restricts the final sum to the first block of the
+  cluster
+- **Result**: The two conditions together narrow the final summation to one
+  thread per warp within block rank 0, so `TPB / 32 = 8` threads run it and
+  each writes the same value to `output[0]`
+- **Efficiency**: 8 threads do the final aggregation instead of all 1024
 
 ## **Key technical insights**
 
-**Three-level reduction hierarchy:**
+**Two-level reduction hierarchy:**
 
-1. **Thread → Warp**: Individual threads contribute to warp-level partial sums
-2. **Warp → Block**: Tree reduction combines warps into single block result (256
-   → 1)
-3. **Block → Cluster**: Simple loop combines block results into final sum (4 →
-   1)
+1. **Thread → Block**: Shared-memory tree reduction combines every thread's
+   value into a single block result (256 → 1)
+2. **Block → Cluster**: Simple loop over `temp_storage` combines block results
+   into final sum (4 → 1)
 
 **Memory access patterns:**
 
@@ -306,7 +313,9 @@ if elect_one_sync() and my_block_rank == 0:
   step
 - **[`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)**:
   **Global barrier** - all blocks reach same execution point
-- **Single writer**: Election prevents race conditions on final output
+- **Benign write race**: The elected threads of block rank 0 all store the same
+  total to `output[0]`, so the result is well defined even though the write is
+  not single-writer
 
 **Algorithm complexity analysis:**
 
@@ -336,7 +345,7 @@ distributed computing:
 
 **Comparison to single-block approaches:**
 
-- **Traditional `block.sum()`**: Works within 256 threads maximum
+- **Traditional `block.sum()`**: Limited to the threads of a single block
 - **Cluster collective**: Scales to 1000+ threads across multiple blocks
 - **Same accuracy**: Both produce identical mathematical results
 - **Different scale**: Cluster approach handles larger datasets

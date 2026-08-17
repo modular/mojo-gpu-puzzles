@@ -233,19 +233,21 @@ def test_aligned() raises:
 @parameter
 @always_inline
 def benchmark_scalar(mut b: Bencher) raises:
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](SIZE)
+    out.enqueue_fill(0)
+    var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
+    a.enqueue_fill(1)
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+
     @parameter
     @always_inline
     def workflow(ctx: DeviceContext) raises:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
-        var a = ctx.enqueue_create_buffer[dtype](SIZE)
-        a.enqueue_fill(1)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            a, layout
-        )
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-            out, layout
-        )
         ctx.enqueue_function[scalar_kernel](
             out_tensor,
             a_tensor,
@@ -256,26 +258,27 @@ def benchmark_scalar(mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[workflow](b, bench_ctx)
 
 
 @parameter
 @always_inline
 def benchmark_unaligned(mut b: Bencher) raises:
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](SIZE)
+    out.enqueue_fill(0)
+    var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
+    a.enqueue_fill(1)
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+
     @parameter
     @always_inline
     def workflow(ctx: DeviceContext) raises:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
-        var a = ctx.enqueue_create_buffer[dtype](SIZE)
-        a.enqueue_fill(1)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            a, layout
-        )
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-            out, layout
-        )
         ctx.enqueue_function[unaligned_kernel](
             out_tensor,
             a_tensor,
@@ -286,26 +289,27 @@ def benchmark_unaligned(mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[workflow](b, bench_ctx)
 
 
 @parameter
 @always_inline
 def benchmark_aligned(mut b: Bencher) raises:
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](SIZE)
+    out.enqueue_fill(0)
+    var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
+    a.enqueue_fill(1)
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+
     @parameter
     @always_inline
     def workflow(ctx: DeviceContext) raises:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
-        var a = ctx.enqueue_create_buffer[dtype](SIZE)
-        a.enqueue_fill(1)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            a, layout
-        )
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-            out, layout
-        )
         ctx.enqueue_function[aligned_kernel](
             out_tensor,
             a_tensor,
@@ -316,7 +320,6 @@ def benchmark_aligned(mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[workflow](b, bench_ctx)
 
 

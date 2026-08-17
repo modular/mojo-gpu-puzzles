@@ -156,7 +156,7 @@ But like any good detective, you'll learn to:
 
 - GPU programming concepts from Puzzles 1-8 (memory management, thread
   coordination, barriers)
-- **[Compatible NVIDIA GPU hardware](https://docs.modular.com/faq#gpu-requirements)**
+- **[Compatible NVIDIA GPU hardware](https://docs.modular.com/packages/#gpu-compatibility)**
 - Environment setup with `pixi` package manager for accessing
   `compute-sanitizer`
 - **Prior puzzles**: Familiarity with

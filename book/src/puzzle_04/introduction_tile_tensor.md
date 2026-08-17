@@ -14,14 +14,14 @@ Let's look at the challenges we've faced so far:
 
 ```mojo
 # Puzzle 1: Simple indexing
-output[i] = a[i] + 10.0
+output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 
 # Puzzle 2: Multiple array management
-output[i] = a[i] + b[i]
+output[unsafe_offset=i] = a[unsafe_offset=i] + b[unsafe_offset=i]
 
 # Puzzle 3: Bounds checking
 if i < size:
-    output[i] = a[i] + 10.0
+    output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 ```
 
 As dimensions grow, code becomes more complex:
@@ -30,7 +30,7 @@ As dimensions grow, code becomes more complex:
 # Traditional 2D indexing for row-major 2D matrix
 var idx = row * WIDTH + col
 if row < height and col < width:
-    output[idx] = a[idx] + 10.0
+    output[unsafe_offset=idx] = a[unsafe_offset=idx] + 10.0
 ```
 
 ## The solution: A peek at TileTensor
@@ -38,11 +38,11 @@ if row < height and col < width:
 TileTensor will help us tackle these challenges with elegant solutions. Here's a
 glimpse of what's coming:
 
-1. **Natural Indexing**: Use `tensor[i, j]` instead of manual offset
+1. **Natural indexing**: Use `tensor[i, j]` instead of manual offset
    calculations
-2. **Flexible Memory Layouts**: Support for row-major, column-major, and tiled
+2. **Flexible memory layouts**: Support for row-major, column-major, and tiled
    organizations
-3. **Performance Optimization**: Efficient memory access patterns for GPU
+3. **Performance optimization**: Efficient memory access patterns for GPU
 
 ## A taste of what's ahead
 
@@ -126,12 +126,14 @@ uv run poe tile_tensor_intro
 
 ```txt
 Before:
-0.0 0.0 0.0
-0.0 0.0 0.0
+[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 After:
-1.0 0.0 0.0
-0.0 0.0 0.0
+[[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 ```
+
+A `TileTensor` whose dimensions are all known at compile time prints as nested
+rows on a single line. Give it a runtime dimension and it prints flat instead,
+element by element.
 
 Let's break down what's happening:
 

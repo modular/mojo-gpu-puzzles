@@ -89,6 +89,7 @@ uv run poe p04_tile_tensor
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
+out shape: 2 x 2
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ```

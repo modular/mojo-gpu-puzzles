@@ -109,25 +109,28 @@ def two_way_conflict_kernel(
 @parameter
 @always_inline
 def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    var input_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    input_buf.enqueue_fill(0)
+
+    with input_buf.map_to_host() as input_host:
+        for i in range(test_size):
+            input_host[i] = Scalar[dtype](i + 1)
+
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+        input_buf, layout
+    )
+
     @parameter
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var out = ctx.enqueue_create_buffer[dtype](test_size)
-        out.enqueue_fill(0)
-        var input_buf = ctx.enqueue_create_buffer[dtype](test_size)
-        input_buf.enqueue_fill(0)
-
-        with input_buf.map_to_host() as input_host:
-            for i in range(test_size):
-                input_host[i] = Scalar[dtype](i + 1)
-
-        var out_tensor = TileTensor(out, layout)
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
-            input_buf, layout
-        )
-
         comptime kernel = no_conflict_kernel
         ctx.enqueue_function[kernel](
             out_tensor,
@@ -139,32 +142,34 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[kernel_workflow](b, bench_ctx)
 
 
 @parameter
 @always_inline
 def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    var input_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    input_buf.enqueue_fill(0)
+
+    with input_buf.map_to_host() as input_host:
+        for i in range(test_size):
+            input_host[i] = Scalar[dtype](i + 1)
+
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+        input_buf, layout
+    )
+
     @parameter
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var out = ctx.enqueue_create_buffer[dtype](test_size)
-        out.enqueue_fill(0)
-        var input_buf = ctx.enqueue_create_buffer[dtype](test_size)
-        input_buf.enqueue_fill(0)
-
-        with input_buf.map_to_host() as input_host:
-            for i in range(test_size):
-                input_host[i] = Scalar[dtype](i + 1)
-
-        var out_tensor = TileTensor(out, layout)
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
-            input_buf, layout
-        )
-
         comptime kernel = two_way_conflict_kernel
         ctx.enqueue_function[kernel](
             out_tensor,
@@ -176,7 +181,6 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[kernel_workflow](b, bench_ctx)
 
 

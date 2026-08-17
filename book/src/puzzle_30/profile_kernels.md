@@ -25,7 +25,7 @@ output[i] = a[i] + b[i]  // Simple arithmetic - what could go wrong?
 **The shocking reality:**
 
 - **All three kernels produce identical, correct results**
-- **One kernel runs ~50x slower than the others**
+- **One kernel runs thousands of times slower than the others**
 - **The slowest kernel has the highest cache hit rates** (counterintuitive!)
 - **Standard performance intuition completely fails**
 
@@ -34,15 +34,15 @@ output[i] = a[i] + b[i]  // Simple arithmetic - what could go wrong?
 1. **Identify the performance culprit** - Which kernel is catastrophically slow?
 2. **Uncover the cache paradox** - Why do high cache hits indicate poor
    performance?
-3. **Decode memory access patterns** - What makes identical operations behave so
+3. **Account for the work** - What makes identical operations behave so
    differently?
-4. **Learn profiling methodology** - Use NSight tools to gather evidence, not
+4. **Learn profiling methodology** - Use Nsight tools to gather evidence, not
    guesses
 
 **Why this matters:** This puzzle reveals a fundamental GPU performance
 principle that challenges CPU-based intuition. The skills you develop here apply
-to real-world GPU optimization where memory access patterns often matter more
-than algorithmic complexity.
+to real-world GPU optimization, where a metric that looks healthy can be hiding
+the actual cost.
 
 **The twist:** We approach this **without looking at the source code first** -
 using only profiling tools as your guide, just like debugging production
@@ -53,8 +53,8 @@ for further analysis.
 
 From the profiling tutorial, you have:
 
-- **NSight Systems (`nsys`)** - Find which kernels are slow
-- **NSight Compute (`ncu`)** - Analyze why kernels are slow
+- **Nsight Systems (`nsys`)** - Find which kernels are slow
+- **Nsight Compute (`ncu`)** - Analyze why kernels are slow
 - **Memory efficiency metrics** - Detect poor access patterns
 
 ## Getting started
@@ -70,20 +70,20 @@ You'll see dramatic timing differences between kernels! One kernel is
 **much slower** than the others. Your job is to figure out why using profiling
 tools **without** looking at the code.
 
-**Example output:**
+**Example output** (B200, MAX 26.5.0 / Mojo 1.0.0 — your absolute times will
+differ, the ratio between them is the point):
 
 ```text
 | name    | met (ms)  | iters |
 | ------- | --------- | ----- |
-| kernel1 | 171.85    | 11    |
-| kernel2 | 1546.68   | 11    |  <- This one is much slower!
-| kernel3 | 172.18    | 11    |
+| kernel1 | 0.0735    | 100   |
+| kernel2 | 371.16    | 100   |  <- This one is much slower!
+| kernel3 | 0.0809    | 100   |
 ```
 
 ### Step 2: Prepare your code for profiling
 
-**Critical**: For accurate profiling, build with full debug information while
-keeping optimizations enabled:
+**Critical**: For source-level attribution, build with full debug information:
 
 ```bash
 mojo build --debug-level=full problems/p30/p30.mojo -o problems/p30/p30_profiler
@@ -93,12 +93,15 @@ mojo build --debug-level=full problems/p30/p30.mojo -o problems/p30/p30_profiler
 
 - **Full debug info**: Provides complete symbol tables, variable names, and
   source line mapping for profilers
-- **Comprehensive analysis**: Enables NSight tools to correlate performance data
+- **Comprehensive analysis**: Enables Nsight tools to correlate performance data
   with specific code locations
-- **Optimizations enabled**: Ensures realistic performance measurements that
-  match production builds
 
-## Step 3: System-wide investigation (NSight Systems)
+The debug metadata costs real time — see
+[the debug-build trade-off](./nvidia_profiling_basics.md#step-1-prepare-your-code-for-profiling).
+It does not distort this investigation, because the effect you are hunting is a
+several-thousand-fold gap between kernels built the same way.
+
+### Step 3: System-wide investigation (Nsight Systems)
 
 Profile each kernel to see the big picture:
 
@@ -120,15 +123,15 @@ nsys stats --force-export=true ./problems/p30/kernel3_profile.nsys-rep > ./probl
 - **Kernel execution times** - How much do they vary?
 - **Memory transfer patterns** - Are they similar across implementations?
 
-## Step 4: Kernel deep-dive (NSight Compute)
+### Step 4: Kernel deep-dive (Nsight Compute)
 
-Once you identify the slow kernel, analyze it with NSight Compute:
+Once you identify the slow kernel, analyze it with Nsight Compute:
 
 ```bash
 # Deep-dive into memory patterns for each kernel using the optimized build
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
+ncu --set roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
+ncu --set roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
+ncu --set roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
 
 # View the results
 ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details
@@ -136,12 +139,13 @@ ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
 ```
 
-**When you run these commands, you'll see output like this:**
+**When you run these commands, you'll see output like this** (B200; the
+absolute figures depend on your GPU, the gap between them does not):
 
 ```text
-Kernel1: Memory Throughput: ~308 Gbyte/s, Max Bandwidth: ~51%
-Kernel2: Memory Throughput: ~6 Gbyte/s,   Max Bandwidth: ~12%
-Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
+Kernel1: Memory Throughput: ~2.06 Tbyte/s, Max Bandwidth: ~31%
+Kernel2: Memory Throughput: ~8.7 Gbyte/s,  Max Bandwidth: ~27%
+Kernel3: Memory Throughput: ~1.78 Tbyte/s, Max Bandwidth: ~27%
 ```
 
 **Key metrics to investigate:**
@@ -155,36 +159,36 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 cache hit rates but the **lowest** performance! This is the key mystery to
 solve.
 
-## Step 5: Detective questions
+### Step 5: Detective questions
 
 Use your profiling evidence to answer these questions by looking at the kernel
 code
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>:
 
-### Performance analysis
+#### Performance analysis
 
-1. **Which kernel achieves the highest Memory Throughput?** (Look at Gbyte/s
-   values)
-2. **Which kernel has the lowest Max Bandwidth utilization?** (Compare
-   percentages)
+1. **Which kernel achieves the highest Memory Throughput?** (Look at the
+   Gbyte/s values)
+2. **Which kernel achieves the lowest?** And how far apart are the three Max
+   Bandwidth percentages by comparison — does that metric separate them at all?
 3. **What's the performance gap in memory throughput?** (Factor difference
    between fastest and slowest)
 
-### The cache paradox
+#### The cache paradox
 
 4. **Which kernel has the highest L1/TEX Hit Rate?**
 5. **Which kernel has the highest L2 Hit Rate?**
 6. **🤯 Why does the kernel with the BEST cache hit rates perform the WORST?**
 
-### Memory access detective work
+#### Redundant work detective work
 
 7. **Can high cache hit rates actually indicate a performance problem?**
-8. **What memory access pattern would cause high cache hits but low
-   throughput?**
-9. **Why might "efficient caching" be a symptom of "inefficient memory
-   access"?**
+8. **Count the element operations each kernel performs. How does kernel2's
+   loop bound compare to the number of threads in the grid?**
+9. **If every kernel's warps are equally coalesced, what is left to explain the
+   throughput gap?**
 
-### The "Aha!" Moment
+#### The "Aha!" Moment
 
 10. **Based on the profiling evidence, what fundamental GPU memory principle
     does this demonstrate?**
@@ -195,8 +199,9 @@ not a performance victory!
 ## Solution
 
 The mystery reveals a fundamental GPU performance principle:
-**memory access patterns dominate performance for memory-bound operations**,
-even when kernels perform identical computations.
+**for memory-bound operations, the total volume of work dominates performance**,
+even when every kernel computes the same result from the same coalesced
+accesses.
 
 **The profiling evidence reveals:**
 
@@ -204,27 +209,27 @@ even when kernels perform identical computations.
    catastrophically slow (orders of magnitude difference)
 2. **Memory throughput tells the story**: Fast kernels achieve high bandwidth
    utilization, slow kernel achieves minimal utilization
-3. **The cache paradox**: The slowest kernel has the **highest** cache hit rates
-   - revealing that high cache hits can indicate **poor** memory access patterns
-4. **Memory access patterns matter more than algorithmic complexity** for
+3. **The cache paradox**: The slowest kernel has the **highest** cache hit
+   rates—revealing that high cache hits can indicate **wasted** work
+4. **How much work a kernel does matters more than how well it caches** for
    memory-bound GPU workloads
 
 <details class="solution-details">
 <summary><strong>Complete Solution with Enhanced Explanation</strong></summary>
 
-This profiling detective case demonstrates how memory access patterns create
-orders-of-magnitude performance differences, even when kernels perform identical
-mathematical operations.
+This profiling detective case demonstrates how the amount of work a kernel
+issues creates orders-of-magnitude performance differences, even when kernels
+perform identical mathematical operations.
 
 ## **Performance evidence from profiling**
 
-**NSight Systems Timeline Analysis:**
+**Nsight Systems Timeline Analysis:**
 
 - **Kernel 1**: Short execution time - **EFFICIENT**
 - **Kernel 3**: Similar to Kernel 1 - **EFFICIENT**
 - **Kernel 2**: Dramatically longer execution time - **INEFFICIENT**
 
-**NSight Compute Memory Analysis (Hardware-Agnostic Patterns):**
+**Nsight Compute Memory Analysis (Hardware-Agnostic Patterns):**
 
 - **Efficient kernels (1 & 3)**: High memory throughput, good bandwidth
   utilization, moderate cache hit rates
@@ -238,7 +243,7 @@ mathematical operations.
 - **Kernel2 has the HIGHEST cache hit rates** but **WORST performance**
 - **This challenges conventional wisdom**: "High cache hits = good performance"
 - **The truth**: High cache hit rates can be a
-  **symptom of inefficient memory access patterns**
+  **symptom of re-reading data the grid has already fetched**
 
 **Why the Cache Paradox Occurs:**
 
@@ -249,11 +254,11 @@ mathematical operations.
 
 **GPU memory reality (CORRECT understanding):**
 
-- **Coalescing matters more than caching** for memory-bound workloads
-- **Poor access patterns** can cause artificial cache hit inflation
+- **Delivered bandwidth matters more than hit rate** for memory-bound workloads
+- **Redundant work** can inflate cache hit rates while starving throughput
 - **Memory bandwidth utilization** is the real performance indicator
 
-## **Root cause analysis - memory access patterns**
+## **Root cause analysis - redundant work**
 
 **Actual Kernel Implementations from p30.mojo:**
 
@@ -265,7 +270,7 @@ mathematical operations.
 
 *Standard thread indexing - adjacent threads access adjacent memory*
 
-**Kernel 2 - Inefficient Strided Access:**
+**Kernel 2 - Redundant Grid-Stride Loop:**
 
 ```mojo
 {{#include ../../../problems/p30/p30.mojo:kernel2}}
@@ -291,7 +296,8 @@ addresses (just backwards)*
 
 - **Kernel 1**: Classic coalesced access - adjacent threads access adjacent
   memory
-- **Kernel 2**: Catastrophic strided access - threads jump by 512 elements
+- **Kernel 2**: Coalesced within each warp access, but the grid-stride loop
+  makes the whole grid re-traverse the buffer thousands of times
 - **Kernel 3**: Reverse but still coalesced within warps - predictable pattern
 
 ## **Understanding the memory system**
@@ -333,8 +339,8 @@ Warp threads 0-31:             Warp threads 0-31, iteration 0:
                                  iter 1: Memory[512]
                                  iter 2: Memory[1024]
 
-Result: 1 cache line fetch       Result: 32 separate cache line fetches
-Status: ~308 GB/s throughput     Status: ~6 GB/s throughput
+Result: 1 cache line fetch       Result: 1 cache line fetch, ×16,384 passes
+Status: ~2.06 TB/s throughput    Status: ~8.7 GB/s throughput
 Cache: Efficient utilization     Cache: Same lines hit repeatedly!
 ```
 
@@ -349,7 +355,7 @@ Warp threads 0-31 (first iteration):
   Thread 31: Memory[SIZE-32]   (reverse_i = SIZE-1-31)
 
 Result: Adjacent addresses (just backwards)
-Status: ~310 GB/s throughput (nearly identical to Kernel 1)
+Status: ~1.78 TB/s throughput (same order as Kernel 1)
 Cache: Efficient utilization despite reverse order
 ```
 
@@ -378,8 +384,8 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 3. **Redundant work**: the grid already has one thread per element, so the loop
    makes it re-traverse the buffer 16,384 times over—this is the dominant
    cost, and it is what the repeated cache hits are hits *on*
-4. **Occupancy cost**: the long-running loop keeps every thread resident far
-   longer than the one-element-per-thread kernels
+4. **Long residency**: the loop keeps every block resident far longer than the
+   one-element-per-thread kernels, so the grid drains much more slowly
 
 **Concrete example with float32 (4 bytes each):**
 
@@ -397,13 +403,13 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 
 **Systematic Detective Approach:**
 
-**Phase 1: NSight Systems (Big Picture)**
+**Phase 1: Nsight Systems (Big Picture)**
 
 - Identify which kernels are slow
 - Rule out obvious bottlenecks (memory transfers, API overhead)
 - Focus on kernel execution time differences
 
-**Phase 2: NSight Compute (Deep Analysis)**
+**Phase 2: Nsight Compute (Deep Analysis)**
 
 - Analyze memory throughput metrics
 - Compare bandwidth utilization percentages
@@ -414,18 +420,19 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 ```text
 PROFILING EVIDENCE → CODE ANALYSIS:
 
-NSight Compute Results:           Actual Code Pattern:
-- Kernel1: ~308 GB/s            → i = block_idx*block_dim + thread_idx (coalesced)
-- Kernel2: ~6 GB/s, 99% L2 hits → i += 512 (catastrophic stride)
-- Kernel3: ~310 GB/s            → reverse_i = size-1-forward_i (reverse coalesced)
+Nsight Compute Results:           Actual Code Pattern:
+- Kernel1: ~2.06 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
+- Kernel2: ~8.7 GB/s, 99% L2 hits → i += 512 (redundant re-traversal)
+- Kernel3: ~1.78 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
 
-The profiler data directly reveals the memory access efficiency!
+The profiler data directly reveals how much work each kernel issues!
 ```
 
 **Evidence-to-Code Connection:**
 
 - **High throughput + normal cache rates** = Coalesced access (Kernels 1 & 3)
-- **Low throughput + high cache rates** = Inefficient strided access (Kernel 2)
+- **Low throughput + high cache rates** = Redundant re-traversal of data already
+  fetched (Kernel 2)
 - **Memory bandwidth utilization** reveals true efficiency regardless of cache
   statistics
 
@@ -455,13 +462,13 @@ The profiler data directly reveals the memory access efficiency!
 
 **Memory-First Optimization Strategy:**
 
-1. **Memory patterns dominate**: Access patterns often matter more than
-   algorithmic complexity
+1. **Count the work first**: the number of element operations a grid issues
+   often dwarfs every other effect, as kernel2 shows
 2. **Coalescing is critical**: Design for adjacent threads accessing adjacent
    memory
 3. **Measure bandwidth utilization**: Focus on actual throughput, not just cache
    statistics
-4. **Profile systematically**: Use NSight tools to identify real bottlenecks
+4. **Profile systematically**: Use Nsight tools to identify real bottlenecks
 
 **Key Technical Insights:**
 
@@ -479,15 +486,14 @@ This detective case reveals that
 
 **Critical insights:**
 
-- High cache hit rates can indicate poor memory access patterns (not good
-  performance)
+- High cache hit rates can indicate wasted work (not good performance)
 - Memory bandwidth utilization matters more than cache statistics
-- Simple coalesced patterns often outperform complex algorithms
+- Doing the work once beats re-reading data the grid has already fetched
 - Profiling tools reveal counterintuitive performance truths
 
 **Practical methodology:**
 
-- Profile systematically with NSight Systems and NSight Compute
+- Profile systematically with Nsight Systems and Nsight Compute
 - Design for adjacent threads accessing adjacent memory (coalescing)
 - Let profiler evidence guide optimization decisions, not intuition
 

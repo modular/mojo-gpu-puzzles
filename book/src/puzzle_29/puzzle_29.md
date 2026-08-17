@@ -24,10 +24,9 @@
 ## Overview
 
 GPU synchronization is the foundation that enables complex parallel algorithms
-to work correctly and efficiently. This chapter explores three fundamental
+to work correctly and efficiently. This chapter explores two fundamental
 synchronization patterns that appear throughout high-performance GPU computing:
-**pipeline coordination**, **memory barrier management**, and
-**streaming computation**.
+**pipeline coordination** and **memory barrier management**.
 
 **Core learning objectives:**
 
@@ -38,8 +37,7 @@ synchronization patterns that appear throughout high-performance GPU computing:
 
 **Architectural progression:** These puzzles follow a carefully designed
 progression from basic pipeline coordination to advanced memory barrier
-management, culminating in streaming computation patterns used in
-high-throughput applications.
+management.
 
 ## Key concepts
 
@@ -60,8 +58,6 @@ high-throughput applications.
   Simple thread synchronization within blocks
 - **Advanced [mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/)**:
   Fine-grained memory barrier control with state tracking
-- **Streaming coordination**: Asynchronous copy and bulk transfer
-  synchronization
 
 **Memory consistency models:**
 
@@ -87,8 +83,6 @@ high-throughput applications.
 1. **Multi-stage pipelines**: Thread specialization with barrier coordination
 2. **Double-buffered iterations**: Memory barrier management for iterative
    algorithms
-3. **Streaming computation**: Asynchronous copy coordination for high-throughput
-   processing
 
 **Performance considerations:**
 
@@ -99,7 +93,7 @@ high-throughput applications.
 
 ## Puzzle structure
 
-This chapter contains three interconnected puzzles that build upon each other:
+This chapter contains two interconnected puzzles that build upon each other:
 
 ### **[Multi-Stage Pipeline Coordination](barrier.md)**
 
@@ -147,8 +141,8 @@ automata, simulation time-stepping
    specialization basics
 2. **Progress to [Memory Barriers](memory_barrier.md)**: Learn fine-grained
    synchronization control
-3. **Apply to streaming patterns**: Combine concepts for high-throughput
-   applications
+3. **Revisit [Puzzle 28](../puzzle_28/puzzle_28.md)**: Combine these patterns
+   with asynchronous copy for high-throughput applications
 
 **Prerequisites:**
 

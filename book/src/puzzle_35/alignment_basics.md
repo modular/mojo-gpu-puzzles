@@ -72,5 +72,5 @@ kernel:
 
 That is why the [next section](./aligned_load_store.md) builds three kernels
 that are provably equivalent, and the
-[profiling section](./benchmark_and_profile.md) reaches for NSight Compute
+[profiling section](./benchmark_and_profile.md) reaches for Nsight Compute
 rather than trusting timing alone.

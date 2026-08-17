@@ -190,7 +190,7 @@ Now complete this kernel to implement the LayerNorm operation. You'll need to:
 
 **Implementation steps:**
 
-1. First, compute mean and variance using parallel reduction
+1. First, compute mean and variance over the hidden dimension
 2. Then normalize the input using these statistics
 3. Finally, apply the scale and shift parameters
 
@@ -345,6 +345,16 @@ handles one element of the output tensor. Let's break down the key components:
          return
      ```
 
+   - Convert each `TileTensor` argument with `to_layout_tensor()` before
+     indexing it:
+
+     ```mojo
+     var output_lt = output.to_layout_tensor()
+     var input_lt = input.to_layout_tensor()
+     var ln_weight_lt = ln_weight.to_layout_tensor()
+     var ln_bias_lt = ln_bias.to_layout_tensor()
+     ```
+
 2. **Statistics Computation**:
 
    ```mojo
@@ -371,11 +381,11 @@ handles one element of the output tensor. Let's break down the key components:
 3. **Normalization and Scaling**:
 
    ```mojo
-   var input_val = input[batch_idx, seq_idx, hidden_idx]
+   var input_val = input_lt[batch_idx, seq_idx, hidden_idx]
    var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
-       ln_weight[hidden_idx]
-   ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
-   output[batch_idx, seq_idx, hidden_idx] = normalized
+       ln_weight_lt[hidden_idx]
+   ) + rebind[Scalar[dtype]](ln_bias_lt[hidden_idx])
+   output_lt[batch_idx, seq_idx, hidden_idx] = normalized
    ```
 
    - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x -
@@ -391,10 +401,11 @@ handles one element of the output tensor. Let's break down the key components:
      - Input: `[batch_idx, seq_idx, h]`
      - Output: `[batch_idx, seq_idx, hidden_idx]`
      - Parameters: `[hidden_idx]`
-   - Numerical stability ensured by:
-     - Adding epsilon (1e-5) before square root
+   - Numerical handling:
+     - Adding epsilon (1e-5) before the square root
      - Using proper type casting
-     - Computing variance in a numerically stable way
+     - Variance from \\(E[x^2] - \mu^2\\), which is cheap but loses precision
+       when the mean is large relative to the spread
 
 5. **Implementation Details**:
    - **Type Safety**:
@@ -423,7 +434,7 @@ benchmark results where it's slightly slower than the CPU version. The fused
 implementation will address these performance limitations by:
 
 - Computing statistics once per sequence
-- Reusing normalized values
+- Keeping those statistics in registers instead of recomputing them per thread
 - Reducing memory traffic
 - Eliminating intermediate tensor allocations
 
@@ -441,11 +452,14 @@ kernel:
 
 **Key optimizations:**
 
-- Single kernel launch instead of two
-- Shared memory for intermediate results
-- Coalesced memory access patterns
+- Single kernel launch instead of the four-kernel unfused pipeline
+- LayerNorm statistics computed once and held in registers
 - Reduced memory bandwidth usage
 - No intermediate tensor allocations
+
+Note what this kernel does *not* do: it allocates no shared memory, and it
+launches one thread per block, so there is no coalescing to speak of. It is
+deliberately the simplest fusion that works, not a tuned one.
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -464,7 +478,8 @@ kernel:
 
 3. **Computation flow**:
    - Compute LayerNorm statistics once per sequence
-   - Reuse normalized values for all output dimensions
+   - Recompute normalized values from those statistics for each output
+     dimension
    - Combine normalization and linear transformation
 
 4. **Performance**:
@@ -598,10 +613,11 @@ The fused implementation combines operations efficiently:
    - Reuse computed statistics
    - Minimize memory traffic
    - No intermediate tensor allocations
-   - Efficient memory access patterns
+   - Statistics held in registers rather than written back to memory
 
-This implementation achieves better performance than the unfused version by
-reducing memory bandwidth usage and kernel launch overhead.
+Fusing the two operations removes the intermediate tensors and three of the four
+kernel launches the unfused path needs. At this puzzle's size that shows up as a
+small margin - see the benchmark note below.
 </div>
 </details>
 
@@ -619,17 +635,21 @@ operations:
 
 2. **Fused implementation**:
    - Single kernel combining both operations
-   - More complex but significantly more efficient
+   - More complex, and modestly faster at this size
    - Reduced memory bandwidth usage
    - Single kernel launch
    - Benchmark results: 3116.11ms (GPU)
+
+At `[4, 4, 8] -> [4, 4, 16]` the two are about 2% apart, which is inside the
+noise of a run dominated by Python and dispatch overhead. Fusion is the right
+structural choice, but this configuration is far too small to show it.
 
 ### Memory bandwidth optimization
 
 1. **Eliminated memory traffic**:
    - No intermediate tensor allocations between operations
    - Reduced global memory reads/writes
-   - Reuse of normalized values for linear transformation
+   - Reuse of LayerNorm statistics across all output dimensions
    - Memory bandwidth reduction: \\[\Large \text{reduction} =
      \frac{\text{unfused\_bandwidth} -
      \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
@@ -649,10 +669,10 @@ operations:
    - Fewer memory allocations
 
 2. **Resource management**:
-   - Shared memory reuse between operations
-   - Better register utilization
-   - Improved thread occupancy
-   - Higher GPU utilization
+   - Values stay in registers instead of round-tripping through global memory
+   - No intermediate buffers to allocate or free
+   - Occupancy is the trade-off, not a win: one thread per block leaves most of
+     each SM idle, which is why the measured margin here is small
 
 ### Performance characteristics
 

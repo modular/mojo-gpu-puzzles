@@ -6,7 +6,7 @@ In this puzzle, you'll learn about:
 - Thread indexing with `thread_idx.x`
 - Simple parallel operations
 
-- **Parallelism**: Each thread executes independently
+- **Parallelism**: Every thread runs the same kernel body concurrently
 - **Thread indexing**: Access element at position `i = thread_idx.x`
 - **Memory access**: Read from `a[i]` and write to `output[i]`
 - **Data independence**: Each output depends only on its corresponding input
@@ -18,6 +18,12 @@ In this puzzle, you'll learn about:
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p01/p01.mojo" class="filename">View full file: problems/p01/p01.mojo</a>
+
+> **Note**: The skeleton declares `var i = thread_idx.x` for you, but nothing
+> uses `i` until you fill in the kernel. Until then the compiler warns
+> `assignment to 'i' was never used; assign to '_' instead?`. That's expected,
+> and it clears as soon as your line reads from `a[i]` and writes to
+> `output[i]`. Later puzzles scaffold their variables the same way.
 
 <details>
 <summary><strong>Tips</strong></summary>

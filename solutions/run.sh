@@ -14,6 +14,18 @@ CROSS_MARK="✗"
 ARROW="→"
 BULLET="•"
 
+# `tr` substitutes bytes, so it cannot emit a multi-byte character: `tr ' ' '█'`
+# writes the first byte of the sequence repeatedly and the bar renders as
+# mojibake. Repeat the whole character instead.
+repeat_char() {
+    local char="$1"
+    local count="$2"
+    local i
+    for ((i = 0; i < count; i++)); do
+        printf '%s' "$char"
+    done
+}
+
 # Global counters
 TOTAL_TESTS=0
 PASSED_TESTS=0
@@ -22,7 +34,6 @@ SKIPPED_TESTS=0
 
 # Global options
 VERBOSE_MODE=true
-IGNORE_LOW_COMPUTE_FAILURES=false
 
 # Arrays to store results
 declare -a FAILED_TESTS_LIST
@@ -110,6 +121,15 @@ should_skip_puzzle_for_apple() {
 
 should_skip_puzzle_for_low_compute() {
     local puzzle_name="$1"
+
+    # Membership is a pure-shell test, so an ungated puzzle never pays for GPU
+    # detection — which shells out to python and pynvml. This runs for every
+    # test now that the check is unconditional, so the order matters.
+    local required_compute=$(get_nvidia_puzzle_min_compute "$puzzle_name")
+    if [ "$required_compute" = "0" ]; then
+        return 1  # No compute requirement
+    fi
+
     local gpu_platform=$(detect_gpu_platform)
 
     # Only apply compute capability restrictions to NVIDIA GPUs
@@ -128,9 +148,6 @@ should_skip_puzzle_for_low_compute() {
         local numeric_cap=$((major * 10 + minor))
     fi
 
-    # Get puzzle's minimum compute requirement
-    local required_compute=$(get_nvidia_puzzle_min_compute "$puzzle_name")
-
     # Skip if GPU doesn't meet requirement
     [ "$numeric_cap" -lt "$required_compute" ]
 }
@@ -144,7 +161,7 @@ usage() {
     echo ""
     echo -e "${BOLD}Options:${NC}"
     echo -e "  ${YELLOW}-v, --verbose${NC}                     Show output for all tests (not just failures)"
-    echo -e "  ${YELLOW}--ignore-low-compute-failures${NC}     Skip NVIDIA puzzles requiring higher compute (8.0+: p16,p19,p28,p29,p33 | 9.0+: p34)"
+    echo -e "  ${YELLOW}--ignore-low-compute-failures${NC}     Accepted for compatibility; skipping is now automatic (8.0+: $(IFS=,; echo "${NVIDIA_COMPUTE_80_REQUIRED_PUZZLES[*]}") | 9.0+: $(IFS=,; echo "${NVIDIA_COMPUTE_90_REQUIRED_PUZZLES[*]}"))"
     echo -e "  ${YELLOW}-h, --help${NC}                        Show this help message"
     echo ""
     echo -e "${BOLD}Parameters:${NC}"
@@ -159,7 +176,7 @@ usage() {
     echo -e "${BOLD}Examples:${NC}"
     echo -e "  ${GREEN}$0${NC}                                    ${GRAY}# Run all puzzles${NC}"
     echo -e "  ${GREEN}$0 -v${NC}                                 ${GRAY}# Run all puzzles with verbose output${NC}"
-    echo -e "  ${GREEN}$0 --ignore-low-compute-failures${NC}      ${GRAY}# Run all puzzles, skip high-compute puzzles (for T4/V100 CI)${NC}"
+    echo -e "  ${GREEN}$0 --ignore-low-compute-failures${NC}      ${GRAY}# No-op; kept so existing CI invocations keep working${NC}"
     echo -e "  ${GREEN}$0 p23${NC}                                ${GRAY}# Run only p23 tests with all flags${NC}"
     echo -e "  ${GREEN}$0 p26 --double-buffer${NC}                ${GRAY}# Run p26 with specific flag${NC}"
     echo -e "  ${GREEN}$0 -v p26 --double-buffer${NC}             ${GRAY}# Run p26 with specific flag (verbose)${NC}"
@@ -215,8 +232,8 @@ print_progress() {
     local empty=$((20 - filled))
 
     printf "\r  ${GRAY}Progress: [${NC}"
-    printf "%*s" $filled | tr ' ' '█'
-    printf "%*s" $empty | tr ' ' '░'
+    repeat_char '█' "$filled"
+    repeat_char '░' "$empty"
     printf "${GRAY}] %d%% (%d/%d)${NC}" $percentage $current $total
 }
 
@@ -247,8 +264,13 @@ execute_or_skip_test() {
         return 0  # Skipped successfully
     fi
 
-    # Check if this should be skipped due to low compute capability BEFORE running
-    if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ] && should_skip_puzzle_for_low_compute "$test_name"; then
+    # Check if this should be skipped due to low compute capability BEFORE
+    # running. Unconditional, like the AMD and Apple checks above: whether the
+    # GPU can run a puzzle is a fact about the hardware, not a preference. This
+    # was previously gated behind a single "is this GPU below 8.0" flag, so the
+    # 9.0 tier was enforced only on cards that already failed the 8.0 test, and
+    # p34 ran and failed on every Ampere and Ada GPU.
+    if should_skip_puzzle_for_low_compute "$test_name"; then
         local required_compute=$(get_nvidia_puzzle_min_compute "$test_name")
         local required_version=$(echo "$required_compute" | sed 's/\([0-9]\)\([0-9]\)/\1.\2/')
         print_test_start "$test_name" "$flag"
@@ -425,8 +447,9 @@ while [[ $# -gt 0 ]]; do
             VERBOSE_MODE=true
             shift
             ;;
+        # Still accepted so existing CI invocations do not start erroring, but
+        # capability skipping no longer depends on it.
         --ignore-low-compute-failures)
-            IGNORE_LOW_COMPUTE_FAILURES=true
             shift
             ;;
         -*)
@@ -449,14 +472,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Auto-detect and enable ignoring low compute failures BEFORE changing directory
-if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "false" ]; then
-    gpu_platform=$(detect_gpu_platform)
-    if [ "$gpu_platform" = "nvidia" ] && ! has_high_compute_capability; then
-        IGNORE_LOW_COMPUTE_FAILURES=true
+# Announce what this GPU cannot run, BEFORE changing directory. The skip itself
+# happens per puzzle in execute_or_skip_test; this only tells the reader what is
+# coming. The list is built by asking the same function that performs the skip,
+# so the announcement cannot claim a different set than the run produces — and,
+# unlike restating the arrays, it names only the tiers this GPU actually fails.
+gpu_platform=$(detect_gpu_platform)
+if [ "$gpu_platform" = "nvidia" ]; then
+    declare -a will_skip=()
+    for puzzle in "${NVIDIA_COMPUTE_80_REQUIRED_PUZZLES[@]}" \
+                  "${NVIDIA_COMPUTE_90_REQUIRED_PUZZLES[@]}"; do
+        if should_skip_puzzle_for_low_compute "$puzzle"; then
+            will_skip+=("$puzzle")
+        fi
+    done
+    if [ ${#will_skip[@]} -gt 0 ]; then
         compute_cap=$(detect_gpu_compute_capability)
-        echo -e "${YELLOW}${BOLD}Auto-detected:${NC} NVIDIA GPU with compute capability ${compute_cap:-<8.0}"
-        echo -e "Automatically skipping high-compute puzzles (8.0+: p16,p19,p28,p29,p33 | 9.0+: p34)"
+        echo -e "${YELLOW}${BOLD}Detected:${NC} NVIDIA GPU with compute capability ${compute_cap:-unknown}"
+        echo -e "Skipping puzzles this GPU cannot run: $(IFS=,; echo "${will_skip[*]}")"
         echo ""
     fi
 fi
@@ -519,8 +552,8 @@ print_summary() {
         local filled=$((success_rate / 5))
         local empty=$((20 - filled))
         echo -n "  "
-        printf "%*s" $filled | tr ' ' '█'
-        printf "%*s" $empty | tr ' ' '░'
+        repeat_char '█' "$filled"
+        repeat_char '░' "$empty"
         echo ""
         echo ""
     fi
@@ -614,9 +647,6 @@ print_startup_banner() {
             ;;
     esac
 
-    if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ]; then
-        echo -e "  ${BULLET} Skip Mode: ${YELLOW}HIGH-COMPUTE PUZZLES SKIPPED${NC} ${GRAY}(--ignore-low-compute-failures)${NC}"
-    fi
     echo ""
 }
 

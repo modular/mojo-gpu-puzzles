@@ -196,24 +196,27 @@ def balanced_kernel(
 @parameter
 @always_inline
 def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var y = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    y.enqueue_fill(0)
+    var x = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    x.enqueue_fill(0)
+
+    with y.map_to_host() as y_host, x.map_to_host() as x_host:
+        for i in range(test_size):
+            x_host[i] = Scalar[dtype](i + 1)
+            y_host[i] = Scalar[dtype](i + 2)
+
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
+
     @parameter
     @always_inline
     def minimal_workflow(ctx: DeviceContext) raises:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var y = ctx.enqueue_create_buffer[dtype](test_size)
-        y.enqueue_fill(0)
-        var x = ctx.enqueue_create_buffer[dtype](test_size)
-        x.enqueue_fill(0)
-
-        with y.map_to_host() as y_host, x.map_to_host() as x_host:
-            for i in range(test_size):
-                x_host[i] = Scalar[dtype](i + 1)
-                y_host[i] = Scalar[dtype](i + 2)
-
-        var y_tensor = TileTensor(y, layout)
-        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
-
         comptime kernel = minimal_kernel
         ctx.enqueue_function[kernel](
             y_tensor,
@@ -226,7 +229,6 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[minimal_workflow](b, bench_ctx)
 
 
@@ -235,24 +237,27 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 def benchmark_sophisticated_parameterized[
     test_size: Int
 ](mut b: Bencher) raises:
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var y = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    y.enqueue_fill(0)
+    var x = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    x.enqueue_fill(0)
+
+    with y.map_to_host() as y_host, x.map_to_host() as x_host:
+        for i in range(test_size):
+            x_host[i] = Scalar[dtype](i + 1)
+            y_host[i] = Scalar[dtype](i + 2)
+
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
+
     @parameter
     @always_inline
     def sophisticated_workflow(ctx: DeviceContext) raises:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var y = ctx.enqueue_create_buffer[dtype](test_size)
-        y.enqueue_fill(0)
-        var x = ctx.enqueue_create_buffer[dtype](test_size)
-        x.enqueue_fill(0)
-
-        with y.map_to_host() as y_host, x.map_to_host() as x_host:
-            for i in range(test_size):
-                x_host[i] = Scalar[dtype](i + 1)
-                y_host[i] = Scalar[dtype](i + 2)
-
-        var y_tensor = TileTensor(y, layout)
-        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
-
         comptime kernel = sophisticated_kernel
         ctx.enqueue_function[kernel](
             y_tensor,
@@ -265,31 +270,33 @@ def benchmark_sophisticated_parameterized[
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[sophisticated_workflow](b, bench_ctx)
 
 
 @parameter
 @always_inline
 def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
+    comptime layout = row_major[test_size]()
+    comptime LayoutType = type_of(layout)
+    var bench_ctx = DeviceContext()
+    var y = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    y.enqueue_fill(0)
+    var x = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    x.enqueue_fill(0)
+
+    with y.map_to_host() as y_host, x.map_to_host() as x_host:
+        for i in range(test_size):
+            x_host[i] = Scalar[dtype](i + 1)
+            y_host[i] = Scalar[dtype](i + 2)
+
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
+
     @parameter
     @always_inline
     def balanced_workflow(ctx: DeviceContext) raises:
-        comptime layout = row_major[test_size]()
-        comptime LayoutType = type_of(layout)
-        var y = ctx.enqueue_create_buffer[dtype](test_size)
-        y.enqueue_fill(0)
-        var x = ctx.enqueue_create_buffer[dtype](test_size)
-        x.enqueue_fill(0)
-
-        with y.map_to_host() as y_host, x.map_to_host() as x_host:
-            for i in range(test_size):
-                x_host[i] = Scalar[dtype](i + 1)
-                y_host[i] = Scalar[dtype](i + 2)
-
-        var y_tensor = TileTensor(y, layout)
-        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
-
         comptime kernel = balanced_kernel
         ctx.enqueue_function[kernel](
             y_tensor,
@@ -302,7 +309,6 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    var bench_ctx = DeviceContext()
     bencher_iter_custom[balanced_workflow](b, bench_ctx)
 
 

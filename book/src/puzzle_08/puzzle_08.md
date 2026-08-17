@@ -7,11 +7,13 @@ stores it in 1D TileTensor `output`.
 
 **Shared memory** is fast, on-chip storage that is visible to all threads within
 the same block. Unlike global memory (which all blocks can access but is slow),
-shared memory has latency similar to a CPU register cache. Each block gets its
-own private shared memory region — threads in one block cannot see the shared
-memory of another block. Because threads can read and write to the same shared
-memory locations, coordination via `barrier()` is required to prevent one thread
-from reading a value before another thread has finished writing it.
+shared memory lives on-chip, alongside the cores running the block, so an access
+costs on the order of tens of cycles rather than the hundreds a global-memory
+access can take. Each block gets its own private shared memory region—threads
+in one block cannot see the shared memory of another block. Because threads can
+read and write to the same shared memory locations, coordination via `barrier()`
+is required to prevent one thread from reading a value before another thread has
+finished writing it.
 
 **Note:** _You have fewer threads per block than the size of `a`._
 
@@ -37,9 +39,10 @@ maintaining the performance benefits of block-local storage.
 - Shared memory: `TPB` elements per block
 
 > **Warning**: Each block can only have a _constant_ amount of shared memory
-> that threads in that block can read and write to. This needs to be a literal
-> python constant, not a variable. After writing to shared memory you need to
-> call [barrier](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) to
+> that threads in that block can read and write to. This needs to be a
+> compile-time constant (a `comptime` binding), not a runtime variable. After
+> writing to shared memory you need to call
+> [barrier](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) to
 > ensure that threads do not cross.
 
 **Educational Note**: In this specific puzzle, the `barrier()` isn't strictly
@@ -156,19 +159,18 @@ maintaining performance:
 
    - Process phase: Each thread adds 10 to its shared tensor value
    - Result: `output[global_i] = shared[local_i] + 10 = 11`
-
-**Note**: In this specific case, the `barrier()` isn't strictly necessary since
-each thread only writes to and reads from its own shared memory location
-(`shared[local_i]`). However, it's included for educational purposes to
-demonstrate proper shared memory synchronization patterns that are essential
-when threads need to access each other's data.
+   - As noted above, the `barrier()` isn't strictly necessary here because each
+     thread only writes to and reads from `shared[local_i]`, but it stands in
+     for the synchronization every cooperative pattern needs
 
 3. **TileTensor benefits**
    - Shared memory allocation:
 
      ```txt
      # Clean TileTensor API with address_space
-     shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
+     var shared = stack_allocation[
+         dtype=dtype, address_space=AddressSpace.SHARED
+     ](row_major[TPB]())
      ```
 
    - Natural indexing for both global and shared:

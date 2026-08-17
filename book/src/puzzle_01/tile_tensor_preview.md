@@ -7,7 +7,7 @@ issues:
 
 ```mojo
 var i = thread_idx.x
-output[i] = a[i] + 10.0
+output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 ```
 
 This works for 1D arrays, but what happens when we need to:

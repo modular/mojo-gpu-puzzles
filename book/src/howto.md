@@ -27,14 +27,15 @@ and solution verification procedures.
 ### System requirements
 
 Make sure your system meets our
-[system requirements](https://docs.modular.com/packages#system-requirements).
+[system requirements](https://docs.modular.com/packages/#system-requirements).
 
 ### Compatible GPU
 
 You'll need a
-[compatible GPU](https://docs.modular.com/faq#gpu-requirements) to run the
-puzzles. After setup, you can verify your GPU compatibility using the
-`gpu-specs` command (see Quick Start section below).
+[compatible GPU](https://docs.modular.com/packages/#gpu-compatibility) to run
+the puzzles. After setup, you can verify your GPU compatibility using the
+`gpu-specs` command (see
+[Setting up your environment](#setting-up-your-environment)).
 
 ## Operating System
 
@@ -46,9 +47,9 @@ puzzles. After setup, you can verify your GPU compatibility using the
 
 ### Windows WSL2 for Linux with NVIDIA
 
-To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Ubuntu
+To setup NVIDIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Ubuntu
 please follow the
-[NVIDIA CUDA on WLS Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
+[NVIDIA CUDA on WSL Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
 
 The important information is to install the NVIDIA Windows CUDA Driver for
 *Windows* because they fully support WSL2. Once a Windows NVIDIA GPU driver is
@@ -64,7 +65,7 @@ Verify from Windows: Open PowerShell (not WSL)
 nvidia-smi
 ```
 
-Verify from inside WSL: (first start WLS e.g. via wsl -d Ubuntu)
+Verify from inside WSL: (first start WSL e.g. via wsl -d Ubuntu)
 
 ```bash
 ls -l /usr/lib/wsl/lib/nvidia-smi
@@ -145,8 +146,8 @@ code --version
 
 For `osx-arm64` users, you'll need:
 
-- **macOS 15.0 or later** for optimal compatibility. Run `pixi run check-macos`
-  and if it fails you'd need to upgrade.
+- **macOS 15.0 or later** for optimal compatibility. Run
+  `pixi run -e apple check-macos` and if it fails you'd need to upgrade.
 - **Xcode 16 or later** (minimum required). Use `xcodebuild -version` to check.
 
 If `xcrun -sdk macosx metal` outputs
@@ -224,12 +225,7 @@ curl -fsSL https://pixi.sh/install.sh | sh
 pixi self-update
 ```
 
-#### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
-
-> **Note**: This path is currently broken. The install fails because its
-> dependencies pin Mojo below version 1.0, which no longer resolves against the
-> release that the puzzles target. Use Option 1 (`pixi`) instead. The same
-> problem affects every `uv run poe ...` command in this book.
+### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
 **Install:**
 
@@ -274,7 +270,7 @@ pixi run p01
 
 ```bash
 # Check your GPU specifications
-pixi run gpu-specs
+pixi run -e amd gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
@@ -286,7 +282,7 @@ pixi run -e amd p01
 
 ```bash
 # Check your GPU specifications
-pixi run gpu-specs
+pixi run -e apple gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
@@ -345,7 +341,10 @@ this book describes.
   <div class="tab-content">
 
 ```bash
-# Run puzzles (remember to include your platform with -e if needed)
+# The NVIDIA environment is the default. On an AMD or Apple GPU, add
+# `-e amd` or `-e apple` to every `pixi run` and `pixi shell` below.
+
+# Run puzzles
 pixi run pXX             # NVIDIA (default) same as `pixi run -e nvidia pXX`
 pixi run -e amd pXX      # AMD GPU
 pixi run -e apple pXX    # Apple GPU
@@ -399,29 +398,29 @@ puzzles require different GPU features and vendor-specific tools.
 | **Part I: GPU Fundamentals**     |            |         |           |                                      |
 | 1 - Map                          | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 2 - Zip                          | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 3 - Guard                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 4 - Map 2D                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 3 - Guards                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 4 - 2D Map                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 5 - Broadcast                    | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | 6 - Blocks                       | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 7 - Shared Memory                | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 8 - Stencil                      | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 7 - 2D Blocks                    | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 8 - Shared Memory                | ✅         | ✅      | ✅        | Basic GPU kernels                    |
 | **Part II: Debugging**           |            |         |           |                                      |
 | 9 - GPU Debugger                 | ✅         | ❌      | ❌        | NVIDIA-specific debugging tools      |
 | 10 - Sanitizer                   | ✅         | ❌      | ❌        | NVIDIA-specific debugging tools      |
 | **Part III: GPU Algorithms**     |            |         |           |                                      |
-| 11 - Reduction                   | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 12 - Scan                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 13 - Pool                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 14 - Conv                        | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 15 - Matmul                      | ✅         | ✅      | ✅        | Basic GPU kernels                    |
-| 16 - Flashdot                    | ✅         | ✅      | ✅        | Advanced memory patterns             |
+| 11 - Pooling                     | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 12 - Dot Product                 | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 13 - 1D Convolution              | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 14 - Prefix Sum                  | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 15 - Axis Sum                    | ✅         | ✅      | ✅        | Basic GPU kernels                    |
+| 16 - Matrix Multiplication       | ✅         | ✅      | ✅        | Advanced memory patterns             |
 | **Part IV: MAX Graph**           |            |         |           |                                      |
 | 17 - Custom Op                   | ✅         | ✅      | ✅        | MAX Graph integration                |
 | 18 - Softmax                     | ✅         | ✅      | ✅        | MAX Graph integration                |
 | 19 - Attention                   | ✅         | ✅      | ✅        | MAX Graph integration                |
 | **Part V: PyTorch Integration**  |            |         |           |                                      |
-| 20 - Torch Bridge                | ✅         | ✅      | ❌        | PyTorch integration                  |
-| 21 - Autograd                    | ✅         | ✅      | ❌        | PyTorch integration                  |
+| 20 - 1D Convolution Op           | ✅         | ✅      | ❌        | PyTorch integration                  |
+| 21 - Embedding Op                | ✅         | ✅      | ❌        | PyTorch integration                  |
 | 22 - Fusion                      | ✅         | ✅      | ❌        | PyTorch integration                  |
 | **Part VI: Functional Patterns** |            |         |           |                                      |
 | 23 - Functional                  | ✅         | ✅      | ✅        | Advanced Mojo patterns               |
@@ -435,7 +434,7 @@ puzzles require different GPU features and vendor-specific tools.
 | 28 - Async Memory                | ✅         | ✅      | ✅        | Advanced memory operations           |
 | 29 - Barriers                    | ✅         | ❌      | ❌        | Advanced NVIDIA-only synchronization |
 | **Part X: Performance Analysis** |            |         |           |                                      |
-| 30 - Profiling                   | ✅         | ❌      | ❌        | NVIDIA profiling tools (NSight)      |
+| 30 - Profiling                   | ✅         | ❌      | ❌        | NVIDIA profiling tools (Nsight)      |
 | 31 - Occupancy                   | ✅         | ❌      | ❌        | NVIDIA profiling tools               |
 | 32 - Bank Conflicts              | ✅         | ❌      | ❌        | NVIDIA profiling tools               |
 | **Part XI: Modern GPU Features** |            |         |           |                                      |
@@ -502,15 +501,23 @@ programming:
 - **Older GPU architecture**: T4 GPUs may have limited compatibility with
   advanced Mojo GPU features
 - **Session limits**: 12-hour maximum runtime, then automatic disconnect
-- **Limited debugging support**: NVIDIA debugging tools (puzzles 9-10) may not
-  be fully available
+- **Tooling-dependent puzzles**: Puzzles 9, 10 and 30-32 drive external NVIDIA
+  tools rather than GPU features. `compute-sanitizer` (9, 10) comes with the
+  environment. Profiling with `ncu` (30-32) needs GPU performance-counter
+  access, which shared platforms often restrict, and `nsys` (30, 31) needs a
+  system CUDA installation. Interactive debugging with `cuda-gdb` (9) expects a
+  terminal rather than a notebook cell
+- **Compute capability limits**: T4 is compute capability 7.5, so puzzles
+  requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won't run
 - **Package installation restrictions**: May require workarounds for Mojo/MAX
   installation
 - **Performance limitations**: Shared infrastructure affects consistent
   benchmarking
 
-**Recommended for:** Basic GPU programming concepts (puzzles 1-8, 11-15) and
-learning fundamental patterns.
+**Recommended for:** Most of the curriculum. On a compute-capability-7.5 GPU
+every puzzle runs except 16, 28, 29 and 33 (which need 8.0) and 34 (which needs
+9.0); the tooling-dependent puzzles above depend on what your environment
+exposes.
 
 #### **Kaggle Notebooks**
 
@@ -532,14 +539,20 @@ Kaggle offers more generous free GPU access:
 
 - **Same GPU architecture constraints**: T4 compatibility issues with advanced
   features
-- **Limited debugging tools**: NVIDIA profiling and debugging tools (puzzles
-  9-10, 30-32) unavailable
+- **Tooling-dependent puzzles**: Puzzles 9, 10 and 30-32 drive external NVIDIA
+  tools rather than GPU features. `compute-sanitizer` (9, 10) comes with the
+  environment. Profiling with `ncu` (30-32) needs GPU performance-counter
+  access, which shared platforms often restrict, and `nsys` (30, 31) needs a
+  system CUDA installation. Interactive debugging with `cuda-gdb` (9) expects a
+  terminal rather than a notebook cell
 - **Mojo installation complexity**: Requires manual setup of Mojo environment
 - **Compute capability limits**: T4 is compute capability 7.5, so puzzles
-  requiring 8.0 (16, 19, 22, 28, 29, 33) and 9.0 (34) won't run
+  requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won't run
 
-**Recommended for:** Extended learning sessions on fundamental GPU programming
-(puzzles 1-15).
+**Recommended for:** Extended learning sessions across most of the curriculum.
+On a compute-capability-7.5 GPU every puzzle runs except 16, 28, 29 and 33
+(which need 8.0) and 34 (which needs 9.0); the tooling-dependent puzzles above
+depend on what your environment exposes.
 
 ### Recommendations
 
@@ -549,9 +562,10 @@ Kaggle offers more generous free GPU access:
   puzzles)
 - **Broad Coverage**: Apple GPUs cover fundamental through advanced concepts
   (24 of 35 puzzles)
-- **Free Platform Learning**: Google Colab/Kaggle suitable for basic to
-  intermediate concepts (puzzles 1-15; their T4 GPUs are below the compute
-  capability 8.0 that puzzle 16 onward can require)
+- **Free Platform Learning**: Google Colab/Kaggle cover most of the curriculum.
+  Their T4 GPUs are compute capability 7.5, which rules out only puzzles 16,
+  28, 29, 33 (8.0) and 34 (9.0); the debugging and profiling puzzles depend on
+  the tooling each platform exposes
 - **Debugging & Profiling**: NVIDIA GPU required for debugging tools and
   performance analysis
 - **Modern GPU Features**: NVIDIA GPU required for Tensor Cores and cluster
@@ -568,7 +582,7 @@ For the build, test, and pull request workflow, see
 ## Join the community
 
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
-  <a href="https://www.modular.com/company/talk-to-us">
+  <a href="https://docs.modular.com/get-started/#stay-in-touch">
     <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
   </a>
   <a href="https://forum.modular.com/c/">

@@ -148,7 +148,8 @@ This solution covers key concepts of block-based GPU processing:
 
 4. **Memory access pattern**
    - Coalesced memory access: threads in a block access contiguous memory
-   - Each thread processes one element: `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
+   - Each thread processes one element:
+     `output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0`
    - Block-level parallelism provides efficient memory bandwidth utilization
 
 This pattern forms the foundation for processing large datasets that exceed the

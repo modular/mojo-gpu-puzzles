@@ -58,10 +58,10 @@ This program computes sliding window sums for each position...
 Input array: [0, 1, 2, 3]
 Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
-stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
-To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
-/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
+Actual result: HostBuffer([0.0, 1.0, 3.0, 5.0])
+Expected: [1.0, 3.0, 6.0, 5.0]
+[FAIL] Test FAILED - Sliding window sums are incorrect!
+Check the window indexing logic...
 ```
 
 ## Your task: detective work
@@ -93,7 +93,7 @@ pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo
 | `r`   | `run`      | `(cuda-gdb) r`           |
 | `n`   | `next`     | `(cuda-gdb) n`           |
 | `c`   | `continue` | `(cuda-gdb) c`           |
-| `b`   | `break`    | `(cuda-gdb) b 39`        |
+| `b`   | `break`    | `(cuda-gdb) b 56`        |
 | `p`   | `print`    | `(cuda-gdb) p thread_id` |
 | `q`   | `quit`     | `(cuda-gdb) q`           |
 
@@ -177,19 +177,19 @@ Each position should sum its neighbors: [left + center + right]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
    <<<(1,1,1),(4,1,1)>>> (output=..., a=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:36
-36          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:47
+47          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ```
 
 #### Step 4: Navigate to the main logic
 
 ```bash
 (cuda-gdb) n
-35          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+46          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
 (cuda-gdb) n
-38          var thread_id = thread_idx.x
+49          var thread_id = thread_idx.x
 (cuda-gdb) n
-44          for offset in range(ITER):
+55          for offset in range(ITER):
 ```
 
 #### Step 5: Test variable accessibility - crucial discovery
@@ -230,15 +230,15 @@ inspect TileTensor data.
 #### Step 6: Set up loop monitoring
 
 ```bash
-(cuda-gdb) b 45
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 45.
+(cuda-gdb) b 56
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 56.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
    <<<(1,1,1),(4,1,1)>>> (output=..., a=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:45
-45              var idx = Int(thread_id) + offset - 1
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
+56              var idx = Int(thread_id) + offset - 1
 ```
 
 **🔍 We're now inside the loop body. Let's count iterations manually.**
@@ -247,13 +247,13 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-46              if 0 <= idx < SIZE:
+57              if 0 <= idx < SIZE:
 (cuda-gdb) n
-44          for offset in range(ITER):
+55          for offset in range(ITER):
 ```
 
-**First iteration complete**: Loop went from line 45 → 46 → back to 44. The loop
-continues.
+**First iteration complete**: Loop went from line 56 → 57 → back to 55. The
+loop continues.
 
 #### Step 8: Second loop iteration (offset = 1)
 
@@ -261,31 +261,31 @@ continues.
 (cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-45              var idx = Int(thread_id) + offset - 1
+56              var idx = Int(thread_id) + offset - 1
 (cuda-gdb) n
-46              if 0 <= idx < SIZE:
+57              if 0 <= idx < SIZE:
 (cuda-gdb) n
-51                  var value = a[idx]
+58                  var value = a[idx]
 (cuda-gdb) n
-48                  window_sum += value
+59                  window_sum += value
 (cuda-gdb) n
-46              if 0 <= idx < SIZE:
+57              if 0 <= idx < SIZE:
 (cuda-gdb) n
-44          for offset in range(ITER):
+55          for offset in range(ITER):
 ```
 
 **Second iteration complete**: This time it went through the if-block (lines
-47-48).
+58-59).
 
 #### Step 9: testing for third iteration
 
 ```bash
 (cuda-gdb) n
-50          output[thread_id] = window_sum
+61          output[thread_id] = window_sum
 ```
 
 **CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went
-directly to line 50 instead of hitting our breakpoint at line 45 again.
+directly to line 61 instead of hitting our breakpoint at line 56 again.
 
 **Conclusion**: The loop ran exactly **2 iterations** and then exited.
 
@@ -293,7 +293,7 @@ directly to line 50 instead of hitting our breakpoint at line 45 again.
 
 ```bash
 (cuda-gdb) n
-34      def process_sliding_window(
+45      def process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1

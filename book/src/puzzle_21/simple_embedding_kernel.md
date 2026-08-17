@@ -13,8 +13,8 @@ memory locations, leading to optimal memory coalescing.
 
 **Thread organization:**
 
-- **Grid configuration**: `[total_elements // 256]` blocks, `256` threads per
-  block
+- **Grid configuration**: `ceildiv(total_elements, 256)` blocks, `256` threads
+  per block
 - **Thread mapping**: Each thread handles one `(batch, seq, embed)` position
 - **Memory pattern**: Consecutive threads access consecutive embedding
   dimensions
@@ -62,8 +62,8 @@ memory access patterns.
 
 **Thread organization:**
 
-- **Grid configuration**: `[batch x seq // 16, embed_dim // 16]` blocks,
-  `16 x 16` threads per block
+- **Grid configuration**: `[ceildiv(batch x seq, 16), ceildiv(embed_dim, 16)]`
+  blocks, `16 x 16` threads per block
 - **Thread mapping**: `thread_idx.x` maps to batch/sequence, `thread_idx.y` maps
   to embedding dimension
 - **Memory pattern**: Threads in a warp may access scattered memory locations
@@ -99,8 +99,8 @@ You need to complete the missing parts in both embedding kernels:
   `if batch_seq_idx >= total_positions or embed_idx >= embed_dim`
 - The token lookup is the same as 1D, but you're only handling one embedding
   dimension per thread
-- This kernel processes one embedding dimension per thread instead of entire
-  vectors
+- Like the 1D kernel, each thread handles a single embedding element—only the
+  index mapping differs
 
 </div>
 </details>
@@ -123,8 +123,8 @@ This operation registers the optimized 1D embedding kernel as `"embedding"`:
 
 - **Simple grid configuration**: Uses a straightforward 1D grid with
   `ceildiv(total_elements, THREADS_PER_BLOCK)` blocks
-- **Memory optimization**: Single `enqueue_memset` call to zero the output
-  buffer efficiently
+- **Output initialization**: A single `enqueue_memset` zeroes the output buffer
+  before the launch
 - **Compile-time parameters**: All tensor dimensions passed as compile-time
   parameters for optimal performance
 - **Device abstraction**: Handles both GPU execution and CPU fallback seamlessly
@@ -306,11 +306,13 @@ The 1D kernel typically performs better because:
 
 The 2D kernel may perform worse due to:
 
-- **Scattered memory accesses**: Threads within a warp may access different
-  embedding vectors
+- **Scattered memory accesses**: Consecutive lanes in a warp vary along
+  `batch_seq_idx`, so they read from different embedding vectors
 - **Complex grid configuration**: 16×16 blocks may not align optimally with
   memory layout
-- **Warp divergence**: Different threads may follow different execution paths
+- **More memory transactions**: A warp's loads spread across many embedding
+  rows instead of one contiguous run, so each transaction returns mostly
+  unused bytes
 
 </div>
 
@@ -318,13 +320,14 @@ The 2D kernel may perform worse due to:
 
 ## Key concepts
 
-| Concept                 | 1D Coalesced                      | 2D Non-coalesced                          |
-|-------------------------|-----------------------------------|-------------------------------------------|
-| **Thread organization** | 1D flat indexing                  | 2D grid (batch×seq, embed)                |
-| **Memory access**       | Consecutive addresses             | Potentially scattered                     |
-| **Grid configuration**  | Simple: `[total_elements // 256]` | Complex: `[batch×seq // 16, embed // 16]` |
-| **Performance**         | Optimized for memory bandwidth    | Suboptimal memory pattern                 |
-| **Use case**            | Production kernels                | Educational comparison                    |
+| Concept                 | 1D Coalesced                           | 2D Non-coalesced                                        |
+|-------------------------|----------------------------------------|---------------------------------------------------------|
+| **Thread organization** | 1D flat indexing                       | 2D grid (batch×seq, embed)                              |
+| **Memory access**       | Consecutive addresses                  | Potentially scattered                                   |
+| **Grid configuration**  | Simple: `ceildiv(total_elements, 256)` | Complex: `[ceildiv(batch×seq, 16), ceildiv(embed, 16)]` |
+| **Performance**         | Optimized for memory bandwidth         | Suboptimal memory pattern                               |
+| **Use case**            | Production kernels                     | Educational comparison                                  |
 
-The core lesson: **memory coalescing** can lead to 2-3x performance differences
-for memory-bound operations like embeddings.
+The core lesson: **memory coalescing** dominates the runtime of memory-bound
+operations like embeddings. Both kernels do identical arithmetic and read the
+same bytes; only the access pattern differs.

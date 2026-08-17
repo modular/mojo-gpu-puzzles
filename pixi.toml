@@ -1,12 +1,23 @@
 [workspace]
+# Virtual packages on `platforms` entries parse only from 0.71.0. Without this,
+# an older pixi fails with "expected a string, found table" on the first
+# command a reader runs.
+requires-pixi = ">=0.71"
 authors = ["Modular <hello@modular.com>"]
-channels = ["https://conda.modular.com/max", "conda-forge"]
+channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
 name = "mojo-gpu-puzzles"
-platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+platforms = [
+  "linux-64",
+  "linux-aarch64",
+  "osx-arm64",
+  { platform = "linux-64", cuda = "12" },
+  { platform = "linux-aarch64", cuda = "12" },
+  { platform = "osx-arm64", macos = "15.0" },
+]
 version = "1.0.0"
 
 [feature.nvidia]
-system-requirements = { cuda = "12" }
+platforms = ["linux-64-cuda-12", "linux-aarch64-cuda-12", "osx-arm64"]
 channels = ["nvidia"]
 
 [feature.nvidia.target.linux-64.dependencies]
@@ -28,19 +39,25 @@ torch = { version = "==2.9.0", index = "https://download.pytorch.org/whl/cu130" 
 nvidia-ml-py = "*"
 
 [feature.amd]
-system-requirements = {}
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 
 [feature.amd.target.linux-64.pypi-dependencies]
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/rocm6.3" }
 pytorch-triton-rocm = {version = "*", index = "https://download.pytorch.org/whl/rocm6.3" }
 
 [feature.apple]
-system-requirements = { macos = "15.0" }
+platforms = ["osx-arm64-macos-15-0", "linux-64", "linux-aarch64"]
+
+# Building the book compiles nothing, so it must not inherit the GPU platform
+# requirements: the publish runner has no CUDA, and a pixi that enforced them
+# would break the deploy with no content change.
+[feature.book]
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 
 [dependencies]
 python = "==3.12"
 mojo = "*" # includes `mojo-compiler`, lsp, debugger, formatter etc.
-max = "*"
+max = ">=26.3.0.dev2026042817"
 bash = ">=5.2.21,<6"
 manim = ">=0.18.1,<0.19"
 mdbook = ">=0.4.48,<0.5"
@@ -50,6 +67,7 @@ pre-commit = ">=4.2.0,<5"
 nvidia = { features = ["nvidia"], solve-group = "nvidia" }
 amd = { features = ["amd"], solve-group = "amd" }
 apple = { features = ["apple"], solve-group = "apple" }
+book = { features = ["book"] }
 default = { features = ["nvidia"] }
 
 [tasks]
@@ -127,7 +145,7 @@ viz14 = "cd book/src/puzzle_14 && python puzzle_14_viz.py"
 p15 = "mojo problems/p15/p15.mojo"
 viz15 = "cd book/src/puzzle_15 && python puzzle_15_viz.py"
 
-p16 = "mojo problems/p16/p16.mojo"
+p16 = "bash solutions/gate.sh p16 mojo problems/p16/p16.mojo"
 viz16 = "cd book/src/puzzle_16 && python puzzle_16_viz.py"
 rooflineviz = "cd book/src/puzzle_16 && python roofline_viz.py"
 
@@ -137,13 +155,13 @@ p18-package = "mojo package problems/p18/op -o problems/p18/op.mojoc"
 p18-test-kernels = { cmd = "mojo run -I problems/p18 problems/p18/test/test_softmax.mojo", depends-on = ["p18-package"] }
 p18 = { cmd = "python problems/p18/p18.py", depends-on = ["p18-package"] }
 
-p19 = "mojo package problems/p19/op -o problems/p19/op.mojoc && python problems/p19/p19.py"
+p19 = "bash solutions/gate.sh p19 mojo package problems/p19/op -o problems/p19/op.mojoc && python problems/p19/p19.py"
 
 p20 = "python problems/p20/p20.py"
 
 p21 = "python problems/p21/p21.py"
 
-p22 = "python problems/p22/p22.py"
+p22 = "bash solutions/gate.sh p22 python problems/p22/p22.py"
 
 p23 = "mojo problems/p23/p23.mojo"
 
@@ -155,9 +173,9 @@ p26 = "mojo problems/p26/p26.mojo"
 
 p27 = "mojo problems/p27/p27.mojo"
 
-p28 = "mojo problems/p28/p28.mojo"
+p28 = "bash solutions/gate.sh p28 mojo problems/p28/p28.mojo"
 
-p29 = "mojo problems/p29/p29.mojo"
+p29 = "bash solutions/gate.sh p29 mojo problems/p29/p29.mojo"
 
 p30 = "mojo problems/p30/p30.mojo"
 
@@ -165,9 +183,9 @@ p31 = "mojo problems/p31/p31.mojo"
 
 p32 = "mojo problems/p32/p32.mojo"
 
-p33 = "mojo problems/p33/p33.mojo"
+p33 = "bash solutions/gate.sh p33 mojo problems/p33/p33.mojo"
 
-p34 = "mojo problems/p34/p34.mojo"
+p34 = "bash solutions/gate.sh p34 mojo problems/p34/p34.mojo"
 
 p35 = "mojo problems/p35/p35.mojo"
 

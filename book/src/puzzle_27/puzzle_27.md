@@ -15,9 +15,9 @@ leverage hardware-optimized block-wide communication primitives across multiple
 warps.
 
 **Key insight:** _GPU thread blocks execute with sophisticated hardware
-coordination - Mojo's block operations harness cross-warp communication and
-dedicated hardware units to provide complete parallel programming building
-blocks: reduction (all→one), scan (all→each), and broadcast (one→all)._
+coordination - Mojo's block operations combine warp shuffles with shared memory
+and barriers to provide complete parallel programming building blocks:
+reduction (all→one), scan (all→each), and broadcast (one→all)._
 
 ## What you'll learn
 
@@ -43,11 +43,12 @@ Cross-warp coordination:
 
 - **Cross-warp synchronization**: Automatic coordination across multiple warps
   within a block
-- **Dedicated hardware units**: Specialized scan units and butterfly reduction
-  networks
-- **Zero explicit barriers**: Hardware manages all synchronization internally
-- **Logarithmic complexity**: \\(O(\\log n)\\) algorithms with
-  single-instruction simplicity
+- **Warp shuffle plus shared memory**: A per-warp shuffle scan combined across
+  warps through shared memory
+- **Zero explicit barriers**: The primitives place the required `barrier()`
+  calls for you
+- **Logarithmic complexity**: \\(O(\\log n)\\) algorithms with single-call
+  simplicity
 
 ### **Block operations in Mojo**
 
@@ -119,11 +120,12 @@ while stride > 0:
 
 ### **The intermediate step: Warp programming (Puzzle 24)**
 
-Hardware-accelerated but limited scope - `warp.sum()` within 32-thread warps:
+Hardware-accelerated but limited scope - `warp.sum()` within a single warp
+(`WARP_SIZE` threads):
 
 ```mojo
 # Warp approach: 1 line but single warp only
-var total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
+var total = warp.sum(partial_product)
 ```
 
 ### **The destination: Block programming (This puzzle)**
