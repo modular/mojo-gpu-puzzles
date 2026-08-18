@@ -463,7 +463,7 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--benchmark":
-        print("Running P21 GPU Benchmarks...")
+        print("Running P23 GPU Benchmarks...")
         print("SIMD width:", SIMD_WIDTH)
         print("-" * 80)
         var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)

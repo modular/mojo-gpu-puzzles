@@ -138,9 +138,9 @@ def warp_inclusive_prefix_sum[
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
-    Compare this to Puzzle 12's complex shared memory + barrier approach.
+    Compare this to Puzzle 14's complex shared memory + barrier approach.
 
-    Puzzle 12 approach:
+    Puzzle 14 approach:
     - Shared memory allocation
     - Multiple barrier synchronizations
     - Log(n) iterations with manual tree reduction
@@ -160,7 +160,7 @@ def warp_inclusive_prefix_sum[
     if global_i < size:
         var current_val = input[global_i]
 
-        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 14!
         # But it only works within the current warp (WARP_SIZE threads)
         var scan_result = prefix_sum[exclusive=False](current_val)
 

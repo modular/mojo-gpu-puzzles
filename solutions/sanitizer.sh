@@ -120,7 +120,7 @@ case "$TOOL" in
         GREP_PATTERN="(========= COMPUTE-SANITIZER|========= ERROR SUMMARY|========= Memory Error|========= Invalid|========= Out of bounds|out:|expected:)"
         ;;
     racecheck)
-        GREP_PATTERN="(========= COMPUTE-SANITIZER|========= ERROR SUMMARY|========= Race|========= Hazard|out:|expected:)"
+        GREP_PATTERN="(========= COMPUTE-SANITIZER|========= ERROR SUMMARY|========= RACECHECK SUMMARY|========= Error: Race|=========     and |out:|expected:)"
         ;;
     synccheck)
         GREP_PATTERN="(========= COMPUTE-SANITIZER|========= ERROR SUMMARY|========= Sync|========= Deadlock|out:|expected:)"
@@ -132,6 +132,27 @@ esac
 
 TOTAL_ERRORS=0
 
+# racecheck reports "RACECHECK SUMMARY: N hazards displayed (N errors, M
+# warnings)"; every other tool reports "ERROR SUMMARY: N errors". Reading only
+# the latter meant a detected race never reached TOTAL_ERRORS, so the task that
+# teaches race detection exited 0 and printed a clean bill of health.
+extract_error_count() {
+  local output="$1"
+  local count
+
+  count=$(printf '%s\n' "$output" \
+    | sed -n 's/.*RACECHECK SUMMARY: [0-9][0-9]* hazards* displayed (\([0-9][0-9]*\) error.*/\1/p' \
+    | head -n1)
+
+  if [ -z "$count" ]; then
+    count=$(printf '%s\n' "$output" \
+      | sed -n 's/.*ERROR SUMMARY: \([0-9][0-9]*\) error.*/\1/p' \
+      | head -n1)
+  fi
+
+  printf '%s' "$count"
+}
+
 run_mojo_files_with_sanitizer() {
   local path_prefix="$1"
   local tool="$2"
@@ -142,13 +163,16 @@ run_mojo_files_with_sanitizer() {
     if [ -f "$f" ] && [ "$f" != "__init__.mojo" ]; then
       # If specific flag is provided, use only that flag
       if [ -n "$specific_flag" ]; then
-        # Check if the file supports this flag (check both patterns)
-        if grep -q "argv()\[1\] == \"$specific_flag\"" "$f" || grep -q "test_type == \"$specific_flag\"" "$f"; then
+        # Puzzles compare the mode flag three different ways: against
+        # `argv()[1]` directly, against a `test_type` binding, or against a
+        # `flag` binding. Recognising only the first two silently skipped every
+        # puzzle written in the third style, including the race-detection one.
+        if grep -qE "(argv\(\)\[1\]|test_type|flag)[[:space:]]*==[[:space:]]*\"$specific_flag\"" "$f"; then
           echo "=== Running compute-sanitizer --tool $tool on ${path_prefix}$f with flag: $specific_flag ==="
           output=$(compute-sanitizer --tool "$tool" mojo "$f" "$specific_flag" 2>&1)
           filtered_output=$(echo "$output" | grep -E "$grep_pattern")
 
-          error_count=$(echo "$output" | grep -E "========= ERROR SUMMARY: [0-9]+ error" | sed -n 's/.*ERROR SUMMARY: \([0-9]\+\) error.*/\1/p' | head -n1)
+          error_count=$(extract_error_count "$output")
 
           if [ -n "$error_count" ] && [ "$error_count" -gt 0 ]; then
             echo -e "${RED}FOUND $error_count ERRORS!${NC}"
@@ -165,10 +189,9 @@ run_mojo_files_with_sanitizer() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        # Check both patterns: argv()[1] == "--flag" and test_type == "--flag"
-        flags1=$(grep -o 'argv()\[1\] == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
-        flags2=$(grep -o 'test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
-        flags=$(echo -e "$flags1\n$flags2" | sort -u | grep -v '^$')
+        # Same three comparison styles as the specific-flag branch above.
+        flags=$(grep -oE '(argv\(\)\[1\]|test_type|flag)[[:space:]]*==[[:space:]]*"--[^"]*"' "$f" \
+          | grep -oE -- '--[^"]*' | grep -v '^--demo' | sort -u | grep -v '^$')
 
         if [ -z "$flags" ]; then
           echo "No flags detected for ${path_prefix}$f"
@@ -176,7 +199,7 @@ run_mojo_files_with_sanitizer() {
           output=$(compute-sanitizer --tool "$tool" mojo "$f" 2>&1)
           filtered_output=$(echo "$output" | grep -E "$grep_pattern")
 
-          error_count=$(echo "$output" | grep -E "========= ERROR SUMMARY: [0-9]+ error" | sed -n 's/.*ERROR SUMMARY: \([0-9]\+\) error.*/\1/p' | head -n1)
+          error_count=$(extract_error_count "$output")
 
           if [ -n "$error_count" ] && [ "$error_count" -gt 0 ]; then
             echo -e "${RED}FOUND $error_count ERRORS!${NC}"
@@ -195,7 +218,7 @@ run_mojo_files_with_sanitizer() {
             output=$(compute-sanitizer --tool "$tool" mojo "$f" "$flag" 2>&1)
             filtered_output=$(echo "$output" | grep -E "$grep_pattern")
 
-            error_count=$(echo "$output" | grep -E "========= ERROR SUMMARY: [0-9]+ error" | sed -n 's/.*ERROR SUMMARY: \([0-9]\+\) error.*/\1/p' | head -n1)
+            error_count=$(extract_error_count "$output")
 
             if [ -n "$error_count" ] && [ "$error_count" -gt 0 ]; then
               echo -e "${RED}FOUND $error_count ERRORS!${NC}"

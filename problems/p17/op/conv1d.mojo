@@ -126,7 +126,7 @@ struct Conv1DCustomOp:
                 0,
             )
 
-            # FILL ME IN with 1 line calling our conv1d_kernel
+            # FILL ME IN with 2 lines calling our conv1d_kernel
 
         elif target == "cpu":
             # we can fallback to CPU

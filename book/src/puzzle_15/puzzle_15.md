@@ -104,7 +104,7 @@ uv run poe p15
 Your output will look like this if the puzzle isn't solved yet:
 
 ```txt
-out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 ```
 

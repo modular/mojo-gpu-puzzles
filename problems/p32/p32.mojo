@@ -70,7 +70,8 @@ def two_way_conflict_kernel(
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
-    Threads 0,16 -> Bank 0, Threads 1,17 -> Bank 1, etc.
+    Stride-2 means thread i reads index 2i, so threads i and i+16 share bank
+    (2*i) % 32 — threads 0,16 -> Bank 0; threads 1,17 -> Bank 2; etc.
     Each bank serves 2 threads, doubling access time.
     """
     var size = Int(size_dev)

@@ -163,7 +163,7 @@ def transpose_kernel[
 # ANCHOR_END: transpose_kernel_solution
 
 
-# Apply softmax to attention scores taken from p16
+# Apply softmax to attention scores taken from p18
 def softmax_gpu_kernel[
     input_size: Int,
     LayoutType: TensorLayout,
