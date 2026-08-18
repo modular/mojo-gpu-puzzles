@@ -4,7 +4,7 @@
 
 퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를
 미리 살펴봅시다: 🥁... 바로
-**[TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/)**
+**[TileTensor](https://max.modular.com/mojo/layout/tile_tensor/TileTensor/)**
 입니다.
 
 > 💡 _TileTensor가 어떤 일을 할 수 있는지 맛보기로 살펴봅니다. 지금 모든 걸
@@ -70,10 +70,10 @@ tensor[1, 2] = 2.0  # 마지막 요소
 ```
 
 `Layout`과 `TileTensor`에 대해 더 알아보려면
-[Mojo 매뉴얼](https://docs.modular.com/mojo/manual/)의 가이드를 참고하세요:
+[Mojo 매뉴얼](https://max.modular.com/mojo/manual/)의 가이드를 참고하세요:
 
-- [Introduction to layouts](https://docs.modular.com/mojo/manual/layout/layouts)
-- [Using TileTensor](https://docs.modular.com/mojo/manual/layout/tensors)
+- [Introduction to layouts](https://max.modular.com/mojo/manual/layout/layouts)
+- [Using TileTensor](https://max.modular.com/mojo/manual/layout/tensors)
 
 ## 간단한 예제
 

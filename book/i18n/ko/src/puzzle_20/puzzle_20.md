@@ -22,7 +22,7 @@
 
 이 퍼즐에서는 [Puzzle 17: 1D 합성곱 Op](../puzzle_17/puzzle_17.md)의 1D
 합성곱(convolution) 커널을 그대로 가져와서, MAX 그래프 대신
-[CustomOpLibrary](https://docs.modular.com/api/python/torch/)를 사용하여
+[CustomOpLibrary](https://max.modular.com/api/python/torch/)를 사용하여
 PyTorch와 통합합니다.
 
 여기서 핵심은 **동일한 Mojo 커널이 수정 없이 그대로 동작한다**는 것입니다. MAX

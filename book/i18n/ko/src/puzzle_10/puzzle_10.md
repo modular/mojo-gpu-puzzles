@@ -142,7 +142,7 @@ GPU 검사를 하려면 **병렬 프로그램 탐정**이 되어야 합니다. �
 **알아야 할 것**:
 
 - Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (메모리 관리, 스레드 조율, 배리어)
-- **[호환 NVIDIA GPU 하드웨어](https://docs.modular.com/faq#gpu-requirements)**
+- **[호환 NVIDIA GPU 하드웨어](https://max.modular.com/faq#gpu-requirements)**
 - `compute-sanitizer` 접근을 위한 `pixi` 패키지 매니저 환경 설정
 - **선행 퍼즐**: [Puzzle 4](../puzzle_04/introduction_tile_tensor.md)와
   [Puzzle 8](../puzzle_08/puzzle_08.md) 숙지 권장

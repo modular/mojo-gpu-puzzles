@@ -28,18 +28,18 @@
 **핵심 기능:**
 
 - **블록 간 동기화**:
-  [`cluster_sync`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync),
-  [`cluster_arrive`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive),
-  [`cluster_wait`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로
+  [`cluster_sync`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync),
+  [`cluster_arrive`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive),
+  [`cluster_wait`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로
   여러 블록을 조정합니다
 - **블록 식별**:
-  [`block_rank_in_cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)를
+  [`block_rank_in_cluster`](https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)를
   사용하여 고유한 블록 조정을 수행합니다
 - **효율적인 조정**:
-  [`elect_one_sync`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)로
+  [`elect_one_sync`](https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)로
   최적화된 워프 수준 협력을 구현합니다
 - **고급 패턴**:
-  [`cluster_mask_base`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base)로
+  [`cluster_mask_base`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base)로
   선택적 블록 조정을 수행합니다
 
 ## 클러스터 프로그래밍 모델
@@ -93,15 +93,15 @@ Grid (Multiple Clusters)
 **핵심**: 클러스터 동기화 패턴의 기본 이해
 
 여러 스레드 블록이
-[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)와
-[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)를
+[`cluster_arrive()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)와
+[`cluster_wait()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)를
 사용하여 기본적인 블록 간 통신과 데이터 분배를 위해 실행을 조정하는 방법을
 배웁니다.
 
 **주요 API**:
-[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster),
-[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive),
-[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+[`block_rank_in_cluster()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster),
+[`cluster_arrive()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive),
+[`cluster_wait()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
 
 ---
 
@@ -113,9 +113,9 @@ Grid (Multiple Clusters)
 조정하는 클러스터 전체 리덕션과 집합 연산을 배웁니다.
 
 **주요 API**:
-[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync),
+[`cluster_sync()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync),
 효율적인 클러스터 조정을 위한
-[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)
+[`elect_one_sync()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)
 
 ---
 
@@ -127,8 +127,8 @@ GPU 활용률을 극대화하고 복잡한 연산 워크플로우를 구현하�
 레벨, 클러스터 레벨의 조정을 결합하는 정교한 알고리즘을 구현합니다.
 
 **주요 API**:
-[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync),
-[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive),
+[`elect_one_sync()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync),
+[`cluster_arrive()`](https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive),
 고급 조정 패턴
 
 ## 클러스터 프로그래밍이 중요한 이유

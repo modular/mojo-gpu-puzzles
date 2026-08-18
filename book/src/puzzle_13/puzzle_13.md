@@ -6,7 +6,7 @@
 > memory management:
 >
 > 1. Raw memory management with direct pointer manipulation using [Pointer](https://mojolang.org/docs/std/memory/pointer/Pointer/)
-> 2. The more structured [TileTensor](https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/) with its powerful address_space parameter for memory allocation
+> 2. The more structured [TileTensor](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/) with its powerful address_space parameter for memory allocation
 >
 > From Puzzle 7 onward the puzzles use `TileTensor` almost exclusively (Puzzle 9
 > keeps a raw-pointer kernel to demonstrate a debugging scenario), and

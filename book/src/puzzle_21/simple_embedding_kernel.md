@@ -175,7 +175,7 @@ Both custom operations provide essential infrastructure:
 ### Integration with PyTorch
 
 These registered operations can be called from Python using the
-[CustomOpLibrary](https://docs.modular.com/api/python/torch/):
+[CustomOpLibrary](https://max.modular.com/api/python/torch/):
 
 ```python
 # Load the custom operations

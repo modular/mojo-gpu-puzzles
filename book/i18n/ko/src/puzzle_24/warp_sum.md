@@ -8,7 +8,7 @@
 프로그래밍이 GPU 동기화를 어떻게 변환하는지 보여줍니다.
 
 **핵심 통찰:**
-_[warp.sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/sum) 연산은
+_[warp.sum()](https://max.modular.com/mojo/std/gpu/primitives/warp/sum) 연산은
 SIMT 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 단일 하드웨어 가속
 명령으로 대체합니다._
 
