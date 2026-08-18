@@ -52,9 +52,9 @@ GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 �
 **동기화 기본 요소의 계층 구조:**
 
 - **기본
-  [`barrier()`](https://max.modular.com/mojo/std/gpu/sync/sync/barrier/)**:
+  [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)**:
   블록 내 단순 스레드 동기화
-- **고급 [mbarrier API](https://max.modular.com/mojo/std/gpu/sync/sync/)**:
+- **고급 [mbarrier API](https://max.modular.com/api/mojo/max/gpu/sync/sync/)**:
   상태 추적을 지원하는 세밀한 메모리 배리어 제어
 - **스트리밍 조정**: 비동기 복사 및 대량 전송 동기화
 
@@ -110,14 +110,14 @@ GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 �
 **초점**: 고급 메모리 배리어 API와 반복 처리
 
 정밀한 메모리 조정이 필요한 반복 알고리즘을 위해
-[mbarrier API](https://max.modular.com/mojo/std/gpu/sync/sync/)를 사용한
+[mbarrier API](https://max.modular.com/api/mojo/max/gpu/sync/sync/)를 사용한
 **세밀한 동기화 제어**를 탐구합니다. 이 퍼즐은 반복법과 시뮬레이션 알고리즘에
 필수적인 더블 버퍼링 패턴을 보여줍니다.
 
 **핵심 개념**:
 
-- 고급 [mbarrier API](https://max.modular.com/mojo/std/gpu/sync/sync/) vs 기본
-  [`barrier()`](https://max.modular.com/mojo/std/gpu/sync/sync/barrier/)
+- 고급 [mbarrier API](https://max.modular.com/api/mojo/max/gpu/sync/sync/) vs 기본
+  [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
 - 읽기/쓰기 버퍼 역할을 교대하는 더블 버퍼링
 - 명시적 메모리 배리어를 사용한 반복 알고리즘 조정
 

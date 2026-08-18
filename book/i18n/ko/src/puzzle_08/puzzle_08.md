@@ -35,7 +35,7 @@
 > **경고**: 각 블록에는 해당 블록의 스레드들이 읽고 쓸 수 있는 공유 메모리의
 > 양이 _상수_로 고정되어 있습니다. 이 값은 파이썬 리터럴 상수여야 하며 변수를
 > 사용할 수 없습니다. 공유 메모리에 쓴 후에는
-> [barrier](https://max.modular.com/mojo/std/gpu/sync/sync/barrier/)를 호출해
+> [barrier](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)를 호출해
 > 스레드들이 교차하지 않도록 해야 합니다.
 
 **학습 참고**: 이 퍼즐에서는 각 스레드가 자신의 공유 메모리 위치에만 접근하므로

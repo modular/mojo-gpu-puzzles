@@ -43,7 +43,7 @@
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a>
 
 이 퍼즐의 핵심은
-[barrier](https://max.modular.com/mojo/std/gpu/sync/sync/barrier/)가 블록
+[barrier](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)가 블록
 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는
 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 커널을
 큐에 넣어야 합니다:

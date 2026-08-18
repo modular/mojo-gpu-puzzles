@@ -22,7 +22,7 @@
   <a href="https://github.com/modular/mojo-gpu-puzzles/actions/workflows/ci.yml">
     <img src="https://github.com/modular/mojo-gpu-puzzles/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
   </a>
-  <a href="https://max.modular.com/mojo">
+  <a href="https://mojolang.org/docs">
     <img src="https://img.shields.io/badge/Powered%20by-Mojo-FF5F1F" alt="Powered by Mojo">
   </a>
   <a href="https://max.modular.com/get-started/#stay-in-touch">

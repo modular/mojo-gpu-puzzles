@@ -8,7 +8,7 @@
 있습니다.
 
 **핵심 통찰:**
-_[shuffle_down()](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)
+_[shuffle_down()](https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down)
 연산은 SIMT 실행을 활용하여 각 레인이 같은 워프 내 이웃의 데이터에 접근할 수
 있게 하며, 효율적인 스텐실 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다._
 
