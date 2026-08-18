@@ -4,7 +4,7 @@
 
 **중요 사항**: 퍼즐 29는 현재 NVIDIA 전용입니다.
 [동반 스텐실 퍼즐](memory_barrier.md)에서 사용되는
-[`mbarrier` API](https://docs.modular.com/mojo/std/gpu/sync/sync/) 는
+[`mbarrier` API](https://max.modular.com/mojo/std/gpu/sync/sync/) 는
 NVIDIA 하드웨어가 필요하며, `pixi` 작업이 이를 동일한 컴파일 단위로
 가져옵니다.
 

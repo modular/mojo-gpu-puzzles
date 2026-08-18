@@ -7,7 +7,7 @@
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
+  <a href="https://max.modular.com/mojo/manual/" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
@@ -24,7 +24,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://docs.modular.com/get-started/#stay-in-touch"
+    <a href="https://max.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">
@@ -36,7 +36,7 @@
 > _"우리가 할 수 있기 전에 배워야 하는 것들은, 하면서 배운다."_
 > 아리스토텔레스 (니코마코스 윤리학)
 
-[Mojo](https://docs.modular.com/mojo/manual/) 🔥를 사용한 GPU 프로그래밍 실습
+[Mojo](https://max.modular.com/mojo/manual/) 🔥를 사용한 GPU 프로그래밍 실습
 가이드에 오신 것을 환영합니다. Mojo는 파이썬 문법과 시스템 수준의 성능을 결합한
 프로그래밍 언어입니다.
 

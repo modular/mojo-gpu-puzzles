@@ -7,9 +7,9 @@
 **Puzzle 26: 고급 워프 통신 기본 요소**에서는 정교한 GPU
 **워프 레벨 버터플라이 통신과 병렬 스캔 연산** - 워프 내에서 효율적인 트리 기반
 알고리즘과 병렬 리덕션을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다.
-[shuffle_xor](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)을
+[shuffle_xor](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)을
 사용한 버터플라이 네트워크와
-[prefix_sum](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)을
+[prefix_sum](https://max.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)을
 사용한 하드웨어 최적화 병렬 스캔을 배우며, 복잡한 다단계 공유 메모리 알고리즘
 없이 이를 구현하는 방법을 익힙니다.
 
@@ -53,9 +53,9 @@ Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
 `gpu.primitives.warp`의 정교한 통신 기본 요소를 배웁니다:
 
 1. **[`shuffle_xor(value,
-   mask)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)**:
+   mask)`](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)**:
    트리 알고리즘을 위한 XOR 기반 버터플라이 통신
-2. **[`prefix_sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)**:
+2. **[`prefix_sum(value)`](https://max.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)**:
    하드웨어 가속 병렬 스캔 연산
 3. **고급 조정 패턴**: 여러 기본 요소를 결합한 복잡한 알고리즘
 

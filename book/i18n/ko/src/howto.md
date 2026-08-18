@@ -26,13 +26,13 @@
 ### 시스템 요구사항
 
 먼저 시스템이
-[시스템 요구사항](https://docs.modular.com/packages#system-requirements)을
+[시스템 요구사항](https://max.modular.com/packages#system-requirements)을
 충족하는지 확인하세요.
 
 ### 지원되는 GPU
 
 퍼즐을 실행하려면
-[지원되는 GPU](https://docs.modular.com/faq#gpu-requirements)가 필요합니다.
+[지원되는 GPU](https://max.modular.com/faq#gpu-requirements)가 필요합니다.
 환경 설정을 마친 뒤 아래 환경 설정의 `gpu-specs` 명령어로 GPU 호환성을 확인할 수
 있습니다.
 
@@ -167,9 +167,9 @@ xcodebuild -downloadComponent MetalToolchain
 
 - 프로그래밍 기초 (변수, 반복문, 조건문, 함수)
 - 병렬 컴퓨팅 개념 (스레드, 동기화, 경쟁 상태)
-- [Mojo](https://docs.modular.com/mojo/manual/) 기본 문법
-  ([포인터 입문](https://docs.modular.com/mojo/manual/pointers/) 섹션 포함)
-- [GPU 프로그래밍 기초](https://docs.modular.com/mojo/manual/gpu/fundamentals)를
+- [Mojo](https://max.modular.com/mojo/manual/) 기본 문법
+  ([포인터 입문](https://max.modular.com/mojo/manual/pointers/) 섹션 포함)
+- [GPU 프로그래밍 기초](https://max.modular.com/mojo/manual/gpu/fundamentals)를
   미리 읽어두면 도움이 됩니다!
 
 GPU 프로그래밍 경험이 없어도 괜찮습니다! 퍼즐을 풀어가며 자연스럽게 익힐 수

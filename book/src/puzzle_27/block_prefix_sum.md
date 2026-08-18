@@ -1,14 +1,14 @@
 # block.prefix_sum() Parallel Histogram Binning
 
 This puzzle implements parallel histogram binning using block-level
-[block.prefix_sum](https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
+[block.prefix_sum](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
 operations for advanced parallel filtering and extraction. Each thread
 determines its element's target bin, then applies `block.prefix_sum()` to
 compute write positions for extracting elements from a specific bin, showing how
 prefix sum enables sophisticated parallel partitioning beyond simple reductions.
 
 **Key insight:** _The
-[block.prefix_sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
+[block.prefix_sum()](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
 operation provides parallel filtering and extraction by computing cumulative
 write positions for matching elements across all threads in a block._
 

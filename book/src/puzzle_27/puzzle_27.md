@@ -54,11 +54,11 @@ Cross-warp coordination:
 
 Learn the complete parallel programming toolkit from `max.gpu.primitives.block`:
 
-1. **[`block.sum(value)`](https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum)**:
+1. **[`block.sum(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/block/sum)**:
    All-to-one reduction for totals, averages, maximum/minimum values
-2. **[`block.prefix_sum(value)`](https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)**:
+2. **[`block.prefix_sum(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)**:
    All-to-each scan for parallel filtering and extraction
-3. **[`block.broadcast(value)`](https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast)**:
+3. **[`block.broadcast(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/block/broadcast)**:
    One-to-all distribution for parameter sharing and coordination
 
 > **Note:** These primitives enable sophisticated parallel algorithms like

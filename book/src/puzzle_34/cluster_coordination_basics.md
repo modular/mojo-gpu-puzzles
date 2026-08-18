@@ -11,9 +11,9 @@ APIs.
 results in a shared output array.
 
 **Key Learning**: Learn the essential cluster synchronization pattern:
-[`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+[`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
 → process →
-[`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait),
+[`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait),
 extending the synchronization concepts from
 [barrier() in Puzzle 29](../puzzle_29/barrier.md).
 
@@ -43,9 +43,9 @@ processing completes before any block reads the final results.
 **Coordination Requirements:**
 
 1. Each block must signal completion using
-   [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+   [`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
 2. All blocks must wait for others using
-   [`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
+   [`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
 3. Final output shows each block's processed sum in a 4-element array
 
 ## Configuration
@@ -80,7 +80,7 @@ processing completes before any block reads the final results.
 ### **Block identification patterns**
 
 - Use
-  [`block_rank_in_cluster()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)
+  [`block_rank_in_cluster()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)
   to get the cluster rank (0-3)
 - Use `block_idx.x` for reliable block indexing in grid launch
 - Scale data processing by block position for distinct results
@@ -99,11 +99,11 @@ processing completes before any block reads the final results.
 
 1. **Process**: Each block works on its portion of data
 2. **Signal**:
-   [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+   [`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
    announces processing completion
 3. **Compute**: Block-local operations (reduction, aggregation)
 4. **Wait**:
-   [`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
+   [`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
    blocks until every block has arrived
 
 ### **Thread coordination within blocks**
@@ -212,7 +212,7 @@ var block_id = block_idx.x                               # Block index for relia
 
 **Inter-block signaling:**
 
-- [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+- [`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
   signals that this block has completed its local processing phase
 - This is a **non-blocking** operation, and it makes this block's earlier writes
   visible to the rest of the cluster
@@ -233,7 +233,7 @@ if local_i == 0:
 
 **Final synchronization:**
 
-- [`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
+- [`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
   blocks until every block in the cluster has called `cluster_arrive()`
 - No block runs past this point until the whole cluster has signaled arrival
 
@@ -242,7 +242,7 @@ if local_i == 0:
 **Why use `block_id` instead of `my_block_rank`?**
 
 - `block_idx.x` provides reliable grid-launch indexing (0, 1, 2, 3)
-- [`block_rank_in_cluster()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)
+- [`block_rank_in_cluster()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)
   returns the rank *within* the cluster, so several blocks share a rank as soon
   as the grid holds more than one cluster
 - Using `block_id` guarantees each block gets unique data portions and output
@@ -257,9 +257,9 @@ if local_i == 0:
 **Synchronization hierarchy:**
 
 1. **`barrier()`**: Synchronizes threads within each block (intra-block)
-2. **[`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)**:
+2. **[`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)**:
    Signals completion to other blocks (inter-block, non-blocking)
-3. **[`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)**:
+3. **[`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)**:
    Waits for all blocks to arrive (inter-block, blocking)
 
 **Performance characteristics:**
@@ -280,12 +280,12 @@ structure:
 
 1. **Phase 1**: Each block processes its assigned data portion independently
 2. **Signal**:
-   [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+   [`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
    announces completion of processing
 3. **Phase 2**: Each block carries on with block-local work while the others are
    still arriving
 4. **Synchronize**:
-   [`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
+   [`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait)
    blocks until every block has arrived, and only past this point is another
    block's result safe to read
 

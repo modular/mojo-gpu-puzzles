@@ -388,7 +388,7 @@ all boundary checks:
 
    This directly expresses "get the tile at position (block_idx.y, block_idx.x)"
    without manual coordinate calculation. See the
-   [documentation](https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile)
+   [documentation](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile)
    for more details.
 
 2. **Asynchronous memory operations**
@@ -411,7 +411,7 @@ all boundary checks:
    - Issue the copy through the GPU's asynchronous copy path (`cp.async` on
      NVIDIA), which moves global memory straight into shared memory without
      staging through registers, via
-     [copy_dram_to_sram_async](https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
+     [copy_dram_to_sram_async](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
    - Use specialized thread layouts for optimal memory access patterns
    - Eliminate the need for manual memory initialization
    - **Important**:
