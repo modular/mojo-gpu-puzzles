@@ -168,7 +168,7 @@
 ### PyTorch 통합
 
 등록된 연산은
-[CustomOpLibrary](https://docs.modular.com/api/python/torch/)를 통해
+[CustomOpLibrary](https://max.modular.com/api/python/torch/)를 통해
 파이썬에서 호출할 수 있습니다:
 
 ```python

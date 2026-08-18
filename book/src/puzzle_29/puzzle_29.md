@@ -54,9 +54,9 @@ management.
 **Synchronization primitive hierarchy:**
 
 - **Basic
-  [`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/)**:
+  [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)**:
   Simple thread synchronization within blocks
-- **Advanced [mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/)**:
+- **Advanced [mbarrier APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/)**:
   Fine-grained memory barrier control with state tracking
 
 **Memory consistency models:**
@@ -118,15 +118,15 @@ computations, neural network layer coordination
 **Focus**: Advanced memory barrier APIs and iterative processing
 
 Explore **fine-grained synchronization control** using
-[mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/) for iterative
+[mbarrier APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/) for iterative
 algorithms that require precise memory coordination. This puzzle demonstrates
 double-buffering patterns essential for iterative solvers and simulation
 algorithms.
 
 **Key concepts**:
 
-- Advanced [mbarrier APIs](https://docs.modular.com/api/mojo/max/gpu/sync/sync/) vs
-  basic [`barrier()`](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
+- Advanced [mbarrier APIs](https://max.modular.com/api/mojo/max/gpu/sync/sync/) vs
+  basic [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
 - Double-buffering with alternating read/write buffer roles
 - Iterative algorithm coordination with explicit memory barriers
 

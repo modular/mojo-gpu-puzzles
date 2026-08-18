@@ -17,7 +17,7 @@ GPU 디버깅은 처음에는 어려워 보일 수 있습니다. 수천 개의 �
 
 **참고**: 다음 내용은 범용 IDE 호환성을 위해 명령줄 디버깅에 초점을 맞춥니다. VS
 Code 디버깅을 선호한다면
-[Mojo 디버깅 문서](https://docs.modular.com/mojo/tools/debugging)에서 VS Code
+[Mojo 디버깅 문서](https://max.modular.com/mojo/tools/debugging)에서 VS Code
 전용 설정과 워크플로우를 참조하세요.
 
 ## GPU 디버깅이 다른 이유
@@ -37,7 +37,7 @@ Code 디버깅을 선호한다면
 ## 디버깅 도구 모음
 
 Mojo의 GPU 디버깅 기능은 현재 NVIDIA GPU로 제한됩니다.
-[Mojo 디버깅 문서](https://docs.modular.com/mojo/tools/debugging)에 따르면 Mojo
+[Mojo 디버깅 문서](https://max.modular.com/mojo/tools/debugging)에 따르면 Mojo
 패키지에는 다음이 포함됩니다:
 
 - CPU 측 디버깅을 위한 Mojo 플러그인이 포함된 **LLDB 디버거**
@@ -45,7 +45,7 @@ Mojo의 GPU 디버깅 기능은 현재 NVIDIA GPU로 제한됩니다.
 - 범용 IDE 호환성을 위한 `mojo debug`를 통한 **명령줄 인터페이스**
 
 GPU 전용 디버깅에 대해서는
-[Mojo GPU 디버깅 가이드](https://docs.modular.com/mojo/tools/gpu-debugging)에서
+[Mojo GPU 디버깅 가이드](https://max.modular.com/mojo/tools/gpu-debugging)에서
 추가 기술 세부 사항을 제공합니다.
 
 이 아키텍처는 익숙한 디버깅 명령어와 GPU 전용 기능, 두 가지 장점을 모두
@@ -1312,8 +1312,8 @@ GPU 디버깅에는 수천 개의 병렬 스레드, 복잡한 메모리 계층 �
 
 ## 추가 자료
 
-- [Mojo 디버깅 문서](https://docs.modular.com/mojo/tools/debugging)
-- [Mojo GPU 디버깅 가이드](https://docs.modular.com/mojo/tools/gpu-debugging)
+- [Mojo 디버깅 문서](https://max.modular.com/mojo/tools/debugging)
+- [Mojo GPU 디버깅 가이드](https://max.modular.com/mojo/tools/gpu-debugging)
 - [NVIDIA CUDA-GDB 사용자 가이드](https://docs.nvidia.com/cuda/cuda-gdb/index.html)
 - [CUDA-GDB 명령어 참조](https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference)
 

@@ -20,7 +20,7 @@
 In [Puzzle 13](../puzzle_13/puzzle_13.md), we implemented a 1D convolution
 kernel that runs efficiently on the GPU. Now we'll take this kernel and
 transform it into a custom operation that can be called directly from Python
-using [MAX Graph](https://docs.modular.com/api/python/graph/).
+using [MAX Graph](https://max.modular.com/api/python/graph/).
 
 The 1D convolution kernel we'll be working with is already implemented:
 
@@ -133,9 +133,9 @@ The solution is:
 These two statements do several important things:
 
 1. Calls
-   [enqueue_function](https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
+   [enqueue_function](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
    on the GPU context (`gpu_ctx` is of type
-   [DeviceContext](https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))
+   [DeviceContext](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))
    to schedule our kernel execution
 2. Binds the layout and size information as **compile-time** parameters through
    the `comptime kernel = conv1d_kernel[...]` binding
@@ -152,23 +152,23 @@ Let's break down how this works in the larger context:
    - Creates NumPy arrays for input and kernel
    - Calls `conv_1d()` function which wraps our operation in MAX Graph
    - Converts NumPy arrays to
-     [MAX driver](https://docs.modular.com/api/python/driver) Buffers with
+     [MAX driver](https://max.modular.com/api/python/driver) Buffers with
      `Buffer.from_numpy(input).to(device)`
    - Loads the custom operation package with `custom_extensions=[mojo_kernels]`
 
 2. **Graph building**:
    - Defines input and output tensor types with
-     [TensorType](https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType)
+     [TensorType](https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType)
    - Specifies parameters for our operation via `parameters={...}`
    - Creates a computation graph with
-     [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/api/python/graph/Graph)
+     [`Graph("conv_1d_graph", ...)`](https://max.modular.com/api/python/graph/Graph)
    - Calls our operation using
-     [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/api/python/graph/ops#custom)
+     [`ops.custom(name="conv1d", ...)`](https://max.modular.com/api/python/graph/ops#custom)
 
 3. **Custom op registration**:
    - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
      Graph. See
-     [@extensibility.register](https://docs.modular.com/api/mojo/extensibility/decorators/register/)
+     [@extensibility.register](https://max.modular.com/api/mojo/extensibility/decorators/register/)
    - The `execute` method parameters define the interface (inputs, outputs,
      context)
    - Input/output tensors are converted to TileTensors for use in our kernel
@@ -248,8 +248,8 @@ functions to create efficient, type-safe, accelerated operations.
 
 > Check out the follow tutorials for more details:
 >
-> - [Get started with MAX Graph in Python](https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/)
-> - [MAX Graph custom op for GPUs](https://docs.modular.com/tutorials/build-custom-ops/)
+> - [Get started with MAX Graph in Python](https://max.modular.com/tutorials/get-started-with-max-graph-in-python/)
+> - [MAX Graph custom op for GPUs](https://max.modular.com/tutorials/build-custom-ops/)
 
 ### Custom op registration
 

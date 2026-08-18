@@ -46,7 +46,7 @@ explains that the Mojo package includes:
 - **Command-line interface** via `mojo debug` for universal IDE compatibility
 
 For GPU-specific debugging, the
-[GPU debugging guide](https://docs.modular.com/gpu/debugging/)
+[GPU debugging guide](https://max.modular.com/gpu/debugging/)
 provides additional technical details.
 
 This architecture provides the best of both worlds: familiar debugging commands
@@ -1350,7 +1350,7 @@ hierarchies, and specialized tools. You now have:
 ## Additional resources
 
 - [Mojo debugging documentation](https://mojolang.org/docs/tools/debugging/)
-- [GPU debugging guide](https://docs.modular.com/gpu/debugging/)
+- [GPU debugging guide](https://max.modular.com/gpu/debugging/)
 - [NVIDIA CUDA-GDB User Guide](https://docs.nvidia.com/cuda/cuda-gdb/index.html)
 - [CUDA-GDB Command Reference](https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference)
 

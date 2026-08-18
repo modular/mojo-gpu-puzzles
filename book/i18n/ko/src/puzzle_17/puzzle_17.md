@@ -21,7 +21,7 @@
 
 [Puzzle 13: 1D 합성곱](../puzzle_13/puzzle_13.md)에서 GPU에서 효율적으로
 동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을
-[MAX 그래프](https://docs.modular.com/api/python/graph/)를 통해 파이썬에서
+[MAX 그래프](https://max.modular.com/api/python/graph/)를 통해 파이썬에서
 직접 호출할 수 있는 커스텀 연산으로 변환합니다.
 
 사용할 1D 합성곱 커널은 이미 구현되어 있습니다:
@@ -134,8 +134,8 @@ Verification passed: Custom kernel results match NumPy calculation
 이 한 줄이 수행하는 중요한 작업들은 다음과 같습니다:
 
 1. GPU 컨텍스트(`gpu_ctx`의 타입은
-   [DeviceContext](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/))에서
-   [enqueue_function](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function)을
+   [DeviceContext](https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/))에서
+   [enqueue_function](https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function)을
    호출하여 커널 실행 예약
 2. 필요한 레이아웃과 크기 정보를 **컴파일 타임** 파라미터로 전달
 3. 출력, 입력, 커널 텐서를 런타임 인자로 제공
@@ -151,21 +151,21 @@ Verification passed: Custom kernel results match NumPy calculation
    - 입력과 커널용 NumPy 배열 생성
    - MAX 그래프로 연산을 감싸는 `conv_1d()` 함수 호출
    - NumPy 배열을 `Buffer.from_numpy(input).to(device)`로
-     [MAX driver](https://docs.modular.com/api/python/driver) Buffer로 변환
+     [MAX driver](https://max.modular.com/api/python/driver) Buffer로 변환
    - `custom_extensions=[mojo_kernels]`로 커스텀 연산 패키지 로드
 
 2. **그래프 구축**:
-   - [TensorType](https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType)으로
+   - [TensorType](https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType)으로
      입력 및 출력 텐서 타입 정의
    - `parameters={...}`를 통해 연산의 파라미터 지정
-   - [`Graph("conv_1d_graph", ...)`](https://docs.modular.com/api/python/graph/Graph)로
+   - [`Graph("conv_1d_graph", ...)`](https://max.modular.com/api/python/graph/Graph)로
      연산 그래프 생성
-   - [`ops.custom(name="conv1d", ...)`](https://docs.modular.com/api/python/graph/ops#custom)로
+   - [`ops.custom(name="conv1d", ...)`](https://max.modular.com/api/python/graph/ops#custom)로
      커스텀 연산 호출
 
 3. **커스텀 op 등록**:
    - `@extensibility.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출.
-     [@extensibility.register](https://docs.modular.com/mojo/manual/decorators/extensibility-register/)
+     [@extensibility.register](https://max.modular.com/mojo/manual/decorators/extensibility-register/)
      참고
    - `execute` 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의
    - 입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환
@@ -233,8 +233,8 @@ Verification passed: Custom kernel results match NumPy calculation
 
 > 더 자세한 내용은 아래 튜토리얼을 참고하세요:
 >
-> - [Get started with MAX Graph in Python](https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/)
-> - [MAX Graph custom op for GPUs](https://docs.modular.com/tutorials/build-custom-ops/)
+> - [Get started with MAX Graph in Python](https://max.modular.com/tutorials/get-started-with-max-graph-in-python/)
+> - [MAX Graph custom op for GPUs](https://max.modular.com/tutorials/build-custom-ops/)
 
 ### 커스텀 op 등록
 

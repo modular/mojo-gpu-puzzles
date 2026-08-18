@@ -42,7 +42,7 @@ maintaining the performance benefits of block-local storage.
 > that threads in that block can read and write to. This needs to be a
 > compile-time constant (a `comptime` binding), not a runtime variable. After
 > writing to shared memory you need to call
-> [barrier](https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/) to
+> [barrier](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/) to
 > ensure that threads do not cross.
 
 **Educational Note**: In this specific puzzle, the `barrier()` isn't strictly

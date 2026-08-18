@@ -5,7 +5,7 @@
 Building on basic cluster coordination from the previous section, this challenge
 teaches you to implement **cluster-wide collective operations** - extending the
 familiar
-[`block.sum`](https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum)
+[`block.sum`](https://max.modular.com/api/mojo/max/gpu/primitives/block/sum)
 pattern from [Puzzle 27](../puzzle_27/block_sum.md) to coordinate across
 **multiple thread blocks**.
 
@@ -14,9 +14,9 @@ elements across 4 coordinated blocks, combining their individual reductions into
 a single global result.
 
 **Key Learning**: Learn
-[`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
+[`cluster_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
 for full cluster coordination and
-[`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)
+[`elect_one_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)
 for efficient final reductions.
 
 ## The problem: large-scale global sum
@@ -51,7 +51,7 @@ by their thread count and
 
 1. **Local reduction**: Each block computes partial sum using tree reduction
 2. **Cluster sync**:
-   [`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
+   [`cluster_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
    ensures all partial results are ready
 3. **Final aggregation**: An elected thread in the first block combines all
    partial results
@@ -94,7 +94,7 @@ by their thread count and
 
 - Store partial results in `temp_storage[block_id]` for reliable indexing
 - Use
-  [`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
+  [`cluster_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
   for full cluster synchronization, which is `cluster_arrive()` followed by
   `cluster_wait()`
 - Restrict the final global aggregation to the first block of the cluster
@@ -102,7 +102,7 @@ by their thread count and
 ### **Election pattern for efficiency**
 
 - Use
-  [`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)
+  [`elect_one_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)
   within the first block (`my_block_rank == 0`) (pattern from
   [warp programming](../puzzle_24/warp_sum.md))
 - This keeps the final sum to one thread per warp in that block instead of all
@@ -127,14 +127,14 @@ by their thread count and
 ## Cluster APIs reference
 
 **From
-[`max.gpu.primitives.cluster`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/)
+[`max.gpu.primitives.cluster`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/)
 module:**
 
-- **[`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)**:
+- **[`cluster_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)**:
   Full cluster synchronization: `cluster_arrive()` followed by `cluster_wait()`
-- **[`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
+- **[`elect_one_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
   Elects single thread within warp for efficient coordination
-- **[`block_rank_in_cluster()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)**:
+- **[`block_rank_in_cluster()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster)**:
   Returns unique block identifier within cluster
 
 ## Tree reduction pattern
@@ -258,11 +258,11 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 
 **Full cluster barrier:**
 
-- [`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
+- [`cluster_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)
   is a convenience wrapper around
-  [`cluster_arrive()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
+  [`cluster_arrive()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive)
   followed immediately by
-  [`cluster_wait()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait),
+  [`cluster_wait()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait),
   with no window between them for other work
 - Ensures **all blocks complete their local reductions** before any block
   proceeds
@@ -282,7 +282,7 @@ if elect_one_sync() and my_block_rank == 0:
 
 **Why this election strategy?**
 
-- **[`elect_one_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
+- **[`elect_one_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
   Hardware primitive that selects exactly one thread per warp
 - **`my_block_rank == 0`**: Restricts the final sum to the first block of the
   cluster
@@ -311,7 +311,7 @@ if elect_one_sync() and my_block_rank == 0:
 
 - **`barrier()`**: Ensures all threads in block complete each tree reduction
   step
-- **[`cluster_sync()`](https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)**:
+- **[`cluster_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync)**:
   **Global barrier** - all blocks reach same execution point
 - **Benign write race**: The elected threads of block rank 0 all store the same
   total to `output[0]`, so the result is well defined even though the write is

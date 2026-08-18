@@ -60,7 +60,7 @@ Before diving in, ensure you have solid foundation in:
 - Basic understanding of memory latency vs. bandwidth
 
 **API familiarity:**
-[Mojo GPU Memory Operations](https://docs.modular.com/api/mojo/max/gpu/memory/)
+[Mojo GPU Memory Operations](https://max.modular.com/api/mojo/max/gpu/memory/)
 
 > **⚠️ Hardware compatibility note:** This puzzle uses async copy operations
 > (`copy_dram_to_sram_async`, `async_copy_wait_all`) that lower to the NVIDIA
@@ -101,9 +101,9 @@ Building on the async copy operations introduced in
 [Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-tiletensor-tiling),
 you'll now focus specifically on their memory optimization potential:
 
-- **[`copy_dram_to_sram_async()`](https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)**:
+- **[`copy_dram_to_sram_async()`](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)**:
   Launch background DRAM→SRAM transfers that bypass the register file
-- **[`async_copy_wait_all()`](https://docs.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/)**:
+- **[`async_copy_wait_all()`](https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/)**:
   Synchronize transfer completion before accessing shared memory
 
 **What's different from Puzzle 16?** While Puzzle 16 used async copy for clean
@@ -394,7 +394,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 
 - **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a
   256-element view of the input array starting at `block_idx.x * 256`. The Mojo
-  [`tile` method](https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile)
+  [`tile` method](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile)
   does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds
   indices results in undefined behavior. The implementation must ensure the tile
   size and offset remain within valid array bounds.

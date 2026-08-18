@@ -8,7 +8,7 @@
 구현할 수 있습니다.
 
 **핵심 통찰:**
-_[shuffle_xor()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)
+_[shuffle_xor()](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)
 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, 워프 크기에 대해
 \\(O(\\log n)\\) 복잡도로 확장되는 효율적인 버터플라이 네트워크와 병렬
 알고리즘을 가능하게 합니다._

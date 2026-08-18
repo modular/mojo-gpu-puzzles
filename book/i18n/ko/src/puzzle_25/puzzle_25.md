@@ -7,8 +7,8 @@
 **Puzzle 25: 워프 통신 기본 요소**에서는 고급 GPU **워프 레벨 통신 연산** - 워프
 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본
 요소를 소개합니다.
-[shuffle_down](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)과
-[broadcast](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)를
+[shuffle_down](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)과
+[broadcast](https://max.modular.com/mojo/std/gpu/primitives/warp/broadcast)를
 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을
 배웁니다.
 
@@ -50,20 +50,20 @@ GPU 워프 (32 스레드, SIMT 록스텝 실행)
 `gpu.primitives.warp`의 핵심 통신 기본 요소를 배웁니다:
 
 1. **[`shuffle_down(value,
-   offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**:
+   offset)`](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**:
    더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)
-2. **[`broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)**:
+2. **[`broadcast(value)`](https://max.modular.com/mojo/std/gpu/primitives/warp/broadcast)**:
    레인 0의 값을 모든 레인에 공유 (일대다)
 3. **[`shuffle_idx(value,
-   lane)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**:
+   lane)`](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**:
    특정 레인에서 값을 가져오기 (임의 접근)
 4. **[`shuffle_up(value,
-   offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**:
+   offset)`](https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**:
    더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)
 
 > **참고:** 이 퍼즐은 가장 많이 사용되는 통신 패턴인 `shuffle_down()`과
 > `broadcast()`에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은
-> [Mojo GPU 워프 문서](https://docs.modular.com/mojo/std/gpu/primitives/warp/)를
+> [Mojo GPU 워프 문서](https://max.modular.com/mojo/std/gpu/primitives/warp/)를
 > 참고하세요.
 
 ### **성능 변환 예시**

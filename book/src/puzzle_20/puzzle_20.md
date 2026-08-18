@@ -20,7 +20,7 @@
 
 In this puzzle, we'll take the exact same 1D convolution kernel from
 [Puzzle 17](../puzzle_17/puzzle_17.md) and integrate it with PyTorch using the
-[CustomOpLibrary](https://docs.modular.com/api/python/generated/max.experimental.torch.CustomOpLibrary/)
+[CustomOpLibrary](https://max.modular.com/api/python/generated/max.experimental.torch.CustomOpLibrary/)
 instead of MAX Graph.
 
 The key learning here is that **the same Mojo kernel works unchanged** - only

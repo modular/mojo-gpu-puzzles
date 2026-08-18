@@ -6,7 +6,7 @@ modern GPU programming abstracts low-level details while preserving high
 performance.
 
 **Key insight:** _The
-[elementwise](https://docs.modular.com/api/mojo/max/algorithm/functional/elementwise/)
+[elementwise](https://max.modular.com/api/mojo/max/algorithm/functional/elementwise/)
 function automatically handles thread management, SIMD vectorization, and memory
 coalescing for you._
 

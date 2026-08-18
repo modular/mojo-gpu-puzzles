@@ -78,7 +78,7 @@ x} \\] 여기서:
 커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:
 
 - 기울기 누적을 위한
-  [원자적 연산](https://docs.modular.com/mojo/std/os/atomic/Atomic/)
+  [원자적 연산](https://max.modular.com/mojo/std/os/atomic/Atomic/)
 - 기울기 계산에서의 수치 안정성
 - 효율적인 GPU 활용을 위한 메모리 접근 패턴
 - 연산 간 적절한 동기화

@@ -27,12 +27,12 @@ and solution verification procedures.
 ### System requirements
 
 Make sure your system meets our
-[system requirements](https://docs.modular.com/packages/#system-requirements).
+[system requirements](https://max.modular.com/packages/#system-requirements).
 
 ### Compatible GPU
 
 You'll need a
-[compatible GPU](https://docs.modular.com/packages/#gpu-compatibility) to run
+[compatible GPU](https://max.modular.com/packages/#gpu-compatibility) to run
 the puzzles. After setup, you can verify your GPU compatibility using the
 `gpu-specs` command (see
 [Setting up your environment](#setting-up-your-environment)).
@@ -173,7 +173,7 @@ Basic knowledge of:
 - Basic familiarity with [Mojo](https://mojolang.org/docs/manual/) (language
   basics parts and
   [intro to pointers](https://mojolang.org/docs/manual/pointers/) section)
-- [GPU programming fundamentals](https://docs.modular.com/gpu/fundamentals/)
+- [GPU programming fundamentals](https://max.modular.com/gpu/fundamentals/)
   is helpful!
 
 No prior GPU programming experience is necessary! We'll build that knowledge
@@ -582,7 +582,7 @@ For the build, test, and pull request workflow, see
 ## Join the community
 
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
-  <a href="https://docs.modular.com/get-started/#stay-in-touch">
+  <a href="https://max.modular.com/get-started/#stay-in-touch">
     <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
   </a>
   <a href="https://forum.modular.com/c/">

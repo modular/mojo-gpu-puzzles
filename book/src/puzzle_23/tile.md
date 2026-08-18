@@ -71,7 +71,7 @@ For a 1024-element vector with `TILE_SIZE=32`: `1024 ÷ 32 = 32` tiles exactly.
 ### 2. **Tile extraction pattern**
 
 Check out the
-[TileTensor `.tile` documentation](https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile).
+[TileTensor `.tile` documentation](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile).
 
 ```mojo
 var tile_id = Int(indices[0].value())  # Each thread gets one tile to process

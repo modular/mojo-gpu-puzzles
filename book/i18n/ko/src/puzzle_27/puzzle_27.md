@@ -49,11 +49,11 @@ GPU 스레드 블록 (128 스레드, 4개 또는 2개 워프, 하드웨어 조�
 
 `gpu.primitives.block`의 완전한 병렬 프로그래밍 도구 모음을 배웁니다:
 
-1. **[`block.sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/sum)**:
+1. **[`block.sum(value)`](https://max.modular.com/mojo/std/gpu/primitives/block/sum)**:
    합계, 평균, 최댓값/최솟값을 위한 전체→하나 리덕션
-2. **[`block.prefix_sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum)**:
+2. **[`block.prefix_sum(value)`](https://max.modular.com/mojo/std/gpu/primitives/block/prefix_sum)**:
    병렬 필터링과 추출을 위한 전체→각각 스캔
-3. **[`block.broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast)**:
+3. **[`block.broadcast(value)`](https://max.modular.com/mojo/std/gpu/primitives/block/broadcast)**:
    매개변수 공유와 조율을 위한 하나→전체 분배
 
 > **참고:** 이 기본 요소들은 통계 연산, 히스토그램 구간 분류, 정규화

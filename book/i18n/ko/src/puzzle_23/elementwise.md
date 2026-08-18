@@ -7,7 +7,7 @@
 세부 사항을 추상화하면서도 높은 성능을 유지하는지 보여줍니다.
 
 **핵심 통찰:**
-_[elementwise](https://docs.modular.com/mojo/std/algorithm/functional/elementwise/)
+_[elementwise](https://max.modular.com/mojo/std/algorithm/functional/elementwise/)
 함수는 스레드 관리, SIMD 벡터화, 메모리 병합을 자동으로 처리합니다._
 
 ## 핵심 개념
