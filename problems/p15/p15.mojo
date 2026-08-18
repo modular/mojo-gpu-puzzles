@@ -78,7 +78,7 @@ def main() raises:
         ctx.synchronize()
 
         with out.map_to_host() as out_host:
-            print("out:", out)
+            print("out:", out_host)
             print("expected:", expected)
             for i in range(BATCH):
                 assert_equal(out_host[i], expected[i])

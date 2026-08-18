@@ -27,7 +27,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-# ANCHOR: butterfly_pair_swap_solution
+# ANCHOR: butterfly_pair_swap
 def butterfly_pair_swap[
     size: Int
 ](
@@ -45,7 +45,7 @@ def butterfly_pair_swap[
     # FILL ME IN (4 lines)
 
 
-# ANCHOR_END: butterfly_pair_swap_solution
+# ANCHOR_END: butterfly_pair_swap
 
 
 # ANCHOR: butterfly_parallel_max
@@ -110,9 +110,9 @@ def warp_inclusive_prefix_sum[
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
-    Compare this to Puzzle 12's complex shared memory + barrier approach.
+    Compare this to Puzzle 14's complex shared memory + barrier approach.
 
-    Puzzle 12 approach:
+    Puzzle 14 approach:
     - Shared memory allocation
     - Multiple barrier synchronizations
     - Log(n) iterations with manual tree reduction

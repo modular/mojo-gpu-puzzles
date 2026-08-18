@@ -346,12 +346,13 @@ reduction.
 1. **Load values into shared memory**:
 
    ```text
-   shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
+   shared = [8, 9, 10, 11, 12, 13, 14, 0]
    ```
 
-   Note: Thread 7 doesn't load anything since `global_i = 15 >= SIZE_2`, leaving
-   `shared[7]` uninitialized. This is safe because Thread 7 won't participate in
-   the final output.
+   Note: Thread 7 has no input element to load, since `global_i = 15 >= SIZE_2`,
+   so it writes 0 instead. Leaving `shared[7]` uninitialized would be undefined
+   behavior — the reduction below reads every position on every iteration,
+   including this one.
 
 2. **Iterations of parallel reduction** (\\(\log_2(TPB) = 3\\) iterations):
 
@@ -359,7 +360,7 @@ reduction.
    three iterations:
 
    ```text
-   shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
+   shared = [8, 17, 27, 38, 50, 63, 77, 77]
    ```
 
 3. **Write local results back to global memory**:
@@ -371,26 +372,24 @@ reduction.
 4. **Store block sum in auxiliary space** (only last thread in block):
 
    ```text
-   output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
+   output[16] = shared[7]  // Thread 7 (TPB-1) stores 77
    ```
 
-   Note: Even though Thread 7 doesn't load valid input data, it still
-   participates in the prefix sum computation within the block. The `shared[7]`
-   position gets updated during the parallel reduction iterations, but since it
-   started uninitialized, the final value is unpredictable. However, this
-   doesn't affect correctness because Block 1 is the last block, so this block
-   sum is never used in Phase 2.
+   Note: Even though Thread 7 loads no input element, it still participates in
+   the prefix sum computation within the block, so `shared[7]` accumulates the
+   block total of 77. Block 1 is the last block, so Phase 2 never reads this
+   block sum.
 
 After Phase 1, the output buffer contains:
 
 ```text
-[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
+[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, 77]
                                                         ^   ^
                                                 Block sums stored here
 ```
 
-Note: The last block sum (???) is unpredictable since it's based on
-uninitialized memory, but this doesn't affect the final result.
+Note: The last block sum (77) is computed but never used, since Block 1 is the
+final block.
 
 ## Host-device synchronization: When it's actually needed
 
