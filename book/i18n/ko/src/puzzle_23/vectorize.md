@@ -5,7 +5,7 @@
 ## 개요
 
 이 퍼즐에서는 수동 벡터화와
-[vectorize](https://max.modular.com/mojo/std/algorithm/functional/vectorize/)를
+[vectorize](https://mojolang.org/docs/std/algorithm/functional/vectorize/)를
 사용하여 GPU 커널 내에서 SIMD 연산을 정밀하게 제어하는 **고급 벡터화 기법**을
 탐구합니다. 벡터화된 연산에 대해 두 가지 다른 접근법을 구현합니다:
 

@@ -109,7 +109,7 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 
 - **`max_iters=10`**: 통계적 신뢰성을 위해 최대 10회 반복
 - **`num_warmup_iters=1`**: 측정 전 GPU 워밍업
-- [Benchmark 문서](https://max.modular.com/mojo/std/benchmark/)를 참고하세요
+- [Benchmark 문서](https://mojolang.org/docs/std/benchmark/)를 참고하세요
 
 ## 벤치마킹 구현의 핵심
 

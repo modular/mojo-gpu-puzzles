@@ -3,7 +3,7 @@
 # block.prefix_sum()과 병렬 히스토그램 구간 분류
 
 이 퍼즐은 블록 레벨
-[block.prefix_sum](https://max.modular.com/mojo/std/gpu/primitives/block/prefix_sum)
+[block.prefix_sum](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
 연산을 사용하여 고급 병렬 필터링과 추출을 위한 병렬 히스토그램 구간 분류를
 구현합니다. 각 스레드가 자신의 요소가 속할 대상 구간을 결정한 다음,
 `block.prefix_sum()`을 적용하여 특정 구간의 요소를 추출하기 위한 쓰기 위치를
@@ -11,7 +11,7 @@
 방법을 보여줍니다.
 
 **핵심 통찰:**
-_[block.prefix_sum()](https://max.modular.com/mojo/std/gpu/primitives/block/prefix_sum)
+_[block.prefix_sum()](https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum)
 연산은 블록 내 모든 스레드에 걸쳐 일치하는 요소의 누적 쓰기 위치를 계산하여 병렬
 필터링과 추출을 제공합니다._
 

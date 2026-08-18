@@ -134,8 +134,8 @@ Verification passed: Custom kernel results match NumPy calculation
 이 한 줄이 수행하는 중요한 작업들은 다음과 같습니다:
 
 1. GPU 컨텍스트(`gpu_ctx`의 타입은
-   [DeviceContext](https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/))에서
-   [enqueue_function](https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function)을
+   [DeviceContext](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))에서
+   [enqueue_function](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)을
    호출하여 커널 실행 예약
 2. 필요한 레이아웃과 크기 정보를 **컴파일 타임** 파라미터로 전달
 3. 출력, 입력, 커널 텐서를 런타임 인자로 제공
@@ -165,7 +165,7 @@ Verification passed: Custom kernel results match NumPy calculation
 
 3. **커스텀 op 등록**:
    - `@extensibility.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출.
-     [@extensibility.register](https://max.modular.com/mojo/manual/decorators/extensibility-register/)
+     [@extensibility.register](https://mojolang.org/docs/manual/decorators/extensibility-register/)
      참고
    - `execute` 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의
    - 입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환
