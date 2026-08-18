@@ -94,11 +94,14 @@ def prefix_sum_local_phase(
     # Load data into shared memory
     # Example with SIZE_2=15, TPB=8, BLOCKS=2:
     # Block 0 shared mem: [0,1,2,3,4,5,6,7]
-    # Block 1 shared mem: [8,9,10,11,12,13,14,uninitialized]
-    # Note: The last position remains uninitialized since global_i >= size,
-    # but this is safe because that thread doesn't participate in computation
+    # Block 1 shared mem: [8,9,10,11,12,13,14,0]
+    # The tail position has no input element. Zero it rather than leaving it
+    # uninitialized: the reduction below reads every position on every pass,
+    # and reading uninitialized memory is undefined behavior.
     if global_i < size:
         shared[local_i] = a[global_i]
+    else:
+        shared[local_i] = 0
 
     barrier()
 
@@ -110,7 +113,7 @@ def prefix_sum_local_phase(
     #   Block 0: [0,1,3+0,5+1,7+3,9+5,11+7,13+9] = [0,1,3,6,10,14,18,22]
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
-    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
+    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,77]
     var offset = 1
     for _ in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.ElementType = 0
@@ -126,14 +129,14 @@ def prefix_sum_local_phase(
 
     # Write local results to output
     # Block 0 writes: [0,1,3,6,10,15,21,28]
-    # Block 1 writes: [8,17,27,38,50,63,77,???]
+    # Block 1 writes: [8,17,27,38,50,63,77,77]
     if global_i < size:
         output[global_i] = shared[local_i]
 
     # Store block sums in auxiliary space
     # Block 0: Thread 7 stores shared[7] == 28 at position size+0 (position 15)
-    # Block 1: Thread 7 stores shared[7] == ??? at position size+1 (position 16).  This sum is not needed for the final output.
-    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,???]
+    # Block 1: Thread 7 stores shared[7] == 77 at position size+1 (position 16). This sum is not needed for the final output.
+    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
     #                                                           ↑  ↑
     #                                                     Block sums here
     if local_i == TPB - 1:

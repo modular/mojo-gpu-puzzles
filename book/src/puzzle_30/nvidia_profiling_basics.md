@@ -20,7 +20,10 @@ code.
 The `nvidia` pixi environment pulls in `cuda-toolkit` and `nsight-compute`, so
 `ncu` and the CUDA command-line tools are on your path as soon as it's active.
 Nsight Systems is not a conda package, so `nsys` has to come from a system-wide
-CUDA or Nsight Systems install rather than from pixi.
+CUDA or Nsight Systems install rather than from pixi — download it from
+[NVIDIA Nsight Systems](https://developer.nvidia.com/nsight-systems/get-started)
+if you don't already have it. That is why the `nsys` commands below run
+directly, while the `ncu` commands run through `pixi run`.
 
 ### Nsight Systems (`nsys`) - the "big picture" tool
 
@@ -44,13 +47,13 @@ CUDA or Nsight Systems install rather than from pixi.
 
 ```bash
 # See the help
-pixi run nsys --help
+nsys --help
 
 # Basic system-wide profiling
-pixi run nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
+nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
 
 # Interactive analysis
-pixi run nsys stats --force-export=true timeline.nsys-rep
+nsys stats --force-export=true timeline.nsys-rep
 ```
 
 ### Nsight Compute (`ncu`) - the "kernel deep-dive" tool

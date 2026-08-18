@@ -193,7 +193,7 @@ def double_buffered_stencil_computation(
 
 
 def test_multi_stage_pipeline() raises:
-    """Test Puzzle 26A: Multi-Stage Pipeline Coordination."""
+    """Test Puzzle 29A: Multi-Stage Pipeline Coordination."""
     with DeviceContext() as ctx:
         var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
@@ -254,9 +254,9 @@ def test_multi_stage_pipeline() raises:
 
 
 def test_double_buffered_stencil() raises:
-    """Test Puzzle 26B: Double-Buffered Stencil Computation."""
+    """Test Puzzle 29B: Double-Buffered Stencil Computation."""
     with DeviceContext() as ctx:
-        # Test Puzzle 26B: Double-Buffered Stencil Computation
+        # Test Puzzle 29B: Double-Buffered Stencil Computation
         var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
         var inp = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -268,7 +268,7 @@ def test_double_buffered_stencil() raises:
                 # Create a step pattern that will be smoothed by stencil
                 inp_host[i] = Scalar[dtype](1.0 if i % 20 < 10 else 0.0)
 
-        # Create TileTensors for Puzzle 26B
+        # Create TileTensors for Puzzle 29B
         var out_tensor = TileTensor[mut=True, dtype, LayoutType](out, layout)
         var inp_tensor = TileTensor[mut=False, dtype, LayoutType](inp, layout)
 
@@ -332,12 +332,12 @@ def test_double_buffered_stencil() raises:
 
 def main() raises:
     """Run GPU synchronization tests based on command line arguments."""
-    print("Puzzle 26: GPU Synchronization Primitives")
+    print("Puzzle 29: GPU Synchronization Primitives")
     print("=" * 50)
 
     # Parse command line arguments
     if len(argv()) != 2:
-        print("Usage: p26.mojo [--multi-stage | --double-buffer]")
+        print("Usage: p29.mojo [--multi-stage | --double-buffer]")
         print("  --multi-stage: Test multi-stage pipeline coordination")
         print("  --double-buffer: Test double-buffered stencil computation")
         return
@@ -349,7 +349,7 @@ def main() raises:
         print("STAGE2_THREADS:", STAGE2_THREADS)
         print("BLUR_RADIUS:", BLUR_RADIUS)
         print("")
-        print("Testing Puzzle 26A: Multi-Stage Pipeline Coordination")
+        print("Testing Puzzle 29A: Multi-Stage Pipeline Coordination")
         print("=" * 60)
         test_multi_stage_pipeline()
     elif argv()[1] == "--double-buffer":
@@ -358,8 +358,8 @@ def main() raises:
         print("STENCIL_ITERATIONS:", STENCIL_ITERATIONS)
         print("BUFFER_COUNT:", BUFFER_COUNT)
         print("")
-        print("Testing Puzzle 26B: Double-Buffered Stencil Computation")
+        print("Testing Puzzle 29B: Double-Buffered Stencil Computation")
         print("=" * 60)
         test_double_buffered_stencil()
     else:
-        print("Usage: p26.mojo [--multi-stage | --double-buffer]")
+        print("Usage: p29.mojo [--multi-stage | --double-buffer]")

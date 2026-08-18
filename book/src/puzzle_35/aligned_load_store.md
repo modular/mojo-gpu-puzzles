@@ -66,12 +66,12 @@ passes `store_alignment=VEC_ALIGN` explicitly.
 ## Running it
 
 ```bash
-pixi run mojo solutions/p35/p35.mojo --simple
+pixi run mojo solutions/p35/p35.mojo --scalar
 pixi run mojo solutions/p35/p35.mojo --unaligned
 pixi run mojo solutions/p35/p35.mojo --aligned
 ```
 
-`--simple` runs `scalar_kernel`. Each command prints `<kernel> kernel: passed`,
+`--scalar` runs `scalar_kernel`. Each command prints `<kernel> kernel: passed`,
 confirming all three are correct. The performance difference is the subject of
 the [next section](./benchmark_and_profile.md).
 

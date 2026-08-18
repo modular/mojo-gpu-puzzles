@@ -55,7 +55,8 @@ def conv_1d_simple(
 
     barrier()
 
-    # Note: this is unsafe as it enforces no guard so could access `shared_a` beyond its bounds
+    # Note: this variant is wasteful, not unsafe — the `local_i + j < SIZE` guard
+    # keeps every access inside `shared_a`; it just re-tests the bound per tap.
     # local_sum = Scalar[dtype](0)
     # for j in range(CONV):
     #     if local_i + j < SIZE:

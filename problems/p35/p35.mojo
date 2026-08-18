@@ -324,14 +324,14 @@ def benchmark_aligned(mut b: Bencher) raises:
 def main() raises:
     if len(argv()) < 2:
         print(
-            "Usage: mojo p35.mojo [--simple] [--unaligned] [--aligned]"
+            "Usage: mojo p35.mojo [--scalar] [--unaligned] [--aligned]"
             " [--benchmark]"
         )
         return
 
     print("SIZE:", SIZE, "SIMD_WIDTH:", SIMD_WIDTH)
 
-    if argv()[1] == "--simple":
+    if argv()[1] == "--scalar":
         test_scalar()
         print("Puzzle 35 complete ✅")
     elif argv()[1] == "--unaligned":
@@ -359,6 +359,6 @@ def main() raises:
     else:
         print("Unknown argument:", argv()[1])
         print(
-            "Usage: mojo p35.mojo [--simple] [--unaligned] [--aligned]"
+            "Usage: mojo p35.mojo [--scalar] [--unaligned] [--aligned]"
             " [--benchmark]"
         )

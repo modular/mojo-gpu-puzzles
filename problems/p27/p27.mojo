@@ -397,7 +397,7 @@ def main() raises:
             var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
             var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-            input_buf.enqueue_fill(0)
+            output_buf.enqueue_fill(0)
 
             # Create test data: values like [1, 2, 3, 4, 5, ..., 8, 1, 2, 3, ...]
             # Mean value will be 4.5, so normalized values will be input[i] / 4.5

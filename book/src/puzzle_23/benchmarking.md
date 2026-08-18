@@ -59,7 +59,7 @@ times):
 ```txt
 SIZE: 1024
 simd_width: 4
-Running P21 GPU Benchmarks...
+Running P23 GPU Benchmarks...
 SIMD width: 4
 --------------------------------------------------------------------------------
 Testing SIZE=16, TILE=4
