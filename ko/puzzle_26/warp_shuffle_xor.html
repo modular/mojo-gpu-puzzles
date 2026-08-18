@@ -304,23 +304,7 @@ output[global_i] = swapped_val
 <p>입력 데이터 <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code>을 페어
 <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>으로 변환하며, 각 페어 <code>(i, i+1)</code>이 XOR 통신으로
 값을 교환합니다.</p>
-<pre><code class="language-mojo">def butterfly_pair_swap[
-    size: Int
-](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
-    """
-    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
-    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
-    Uses shuffle_xor(val, 1) to swap values within each pair.
-    This is the foundation of butterfly network communication patterns.
-    """
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-
-    # FILL ME IN (4 lines)
-
-
+<pre><code class="language-mojo">
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
 <details>

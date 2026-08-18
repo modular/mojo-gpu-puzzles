@@ -321,11 +321,11 @@ out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
 2D <code>(m, n)</code> form—there is no coordinate-list overload—so this rank-1 kernel
 passes <code>store_alignment=VEC_ALIGN</code> explicitly.</p>
 <h2 id="running-it"><a class="header" href="#running-it">Running it</a></h2>
-<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --simple
+<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --scalar
 pixi run mojo solutions/p35/p35.mojo --unaligned
 pixi run mojo solutions/p35/p35.mojo --aligned
 </code></pre>
-<p><code>--simple</code> runs <code>scalar_kernel</code>. Each command prints <code>&lt;kernel&gt; kernel: passed</code>,
+<p><code>--scalar</code> runs <code>scalar_kernel</code>. Each command prints <code>&lt;kernel&gt; kernel: passed</code>,
 confirming all three are correct. The performance difference is the subject of
 the <a href="./benchmark_and_profile.html">next section</a>.</p>
 <details>

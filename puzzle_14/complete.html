@@ -413,11 +413,14 @@ def prefix_sum_local_phase(
     # Load data into shared memory
     # Example with SIZE_2=15, TPB=8, BLOCKS=2:
     # Block 0 shared mem: [0,1,2,3,4,5,6,7]
-    # Block 1 shared mem: [8,9,10,11,12,13,14,uninitialized]
-    # Note: The last position remains uninitialized since global_i &gt;= size,
-    # but this is safe because that thread doesn't participate in computation
+    # Block 1 shared mem: [8,9,10,11,12,13,14,0]
+    # The tail position has no input element. Zero it rather than leaving it
+    # uninitialized: the reduction below reads every position on every pass,
+    # and reading uninitialized memory is undefined behavior.
     if global_i &lt; size:
         shared[local_i] = a[global_i]
+    else:
+        shared[local_i] = 0
 
     barrier()
 
@@ -429,7 +432,7 @@ def prefix_sum_local_phase(
     #   Block 0: [0,1,3+0,5+1,7+3,9+5,11+7,13+9] = [0,1,3,6,10,14,18,22]
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
-    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
+    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,77]
     var offset = 1
     for _ in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.ElementType = 0
@@ -445,14 +448,14 @@ def prefix_sum_local_phase(
 
     # Write local results to output
     # Block 0 writes: [0,1,3,6,10,15,21,28]
-    # Block 1 writes: [8,17,27,38,50,63,77,???]
+    # Block 1 writes: [8,17,27,38,50,63,77,77]
     if global_i &lt; size:
         output[global_i] = shared[local_i]
 
     # Store block sums in auxiliary space
     # Block 0: Thread 7 stores shared[7] == 28 at position size+0 (position 15)
-    # Block 1: Thread 7 stores shared[7] == ??? at position size+1 (position 16).  This sum is not needed for the final output.
-    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,???]
+    # Block 1: Thread 7 stores shared[7] == 77 at position size+1 (position 16). This sum is not needed for the final output.
+    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
     #                                                           ↑  ↑
     #                                                     Block sums here
     if local_i == TPB - 1:
@@ -596,17 +599,18 @@ shared[7] = 22 + 6 = 28
 <ol>
 <li>
 <p><strong>Load values into shared memory</strong>:</p>
-<pre><code class="language-text">shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
+<pre><code class="language-text">shared = [8, 9, 10, 11, 12, 13, 14, 0]
 </code></pre>
-<p>Note: Thread 7 doesn’t load anything since <code>global_i = 15 &gt;= SIZE_2</code>, leaving
-<code>shared[7]</code> uninitialized. This is safe because Thread 7 won’t participate in
-the final output.</p>
+<p>Note: Thread 7 has no input element to load, since <code>global_i = 15 &gt;= SIZE_2</code>,
+so it writes 0 instead. Leaving <code>shared[7]</code> uninitialized would be undefined
+behavior — the reduction below reads every position on every iteration,
+including this one.</p>
 </li>
 <li>
 <p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
 <p>Only the first 7 threads participate in meaningful computation. After all
 three iterations:</p>
-<pre><code class="language-text">shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
+<pre><code class="language-text">shared = [8, 17, 27, 38, 50, 63, 77, 77]
 </code></pre>
 </li>
 <li>
@@ -616,23 +620,21 @@ three iterations:</p>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread in block):</p>
-<pre><code class="language-text">output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
+<pre><code class="language-text">output[16] = shared[7]  // Thread 7 (TPB-1) stores 77
 </code></pre>
-<p>Note: Even though Thread 7 doesn’t load valid input data, it still
-participates in the prefix sum computation within the block. The <code>shared[7]</code>
-position gets updated during the parallel reduction iterations, but since it
-started uninitialized, the final value is unpredictable. However, this
-doesn’t affect correctness because Block 1 is the last block, so this block
-sum is never used in Phase 2.</p>
+<p>Note: Even though Thread 7 loads no input element, it still participates in
+the prefix sum computation within the block, so <code>shared[7]</code> accumulates the
+block total of 77. Block 1 is the last block, so Phase 2 never reads this
+block sum.</p>
 </li>
 </ol>
 <p>After Phase 1, the output buffer contains:</p>
-<pre><code class="language-text">[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
+<pre><code class="language-text">[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, 77]
                                                         ^   ^
                                                 Block sums stored here
 </code></pre>
-<p>Note: The last block sum (???) is unpredictable since it’s based on
-uninitialized memory, but this doesn’t affect the final result.</p>
+<p>Note: The last block sum (77) is computed but never used, since Block 1 is the
+final block.</p>
 <h2 id="host-device-synchronization-when-its-actually-needed"><a class="header" href="#host-device-synchronization-when-its-actually-needed">Host-device synchronization: When it’s actually needed</a></h2>
 <p>The two kernel phases execute sequentially
 <strong>without any explicit synchronization</strong> between them:</p>

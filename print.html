@@ -6236,7 +6236,8 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
     barrier()
 
-    # Note: this is unsafe as it enforces no guard so could access `shared_a` beyond its bounds
+    # Note: this variant is wasteful, not unsafe — the `local_i + j &lt; SIZE` guard
+    # keeps every access inside `shared_a`; it just re-tests the bound per tap.
     # local_sum = Scalar[dtype](0)
     # for j in range(CONV):
     #     if local_i + j &lt; SIZE:
@@ -7156,11 +7157,14 @@ def prefix_sum_local_phase(
     # Load data into shared memory
     # Example with SIZE_2=15, TPB=8, BLOCKS=2:
     # Block 0 shared mem: [0,1,2,3,4,5,6,7]
-    # Block 1 shared mem: [8,9,10,11,12,13,14,uninitialized]
-    # Note: The last position remains uninitialized since global_i &gt;= size,
-    # but this is safe because that thread doesn't participate in computation
+    # Block 1 shared mem: [8,9,10,11,12,13,14,0]
+    # The tail position has no input element. Zero it rather than leaving it
+    # uninitialized: the reduction below reads every position on every pass,
+    # and reading uninitialized memory is undefined behavior.
     if global_i &lt; size:
         shared[local_i] = a[global_i]
+    else:
+        shared[local_i] = 0
 
     barrier()
 
@@ -7172,7 +7176,7 @@ def prefix_sum_local_phase(
     #   Block 0: [0,1,3+0,5+1,7+3,9+5,11+7,13+9] = [0,1,3,6,10,14,18,22]
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
-    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
+    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,77]
     var offset = 1
     for _ in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.ElementType = 0
@@ -7188,14 +7192,14 @@ def prefix_sum_local_phase(
 
     # Write local results to output
     # Block 0 writes: [0,1,3,6,10,15,21,28]
-    # Block 1 writes: [8,17,27,38,50,63,77,???]
+    # Block 1 writes: [8,17,27,38,50,63,77,77]
     if global_i &lt; size:
         output[global_i] = shared[local_i]
 
     # Store block sums in auxiliary space
     # Block 0: Thread 7 stores shared[7] == 28 at position size+0 (position 15)
-    # Block 1: Thread 7 stores shared[7] == ??? at position size+1 (position 16).  This sum is not needed for the final output.
-    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,???]
+    # Block 1: Thread 7 stores shared[7] == 77 at position size+1 (position 16). This sum is not needed for the final output.
+    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
     #                                                           ↑  ↑
     #                                                     Block sums here
     if local_i == TPB - 1:
@@ -7339,17 +7343,18 @@ shared[7] = 22 + 6 = 28
 <ol>
 <li>
 <p><strong>Load values into shared memory</strong>:</p>
-<pre><code class="language-text">shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
+<pre><code class="language-text">shared = [8, 9, 10, 11, 12, 13, 14, 0]
 </code></pre>
-<p>Note: Thread 7 doesn’t load anything since <code>global_i = 15 &gt;= SIZE_2</code>, leaving
-<code>shared[7]</code> uninitialized. This is safe because Thread 7 won’t participate in
-the final output.</p>
+<p>Note: Thread 7 has no input element to load, since <code>global_i = 15 &gt;= SIZE_2</code>,
+so it writes 0 instead. Leaving <code>shared[7]</code> uninitialized would be undefined
+behavior — the reduction below reads every position on every iteration,
+including this one.</p>
 </li>
 <li>
 <p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
 <p>Only the first 7 threads participate in meaningful computation. After all
 three iterations:</p>
-<pre><code class="language-text">shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
+<pre><code class="language-text">shared = [8, 17, 27, 38, 50, 63, 77, 77]
 </code></pre>
 </li>
 <li>
@@ -7359,23 +7364,21 @@ three iterations:</p>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread in block):</p>
-<pre><code class="language-text">output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
+<pre><code class="language-text">output[16] = shared[7]  // Thread 7 (TPB-1) stores 77
 </code></pre>
-<p>Note: Even though Thread 7 doesn’t load valid input data, it still
-participates in the prefix sum computation within the block. The <code>shared[7]</code>
-position gets updated during the parallel reduction iterations, but since it
-started uninitialized, the final value is unpredictable. However, this
-doesn’t affect correctness because Block 1 is the last block, so this block
-sum is never used in Phase 2.</p>
+<p>Note: Even though Thread 7 loads no input element, it still participates in
+the prefix sum computation within the block, so <code>shared[7]</code> accumulates the
+block total of 77. Block 1 is the last block, so Phase 2 never reads this
+block sum.</p>
 </li>
 </ol>
 <p>After Phase 1, the output buffer contains:</p>
-<pre><code class="language-text">[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
+<pre><code class="language-text">[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, 77]
                                                         ^   ^
                                                 Block sums stored here
 </code></pre>
-<p>Note: The last block sum (???) is unpredictable since it’s based on
-uninitialized memory, but this doesn’t affect the final result.</p>
+<p>Note: The last block sum (77) is computed but never used, since Block 1 is the
+final block.</p>
 <h2 id="host-device-synchronization-when-its-actually-needed"><a class="header" href="#host-device-synchronization-when-its-actually-needed">Host-device synchronization: When it’s actually needed</a></h2>
 <p>The two kernel phases execute sequentially
 <strong>without any explicit synchronization</strong> between them:</p>
@@ -7548,7 +7551,7 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 </code></pre>
 <h2 id="solution-16"><a class="header" href="#solution-16">Solution</a></h2>
@@ -9299,7 +9302,7 @@ struct Conv1DCustomOp:
                 0,
             )
 
-            # FILL ME IN with 1 line calling our conv1d_kernel
+            # FILL ME IN with 2 lines calling our conv1d_kernel
 
         elif target == "cpu":
             # we can fallback to CPU
@@ -15645,7 +15648,7 @@ is a B200 with MAX 26.5.0 / Mojo 1.0.0 — read the ranking, not the absolute
 times):</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
-Running P21 GPU Benchmarks...
+Running P23 GPU Benchmarks...
 SIMD width: 4
 --------------------------------------------------------------------------------
 Testing SIZE=16, TILE=4
@@ -19789,9 +19792,9 @@ elements plus itself.</p>
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
-    Compare this to Puzzle 12's complex shared memory + barrier approach.
+    Compare this to Puzzle 14's complex shared memory + barrier approach.
 
-    Puzzle 12 approach:
+    Puzzle 14 approach:
     - Shared memory allocation
     - Multiple barrier synchronizations
     - Log(n) iterations with manual tree reduction
@@ -19885,9 +19888,9 @@ Puzzle 26 complete ✅
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
-    Compare this to Puzzle 12's complex shared memory + barrier approach.
+    Compare this to Puzzle 14's complex shared memory + barrier approach.
 
-    Puzzle 12 approach:
+    Puzzle 14 approach:
     - Shared memory allocation
     - Multiple barrier synchronizations
     - Log(n) iterations with manual tree reduction
@@ -19907,7 +19910,7 @@ Puzzle 26 complete ✅
     if global_i &lt; size:
         var current_val = input[global_i]
 
-        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 14!
         # But it only works within the current warp (WARP_SIZE threads)
         var scan_result = prefix_sum[exclusive=False](current_val)
 
@@ -24120,7 +24123,10 @@ code.</p>
 <p>The <code>nvidia</code> pixi environment pulls in <code>cuda-toolkit</code> and <code>nsight-compute</code>, so
 <code>ncu</code> and the CUDA command-line tools are on your path as soon as it’s active.
 Nsight Systems is not a conda package, so <code>nsys</code> has to come from a system-wide
-CUDA or Nsight Systems install rather than from pixi.</p>
+CUDA or Nsight Systems install rather than from pixi — download it from
+<a href="https://developer.nvidia.com/nsight-systems/get-started">NVIDIA Nsight Systems</a>
+if you don’t already have it. That is why the <code>nsys</code> commands below run
+directly, while the <code>ncu</code> commands run through <code>pixi run</code>.</p>
 <h3 id="nsight-systems-nsys---the-big-picture-tool"><a class="header" href="#nsight-systems-nsys---the-big-picture-tool">Nsight Systems (<code>nsys</code>) - the “big picture” tool</a></h3>
 <p><strong>Purpose</strong>: System-wide performance analysis
 (<a href="https://docs.nvidia.com/nsight-systems/">Nsight Systems Documentation</a>)</p>
@@ -24140,13 +24146,13 @@ CUDA or Nsight Systems install rather than from pixi.</p>
 <li>Finding kernel launch bottlenecks</li>
 </ul>
 <pre><code class="language-bash"># See the help
-pixi run nsys --help
+nsys --help
 
 # Basic system-wide profiling
-pixi run nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
+nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
 
 # Interactive analysis
-pixi run nsys stats --force-export=true timeline.nsys-rep
+nsys stats --force-export=true timeline.nsys-rep
 </code></pre>
 <h3 id="nsight-compute-ncu---the-kernel-deep-dive-tool"><a class="header" href="#nsight-compute-ncu---the-kernel-deep-dive-tool">Nsight Compute (<code>ncu</code>) - the “kernel deep-dive” tool</a></h3>
 <p><strong>Purpose</strong>: Detailed single-kernel performance analysis
@@ -26323,7 +26329,8 @@ def no_conflict_kernel(
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
-    Threads 0,16 -&gt; Bank 0, Threads 1,17 -&gt; Bank 1, etc.
+    Stride-2 means thread i reads index 2i, so threads i and i+16 share bank
+    (2*i) % 32 — threads 0,16 -&gt; Bank 0; threads 1,17 -&gt; Bank 2; etc.
     Each bank serves 2 threads, doubling access time.
     """
     var size = Int(size_dev)
@@ -29174,11 +29181,11 @@ out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
 2D <code>(m, n)</code> form—there is no coordinate-list overload—so this rank-1 kernel
 passes <code>store_alignment=VEC_ALIGN</code> explicitly.</p>
 <h2 id="running-it"><a class="header" href="#running-it">Running it</a></h2>
-<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --simple
+<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --scalar
 pixi run mojo solutions/p35/p35.mojo --unaligned
 pixi run mojo solutions/p35/p35.mojo --aligned
 </code></pre>
-<p><code>--simple</code> runs <code>scalar_kernel</code>. Each command prints <code>&lt;kernel&gt; kernel: passed</code>,
+<p><code>--scalar</code> runs <code>scalar_kernel</code>. Each command prints <code>&lt;kernel&gt; kernel: passed</code>,
 confirming all three are correct. The performance difference is the subject of
 the <a href="puzzle_35/./benchmark_and_profile.html">next section</a>.</p>
 <details>

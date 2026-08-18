@@ -240,7 +240,10 @@ code.</p>
 <p>The <code>nvidia</code> pixi environment pulls in <code>cuda-toolkit</code> and <code>nsight-compute</code>, so
 <code>ncu</code> and the CUDA command-line tools are on your path as soon as it’s active.
 Nsight Systems is not a conda package, so <code>nsys</code> has to come from a system-wide
-CUDA or Nsight Systems install rather than from pixi.</p>
+CUDA or Nsight Systems install rather than from pixi — download it from
+<a href="https://developer.nvidia.com/nsight-systems/get-started">NVIDIA Nsight Systems</a>
+if you don’t already have it. That is why the <code>nsys</code> commands below run
+directly, while the <code>ncu</code> commands run through <code>pixi run</code>.</p>
 <h3 id="nsight-systems-nsys---the-big-picture-tool"><a class="header" href="#nsight-systems-nsys---the-big-picture-tool">Nsight Systems (<code>nsys</code>) - the “big picture” tool</a></h3>
 <p><strong>Purpose</strong>: System-wide performance analysis
 (<a href="https://docs.nvidia.com/nsight-systems/">Nsight Systems Documentation</a>)</p>
@@ -260,13 +263,13 @@ CUDA or Nsight Systems install rather than from pixi.</p>
 <li>Finding kernel launch bottlenecks</li>
 </ul>
 <pre><code class="language-bash"># See the help
-pixi run nsys --help
+nsys --help
 
 # Basic system-wide profiling
-pixi run nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
+nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
 
 # Interactive analysis
-pixi run nsys stats --force-export=true timeline.nsys-rep
+nsys stats --force-export=true timeline.nsys-rep
 </code></pre>
 <h3 id="nsight-compute-ncu---the-kernel-deep-dive-tool"><a class="header" href="#nsight-compute-ncu---the-kernel-deep-dive-tool">Nsight Compute (<code>ncu</code>) - the “kernel deep-dive” tool</a></h3>
 <p><strong>Purpose</strong>: Detailed single-kernel performance analysis
