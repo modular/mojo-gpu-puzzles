@@ -13,6 +13,7 @@
 import argparse
 import logging
 import os
+import sys
 import time
 import warnings
 from pathlib import Path
@@ -1261,7 +1262,7 @@ def main():
         print(
             "  python p22.py --demo-simple    # Single operation demo (fastest)"
         )
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
