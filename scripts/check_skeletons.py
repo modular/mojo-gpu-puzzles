@@ -72,7 +72,7 @@ EXCLUDED = {
 
 def _is_anchor(line: str) -> bool:
     s = line.strip()
-    return s.startswith("# ANCHOR:") or s.startswith("# ANCHOR_END:")
+    return s.startswith(("# ANCHOR:", "# ANCHOR_END:"))
 
 
 def _is_fill(line: str) -> bool:

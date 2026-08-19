@@ -70,9 +70,7 @@ ALLOWLIST: set[str] = set()
 
 
 def is_external(target: str) -> bool:
-    return target.startswith(
-        ("http://", "https://", "mailto:", "#")
-    ) or target.startswith("data:")
+    return target.startswith(("http://", "https://", "mailto:", "#", "data:"))
 
 
 def resolve(target: str, md_file: Path, en_root: Path) -> Path:
