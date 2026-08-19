@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
+import sys
 import time
 from pathlib import Path
 
@@ -118,11 +119,11 @@ if __name__ == "__main__":
             print("   ✅ Both implementations CORRECT")
         else:
             print("   ❌ One or both implementations INCORRECT")
-            exit(1)
+            sys.exit(1)
 
     except Exception as e:
         print(f"   ❌ Implementation failed: {e}")
-        exit(1)
+        sys.exit(1)
 
     print()
     print("Benchmarking Mojo Kernels...")
