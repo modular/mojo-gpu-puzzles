@@ -122,12 +122,12 @@ var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 Each benchmark follows a streamlined pattern:
 
 ```mojo
-@__parameter
+@always_inline
 def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     var bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    @__parameter
-    def pattern_workflow(ctx: DeviceContext) raises:
+    @always_inline
+    def pattern_workflow(ctx: DeviceContext) raises {imm}:
       # Compute: Execute the algorithm being measured
 
     bencher_iter_custom(b, pattern_workflow, bench_ctx)
@@ -297,19 +297,27 @@ Modify parameters to test different conditions:
 
 ```mojo
 # Different problem sizes
-bench.bench_function[benchmark_elementwise_parameterized[1024, 32]](
-    BenchId("elementwise_1024_32")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_elementwise_parameterized[
+        1024, 32
+    ](b),
+    BenchId("elementwise_1024_32"),
 )
-bench.bench_function[benchmark_elementwise_parameterized[64, 8]](
-    BenchId("elementwise_64_8")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_elementwise_parameterized[
+        64, 8
+    ](b),
+    BenchId("elementwise_64_8"),
 )
 
 # Different tile sizes
-bench.bench_function[benchmark_tiled_parameterized[256, 8]](
-    BenchId("tiled_256_8")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_tiled_parameterized[256, 8](b),
+    BenchId("tiled_256_8"),
 )
-bench.bench_function[benchmark_tiled_parameterized[256, 64]](
-    BenchId("tiled_256_64")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_tiled_parameterized[256, 64](b),
+    BenchId("tiled_256_64"),
 )
 ```
 

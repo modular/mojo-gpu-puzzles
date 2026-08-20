@@ -137,11 +137,10 @@ def functional_warp_dot_product[
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
-    @__parameter
     @always_inline
     def compute_dot_product[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -> None:
+        simd_width: Int, alignment: Int = 1
+    ](indices: Coord) {var} -> None:
         var idx = Int(indices[0].value())
         # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
         var a_lt = a.to_layout_tensor()
@@ -165,7 +164,9 @@ def functional_warp_dot_product[
             out_lt.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
-    elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
+    elementwise[simd_width=1, target="gpu"](
+        compute_dot_product, Coord(size), ctx
+    )
 
 
 # ANCHOR_END: functional_warp_approach_solution
@@ -211,7 +212,6 @@ def check_result[
             assert_equal(actual_host[i], expected[i])
 
 
-@__parameter
 @always_inline
 def benchmark_simple_warp_parameterized[
     test_size: Int
@@ -270,7 +270,6 @@ def benchmark_simple_warp_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
 @always_inline
 def benchmark_functional_warp_parameterized[
     test_size: Int
@@ -320,7 +319,6 @@ def benchmark_functional_warp_parameterized[
     bench_ctx.synchronize()
 
 
-@__parameter
 @always_inline
 def benchmark_traditional_parameterized[
     test_size: Int
@@ -448,87 +446,164 @@ def main() raises:
         var bench = Bench(bench_config.copy())
 
         print("Testing SIZE=1 x WARP_SIZE, BLOCKS=1")
-        bench.bench_function[benchmark_traditional_parameterized[WARP_SIZE]](
-            BenchId("traditional_1x")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                WARP_SIZE
+            ](b),
+            BenchId("traditional_1x"),
         )
-        bench.bench_function[benchmark_simple_warp_parameterized[WARP_SIZE]](
-            BenchId("simple_warp_1x")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                WARP_SIZE
+            ](b),
+            BenchId("simple_warp_1x"),
         )
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[WARP_SIZE]
-        ](BenchId("functional_warp_1x"))
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[WARP_SIZE](b),
+            BenchId("functional_warp_1x"),
+        )
 
         print("-" * 80)
         print("Testing SIZE=4 x WARP_SIZE, BLOCKS=4")
-        bench.bench_function[
-            benchmark_traditional_parameterized[4 * WARP_SIZE]
-        ](BenchId("traditional_4x"))
-        bench.bench_function[
-            benchmark_simple_warp_parameterized[4 * WARP_SIZE]
-        ](BenchId("simple_warp_4x"))
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[4 * WARP_SIZE]
-        ](BenchId("functional_warp_4x"))
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                4 * WARP_SIZE
+            ](b),
+            BenchId("traditional_4x"),
+        )
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                4 * WARP_SIZE
+            ](b),
+            BenchId("simple_warp_4x"),
+        )
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[4 * WARP_SIZE](b),
+            BenchId("functional_warp_4x"),
+        )
 
         print("-" * 80)
         print("Testing SIZE=32 x WARP_SIZE, BLOCKS=32")
-        bench.bench_function[
-            benchmark_traditional_parameterized[32 * WARP_SIZE]
-        ](BenchId("traditional_32x"))
-        bench.bench_function[
-            benchmark_simple_warp_parameterized[32 * WARP_SIZE]
-        ](BenchId("simple_warp_32x"))
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[32 * WARP_SIZE]
-        ](BenchId("functional_warp_32x"))
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                32 * WARP_SIZE
+            ](b),
+            BenchId("traditional_32x"),
+        )
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                32 * WARP_SIZE
+            ](b),
+            BenchId("simple_warp_32x"),
+        )
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[32 * WARP_SIZE](
+                b
+            ),
+            BenchId("functional_warp_32x"),
+        )
 
         print("-" * 80)
         print("Testing SIZE=256 x WARP_SIZE, BLOCKS=256")
-        bench.bench_function[
-            benchmark_traditional_parameterized[256 * WARP_SIZE]
-        ](BenchId("traditional_256x"))
-        bench.bench_function[
-            benchmark_simple_warp_parameterized[256 * WARP_SIZE]
-        ](BenchId("simple_warp_256x"))
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[256 * WARP_SIZE]
-        ](BenchId("functional_warp_256x"))
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                256 * WARP_SIZE
+            ](b),
+            BenchId("traditional_256x"),
+        )
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                256 * WARP_SIZE
+            ](b),
+            BenchId("simple_warp_256x"),
+        )
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[256 * WARP_SIZE](
+                b
+            ),
+            BenchId("functional_warp_256x"),
+        )
 
         print("-" * 80)
         print("Testing SIZE=2048 x WARP_SIZE, BLOCKS=2048")
-        bench.bench_function[
-            benchmark_traditional_parameterized[2048 * WARP_SIZE]
-        ](BenchId("traditional_2048x"))
-        bench.bench_function[
-            benchmark_simple_warp_parameterized[2048 * WARP_SIZE]
-        ](BenchId("simple_warp_2048x"))
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[2048 * WARP_SIZE]
-        ](BenchId("functional_warp_2048x"))
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                2048 * WARP_SIZE
+            ](b),
+            BenchId("traditional_2048x"),
+        )
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                2048 * WARP_SIZE
+            ](b),
+            BenchId("simple_warp_2048x"),
+        )
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[2048 * WARP_SIZE](
+                b
+            ),
+            BenchId("functional_warp_2048x"),
+        )
 
         print("-" * 80)
         print("Testing SIZE=16384 x WARP_SIZE, BLOCKS=16384 (Large Scale)")
-        bench.bench_function[
-            benchmark_traditional_parameterized[16384 * WARP_SIZE]
-        ](BenchId("traditional_16384x"))
-        bench.bench_function[
-            benchmark_simple_warp_parameterized[16384 * WARP_SIZE]
-        ](BenchId("simple_warp_16384x"))
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[16384 * WARP_SIZE]
-        ](BenchId("functional_warp_16384x"))
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                16384 * WARP_SIZE
+            ](b),
+            BenchId("traditional_16384x"),
+        )
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                16384 * WARP_SIZE
+            ](b),
+            BenchId("simple_warp_16384x"),
+        )
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[
+                16384 * WARP_SIZE
+            ](
+                b
+            ),
+            BenchId("functional_warp_16384x"),
+        )
 
         print("-" * 80)
         print("Testing SIZE=65536 x WARP_SIZE, BLOCKS=65536 (Massive Scale)")
-        bench.bench_function[
-            benchmark_traditional_parameterized[65536 * WARP_SIZE]
-        ](BenchId("traditional_65536x"))
-        bench.bench_function[
-            benchmark_simple_warp_parameterized[65536 * WARP_SIZE]
-        ](BenchId("simple_warp_65536x"))
-        bench.bench_function[
-            benchmark_functional_warp_parameterized[65536 * WARP_SIZE]
-        ](BenchId("functional_warp_65536x"))
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_traditional_parameterized[
+                65536 * WARP_SIZE
+            ](b),
+            BenchId("traditional_65536x"),
+        )
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_simple_warp_parameterized[
+                65536 * WARP_SIZE
+            ](b),
+            BenchId("simple_warp_65536x"),
+        )
+        bench.bench_function(
+            lambda (
+                mut b: Bencher
+            ) raises: benchmark_functional_warp_parameterized[
+                65536 * WARP_SIZE
+            ](
+                b
+            ),
+            BenchId("functional_warp_65536x"),
+        )
 
         print(bench)
         print("Benchmarks completed!")

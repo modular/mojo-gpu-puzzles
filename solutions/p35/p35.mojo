@@ -237,7 +237,6 @@ def test_aligned() raises:
 # ---------------------------------------------------------------------------- #
 
 
-@__parameter
 @always_inline
 def benchmark_scalar(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
@@ -270,7 +269,6 @@ def benchmark_scalar(mut b: Bencher) raises:
     bencher_iter_custom(b, workflow, bench_ctx)
 
 
-@__parameter
 @always_inline
 def benchmark_unaligned(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
@@ -303,7 +301,6 @@ def benchmark_unaligned(mut b: Bencher) raises:
     bencher_iter_custom(b, workflow, bench_ctx)
 
 
-@__parameter
 @always_inline
 def benchmark_aligned(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
@@ -361,13 +358,13 @@ def main() raises:
         var bench = Bench(BenchConfig(max_iters=100, num_warmup_iters=10))
 
         print("\nScalar (one element per thread):")
-        bench.bench_function[benchmark_scalar](BenchId("scalar"))
+        bench.bench_function(benchmark_scalar, BenchId("scalar"))
 
         print("\nVectorized, under-stated alignment (scalar codegen):")
-        bench.bench_function[benchmark_unaligned](BenchId("unaligned"))
+        bench.bench_function(benchmark_unaligned, BenchId("unaligned"))
 
         print("\nVectorized, aligned (ld.global.nc.v4 codegen):")
-        bench.bench_function[benchmark_aligned](BenchId("aligned"))
+        bench.bench_function(benchmark_aligned, BenchId("aligned"))
 
         bench.dump_report()
         print("\nProfile with NSight Compute to confirm the codegen change!")

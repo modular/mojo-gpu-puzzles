@@ -18,7 +18,7 @@ This puzzle covers:
 - **Automatic SIMD vectorization** within GPU threads
 - **TileTensor operations** for safe memory access
 - **GPU thread hierarchy** vs SIMD operations
-- **Capturing semantics** in nested functions
+- **Capture semantics** in nested closures
 
 The mathematical operation is simple element-wise addition:
 \\[\Large \text{output}[i] = a[i] + b[i]\\]
@@ -62,22 +62,19 @@ one scalar at a time.
 The `elementwise` function expects a nested function with this exact signature:
 
 ```mojo
-@__parameter
 @always_inline
 def your_function[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -> None:
+    simd_width: Int, alignment: Int = 1
+](indices: Coord) {var} -> None:
     # Your implementation here
 ```
 
 **Why each part matters:**
 
-- `@__parameter`: Enables compile-time specialization for optimal GPU code
-  generation
 - `@always_inline`: Forces inlining to eliminate function call overhead in GPU
   kernels
-- `capturing`: Allows access to variables from the outer scope (the input/output
-  tensors)
+- `{var}`: The capture list - allows access to variables from the outer scope
+  (the input/output tensors)
 - `Coord`: Carries the per-dimension indices for the current SIMD chunk; use
   `indices[0]` for 1D operations
 
@@ -128,9 +125,11 @@ Writes the entire SIMD vector back to memory in one operation.
 ### 6. **Calling the elementwise function**
 
 ```mojo
-elementwise[your_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
+elementwise[simd_width=SIMD_WIDTH, target="gpu"](your_function, Coord(total_size), ctx)
 ```
 
+- Your nested function is passed as a runtime argument, and the problem shape
+  is wrapped in a `Coord`
 - `total_size` is the `size` compile-time parameter of the enclosing
   function—the template already passes it
 - `elementwise` sizes the grid itself and drives a grid-stride loop, so your
@@ -236,7 +235,7 @@ if idx < size:
 
 ```mojo
 # Automatic management + SIMD vectorization
-elementwise[add_function, simd_width, target="gpu"](size, ctx)
+elementwise[simd_width=simd_width, target="gpu"](add_function, Coord(size), ctx)
 ```
 
 **What `elementwise` abstracts away:**
@@ -252,22 +251,21 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 ### 2. **Deep dive: nested function architecture**
 
 ```mojo
-@__parameter
 @always_inline
 def add[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -> None:
+    simd_width: Int, alignment: Int = 1
+](indices: Coord) {var} -> None:
 ```
 
 **Parameter Analysis:**
 
-- **`@__parameter`**: This decorator provides **compile-time specialization**. The
-  function is generated separately for each unique `simd_width`, allowing
-  aggressive optimization.
+- **`simd_width: Int`**: A compile-time parameter, so the function is
+  instantiated separately for each unique `simd_width`, allowing aggressive
+  optimization.
 - **`@always_inline`**: Critical for GPU performance - eliminates function call
   overhead by embedding the code directly into the kernel.
-- **`capturing`**: Enables **lexical scoping** - the inner function can access
-  variables from the outer scope without explicit parameter passing.
+- **`{var}`**: The capture list enables **lexical scoping** - the inner function
+  can access variables from the outer scope without explicit parameter passing.
 - **`Coord`**: Carries the per-dimension indices for the SIMD chunk being
   processed; `indices[0]` is the linear start position for 1D operations.
 
@@ -400,7 +398,7 @@ __global__ void add_kernel(float* output, float* a, float* b, int size) {
 
 ```mojo
 # Mojo: safe, concise, automatically vectorized
-elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
+elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
 ```
 
 **Benefits of Functional Approach:**

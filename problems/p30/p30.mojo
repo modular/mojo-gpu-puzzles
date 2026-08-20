@@ -87,7 +87,6 @@ def kernel3(
 # ANCHOR_END: kernel3
 
 
-@__parameter
 @always_inline
 def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
@@ -134,7 +133,6 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel1_workflow, bench_ctx)
 
 
-@__parameter
 @always_inline
 def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
@@ -181,7 +179,6 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel2_workflow, bench_ctx)
 
 
-@__parameter
 @always_inline
 def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
@@ -426,18 +423,27 @@ def main() raises:
         var bench = Bench()
 
         print("Benchmarking Kernel 1")
-        bench.bench_function[benchmark_kernel1_parameterized[SIZE]](
-            BenchId("kernel1")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_kernel1_parameterized[
+                SIZE
+            ](b),
+            BenchId("kernel1"),
         )
 
         print("Benchmarking Kernel 2")
-        bench.bench_function[benchmark_kernel2_parameterized[SIZE]](
-            BenchId("kernel2")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_kernel2_parameterized[
+                SIZE
+            ](b),
+            BenchId("kernel2"),
         )
 
         print("Benchmarking Kernel 3")
-        bench.bench_function[benchmark_kernel3_parameterized[SIZE]](
-            BenchId("kernel3")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_kernel3_parameterized[
+                SIZE
+            ](b),
+            BenchId("kernel3"),
         )
 
         bench.dump_report()
