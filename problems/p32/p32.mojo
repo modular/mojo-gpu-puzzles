@@ -114,7 +114,6 @@ def two_way_conflict_kernel(
 # ANCHOR_END: two_way_conflict_kernel
 
 
-@__parameter
 @always_inline
 def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure.
@@ -157,7 +156,6 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel_workflow, bench_ctx)
 
 
-@__parameter
 @always_inline
 def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure.
@@ -292,13 +290,15 @@ def main() raises:
         var bench = Bench()
 
         print("\nNo-conflict kernel (optimal):")
-        bench.bench_function[benchmark_no_conflict[SIZE]](
-            BenchId("no_conflict")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_no_conflict[SIZE](b),
+            BenchId("no_conflict"),
         )
 
         print("\nTwo-way conflict kernel:")
-        bench.bench_function[benchmark_two_way_conflict[SIZE]](
-            BenchId("two_way_conflict")
+        bench.bench_function(
+            lambda (mut b: Bencher) raises: benchmark_two_way_conflict[SIZE](b),
+            BenchId("two_way_conflict"),
         )
 
         bench.dump_report()

@@ -77,7 +77,7 @@ Before diving into functional patterns, ensure you're comfortable with:
 
 - **Basic GPU concepts**: Memory hierarchy, thread execution, SIMD operations
 - **Mojo fundamentals**: Parameter functions, compile-time specialization,
-  capturing semantics
+  closure capture semantics
 - **TileTensor operations**: Loading, storing, and tensor manipulation
 - **GPU memory management**: Buffer allocation, host-device synchronization
 
@@ -94,12 +94,12 @@ Start with the foundation: automatic thread management and SIMD vectorization.
 - Functional GPU programming with `elementwise`
 - Automatic SIMD vectorization within GPU threads
 - TileTensor operations for safe memory access
-- Capturing semantics in nested functions
+- Capture semantics in nested closures
 
 **Key pattern:**
 
 ```mojo
-elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
+elementwise[simd_width=SIMD_WIDTH, target="gpu"](add_function, Coord(total_size), ctx)
 ```
 
 ### **2. Tiled processing**

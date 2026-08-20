@@ -295,11 +295,10 @@ You need to complete the `compute_dot_product` function with
 **10 lines or fewer**:
 
 ```mojo
-@__parameter
 @always_inline
 def compute_dot_product[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -> None:
+    simd_width: Int, alignment: Int = 1
+](indices: Coord) {var} -> None:
     var idx = Int(indices[0].value())
     # FILL IN (10 lines at most)
 ```
@@ -410,7 +409,7 @@ warp operations:
 **Functional approach characteristics:**
 
 ```mojo
-elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
+elementwise[simd_width=1, target="gpu"](compute_dot_product, Coord(size), ctx)
 ```
 
 **Benefits:**
