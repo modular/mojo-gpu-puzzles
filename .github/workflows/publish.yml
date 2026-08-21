@@ -23,6 +23,7 @@ on:
       - stable
     paths:
       - "pixi.lock"
+  workflow_dispatch: {}
 
 permissions:
   id-token: write
@@ -34,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
           path: |
             ~/.modular
@@ -46,6 +47,11 @@ jobs:
           pixi-version: v0.71.0
           cache: false
           post-cleanup: false
+          run-install: false
+
+      - name: Install
+        shell: bash
+        run: pixi install --locked --manifest-path pixi.toml
 
       - name: Build
         shell: bash
@@ -54,8 +60,8 @@ jobs:
           pixi run -e book build-book
 
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@4b09552702d0b65573696410d4707c765da2630b
-        if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/stable'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
