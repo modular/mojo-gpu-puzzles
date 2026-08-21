@@ -57,7 +57,7 @@ platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 [dependencies]
 python = "==3.12"
 mojo = "*" # includes `mojo-compiler`, lsp, debugger, formatter etc.
-max = ">=26.3.0.dev2026042817"
+max = "*"
 bash = ">=5.2.21,<6"
 manim = ">=0.18.1,<0.19"
 mdbook = ">=0.4.48,<0.5"
