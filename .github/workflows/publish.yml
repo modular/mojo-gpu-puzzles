@@ -11,11 +11,8 @@ on:
       - stable
     paths:
       - "pixi.lock"
-  pull_request:
-    branches:
-      - stable
-    paths:
-      - "pixi.lock"
+      - ".github/workflows/publish.yml"
+      - "book/**"
   workflow_dispatch: {}
 
 permissions:
