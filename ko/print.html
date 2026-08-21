@@ -230,7 +230,7 @@
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
+  <a href="https://max.modular.com/mojo/manual/" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
@@ -247,7 +247,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://docs.modular.com/get-started/#stay-in-touch"
+    <a href="https://max.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">
@@ -259,7 +259,7 @@
 <p><em>“우리가 할 수 있기 전에 배워야 하는 것들은, 하면서 배운다.”</em>
 아리스토텔레스 (니코마코스 윤리학)</p>
 </blockquote>
-<p><a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥를 사용한 GPU 프로그래밍 실습
+<p><a href="https://max.modular.com/mojo/manual/">Mojo</a> 🔥를 사용한 GPU 프로그래밍 실습
 가이드에 오신 것을 환영합니다. Mojo는 파이썬 문법과 시스템 수준의 성능을 결합한
 프로그래밍 언어입니다.</p>
 <p>아래 개요 영상을 먼저 시청하거나, 계속 읽어주세요.</p>
@@ -492,11 +492,11 @@ Mojo의 TileTensor 추상화로 전환합니다. 이를 통해 GPU 메모리 패
 <h2 id="사전-준비"><a class="header" href="#사전-준비">사전 준비</a></h2>
 <h3 id="시스템-요구사항"><a class="header" href="#시스템-요구사항">시스템 요구사항</a></h3>
 <p>먼저 시스템이
-<a href="https://docs.modular.com/packages#system-requirements">시스템 요구사항</a>을
+<a href="https://max.modular.com/packages#system-requirements">시스템 요구사항</a>을
 충족하는지 확인하세요.</p>
 <h3 id="지원되는-gpu"><a class="header" href="#지원되는-gpu">지원되는 GPU</a></h3>
 <p>퍼즐을 실행하려면
-<a href="https://docs.modular.com/faq#gpu-requirements">지원되는 GPU</a>가 필요합니다.
+<a href="https://max.modular.com/faq#gpu-requirements">지원되는 GPU</a>가 필요합니다.
 환경 설정을 마친 뒤 아래 환경 설정의 <code>gpu-specs</code> 명령어로 GPU 호환성을 확인할 수
 있습니다.</p>
 <h2 id="운영체제"><a class="header" href="#운영체제">운영체제</a></h2>
@@ -598,9 +598,9 @@ code --version
 <ul>
 <li>프로그래밍 기초 (변수, 반복문, 조건문, 함수)</li>
 <li>병렬 컴퓨팅 개념 (스레드, 동기화, 경쟁 상태)</li>
-<li><a href="https://docs.modular.com/mojo/manual/">Mojo</a> 기본 문법
-(<a href="https://docs.modular.com/mojo/manual/pointers/">포인터 입문</a> 섹션 포함)</li>
-<li><a href="https://docs.modular.com/mojo/manual/gpu/fundamentals">GPU 프로그래밍 기초</a>를
+<li><a href="https://max.modular.com/mojo/manual/">Mojo</a> 기본 문법
+(<a href="https://max.modular.com/mojo/manual/pointers/">포인터 입문</a> 섹션 포함)</li>
+<li><a href="https://max.modular.com/mojo/manual/gpu/fundamentals">GPU 프로그래밍 기초</a>를
 미리 읽어두면 도움이 됩니다!</li>
 </ul>
 <p>GPU 프로그래밍 경험이 없어도 괜찮습니다! 퍼즐을 풀어가며 자연스럽게 익힐 수
@@ -1106,7 +1106,7 @@ idx = (batch * HEIGHT + row) * WIDTH + col
 idx = (batch * padded_height + row) * padded_width + col
 </code></pre>
 <h3 id="tiletensor-미리보기"><a class="header" href="#tiletensor-미리보기">TileTensor 미리보기</a></h3>
-<p><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a>를
+<p><a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a>를
 사용하면 이런 경우를 훨씬 깔끔하게 처리할 수 있습니다:</p>
 <pre><code class="language-mojo"># 미리보기 - 지금은 이 문법을 몰라도 괜찮습니다!
 output[i, j] = a[i, j] + 10.0  # 2D 인덱싱
@@ -1560,7 +1560,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h1 id="tiletensor-알아보기"><a class="header" href="#tiletensor-알아보기">TileTensor 알아보기</a></h1>
 <p>퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를
 미리 살펴봅시다: 🥁… 바로
-<strong><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>
+<strong><a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>
 입니다.</p>
 <blockquote>
 <p>💡 <em>TileTensor가 어떤 일을 할 수 있는지 맛보기로 살펴봅니다. 지금 모든 걸
@@ -1613,10 +1613,10 @@ tensor[0, 0] = 1.0  # 첫 번째 요소
 tensor[1, 2] = 2.0  # 마지막 요소
 </code></pre>
 <p><code>Layout</code>과 <code>TileTensor</code>에 대해 더 알아보려면
-<a href="https://docs.modular.com/mojo/manual/">Mojo 매뉴얼</a>의 가이드를 참고하세요:</p>
+<a href="https://max.modular.com/mojo/manual/">Mojo 매뉴얼</a>의 가이드를 참고하세요:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
-<li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
+<li><a href="https://max.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
+<li><a href="https://max.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
 </ul>
 <h2 id="간단한-예제"><a class="header" href="#간단한-예제">간단한 예제</a></h2>
 <p>TileTensor의 기본을 보여주는 간단한 예제로 모든 것을 정리해봅시다:</p>
@@ -2365,7 +2365,7 @@ row * size + col    tensor[row, col]
 <p><strong>경고</strong>: 각 블록에는 해당 블록의 스레드들이 읽고 쓸 수 있는 공유 메모리의
 양이 _상수_로 고정되어 있습니다. 이 값은 파이썬 리터럴 상수여야 하며 변수를
 사용할 수 없습니다. 공유 메모리에 쓴 후에는
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>를 호출해
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>를 호출해
 스레드들이 교차하지 않도록 해야 합니다.</p>
 </blockquote>
 <p><strong>학습 참고</strong>: 이 퍼즐에서는 각 스레드가 자신의 공유 메모리 위치에만 접근하므로
@@ -2716,7 +2716,7 @@ Kernighan</p>
 단계별 워크플로우를 사용합니다.</p>
 <p><strong>참고</strong>: 다음 내용은 범용 IDE 호환성을 위해 명령줄 디버깅에 초점을 맞춥니다. VS
 Code 디버깅을 선호한다면
-<a href="https://docs.modular.com/mojo/tools/debugging">Mojo 디버깅 문서</a>에서 VS Code
+<a href="https://max.modular.com/mojo/tools/debugging">Mojo 디버깅 문서</a>에서 VS Code
 전용 설정과 워크플로우를 참조하세요.</p>
 <h2 id="gpu-디버깅이-다른-이유"><a class="header" href="#gpu-디버깅이-다른-이유">GPU 디버깅이 다른 이유</a></h2>
 <p>도구로 들어가기 전에, GPU 디버깅이 특별한 이유를 살펴보겠습니다:</p>
@@ -2733,7 +2733,7 @@ Code 디버깅을 선호한다면
 </ul>
 <h2 id="디버깅-도구-모음"><a class="header" href="#디버깅-도구-모음">디버깅 도구 모음</a></h2>
 <p>Mojo의 GPU 디버깅 기능은 현재 NVIDIA GPU로 제한됩니다.
-<a href="https://docs.modular.com/mojo/tools/debugging">Mojo 디버깅 문서</a>에 따르면 Mojo
+<a href="https://max.modular.com/mojo/tools/debugging">Mojo 디버깅 문서</a>에 따르면 Mojo
 패키지에는 다음이 포함됩니다:</p>
 <ul>
 <li>CPU 측 디버깅을 위한 Mojo 플러그인이 포함된 <strong>LLDB 디버거</strong></li>
@@ -2741,7 +2741,7 @@ Code 디버깅을 선호한다면
 <li>범용 IDE 호환성을 위한 <code>mojo debug</code>를 통한 <strong>명령줄 인터페이스</strong></li>
 </ul>
 <p>GPU 전용 디버깅에 대해서는
-<a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU 디버깅 가이드</a>에서
+<a href="https://max.modular.com/mojo/tools/gpu-debugging">Mojo GPU 디버깅 가이드</a>에서
 추가 기술 세부 사항을 제공합니다.</p>
 <p>이 아키텍처는 익숙한 디버깅 명령어와 GPU 전용 기능, 두 가지 장점을 모두
 제공합니다.</p>
@@ -3640,8 +3640,8 @@ CUDA-GDB 스레드 상태, 메모리 주소를 직접 확인했습니다</li>
 <hr />
 <h2 id="추가-자료"><a class="header" href="#추가-자료">추가 자료</a></h2>
 <ul>
-<li><a href="https://docs.modular.com/mojo/tools/debugging">Mojo 디버깅 문서</a></li>
-<li><a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU 디버깅 가이드</a></li>
+<li><a href="https://max.modular.com/mojo/tools/debugging">Mojo 디버깅 문서</a></li>
+<li><a href="https://max.modular.com/mojo/tools/gpu-debugging">Mojo GPU 디버깅 가이드</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">NVIDIA CUDA-GDB 사용자 가이드</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference">CUDA-GDB 명령어 참조</a></li>
 </ul>
@@ -4689,7 +4689,7 @@ CUDA toolkit에 포함되어 있어 <code>pixi</code>를 통해서만 사용할 
 <p><strong>알아야 할 것</strong>:</p>
 <ul>
 <li>Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (메모리 관리, 스레드 조율, 배리어)</li>
-<li><strong><a href="https://docs.modular.com/faq#gpu-requirements">호환 NVIDIA GPU 하드웨어</a></strong></li>
+<li><strong><a href="https://max.modular.com/faq#gpu-requirements">호환 NVIDIA GPU 하드웨어</a></strong></li>
 <li><code>compute-sanitizer</code> 접근을 위한 <code>pixi</code> 패키지 매니저 환경 설정</li>
 <li><strong>선행 퍼즐</strong>: <a href="puzzle_10/../puzzle_04/introduction_tile_tensor.html">Puzzle 4</a>와
 <a href="puzzle_10/../puzzle_08/puzzle_08.html">Puzzle 8</a> 숙지 권장</li>
@@ -5765,8 +5765,8 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께
 살펴보았습니다:</p>
 <ol>
-<li><a href="https://docs.modular.com/mojo/std/memory/pointer/Pointer/">Pointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
-<li>강력한 <code>address_space</code> 파라미터로 메모리를 할당하는, 보다 구조화된 <a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></li>
+<li><a href="https://max.modular.com/mojo/std/memory/pointer/Pointer/">Pointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
+<li>강력한 <code>address_space</code> 파라미터로 메모리를 할당하는, 보다 구조화된 <a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></li>
 </ol>
 <p>이 퍼즐부터는 <code>TileTensor</code>로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을
 제공합니다:</p>
@@ -6698,7 +6698,7 @@ def prefix_sum_block_sum_phase(
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a></p>
 <p>이 퍼즐의 핵심은
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>가 블록
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>가 블록
 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는
 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 커널을
 큐에 넣어야 합니다:</p>
@@ -7722,7 +7722,7 @@ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\]</p>
 <p><strong>비동기 연산에 대한 참고</strong>: 표준 GPU 메모리 로드(<code>ld.global</code>)는 이미
 비동기입니다 — 워프는 로드한 데이터가 실제로 필요해질 때까지 계속 실행됩니다.
 <code>cp.async</code>(CUDA)나
-<a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>(Mojo)
+<a href="https://max.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>(Mojo)
 같은 전용 비동기 복사 명령은 여기서 한 걸음 더 나아가, 전용 복사 엔진을 사용하고
 레지스터를 우회하여 자원 활용을 높입니다. 단순히 동기 연산을 비동기로 바꾸는
 것과는 다릅니다.</p>
@@ -8560,7 +8560,7 @@ b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
 <p>수동 좌표 계산 없이 “(block_idx.y, block_idx.x) 위치의 타일을 가져온다“를
 직접 표현합니다. 자세한 내용은
-<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">문서</a>를
+<a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">문서</a>를
 참고하세요.</p>
 </li>
 <li>
@@ -8581,7 +8581,7 @@ async_copy_wait_all()
 <ul>
 <li>레지스터를 우회하는 전용 복사 엔진을 사용하여 연산과 메모리 전송의 중첩을
 가능하게 합니다
-(<a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
+(<a href="https://max.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
 참고)</li>
 <li>최적의 메모리 접근 패턴을 위한 특화된 스레드 레이아웃을 사용합니다</li>
 <li>수동 메모리 초기화가 불필요합니다</li>
@@ -8755,7 +8755,7 @@ B^T\) 계산</li>
 <h2 id="개요-24"><a class="header" href="#개요-24">개요</a></h2>
 <p><a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13: 1D 합성곱</a>에서 GPU에서 효율적으로
 동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을
-<a href="https://docs.modular.com/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
+<a href="https://max.modular.com/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
 직접 호출할 수 있는 커스텀 연산으로 변환합니다.</p>
 <p>사용할 1D 합성곱 커널은 이미 구현되어 있습니다:</p>
 <pre><code class="language-mojo">comptime TPB = 15
@@ -8958,8 +8958,8 @@ Verification passed: Custom kernel results match NumPy calculation
 이 한 줄이 수행하는 중요한 작업들은 다음과 같습니다:
 <ol>
 <li>GPU 컨텍스트(<code>gpu_ctx</code>의 타입은
-<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)에서
-<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>을
+<a href="https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)에서
+<a href="https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>을
 호출하여 커널 실행 예약</li>
 <li>필요한 레이아웃과 크기 정보를 <strong>컴파일 타임</strong> 파라미터로 전달</li>
 <li>출력, 입력, 커널 텐서를 런타임 인자로 제공</li>
@@ -8975,19 +8975,19 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <li>입력과 커널용 NumPy 배열 생성</li>
 <li>MAX 그래프로 연산을 감싸는 <code>conv_1d()</code> 함수 호출</li>
 <li>NumPy 배열을 <code>Buffer.from_numpy(input).to(device)</code>로
-<a href="https://docs.modular.com/api/python/driver">MAX driver</a> Buffer로 변환</li>
+<a href="https://max.modular.com/api/python/driver">MAX driver</a> Buffer로 변환</li>
 <li><code>custom_extensions=[mojo_kernels]</code>로 커스텀 연산 패키지 로드</li>
 </ul>
 </li>
 <li>
 <p><strong>그래프 구축</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
+<li><a href="https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
 입력 및 출력 텐서 타입 정의</li>
 <li><code>parameters={...}</code>를 통해 연산의 파라미터 지정</li>
-<li><a href="https://docs.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
+<li><a href="https://max.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
 연산 그래프 생성</li>
-<li><a href="https://docs.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
+<li><a href="https://max.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
 커스텀 연산 호출</li>
 </ul>
 </li>
@@ -8995,7 +8995,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <p><strong>커스텀 op 등록</strong>:</p>
 <ul>
 <li><code>@extensibility.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출.
-<a href="https://docs.modular.com/mojo/manual/decorators/extensibility-register/">@extensibility.register</a>
+<a href="https://max.modular.com/mojo/manual/decorators/extensibility-register/">@extensibility.register</a>
 참고</li>
 <li><code>execute</code> 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의</li>
 <li>입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환</li>
@@ -9067,8 +9067,8 @@ gpu_ctx.enqueue_function[...](...) # 커널 예약
 <blockquote>
 <p>더 자세한 내용은 아래 튜토리얼을 참고하세요:</p>
 <ul>
-<li><a href="https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
-<li><a href="https://docs.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
+<li><a href="https://max.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
+<li><a href="https://max.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
 </ul>
 </blockquote>
 <h3 id="커스텀-op-등록"><a class="header" href="#커스텀-op-등록">커스텀 op 등록</a></h3>
@@ -10474,7 +10474,7 @@ Mojo GPU 커널을 파이썬과 연동하는 방법을 배웠습니다. 이제�
 <h2 id="개요-27"><a class="header" href="#개요-27">개요</a></h2>
 <p>이 퍼즐에서는 <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17: 1D 합성곱 Op</a>의 1D
 합성곱(convolution) 커널을 그대로 가져와서, MAX 그래프 대신
-<a href="https://docs.modular.com/api/python/torch/">CustomOpLibrary</a>를 사용하여
+<a href="https://max.modular.com/api/python/torch/">CustomOpLibrary</a>를 사용하여
 PyTorch와 통합합니다.</p>
 <p>여기서 핵심은 <strong>동일한 Mojo 커널이 수정 없이 그대로 동작한다</strong>는 것입니다. MAX
 그래프와 PyTorch 방식 사이에서 달라지는 것은 파이썬 통합 레이어뿐입니다.</p>
@@ -11156,7 +11156,7 @@ struct Embedding2DCustomOp:
 </ol>
 <h3 id="pytorch-통합"><a class="header" href="#pytorch-통합">PyTorch 통합</a></h3>
 <p>등록된 연산은
-<a href="https://docs.modular.com/api/python/torch/">CustomOpLibrary</a>를 통해
+<a href="https://max.modular.com/api/python/torch/">CustomOpLibrary</a>를 통해
 파이썬에서 호출할 수 있습니다:</p>
 <pre><code class="language-python"># Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
@@ -12777,7 +12777,7 @@ x} \] 여기서:</p>
 커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:</p>
 <ul>
 <li>기울기 누적을 위한
-<a href="https://docs.modular.com/mojo/std/os/atomic/Atomic/">원자적 연산</a></li>
+<a href="https://max.modular.com/mojo/std/os/atomic/Atomic/">원자적 연산</a></li>
 <li>기울기 계산에서의 수치 안정성</li>
 <li>효율적인 GPU 활용을 위한 메모리 접근 패턴</li>
 <li>연산 간 적절한 동기화</li>
@@ -13550,7 +13550,7 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 스레드가 자동으로 여러 SIMD 요소를 처리하며, 현대 GPU 프로그래밍이 어떻게 저수준
 세부 사항을 추상화하면서도 높은 성능을 유지하는지 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/algorithm/functional/elementwise/">elementwise</a>
+<em><a href="https://max.modular.com/mojo/std/algorithm/functional/elementwise/">elementwise</a>
 함수는 스레드 관리, SIMD 벡터화, 메모리 병합을 자동으로 처리합니다.</em></p>
 <h2 id="핵심-개념-28"><a class="header" href="#핵심-개념-28">핵심 개념</a></h2>
 <p>이 퍼즐에서 다루는 내용:</p>
@@ -13971,7 +13971,7 @@ def tiled_elementwise_add[
 <p><code>TILE_SIZE=32</code>인 1024개 요소 벡터의 경우: <code>1024 ÷ 32 = 32</code>개 타일이 정확히
 생깁니다.</p>
 <h3 id="2-타일-추출-패턴"><a class="header" href="#2-타일-추출-패턴">2. <strong>타일 추출 패턴</strong></a></h3>
-<p><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> 문서</a>를
+<p><a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> 문서</a>를
 참고하세요.</p>
 <pre><code class="language-mojo">tile_id = indices[0]  # 각 스레드가 처리할 타일 하나를 받음
 out_tile = output.tile[tile_size](tile_id)
@@ -14253,7 +14253,7 @@ Tiled:       적당한 병렬성, 지역화된 메모리 접근
 <h1 id="vectorize---simd-제어"><a class="header" href="#vectorize---simd-제어">vectorize - SIMD 제어</a></h1>
 <h2 id="개요-34"><a class="header" href="#개요-34">개요</a></h2>
 <p>이 퍼즐에서는 수동 벡터화와
-<a href="https://docs.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a>를
+<a href="https://max.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a>를
 사용하여 GPU 커널 내에서 SIMD 연산을 정밀하게 제어하는 <strong>고급 벡터화 기법</strong>을
 탐구합니다. 벡터화된 연산에 대해 두 가지 다른 접근법을 구현합니다:</p>
 <ol>
@@ -14986,7 +14986,7 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 <ul>
 <li><strong><code>max_iters=10</code></strong>: 통계적 신뢰성을 위해 최대 10회 반복</li>
 <li><strong><code>num_warmup_iters=1</code></strong>: 측정 전 GPU 워밍업</li>
-<li><a href="https://docs.modular.com/mojo/std/benchmark/">Benchmark 문서</a>를 참고하세요</li>
+<li><a href="https://max.modular.com/mojo/std/benchmark/">Benchmark 문서</a>를 참고하세요</li>
 </ul>
 <h2 id="벤치마킹-구현의-핵심"><a class="header" href="#벤치마킹-구현의-핵심">벤치마킹 구현의 핵심</a></h2>
 <h3 id="핵심-워크플로우-패턴"><a class="header" href="#핵심-워크플로우-패턴">핵심 워크플로우 패턴</a></h3>
@@ -15695,7 +15695,7 @@ var value = input[global_i]  # 레인 0→input[0], 레인 1→input[1], 등
 레인이 하나의 요소를 처리하고 <code>warp.sum()</code>으로 결과를 자동으로 합산하여, 워프
 프로그래밍이 GPU 동기화를 어떻게 변환하는지 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/sum">warp.sum()</a> 연산은
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/sum">warp.sum()</a> 연산은
 SIMT 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 단일 하드웨어 가속
 명령으로 대체합니다.</em></p>
 <h2 id="핵심-개념-33"><a class="header" href="#핵심-개념-33">핵심 개념</a></h2>
@@ -16349,8 +16349,8 @@ mojo p22.mojo --benchmark
 <p><strong>Puzzle 25: 워프 통신 기본 요소</strong>에서는 고급 GPU <strong>워프 레벨 통신 연산</strong> - 워프
 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본
 요소를 소개합니다.
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down</a>과
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast</a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down</a>과
+<a href="https://max.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast</a>를
 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을
 배웁니다.</p>
 <p><strong>Part VII: GPU 워프 통신</strong>에서는 스레드 그룹 내 워프 레벨 데이터 이동 연산을
@@ -16382,19 +16382,19 @@ mojo p22.mojo --benchmark
 <h3 id="mojo의-워프-통신-연산"><a class="header" href="#mojo의-워프-통신-연산"><strong>Mojo의 워프 통신 연산</strong></a></h3>
 <p><code>gpu.primitives.warp</code>의 핵심 통신 기본 요소를 배웁니다:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>:
 더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast"><code>broadcast(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/broadcast"><code>broadcast(value)</code></a></strong>:
 레인 0의 값을 모든 레인에 공유 (일대다)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>:
 특정 레인에서 값을 가져오기 (임의 접근)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>:
 더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)</li>
 </ol>
 <blockquote>
 <p><strong>참고:</strong> 이 퍼즐은 가장 많이 사용되는 통신 패턴인 <code>shuffle_down()</code>과
 <code>broadcast()</code>에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/">Mojo GPU 워프 문서</a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/warp/">Mojo GPU 워프 문서</a>를
 참고하세요.</p>
 </blockquote>
 <h3 id="성능-변환-예시-1"><a class="header" href="#성능-변환-예시-1"><strong>성능 변환 예시</strong></a></h3>
@@ -16518,7 +16518,7 @@ result = use_shared_value(shared_value, local_data)
 동기화 없이 유한 차분, 이동 평균, 이웃 기반 계산을 효율적으로 수행할 수
 있습니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down()</a>
 연산은 SIMT 실행을 활용하여 각 레인이 같은 워프 내 이웃의 데이터에 접근할 수
 있게 하며, 효율적인 스텐실 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다.</em></p>
 <blockquote>
@@ -17040,7 +17040,7 @@ if lane &lt; WARP_SIZE - offset:
 명시적 동기화 없이 블록 레벨 계산, 조건부 로직 조정, 일대다 통신 패턴을
 효율적으로 수행할 수 있습니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast()</a>
 연산은 SIMT 실행을 활용하여 하나의 레인(보통 레인 0)이 계산한 값을 같은 워프의
 모든 레인에 전달하며, 효율적인 조정 패턴과 집합적 의사결정을 가능하게 합니다.</em></p>
 <blockquote>
@@ -17807,9 +17807,9 @@ result = use_shared_value(shared_value, local_data)
 <p><strong>Puzzle 26: 고급 워프 통신 기본 요소</strong>에서는 정교한 GPU
 <strong>워프 레벨 버터플라이 통신과 병렬 스캔 연산</strong> - 워프 내에서 효율적인 트리 기반
 알고리즘과 병렬 리덕션을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다.
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor</a>을
+<a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor</a>을
 사용한 버터플라이 네트워크와
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum</a>을
+<a href="https://max.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum</a>을
 사용한 하드웨어 최적화 병렬 스캔을 배우며, 복잡한 다단계 공유 메모리 알고리즘
 없이 이를 구현하는 방법을 익힙니다.</p>
 <p><strong>달성 목표:</strong> 복잡한 공유 메모리 + 배리어 + 다단계 리덕션 패턴에서 벗어나,
@@ -17843,9 +17843,9 @@ Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
 <h3 id="mojo의-고급-워프-연산"><a class="header" href="#mojo의-고급-워프-연산"><strong>Mojo의 고급 워프 연산</strong></a></h3>
 <p><code>gpu.primitives.warp</code>의 정교한 통신 기본 요소를 배웁니다:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>:
 트리 알고리즘을 위한 XOR 기반 버터플라이 통신</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>:
 하드웨어 가속 병렬 스캔 연산</li>
 <li><strong>고급 조정 패턴</strong>: 여러 기본 요소를 결합한 복잡한 알고리즘</li>
 </ol>
@@ -17992,7 +17992,7 @@ output[global_i] = scan_result  # 하드웨어 최적화 누적 합
 명시적 동기화 없이 효율적인 병렬 리덕션, 정렬 네트워크, 고급 조정 알고리즘을
 구현할 수 있습니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor()</a>
 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, 워프 크기에 대해
 \(O(\log n)\) 복잡도로 확장되는 효율적인 버터플라이 네트워크와 병렬
 알고리즘을 가능하게 합니다.</em></p>
@@ -18742,7 +18742,7 @@ while offset &gt; 0:
 수십 줄의 공유 메모리 및 동기화 코드가 필요했을 효율적인 누적 계산, 병렬
 파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum()</a>
 연산은 하드웨어 가속 병렬 스캔을 활용하여 워프 레인에 걸쳐 \(O(\log n)\)
 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로
 대체합니다.</em></p>
@@ -19435,11 +19435,11 @@ final_pos = local_pos + partition_offset
 <h3 id="mojo의-블록-연산"><a class="header" href="#mojo의-블록-연산"><strong>Mojo의 블록 연산</strong></a></h3>
 <p><code>gpu.primitives.block</code>의 완전한 병렬 프로그래밍 도구 모음을 배웁니다:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
 합계, 평균, 최댓값/최솟값을 위한 전체→하나 리덕션</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
 병렬 필터링과 추출을 위한 전체→각각 스캔</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
 매개변수 공유와 조율을 위한 하나→전체 분배</li>
 </ol>
 <blockquote>
@@ -19612,12 +19612,12 @@ GPU 프로그래밍을 이해하는 최적의 학습 경로를 제공합니다.<
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blocksum의-핵심---블록-레벨-내적"><a class="header" href="#blocksum의-핵심---블록-레벨-내적">block.sum()의 핵심 - 블록 레벨 내적</a></h1>
 <p><a href="puzzle_27/../puzzle_12/puzzle_12.html">Puzzle 12</a>에서 살펴본 내적을 블록 레벨
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> 연산으로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> 연산으로
 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 블록 내 각
 스레드가 하나의 요소를 처리하고 <code>block.sum()</code>으로 결과를 자동으로 합산하여, 블록
 프로그래밍이 전체 스레드 블록에 걸친 GPU 동기화를 어떻게 변환하는지 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a>
 연산은 블록 전체 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 블록 내
 모든 스레드에 걸쳐 워프 패턴을 사용하는 정교하게 최적화된 구현으로 대체합니다.
 LLVM 분석은 <a href="puzzle_27/block_sum.html#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC%84%9D-blocksum%EC%9D%80-%EC%8B%A4%EC%A0%9C%EB%A1%9C-%EB%AC%B4%EC%97%87%EC%9C%BC%EB%A1%9C-%EC%BB%B4%ED%8C%8C%EC%9D%BC%EB%90%A0%EA%B9%8C">기술 분석</a>을
@@ -19832,7 +19832,7 @@ Just like warp.sum() but for the entire block
 <h3 id="3-tiletensor-인덱싱-패턴"><a class="header" href="#3-tiletensor-인덱싱-패턴">3. <strong>TileTensor 인덱싱 패턴</strong></a></h3>
 <p><code>TileTensor</code> 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요.
 산술 연산을 위해 스칼라 값을 추출해야 합니다.</p>
-<h3 id="4-blocksum-api-개념"><a class="header" href="#4-blocksum-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API 개념</strong></a></h3>
+<h3 id="4-blocksum-api-개념"><a class="header" href="#4-blocksum-api-개념">4. <strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API 개념</strong></a></h3>
 <p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
 <ul>
 <li>블록 크기를 지정하는 템플릿 파라미터</li>
@@ -20039,14 +20039,14 @@ bar.sync           0;                        // 배리어 동기화
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blockprefix_sum과-병렬-히스토그램-구간-분류"><a class="header" href="#blockprefix_sum과-병렬-히스토그램-구간-분류">block.prefix_sum()과 병렬 히스토그램 구간 분류</a></h1>
 <p>이 퍼즐은 블록 레벨
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum</a>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum</a>
 연산을 사용하여 고급 병렬 필터링과 추출을 위한 병렬 히스토그램 구간 분류를
 구현합니다. 각 스레드가 자신의 요소가 속할 대상 구간을 결정한 다음,
 <code>block.prefix_sum()</code>을 적용하여 특정 구간의 요소를 추출하기 위한 쓰기 위치를
 계산합니다. 누적 합이 단순한 리덕션을 넘어 고급 병렬 파티셔닝을 가능하게 하는
 방법을 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum()</a>
 연산은 블록 내 모든 스레드에 걸쳐 일치하는 요소의 누적 쓰기 위치를 계산하여 병렬
 필터링과 추출을 제공합니다.</em></p>
 <h2 id="핵심-개념-41"><a class="header" href="#핵심-개념-41">핵심 개념</a></h2>
@@ -20467,14 +20467,14 @@ Bin 7 extracted elements:
 가능하게 합니다.</p>
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blockbroadcast와-벡터-정규화"><a class="header" href="#blockbroadcast와-벡터-정규화">block.broadcast()와 벡터 정규화</a></h1>
-<p><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
+<p><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
 연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체
 모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을
 받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해
 어떻게 함께 동작하는지 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a>
 연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다:
 리덕션(전체→하나), 스캔(전체→각각), 브로드캐스트(하나→전체).</em></p>
 <h2 id="핵심-개념-42"><a class="header" href="#핵심-개념-42">핵심 개념</a></h2>
@@ -20609,7 +20609,7 @@ if local_i == 0:
 </code></pre>
 <p><strong>왜 스레드 0인가?</strong> <code>block.sum()</code> 패턴에서 스레드 0이 결과를 받는 것과 일관성을
 유지합니다.</p>
-<h3 id="4-blockbroadcast-api-개념"><a class="header" href="#4-blockbroadcast-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API 개념</strong></a></h3>
+<h3 id="4-blockbroadcast-api-개념"><a class="header" href="#4-blockbroadcast-api-개념">4. <strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API 개념</strong></a></h3>
 <p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
 <ul>
 <li>템플릿 파라미터: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
@@ -21097,7 +21097,7 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <li>메모리 지연 시간 vs. 대역폭에 대한 기본 이해</li>
 </ul>
 <p><strong>API 숙지:</strong>
-<a href="https://docs.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<a href="https://max.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
 <p><strong>⚠️ 하드웨어 호환성 참고:</strong> 이 퍼즐은 최신 GPU 아키텍처가 필요할 수 있는
 비동기 복사 연산(<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>)을
@@ -21126,9 +21126,9 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <p><a href="puzzle_28/../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16의 관용적 matmul</a>에서
 소개한 비동기 복사 연산을 기반으로, 이제 메모리 최적화 잠재력에 집중합니다:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
 전용 복사 엔진을 사용하여 백그라운드 DRAM→SRAM 전송 시작</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 공유 메모리 접근 전 전송 완료 동기화</li>
 </ul>
 <p><strong>Puzzle 16과 다른 점은?</strong> Puzzle 16에서는 matmul의 깔끔한 타일 로딩을 위해
@@ -21451,7 +21451,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 <p><strong>타일 생성</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code>는
 <code>block_idx.x * 256</code>에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다.
 Mojo의
-<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> 메서드</a>는
+<a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> 메서드</a>는
 경계 검사나 제로 패딩을 <strong>수행하지 않습니다</strong>. 범위를 벗어난 인덱스 접근은
 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에
 있는지 확인해야 합니다.</p>
@@ -21630,9 +21630,9 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <p><strong>동기화 기본 요소의 계층 구조:</strong></p>
 <ul>
 <li><strong>기본
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>:
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>:
 블록 내 단순 스레드 동기화</li>
-<li><strong>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></strong>:
+<li><strong>고급 <a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></strong>:
 상태 추적을 지원하는 세밀한 메모리 배리어 제어</li>
 <li><strong>스트리밍 조정</strong>: 비동기 복사 및 대량 전송 동기화</li>
 </ul>
@@ -21679,13 +21679,13 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <h3 id="더블-버퍼링-스텐실-연산"><a class="header" href="#더블-버퍼링-스텐실-연산"><strong><a href="puzzle_29/memory_barrier.html">더블 버퍼링 스텐실 연산</a></strong></a></h3>
 <p><strong>초점</strong>: 고급 메모리 배리어 API와 반복 처리</p>
 <p>정밀한 메모리 조정이 필요한 반복 알고리즘을 위해
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
 <strong>세밀한 동기화 제어</strong>를 탐구합니다. 이 퍼즐은 반복법과 시뮬레이션 알고리즘에
 필수적인 더블 버퍼링 패턴을 보여줍니다.</p>
 <p><strong>핵심 개념</strong>:</p>
 <ul>
-<li>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a> vs 기본
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
+<li>고급 <a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a> vs 기본
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
 <li>읽기/쓰기 버퍼 역할을 교대하는 더블 버퍼링</li>
 <li>명시적 메모리 배리어를 사용한 반복 알고리즘 조정</li>
 </ul>
@@ -21714,7 +21714,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <h1 id="다단계-파이프라인-조정-1"><a class="header" href="#다단계-파이프라인-조정-1">다단계 파이프라인 조정</a></h1>
 <p><strong>중요 사항</strong>: 퍼즐 29는 현재 NVIDIA 전용입니다.
 <a href="puzzle_29/memory_barrier.html">동반 스텐실 퍼즐</a>에서 사용되는
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a> 는
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a> 는
 NVIDIA 하드웨어가 필요하며, <code>pixi</code> 작업이 이를 동일한 컴파일 단위로
 가져옵니다.</p>
 <h2 id="개요-42"><a class="header" href="#개요-42">개요</a></h2>
@@ -22169,12 +22169,12 @@ Stage 3을 위해 생산</li>
 <div style="break-before: page; page-break-before: always;"></div><!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="더블-버퍼링-스텐실-연산-1"><a class="header" href="#더블-버퍼링-스텐실-연산-1">더블 버퍼링 스텐실 연산</a></h1>
 <p><strong>중요 사항</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요합니다.
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
 NVIDIA 전용입니다.</p>
 <blockquote>
 <p><strong>🔬 세밀한 동기화: mbarrier vs barrier()</strong></p>
 <p>이 퍼즐은 이전 퍼즐에서 사용한 기본
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 함수보다 훨씬 강력한 제어를 제공하는 <strong>명시적 메모리 배리어 API</strong>를
 소개합니다.</p>
 <p><strong>기본 <code>barrier()</code>의 한계:</strong></p>
@@ -22185,12 +22185,12 @@ NVIDIA 전용입니다.</p>
 <li><strong>세밀도 부족</strong>: 메모리 순서와 타이밍에 대한 제한적 제어</li>
 <li><strong>정적 조정</strong>: 스레드 참여 패턴의 변화에 적응 불가</li>
 </ul>
-<p><strong>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier API</code></a>의
+<p><strong>고급 <a href="https://max.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier API</code></a>의
 기능:</strong></p>
 <ul>
-<li><strong>정밀한 제어</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>로 특정 스레드 수를 지정하여 재사용 가능한 배리어 객체를 설정</li>
-<li><strong>상태 추적</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>로 개별 스레드 완료를 알리고 도착 횟수를 유지</li>
-<li><strong>유연한 대기</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>로 특정 완료 상태를 기다릴 수 있음</li>
+<li><strong>정밀한 제어</strong>: <a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>로 특정 스레드 수를 지정하여 재사용 가능한 배리어 객체를 설정</li>
+<li><strong>상태 추적</strong>: <a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>로 개별 스레드 완료를 알리고 도착 횟수를 유지</li>
+<li><strong>유연한 대기</strong>: <a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>로 특정 완료 상태를 기다릴 수 있음</li>
 <li><strong>재사용 가능한 객체</strong>: 동일한 배리어를 여러 반복에 걸쳐 재초기화하고 재사용 가능</li>
 <li><strong>다중 배리어</strong>: 서로 다른 동기화 지점(초기화, 반복, 마무리)에 서로 다른 배리어 객체 사용</li>
 <li><strong>하드웨어 최적화</strong>: GPU 하드웨어 동기화 기본 요소에 직접 매핑하여 더 나은 성능</li>
@@ -22254,7 +22254,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <p>이 퍼즐에서는 다음을 배웁니다:</p>
 <ul>
 <li>반복 알고리즘을 위한 더블 버퍼링 패턴 구현</li>
-<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
+<li><a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
 명시적 메모리 배리어 조정</li>
 <li>반복에 걸쳐 교대하는 읽기/쓰기 버퍼 역할 관리</li>
 </ul>
@@ -22271,9 +22271,9 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <li><strong>이전 퍼즐 (<a href="puzzle_29/../puzzle_08/puzzle_08.html">P8</a>,
 <a href="puzzle_29/../puzzle_12/puzzle_12.html">P12</a>, <a href="puzzle_29/../puzzle_15/puzzle_15.html">P15</a>):</strong> 단일
 패스 알고리즘을 위한 단순
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 호출</li>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 호출</li>
 <li><strong>이 퍼즐:</strong> 버퍼 교체 타이밍에 대한 정밀한 제어를 위한 명시적
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></li>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></li>
 </ul>
 <p><strong>메모리 배리어 특화:</strong> 기본적인 스레드 동기화와 달리, 이 퍼즐은 메모리 연산이
 언제 완료되는지에 대한 세밀한 제어를 제공하는 <strong>명시적 메모리 배리어</strong>를
@@ -22304,7 +22304,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <ul>
 <li><strong>버퍼 설정</strong>: buffer_A를 입력 데이터로, buffer_B를 0으로 초기화</li>
 <li><strong>배리어 초기화</strong>: 동기화 지점을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier 객체</a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier 객체</a>
 설정</li>
 <li><strong>스레드 조정</strong>: 모든 스레드가 초기화에 참여</li>
 </ul>
@@ -22318,9 +22318,9 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 </ul>
 <p><strong>메모리 배리어 조정:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
 각 스레드가 쓰기 단계 완료를 알림</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
 모든 스레드가 쓰기를 완료할 때까지 대기</li>
 <li><strong>버퍼 교체 안전성</strong>: 다른 스레드가 아직 쓰고 있는 동안 버퍼에서 읽는 것을
 방지</li>
@@ -22458,18 +22458,18 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <h3 id="메모리-배리어-조정"><a class="header" href="#메모리-배리어-조정"><strong>메모리 배리어 조정</strong></a></h3>
 <ul>
 <li>각 스레드가 쓰기 연산을 완료한 후
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 호출</li>
 <li>그 다음
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
 를 폴링 루프로 호출: 이 API는 <strong>비차단</strong> 검사이므로
 <code>while not mbarrier_test_wait(...): pass</code> 안에서 호출해야 모든 스레드가
 도착할 때까지 실제로 대기할 수 있음</li>
 <li>재사용을 위해 반복 간에 배리어 재초기화:
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
 <li>경쟁 상태를 피하기 위해 스레드 0만 배리어를 재초기화</li>
 <li>모든 <code>mbarrier_init</code> 호출(초기 설정과 반복마다의 재초기화) 직후에는
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 를 삽입해, 어떤 스레드도 <code>mbarrier_arrive</code>를 호출하기 전에 모든 스레드가
 초기화된 배리어를 관찰하도록 보장하세요. 이는
 <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers 초기화 패턴</a>
@@ -22663,7 +22663,7 @@ GPU output sample: 1.0 1.0 1.0
 <p>이 퍼즐의 근본적인 돌파구는 단순한 스레드 동기화가 아닌
 <strong>명시적 메모리 배리어 제어</strong>입니다:</p>
 <p><strong>전통적인 접근 방식:</strong> 단순한 스레드 조정을 위해 기본
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 사용</p>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 사용</p>
 <ul>
 <li>모든 스레드가 서로 다른 데이터에 동일한 연산을 실행</li>
 <li>단일 배리어 호출로 스레드 완료를 동기화</li>
@@ -22672,7 +22672,7 @@ GPU output sample: 1.0 1.0 1.0
 <p><strong>이 퍼즐의 혁신:</strong> 명시적 메모리 배리어로 조정되는 서로 다른 버퍼 역할</p>
 <ul>
 <li>buffer_A와 buffer_B가 읽기 소스와 쓰기 대상 사이를 교대</li>
-<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>가 메모리 연산
+<li><a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>가 메모리 연산
 완료에 대한 정밀한 제어를 제공</li>
 <li>명시적 조정으로 버퍼 전환 중 경쟁 상태를 방지</li>
 </ul>
@@ -22688,31 +22688,31 @@ GPU output sample: 1.0 1.0 1.0
 <h2 id="메모리-배리어-api-사용법"><a class="header" href="#메모리-배리어-api-사용법"><strong>메모리 배리어 API 사용법</strong></a></h2>
 <p>mbarrier 조정 패턴의 이해:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
 특정 스레드 수(TPB)를 지정하여 배리어 초기화</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
 개별 스레드의 쓰기 단계 완료를 알림</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
 모든 스레드가 완료를 알릴 때까지 대기</li>
 <li><strong>재초기화</strong>: 재사용을 위해 반복 간에 배리어 상태를 재설정</li>
 </ul>
 <p><strong>핵심 타이밍 순서:</strong></p>
 <ol>
 <li><strong>초기화 + 동기화</strong>: 스레드 0이
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>
 를 호출한 다음, 모든 스레드가
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 를 실행하여 어떤 스레드도 <code>mbarrier_arrive</code>를 호출하기 전에 초기화된
 상태가 블록 전체에 보이도록 합니다
 (<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers 문서</a>
 참조)</li>
 <li><strong>모든 스레드 쓰기</strong>: 각 스레드가 할당된 버퍼 요소를 업데이트</li>
 <li><strong>완료 알림</strong>: 각 스레드가
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 호출</li>
 <li><strong>전원 도착까지 폴링</strong>: 모든 스레드가
 <code>while not mbarrier_test_wait(...): pass</code> 안에서 회전 —
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
 는 비차단 검사이므로 단일 호출은 대기가 아닙니다</li>
 <li><strong>진행 안전</strong>: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능</li>
 </ol>
@@ -24708,7 +24708,7 @@ ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
 <li>CUDA 툴킷이 설치된 NVIDIA GPU</li>
 <li>NSight Compute 프로파일링 도구</li>
 <li>프로파일링 등의 의존성은 <code>pixi</code>로 관리됩니다</li>
-<li><a href="https://docs.modular.com/packages/#gpu-compatibility">호환 가능한 GPU 아키텍처</a></li>
+<li><a href="https://max.modular.com/packages/#gpu-compatibility">호환 가능한 GPU 아키텍처</a></li>
 </ul>
 <h2 id="최적화의-효과"><a class="header" href="#최적화의-효과">최적화의 효과</a></h2>
 <p><strong>뱅크 충돌이 가장 중요한 경우:</strong></p>
@@ -25374,7 +25374,7 @@ mma_op.store_d(C_mma_tile, d_reg)           # Store result
 </code></pre>
 <h2 id="mojo의-텐서-코어-api"><a class="header" href="#mojo의-텐서-코어-api">Mojo의 텐서 코어 API</a></h2>
 <p>Mojo는
-<a href="https://docs.modular.com/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
+<a href="https://max.modular.com/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
 타입을 통해 텐서 코어에 대한 깔끔한 인터페이스를 제공합니다:</p>
 <pre><code class="language-mojo">from layout.tensor_core import TensorCore
 
@@ -25392,7 +25392,7 @@ mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 스위즐 패턴(<em>역주: 공유 메모리의 뱅크 충돌을 피하기 위해 데이터 주소를 비트
 연산으로 재배치하는 기법</em>), 혼합 정밀도 연산도 지원합니다. 지원되는 모든 형태,
 데이터 타입, 메서드에 대한 전체 문서는
-<a href="https://docs.modular.com/mojo/layout/tensor_core/TensorCore/">공식 TensorCore API 레퍼런스</a>를
+<a href="https://max.modular.com/mojo/layout/tensor_core/TensorCore/">공식 TensorCore API 레퍼런스</a>를
 참고하세요.</p>
 <h3 id="행렬-프래그먼트-크기"><a class="header" href="#행렬-프래그먼트-크기">행렬 프래그먼트 크기</a></h3>
 <p>TensorCore API는 GPU 하드웨어에 따라 다양한 형태와 데이터 타입을 지원합니다:</p>
@@ -26217,18 +26217,18 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 <p><strong>핵심 기능:</strong></p>
 <ul>
 <li><strong>블록 간 동기화</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync</code></a>,
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive</code></a>,
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait</code></a>로
 여러 블록을 조정합니다</li>
 <li><strong>블록 식별</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a>를
 사용하여 고유한 블록 조정을 수행합니다</li>
 <li><strong>효율적인 조정</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync</code></a>로
 최적화된 워프 수준 협력을 구현합니다</li>
 <li><strong>고급 패턴</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base"><code>cluster_mask_base</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base"><code>cluster_mask_base</code></a>로
 선택적 블록 조정을 수행합니다</li>
 </ul>
 <h2 id="클러스터-프로그래밍-모델"><a class="header" href="#클러스터-프로그래밍-모델">클러스터 프로그래밍 모델</a></h2>
@@ -26271,31 +26271,31 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 <h3 id="-멀티-블록-조정-기초"><a class="header" href="#-멀티-블록-조정-기초"><strong><a href="puzzle_34/./cluster_coordination_basics.html">🔰 멀티 블록 조정 기초</a></strong></a></h3>
 <p><strong>핵심</strong>: 클러스터 동기화 패턴의 기본 이해</p>
 <p>여러 스레드 블록이
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>와
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>와
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>를
 사용하여 기본적인 블록 간 통신과 데이터 분배를 위해 실행을 조정하는 방법을
 배웁니다.</p>
 <p><strong>주요 API</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>,
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
 <hr />
 <h3 id="-클러스터-전체-집합-연산"><a class="header" href="#-클러스터-전체-집합-연산"><strong><a href="puzzle_34/./cluster_collective_ops.html">☸️ 클러스터 전체 집합 연산</a></strong></a></h3>
 <p><strong>핵심</strong>: 블록 레벨 패턴을 클러스터 규모로 확장</p>
 <p>익숙한 <code>block.sum()</code> 개념을 여러 스레드 블록에 걸쳐 확장하여 대규모 연산을
 조정하는 클러스터 전체 리덕션과 집합 연산을 배웁니다.</p>
 <p><strong>주요 API</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>,
 효율적인 클러스터 조정을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></p>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></p>
 <hr />
 <h3 id="-고급-클러스터-알고리즘"><a class="header" href="#-고급-클러스터-알고리즘"><strong><a href="puzzle_34/./advanced_cluster_patterns.html">🧠 고급 클러스터 알고리즘</a></strong></a></h3>
 <p><strong>핵심</strong>: 프로덕션 수준의 다단계 조정 패턴</p>
 <p>GPU 활용률을 극대화하고 복잡한 연산 워크플로우를 구현하기 위해 워프 레벨, 블록
 레벨, 클러스터 레벨의 조정을 결합하는 정교한 알고리즘을 구현합니다.</p>
 <p><strong>주요 API</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>,
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>,
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
 고급 조정 패턴</p>
 <h2 id="클러스터-프로그래밍이-중요한-이유"><a class="header" href="#클러스터-프로그래밍이-중요한-이유">클러스터 프로그래밍이 중요한 이유</a></h2>
 <p><strong>문제 규모</strong>: 현대 AI 및 과학 워크로드는 단일 스레드 블록의 능력을 초과하는
@@ -26358,9 +26358,9 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 <p><strong>도전 과제</strong>: <strong>4개의 스레드 블록이 조정</strong>하여 서로 다른 데이터 범위를 처리하고
 결과를 공유 출력 배열에 저장하는 멀티 블록 히스토그램 알고리즘을 구현합니다.</p>
 <p><strong>핵심 학습</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 → 처리 →
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>라는
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>라는
 필수적인 클러스터 동기화 패턴을 배웁니다.
 <a href="puzzle_34/../puzzle_29/barrier.html">Puzzle 29의 barrier()</a>에서 배운 동기화 개념을
 확장합니다.</p>
@@ -26384,10 +26384,10 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 <p><strong>조정 요구사항:</strong></p>
 <ol>
 <li>각 블록은
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>를
 사용하여 완료를 알려야 합니다</li>
 <li>모든 블록은
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>를
 사용하여 다른 블록을 기다려야 합니다</li>
 <li>최종 출력은 각 블록의 처리된 합계를 4개 요소 배열로 보여줍니다</li>
 </ol>
@@ -26461,7 +26461,7 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 <div class="solution-tips">
 <h3 id="블록-식별-패턴"><a class="header" href="#블록-식별-패턴"><strong>블록 식별 패턴</strong></a></h3>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>를
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>를
 사용하여 클러스터 순위(0-3)를 얻습니다</li>
 <li>그리드 실행에서 안정적인 블록 인덱싱을 위해 <code>Int(block_idx.x)</code>를 사용합니다</li>
 <li>블록 위치에 따라 데이터 처리를 스케일링하여 고유한 결과를 만듭니다</li>
@@ -26479,11 +26479,11 @@ API를 사용하는 것보다 중요합니다. 하드웨어 기능은 세심한 
 <ol>
 <li><strong>처리</strong>: 각 블록이 자신의 데이터 영역을 처리합니다</li>
 <li><strong>신호</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로
 처리 완료를 알립니다</li>
 <li><strong>연산</strong>: 블록 내부 연산 (리덕션, 집계)</li>
 <li><strong>대기</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
 모든 블록이 완료될 때까지 대기합니다</li>
 </ol>
 <h3 id="블록-내부-스레드-조정"><a class="header" href="#블록-내부-스레드-조정"><strong>블록 내부 스레드 조정</strong></a></h3>
@@ -26613,7 +26613,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <h2 id="2단계-클러스터-조정"><a class="header" href="#2단계-클러스터-조정"><strong>2단계: 클러스터 조정</strong></a></h2>
 <p><strong>블록 간 신호:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>는
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>는
 이 블록이 로컬 처리 단계를 완료했음을 알립니다</li>
 <li>클러스터 하드웨어에 완료를 등록하는 <strong>논블로킹</strong> 연산입니다</li>
 </ul>
@@ -26630,7 +26630,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </ul>
 <p><strong>최종 동기화:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>는
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>는
 클러스터 내 모든 블록이 작업을 완료할 때까지 대기합니다</li>
 <li>이를 통해 전체 클러스터에 걸쳐 결정론적 완료 순서를 보장합니다</li>
 </ul>
@@ -26638,7 +26638,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <p><strong>왜 <code>my_block_rank</code> 대신 <code>block_id</code>를 사용할까?</strong></p>
 <ul>
 <li><code>block_idx.x</code>는 안정적인 그리드 실행 인덱싱을 제공합니다 (0, 1, 2, 3)</li>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>는
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>는
 클러스터 설정에 따라 다르게 동작할 수 있습니다</li>
 <li><code>block_id</code>를 사용하면 각 블록이 고유한 데이터 영역과 출력 위치를 확보할 수
 있습니다</li>
@@ -26652,9 +26652,9 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <p><strong>동기화 계층 구조:</strong></p>
 <ol>
 <li><strong><code>barrier()</code></strong>: 각 블록 내 스레드를 동기화합니다 (블록 내부)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 다른 블록에 완료를 알립니다 (블록 간, 논블로킹)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
 모든 블록이 완료될 때까지 대기합니다 (블록 간, 블로킹)</li>
 </ol>
 <p><strong>성능 특성:</strong></p>
@@ -26670,11 +26670,11 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <ol>
 <li><strong>1단계</strong>: 각 블록이 할당된 데이터 영역을 독립적으로 처리합니다</li>
 <li><strong>신호</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로
 처리 완료를 알립니다</li>
 <li><strong>2단계</strong>: 다른 블록의 결과에 의존하는 연산을 안전하게 수행할 수 있습니다</li>
 <li><strong>동기화</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
 모든 블록이 완료된 후 다음으로 진행합니다</li>
 </ol>
 <p><strong>다음 단계</strong>: 더 고급 조정을 배울 준비가 되셨나요?
@@ -26688,14 +26688,14 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <p>이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는
 <strong>클러스터 전체 집합 연산</strong>을 구현하는 방법을 배웁니다 -
 <a href="puzzle_34/../puzzle_27/block_sum.html">Puzzle 27</a>에서 익힌
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을
 <strong>여러 스레드 블록</strong>에 걸쳐 확장합니다.</p>
 <p><strong>도전 과제</strong>: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별
 리덕션을 하나의 전역 결과로 합치는 클러스터 전체 리덕션을 구현합니다.</p>
 <p><strong>핵심 학습</strong>: 전체 클러스터 조정을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와
 효율적인 최종 리덕션을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 배웁니다.</p>
 <h2 id="문제-대규모-전역-합산"><a class="header" href="#문제-대규모-전역-합산">문제: 대규모 전역 합산</a></h2>
 <p>단일 블록은 (<a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27</a>에서 배웠듯이) 스레드 수와
@@ -26721,7 +26721,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <ol>
 <li><strong>로컬 리덕션</strong>: 각 블록이 트리 리덕션으로 부분 합을 계산합니다</li>
 <li><strong>클러스터 동기화</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로
 모든 부분 결과가 준비되었는지 보장합니다</li>
 <li><strong>최종 집계</strong>: 선출된 하나의 스레드가 모든 부분 결과를 합칩니다</li>
 </ol>
@@ -26770,14 +26770,14 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <ul>
 <li>안정적인 인덱싱을 위해 부분 결과를 <code>temp_storage[block_id]</code>에 저장합니다</li>
 <li>전체 클러스터 동기화를 위해
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를
 사용합니다 (arrive/wait보다 강력)</li>
 <li>최종 전역 집계는 하나의 스레드만 수행해야 합니다</li>
 </ul>
 <h3 id="효율적인-선출-패턴"><a class="header" href="#효율적인-선출-패턴"><strong>효율적인 선출 패턴</strong></a></h3>
 <ul>
 <li>첫 번째 블록(<code>my_block_rank == 0</code>) 내에서
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 사용합니다 (<a href="puzzle_34/../puzzle_24/warp_sum.html">워프 프로그래밍</a>의 패턴)</li>
 <li>중복 연산을 피하기 위해 하나의 스레드만 최종 합산을 수행하도록 보장합니다</li>
 <li>선출된 스레드가 <code>temp_storage</code>에서 모든 부분 결과를 읽습니다
@@ -26796,14 +26796,14 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </div>
 </details>
 <h2 id="클러스터-api-참조"><a class="header" href="#클러스터-api-참조">클러스터 API 참조</a></h2>
-<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
+<p><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
 모듈:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 전체 클러스터 동기화 - arrive/wait 패턴보다 강력</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 효율적인 조정을 위해 워프 내에서 단일 스레드를 선출</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
 클러스터 내 고유한 블록 식별자를 반환</li>
 </ul>
 <h2 id="트리-리덕션-패턴"><a class="header" href="#트리-리덕션-패턴">트리 리덕션 패턴</a></h2>
@@ -26941,8 +26941,8 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <h2 id="2단계-클러스터-동기화"><a class="header" href="#2단계-클러스터-동기화"><strong>2단계: 클러스터 동기화</strong></a></h2>
 <p><strong>전체 클러스터 배리어:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다
 <strong>더 강력한 보장</strong>을 제공합니다</li>
 <li>어떤 블록이든 다음으로 진행하기 전에 <strong>모든 블록이 로컬 리덕션을 완료</strong>하도록
 보장합니다</li>
@@ -26958,7 +26958,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </code></pre>
 <p><strong>왜 이 선출 전략을 사용할까?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 워프당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다</li>
 <li><strong><code>my_block_rank == 0</code></strong>: 단일 쓰기를 보장하기 위해 첫 번째 블록에서만
 선출합니다</li>
@@ -26983,7 +26983,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <ul>
 <li><strong><code>barrier()</code></strong>: 블록 내 모든 스레드가 각 트리 리덕션 단계를 완료하도록
 보장합니다</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 <strong>전역 배리어</strong> - 모든 블록이 동일한 실행 지점에 도달합니다</li>
 <li><strong>단일 쓰기</strong>: 선출을 통해 최종 출력에 대한 경쟁 상태를 방지합니다</li>
 </ul>
@@ -27050,15 +27050,15 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <p><strong>과제</strong>: 다음과 같은 다단계 알고리즘을 구현하세요:</p>
 <ol>
 <li><strong><a href="puzzle_34/../puzzle_24/warp_sum.html">워프 레벨</a></strong>: 효율적인 워프 내부 조정을 위해
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 사용합니다 (<a href="puzzle_34/../puzzle_24/warp_simt.html">SIMT 실행</a>)</li>
 <li><strong><a href="puzzle_34/../puzzle_27/block_sum.html">블록 레벨</a></strong>:
 <a href="puzzle_34/../puzzle_08/puzzle_08.html">공유 메모리 조정</a>을 사용하여 워프 결과를
 집계합니다</li>
 <li><strong>클러스터 레벨</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 /
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 <a href="puzzle_34/../puzzle_29/barrier.html">Puzzle 29의 단계적 동기화</a>를 사용하여 블록 간
 조정을 수행합니다</li>
 </ol>
@@ -27070,9 +27070,9 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <li><strong>2단계 (<a href="puzzle_34/../puzzle_27/puzzle_27.html">블록 레벨</a>)</strong>: 각 블록 내의 모든 워프
 합계를 집계합니다</li>
 <li><strong>3단계 (클러스터 레벨)</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 /
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
 블록 간 조정을 수행합니다</li>
 </ol>
 <p><strong>입력</strong>: 테스트를 위한 <code>(i % 50) * 0.02</code> 패턴의 1024개 float 값
@@ -27117,7 +27117,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <div class="solution-tips">
 <h3 id="워프-레벨-최적화-패턴"><a class="header" href="#워프-레벨-최적화-패턴"><strong>워프 레벨 최적화 패턴</strong></a></h3>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 사용하여 워프당 하나의 스레드를 연산용으로 선출합니다
 (<a href="puzzle_34/../puzzle_24/warp_sum.html">워프 프로그래밍 기초</a>)</li>
 <li>선출된 스레드가 32개의 연속 요소를 처리해야 합니다
@@ -27141,11 +27141,11 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <ol>
 <li><strong>처리</strong>: 각 블록이 계층적 워프 최적화로 데이터를 처리합니다</li>
 <li><strong>신호</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로
 로컬 처리 완료를 알립니다</li>
 <li><strong>저장</strong>: 스레드 0이 블록 결과를 출력에 기록합니다</li>
 <li><strong>대기</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로
 모든 블록이 완료될 때까지 대기합니다</li>
 </ol>
 <h3 id="데이터-스케일링-및-경계-검사"><a class="header" href="#데이터-스케일링-및-경계-검사"><strong>데이터 스케일링 및 경계 검사</strong></a></h3>
@@ -27161,16 +27161,16 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </div>
 </details>
 <h2 id="고급-클러스터-api"><a class="header" href="#고급-클러스터-api">고급 클러스터 API</a></h2>
-<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
+<p><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
 모듈:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 효율적인 연산을 위한 워프 레벨 스레드 선출</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 단계적 클러스터 조정을 위한 완료 신호</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
 모든 블록이 동기화 지점에 도달할 때까지 대기</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
 클러스터 내 고유한 블록 식별자 반환</li>
 </ul>
 <h2 id="계층적-조정-패턴"><a class="header" href="#계층적-조정-패턴">계층적 조정 패턴</a></h2>
@@ -27343,13 +27343,13 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 </code></pre>
 <p><strong>왜 단계적 동기화를 사용할까?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>
 를 최종 연산 <strong>이전에</strong> 호출하면 작업 중첩이 가능합니다</li>
 <li>다른 블록이 아직 처리 중인 동안에도 블록이 자체 결과를 계산할 수 있습니다</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>
 로 결정론적 완료 순서를 보장합니다</li>
 <li>독립적인 블록 연산의 경우
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>보다
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>보다
 더 효율적입니다</li>
 </ul>
 <h2 id="고급-패턴-특성"><a class="header" href="#고급-패턴-특성"><strong>고급 패턴 특성</strong></a></h2>
@@ -27370,16 +27370,16 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 <p><strong>동기화 계층 구조:</strong></p>
 <ol>
 <li><strong><code>barrier()</code></strong>: 블록 내부 스레드 동기화 (데이터 로딩 및 워프 처리 후)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 블록 간 신호 (논블로킹, 작업 중첩 가능)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
 블록 간 동기화 (블로킹, 완료 순서 보장)</li>
 </ol>
 <p><strong>왜 “고급“인가:</strong></p>
 <ul>
 <li><strong>다단계 최적화</strong>: 워프, 블록, 클러스터 프로그래밍 기법을 결합합니다</li>
 <li><strong>하드웨어 효율</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 활용하여 워프 활용률을 최적화합니다</li>
 <li><strong>단계적 조정</strong>: 고급 클러스터 API를 사용하여 유연한 동기화를 구현합니다</li>
 <li><strong>프로덕션 수준</strong>: 실제 GPU 라이브러리에서 사용되는 패턴을 보여줍니다</li>

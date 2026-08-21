@@ -285,7 +285,7 @@ def prefix_sum_block_sum_phase(
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> only
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> only
 synchronizes threads within a block, not across blocks. For cross-block
 synchronization, you need to enqueue multiple kernels that run sequentially on
 the device:</p>

@@ -228,14 +228,14 @@
 <p>이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는
 <strong>클러스터 전체 집합 연산</strong>을 구현하는 방법을 배웁니다 -
 <a href="../puzzle_27/block_sum.html">Puzzle 27</a>에서 익힌
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을
 <strong>여러 스레드 블록</strong>에 걸쳐 확장합니다.</p>
 <p><strong>도전 과제</strong>: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별
 리덕션을 하나의 전역 결과로 합치는 클러스터 전체 리덕션을 구현합니다.</p>
 <p><strong>핵심 학습</strong>: 전체 클러스터 조정을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와
 효율적인 최종 리덕션을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 배웁니다.</p>
 <h2 id="문제-대규모-전역-합산"><a class="header" href="#문제-대규모-전역-합산">문제: 대규모 전역 합산</a></h2>
 <p>단일 블록은 (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>에서 배웠듯이) 스레드 수와
@@ -261,7 +261,7 @@
 <ol>
 <li><strong>로컬 리덕션</strong>: 각 블록이 트리 리덕션으로 부분 합을 계산합니다</li>
 <li><strong>클러스터 동기화</strong>:
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로
 모든 부분 결과가 준비되었는지 보장합니다</li>
 <li><strong>최종 집계</strong>: 선출된 하나의 스레드가 모든 부분 결과를 합칩니다</li>
 </ol>
@@ -310,14 +310,14 @@
 <ul>
 <li>안정적인 인덱싱을 위해 부분 결과를 <code>temp_storage[block_id]</code>에 저장합니다</li>
 <li>전체 클러스터 동기화를 위해
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를
 사용합니다 (arrive/wait보다 강력)</li>
 <li>최종 전역 집계는 하나의 스레드만 수행해야 합니다</li>
 </ul>
 <h3 id="효율적인-선출-패턴"><a class="header" href="#효율적인-선출-패턴"><strong>효율적인 선출 패턴</strong></a></h3>
 <ul>
 <li>첫 번째 블록(<code>my_block_rank == 0</code>) 내에서
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
 사용합니다 (<a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>의 패턴)</li>
 <li>중복 연산을 피하기 위해 하나의 스레드만 최종 합산을 수행하도록 보장합니다</li>
 <li>선출된 스레드가 <code>temp_storage</code>에서 모든 부분 결과를 읽습니다
@@ -336,14 +336,14 @@
 </div>
 </details>
 <h2 id="클러스터-api-참조"><a class="header" href="#클러스터-api-참조">클러스터 API 참조</a></h2>
-<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
+<p><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
 모듈:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 전체 클러스터 동기화 - arrive/wait 패턴보다 강력</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 효율적인 조정을 위해 워프 내에서 단일 스레드를 선출</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
 클러스터 내 고유한 블록 식별자를 반환</li>
 </ul>
 <h2 id="트리-리덕션-패턴"><a class="header" href="#트리-리덕션-패턴">트리 리덕션 패턴</a></h2>
@@ -481,8 +481,8 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <h2 id="2단계-클러스터-동기화"><a class="header" href="#2단계-클러스터-동기화"><strong>2단계: 클러스터 동기화</strong></a></h2>
 <p><strong>전체 클러스터 배리어:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다
+<li><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는
+<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다
 <strong>더 강력한 보장</strong>을 제공합니다</li>
 <li>어떤 블록이든 다음으로 진행하기 전에 <strong>모든 블록이 로컬 리덕션을 완료</strong>하도록
 보장합니다</li>
@@ -498,7 +498,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </code></pre>
 <p><strong>왜 이 선출 전략을 사용할까?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 워프당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다</li>
 <li><strong><code>my_block_rank == 0</code></strong>: 단일 쓰기를 보장하기 위해 첫 번째 블록에서만
 선출합니다</li>
@@ -523,7 +523,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <ul>
 <li><strong><code>barrier()</code></strong>: 블록 내 모든 스레드가 각 트리 리덕션 단계를 완료하도록
 보장합니다</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 <strong>전역 배리어</strong> - 모든 블록이 동일한 실행 지점에 도달합니다</li>
 <li><strong>단일 쓰기</strong>: 선출을 통해 최종 출력에 대한 경쟁 상태를 방지합니다</li>
 </ul>

@@ -304,7 +304,7 @@ def tiled_elementwise_add[
 <p><code>TILE_SIZE=32</code>인 1024개 요소 벡터의 경우: <code>1024 ÷ 32 = 32</code>개 타일이 정확히
 생깁니다.</p>
 <h3 id="2-타일-추출-패턴"><a class="header" href="#2-타일-추출-패턴">2. <strong>타일 추출 패턴</strong></a></h3>
-<p><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> 문서</a>를
+<p><a href="https://max.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> 문서</a>를
 참고하세요.</p>
 <pre><code class="language-mojo">tile_id = indices[0]  # 각 스레드가 처리할 타일 하나를 받음
 out_tile = output.tile[tile_size](tile_id)

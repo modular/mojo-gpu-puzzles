@@ -272,7 +272,7 @@ for this optimization</li>
 <li>Basic understanding of memory latency vs. bandwidth</li>
 </ul>
 <p><strong>API familiarity:</strong>
-<a href="https://docs.modular.com/api/mojo/max/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<a href="https://max.modular.com/api/mojo/max/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
 <p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations
 (<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that lower to the NVIDIA
@@ -308,9 +308,9 @@ computation</li>
 <a href="../puzzle_16/tiled.html#solution-idiomatic-tiletensor-tiling">Puzzle 16’s idiomatic matmul</a>,
 you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
 Launch background DRAM→SRAM transfers that bypass the register file</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 Synchronize transfer completion before accessing shared memory</li>
 </ul>
 <p><strong>What’s different from Puzzle 16?</strong> While Puzzle 16 used async copy for clean
@@ -641,7 +641,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 <li>
 <p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a
 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo
-<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a>
+<a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a>
 does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds
 indices results in undefined behavior. The implementation must ensure the tile
 size and offset remain within valid array bounds.</p>

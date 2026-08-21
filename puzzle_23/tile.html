@@ -306,7 +306,7 @@ def tiled_elementwise_add[
 <p>For a 1024-element vector with <code>TILE_SIZE=32</code>: <code>1024 ÷ 32 = 32</code> tiles exactly.</p>
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
 <p>Check out the
-<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
+<a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
 <pre><code class="language-mojo">var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
 var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
 var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()

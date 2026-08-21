@@ -246,7 +246,7 @@
       target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
-    <a href="https://docs.modular.com/get-started/#stay-in-touch"
+    <a href="https://max.modular.com/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
       aria-label="Newsletter"
       target="_blank">
@@ -524,10 +524,10 @@ and solution verification procedures.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
 <p>Make sure your system meets our
-<a href="https://docs.modular.com/packages/#system-requirements">system requirements</a>.</p>
+<a href="https://max.modular.com/packages/#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a
-<a href="https://docs.modular.com/packages/#gpu-compatibility">compatible GPU</a> to run
+<a href="https://max.modular.com/packages/#gpu-compatibility">compatible GPU</a> to run
 the puzzles. After setup, you can verify your GPU compatibility using the
 <code>gpu-specs</code> command (see
 <a href="howto.html#setting-up-your-environment">Setting up your environment</a>).</p>
@@ -636,7 +636,7 @@ more. Please stay tuned!</p>
 <li>Basic familiarity with <a href="https://mojolang.org/docs/manual/">Mojo</a> (language
 basics parts and
 <a href="https://mojolang.org/docs/manual/pointers/">intro to pointers</a> section)</li>
-<li><a href="https://docs.modular.com/gpu/fundamentals/">GPU programming fundamentals</a>
+<li><a href="https://max.modular.com/gpu/fundamentals/">GPU programming fundamentals</a>
 is helpful!</li>
 </ul>
 <p>No prior GPU programming experience is necessary! We’ll build that knowledge
@@ -991,7 +991,7 @@ For the build, test, and pull request workflow, see
 <a href="https://github.com/modular/mojo-gpu-puzzles#development">Development in the README</a>.</p>
 <h2 id="join-the-community"><a class="header" href="#join-the-community">Join the community</a></h2>
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
-  <a href="https://docs.modular.com/get-started/#stay-in-touch">
+  <a href="https://max.modular.com/get-started/#stay-in-touch">
     <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
   </a>
   <a href="https://forum.modular.com/c/">
@@ -1184,7 +1184,7 @@ idx = (batch * HEIGHT + row) * WIDTH + col
 idx = (batch * padded_height + row) * padded_width + col
 </code></pre>
 <h3 id="tiletensor-preview"><a class="header" href="#tiletensor-preview">TileTensor preview</a></h3>
-<p><a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a>
+<p><a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a>
 will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
 output[i, j] = a[i, j] + 10.0  # 2D indexing
@@ -1639,7 +1639,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction-to-tiletensor"><a class="header" href="#introduction-to-tiletensor">Introduction to TileTensor</a></h1>
 <p>Let’s take a quick break from solving puzzles to preview a powerful abstraction
 that will make our GPU programming journey more enjoyable: 🥁… the
-<strong><a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
+<strong><a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
 <blockquote>
 <p>💡 <em>This is a motivational overview of TileTensor’s capabilities. Don’t worry
 about understanding everything now - we’ll explore each feature in depth as we
@@ -1695,10 +1695,10 @@ tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 </code></pre>
 <p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides in the
-<a href="https://docs.modular.com/tile-tensor/">MAX documentation</a>:</p>
+<a href="https://max.modular.com/tile-tensor/">MAX documentation</a>:</p>
 <ul>
-<li><a href="https://docs.modular.com/tile-tensor/layouts/">TileTensor layouts</a></li>
-<li><a href="https://docs.modular.com/tile-tensor/tensors/">Using TileTensor</a></li>
+<li><a href="https://max.modular.com/tile-tensor/layouts/">TileTensor layouts</a></li>
+<li><a href="https://max.modular.com/tile-tensor/tensors/">Using TileTensor</a></li>
 </ul>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
 <p>Let’s put everything together with a simple example that demonstrates the basics
@@ -2480,7 +2480,7 @@ maintaining the performance benefits of block-local storage.</p>
 that threads in that block can read and write to. This needs to be a
 compile-time constant (a <code>comptime</code> binding), not a runtime variable. After
 writing to shared memory you need to call
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> to
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> to
 ensure that threads do not cross.</p>
 </blockquote>
 <p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly
@@ -2882,7 +2882,7 @@ explains that the Mojo package includes:</p>
 <li><strong>Command-line interface</strong> via <code>mojo debug</code> for universal IDE compatibility</li>
 </ul>
 <p>For GPU-specific debugging, the
-<a href="https://docs.modular.com/gpu/debugging/">GPU debugging guide</a>
+<a href="https://max.modular.com/gpu/debugging/">GPU debugging guide</a>
 provides additional technical details.</p>
 <p>This architecture provides the best of both worlds: familiar debugging commands
 with GPU-specific capabilities.</p>
@@ -3817,7 +3817,7 @@ hierarchies, and specialized tools. You now have:</p>
 <h2 id="additional-resources"><a class="header" href="#additional-resources">Additional resources</a></h2>
 <ul>
 <li><a href="https://mojolang.org/docs/tools/debugging/">Mojo debugging documentation</a></li>
-<li><a href="https://docs.modular.com/gpu/debugging/">GPU debugging guide</a></li>
+<li><a href="https://max.modular.com/gpu/debugging/">GPU debugging guide</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">NVIDIA CUDA-GDB User Guide</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference">CUDA-GDB Command Reference</a></li>
 </ul>
@@ -4924,7 +4924,7 @@ simultaneously</li>
 <ul>
 <li>GPU programming concepts from Puzzles 1-8 (memory management, thread
 coordination, barriers)</li>
-<li><strong><a href="https://docs.modular.com/packages/#gpu-compatibility">Compatible NVIDIA GPU hardware</a></strong></li>
+<li><strong><a href="https://max.modular.com/packages/#gpu-compatibility">Compatible NVIDIA GPU hardware</a></strong></li>
 <li>Environment setup with <code>pixi</code> package manager for accessing
 <code>compute-sanitizer</code></li>
 <li><strong>Prior puzzles</strong>: Familiarity with
@@ -6066,7 +6066,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 memory management:</p>
 <ol>
 <li>Raw memory management with direct pointer manipulation using <a href="https://mojolang.org/docs/std/memory/pointer/Pointer/">Pointer</a></li>
-<li>The more structured <a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a> with its powerful address_space parameter for memory allocation</li>
+<li>The more structured <a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/">TileTensor</a> with its powerful address_space parameter for memory allocation</li>
 </ol>
 <p>From Puzzle 7 onward the puzzles use <code>TileTensor</code> almost exclusively (Puzzle 9
 keeps a raw-pointer kernel to demonstrate a debugging scenario), and
@@ -7029,7 +7029,7 @@ def prefix_sum_block_sum_phase(
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> only
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/">barrier</a> only
 synchronizes threads within a block, not across blocks. For cross-block
 synchronization, you need to enqueue multiple kernels that run sequentially on
 the device:</p>
@@ -8085,7 +8085,7 @@ arithmetic intensity).</p>
 <p><strong>Note on asynchronous operations</strong>: Standard GPU memory loads (<code>ld.global</code>) are
 already asynchronous - warps continue executing until they need the loaded data.
 Specialized async copy instructions like <code>cp.async</code> (CUDA) or
-<a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
+<a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
 (Mojo) provide additional benefits by using dedicated copy engines, bypassing
 registers, and enabling better resource utilization rather than simply making
 synchronous operations asynchronous.</p>
@@ -8938,7 +8938,7 @@ var b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
 <p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)”
 without manual coordinate calculation. See the
-<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">documentation</a>
+<a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">documentation</a>
 for more details.</p>
 </li>
 <li>
@@ -8960,7 +8960,7 @@ async_copy_wait_all()
 <li>Issue the copy through the GPU’s asynchronous copy path (<code>cp.async</code> on
 NVIDIA), which moves global memory straight into shared memory without
 staging through registers, via
-<a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
+<a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
 <li>Use specialized thread layouts for optimal memory access patterns</li>
 <li>Eliminate the need for manual memory initialization</li>
 <li><strong>Important</strong>:
@@ -9168,7 +9168,7 @@ while working in familiar Python environments.</p>
 <p>In <a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution
 kernel that runs efficiently on the GPU. Now we’ll take this kernel and
 transform it into a custom operation that can be called directly from Python
-using <a href="https://docs.modular.com/api/python/graph/">MAX Graph</a>.</p>
+using <a href="https://max.modular.com/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -9371,9 +9371,9 @@ method in the <code>Conv1DCustomOp</code> struct.</p>
 These two statements do several important things:
 <ol>
 <li>Calls
-<a href="https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>
 on the GPU context (<code>gpu_ctx</code> is of type
-<a href="https://docs.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/">DeviceContext</a>)
+<a href="https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/">DeviceContext</a>)
 to schedule our kernel execution</li>
 <li>Binds the layout and size information as <strong>compile-time</strong> parameters through
 the <code>comptime kernel = conv1d_kernel[...]</code> binding</li>
@@ -9390,7 +9390,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <li>Creates NumPy arrays for input and kernel</li>
 <li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
 <li>Converts NumPy arrays to
-<a href="https://docs.modular.com/api/python/driver">MAX driver</a> Buffers with
+<a href="https://max.modular.com/api/python/driver">MAX driver</a> Buffers with
 <code>Buffer.from_numpy(input).to(device)</code></li>
 <li>Loads the custom operation package with <code>custom_extensions=[mojo_kernels]</code></li>
 </ul>
@@ -9399,12 +9399,12 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <p><strong>Graph building</strong>:</p>
 <ul>
 <li>Defines input and output tensor types with
-<a href="https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
+<a href="https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
 <li>Specifies parameters for our operation via <code>parameters={...}</code></li>
 <li>Creates a computation graph with
-<a href="https://docs.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
+<a href="https://max.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
 <li>Calls our operation using
-<a href="https://docs.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
+<a href="https://max.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
 </ul>
 </li>
 <li>
@@ -9412,7 +9412,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>The <code>@extensibility.register("conv1d")</code> decorator exposes our operation to MAX
 Graph. See
-<a href="https://docs.modular.com/api/mojo/extensibility/decorators/register/">@extensibility.register</a></li>
+<a href="https://max.modular.com/api/mojo/extensibility/decorators/register/">@extensibility.register</a></li>
 <li>The <code>execute</code> method parameters define the interface (inputs, outputs,
 context)</li>
 <li>Input/output tensors are converted to TileTensors for use in our kernel</li>
@@ -9495,8 +9495,8 @@ functions to create efficient, type-safe, accelerated operations.</p>
 <blockquote>
 <p>Check out the follow tutorials for more details:</p>
 <ul>
-<li><a href="https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
-<li><a href="https://docs.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
+<li><a href="https://max.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
+<li><a href="https://max.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
 </ul>
 </blockquote>
 <h3 id="custom-op-registration"><a class="header" href="#custom-op-registration">Custom op registration</a></h3>
@@ -11010,7 +11010,7 @@ different Python integration approaches.</p>
 <h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
 <p>In this puzzle, we’ll take the exact same 1D convolution kernel from
 <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the
-<a href="https://docs.modular.com/api/python/generated/max.experimental.torch.CustomOpLibrary/">CustomOpLibrary</a>
+<a href="https://max.modular.com/api/python/generated/max.experimental.torch.CustomOpLibrary/">CustomOpLibrary</a>
 instead of MAX Graph.</p>
 <p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only
 the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
@@ -11707,7 +11707,7 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 </ol>
 <h3 id="integration-with-pytorch"><a class="header" href="#integration-with-pytorch">Integration with PyTorch</a></h3>
 <p>These registered operations can be called from Python using the
-<a href="https://docs.modular.com/api/python/torch/">CustomOpLibrary</a>:</p>
+<a href="https://max.modular.com/api/python/torch/">CustomOpLibrary</a>:</p>
 <pre><code class="language-python"># Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
 
@@ -14171,7 +14171,7 @@ pattern. Each thread automatically processes multiple SIMD elements, showing how
 modern GPU programming abstracts low-level details while preserving high
 performance.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/algorithm/functional/elementwise/">elementwise</a>
+<a href="https://max.modular.com/api/mojo/max/algorithm/functional/elementwise/">elementwise</a>
 function automatically handles thread management, SIMD vectorization, and memory
 coalescing for you.</em></p>
 <h2 id="key-concepts-28"><a class="header" href="#key-concepts-28">Key concepts</a></h2>
@@ -14629,7 +14629,7 @@ def tiled_elementwise_add[
 <p>For a 1024-element vector with <code>TILE_SIZE=32</code>: <code>1024 ÷ 32 = 32</code> tiles exactly.</p>
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
 <p>Check out the
-<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
+<a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
 <pre><code class="language-mojo">var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
 var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
 var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
@@ -20416,11 +20416,11 @@ simplicity</li>
 <h3 id="block-operations-in-mojo"><a class="header" href="#block-operations-in-mojo"><strong>Block operations in Mojo</strong></a></h3>
 <p>Learn the complete parallel programming toolkit from <code>max.gpu.primitives.block</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
 All-to-one reduction for totals, averages, maximum/minimum values</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
 All-to-each scan for parallel filtering and extraction</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
 One-to-all distribution for parameter sharing and coordination</li>
 </ol>
 <blockquote>
@@ -20601,13 +20601,13 @@ implementations. This puzzle teaches you to think at the right abstraction level
 for modern GPU programming.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blocksum-essentials---block-level-dot-product"><a class="header" href="#blocksum-essentials---block-level-dot-product">block.sum() Essentials - Block-Level Dot Product</a></h1>
 <p>Implement the dot product we saw in <a href="puzzle_27/../puzzle_12/puzzle_12.html">puzzle 12</a> using
-block-level <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum">sum</a>
+block-level <a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/sum">sum</a>
 operations to replace complex shared memory patterns with simple function calls.
 Each thread in the block will process one element and use <code>block.sum()</code> to
 combine results automatically, demonstrating how block programming transforms
 GPU synchronization across entire thread blocks.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum()</a>
 operation leverages block-wide execution to replace shared memory + barriers +
 tree reduction with expertly optimized implementations that work across all
 threads using warp patterns in a block. See <a href="puzzle_27/block_sum.html#technical-investigation-what-does-blocksum-actually-compile-to">technical
@@ -20835,7 +20835,7 @@ threads?</p>
 <h3 id="3-tiletensor-indexing-patterns"><a class="header" href="#3-tiletensor-indexing-patterns">3. <strong>TileTensor indexing patterns</strong></a></h3>
 <p>When accessing <code>TileTensor</code> elements, remember that indexing returns SIMD
 values. You’ll need to extract the scalar value for arithmetic operations.</p>
-<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum()</a> API concepts</strong></a></h3>
+<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>A compile-time parameter specifying the block size</li>
@@ -21052,13 +21052,13 @@ Just like <code>warp.sum()</code> simplified warp-level reductions, <code>block.
 simplifies block-level reductions without sacrificing performance.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
 <p>This puzzle implements parallel histogram binning using block-level
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum">block.prefix_sum</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum">block.prefix_sum</a>
 operations for advanced parallel filtering and extraction. Each thread
 determines its element’s target bin, then applies <code>block.prefix_sum()</code> to
 compute write positions for extracting elements from a specific bin, showing how
 prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum">block.prefix_sum()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/prefix_sum">block.prefix_sum()</a>
 operation provides parallel filtering and extraction by computing cumulative
 write positions for matching elements across all threads in a block.</em></p>
 <h2 id="key-concepts-39"><a class="header" href="#key-concepts-39">Key concepts</a></h2>
@@ -21507,14 +21507,14 @@ simple parallel computations to sophisticated parallel algorithms. While
 reorganization patterns essential for high-performance parallel algorithms.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blockbroadcast-vector-normalization"><a class="header" href="#blockbroadcast-vector-normalization">block.broadcast() Vector Normalization</a></h1>
 <p>Implement vector mean normalization by combining
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum</a> and
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/sum">block.sum</a> and
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast</a>
 operations to demonstrate the complete block-level communication workflow. Each
 thread will contribute to computing the mean, then receive the broadcast mean to
 normalize its element, showcasing how block operations work together to solve
 real parallel algorithms.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a>
 operation enables one-to-all communication, completing the fundamental block
 communication patterns: reduction (all→one), scan (all→each), and broadcast
 (one→all).</em></p>
@@ -21652,7 +21652,7 @@ if local_i == 0:
 </code></pre>
 <p><strong>Why thread 0?</strong> Consistent with <code>block.sum()</code> pattern where thread 0 receives
 the result.</p>
-<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
+<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>Compile-time parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
@@ -22152,7 +22152,7 @@ for this optimization</li>
 <li>Basic understanding of memory latency vs. bandwidth</li>
 </ul>
 <p><strong>API familiarity:</strong>
-<a href="https://docs.modular.com/api/mojo/max/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<a href="https://max.modular.com/api/mojo/max/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
 <p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations
 (<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that lower to the NVIDIA
@@ -22188,9 +22188,9 @@ computation</li>
 <a href="puzzle_28/../puzzle_16/tiled.html#solution-idiomatic-tiletensor-tiling">Puzzle 16’s idiomatic matmul</a>,
 you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
 Launch background DRAM→SRAM transfers that bypass the register file</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 Synchronize transfer completion before accessing shared memory</li>
 </ul>
 <p><strong>What’s different from Puzzle 16?</strong> While Puzzle 16 used async copy for clean
@@ -22521,7 +22521,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 <li>
 <p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a
 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo
-<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a>
+<a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a>
 does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds
 indices results in undefined behavior. The implementation must ensure the tile
 size and offset remain within valid array bounds.</p>
@@ -22710,9 +22710,9 @@ relationships</li>
 <p><strong>Synchronization primitive hierarchy:</strong></p>
 <ul>
 <li><strong>Basic
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>:
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>:
 Simple thread synchronization within blocks</li>
-<li><strong>Advanced <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a></strong>:
+<li><strong>Advanced <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a></strong>:
 Fine-grained memory barrier control with state tracking</li>
 </ul>
 <p><strong>Memory consistency models:</strong></p>
@@ -22765,14 +22765,14 @@ computations, neural network layer coordination</p>
 <h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
 <p><strong>Focus</strong>: Advanced memory barrier APIs and iterative processing</p>
 <p>Explore <strong>fine-grained synchronization control</strong> using
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> for iterative
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> for iterative
 algorithms that require precise memory coordination. This puzzle demonstrates
 double-buffering patterns essential for iterative solvers and simulation
 algorithms.</p>
 <p><strong>Key concepts</strong>:</p>
 <ul>
-<li>Advanced <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> vs
-basic <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
+<li>Advanced <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> vs
+basic <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
 <li>Double-buffering with alternating read/write buffer roles</li>
 <li>Iterative algorithm coordination with explicit memory barriers</li>
 </ul>
@@ -22805,7 +22805,7 @@ specialization fundamentals, then advance to
 memory barrier techniques.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
 <p><strong>Important note</strong>: Puzzle 29 is currently NVIDIA-only — the
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/"><code>mbarrier</code> APIs</a> used in
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/"><code>mbarrier</code> APIs</a> used in
 the <a href="puzzle_29/memory_barrier.html">companion stencil puzzle</a> require NVIDIA hardware,
 and the <code>pixi</code> task pulls them into the same compilation unit.</p>
 <h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
@@ -23284,13 +23284,13 @@ approaches used in production GPU software.</p>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="double-buffered-stencil-computation-1"><a class="header" href="#double-buffered-stencil-computation-1">Double-Buffered Stencil Computation</a></h1>
 <p><strong>Important note</strong>: This puzzle requires NVIDIA GPU hardware. The
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/"><code>mbarrier</code> APIs</a> are
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/"><code>mbarrier</code> APIs</a> are
 NVIDIA-only.</p>
 <blockquote>
 <p><strong>🔬 Fine-Grained Synchronization: mbarrier vs barrier()</strong></p>
 <p>This puzzle introduces <strong>explicit memory barrier APIs</strong> that provide
 significantly more control than the basic
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 function used in previous puzzles.</p>
 <p><strong>Basic <code>barrier()</code> limitations:</strong></p>
 <ul>
@@ -23300,12 +23300,12 @@ function used in previous puzzles.</p>
 <li><strong>Coarse-grained</strong>: Limited control over memory ordering and timing</li>
 <li><strong>Static coordination</strong>: Cannot adapt to different thread participation patterns</li>
 </ul>
-<p><strong>Advanced <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/"><code>mbarrier APIs</code></a>
+<p><strong>Advanced <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/"><code>mbarrier APIs</code></a>
 capabilities:</strong></p>
 <ul>
-<li><strong>Precise control</strong>: <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a> sets up reusable barrier objects with specific thread counts</li>
-<li><strong>State tracking</strong>: <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> signals individual thread completion and maintains arrival count</li>
-<li><strong>Flexible waiting</strong>: <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> polls a completion state without blocking, so you decide what a thread does while waiting</li>
+<li><strong>Precise control</strong>: <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a> sets up reusable barrier objects with specific thread counts</li>
+<li><strong>State tracking</strong>: <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> signals individual thread completion and maintains arrival count</li>
+<li><strong>Flexible waiting</strong>: <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> polls a completion state without blocking, so you decide what a thread does while waiting</li>
 <li><strong>Reusable objects</strong>: Same barrier can be reinitialized and reused across multiple iterations</li>
 <li><strong>Multiple barriers</strong>: Different barrier objects for different synchronization points (initialization, iteration, finalization)</li>
 <li><strong>Hardware primitive</strong>: Maps directly to the NVIDIA <code>mbarrier</code> instructions rather than to a single block-wide barrier</li>
@@ -23379,7 +23379,7 @@ buffer_B} &amp; \text{if } i \bmod 2 = 0 \\
 <ul>
 <li>Implementing double-buffering patterns for iterative algorithms</li>
 <li>Coordinating explicit memory barriers using
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a></li>
 <li>Managing alternating read/write buffer roles across iterations</li>
 </ul>
 <p>The key insight is understanding how to safely coordinate buffer swapping in
@@ -23394,10 +23394,10 @@ depends on the complete results of the previous iteration.</p>
 <ul>
 <li><strong>Previous puzzles (<a href="puzzle_29/../puzzle_08/puzzle_08.html">P8</a>,
 <a href="puzzle_29/../puzzle_12/puzzle_12.html">P12</a>, <a href="puzzle_29/../puzzle_15/puzzle_15.html">P15</a>):</strong> Simple
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a> calls
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a> calls
 for single-pass algorithms</li>
 <li><strong>This puzzle:</strong> Explicit
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> for precise
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> for precise
 control over buffer swap timing</li>
 </ul>
 <p><strong>Memory barrier specialization:</strong> Unlike basic thread synchronization, this
@@ -23433,7 +23433,7 @@ iteration</li>
 out-of-range indices); buffer_B is left uninitialized and is first written by
 iteration 0 of the stencil loop</li>
 <li><strong>Barrier initialization</strong>: Set up
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init">mbarrier objects</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init">mbarrier objects</a>
 for synchronization points</li>
 <li><strong>Thread coordination</strong>: All threads participate in initialization</li>
 </ul>
@@ -23447,9 +23447,9 @@ for synchronization points</li>
 </ul>
 <p><strong>Memory barrier coordination:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
 Each thread signals completion of write phase</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
 Poll until everyone has arrived; the call is non-blocking, so it belongs in a
 loop</li>
 <li><strong>Buffer swap safety</strong>: Prevents reading from buffer while others still
@@ -23589,17 +23589,17 @@ assignments</li>
 <h3 id="memory-barrier-coordination"><a class="header" href="#memory-barrier-coordination"><strong>Memory barrier coordination</strong></a></h3>
 <ul>
 <li>Call
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 after each thread completes its write operations</li>
 <li>Follow it with a polling loop on
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>:
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>:
 the API is a <strong>non-blocking</strong> check, so call it inside
 <code>while not mbarrier_test_wait(...): pass</code> to actually wait for every thread
 to arrive before the buffer swap</li>
 <li>Reinitialize barriers between iterations for reuse:
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
 <li>Only thread 0 should reinitialize barriers to avoid race conditions</li>
-<li>Insert a <a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<li>Insert a <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 after each <code>mbarrier_init</code> call (initial setup and per-iteration reinit) so
 every thread observes the initialized barrier before any thread calls
 <code>mbarrier_arrive</code>. This matches the
@@ -23799,7 +23799,7 @@ timing.</p>
 <p>The fundamental breakthrough in this puzzle is
 <strong>explicit memory barrier control</strong> rather than simple thread synchronization:</p>
 <p><strong>Traditional approach:</strong> Use basic
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a> for
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a> for
 simple thread coordination</p>
 <ul>
 <li>All threads execute same operation on different data</li>
@@ -23810,7 +23810,7 @@ simple thread coordination</p>
 memory barriers</p>
 <ul>
 <li>buffer_A and buffer_B alternate between read source and write target</li>
-<li><a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> provide
+<li><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/">mbarrier APIs</a> provide
 precise control over memory operation completion</li>
 <li>Explicit coordination prevents race conditions during buffer transitions</li>
 </ul>
@@ -23828,29 +23828,29 @@ iteration</li>
 <h2 id="memory-barrier-api-usage"><a class="header" href="#memory-barrier-api-usage"><strong>Memory barrier API usage</strong></a></h2>
 <p>Understanding the mbarrier coordination pattern:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
 Initialize barrier for specific thread count (TPB)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
 Signal individual thread completion of write phase</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
 Non-blocking poll of barrier state—call it in a loop until it returns true</li>
 <li><strong>Reinitialization</strong>: Reset barrier state between iterations for reuse</li>
 </ul>
 <p><strong>Critical timing sequence:</strong></p>
 <ol>
 <li><strong>Init + sync</strong>: Thread 0 calls
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>,
 then every thread executes a
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a> so
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a> so
 the initialized state is visible block-wide before any
 <code>mbarrier_arrive</code> call (see the
 <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers docs</a>)</li>
 <li><strong>All threads write</strong>: Each thread updates its assigned buffer element</li>
 <li><strong>Signal completion</strong>: Each thread calls
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
 <li><strong>Poll until all arrived</strong>: Every thread spins in
 <code>while not mbarrier_test_wait(...): pass</code> —
-<a href="https://docs.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
 is a non-blocking check, so a single call is not a wait</li>
 <li><strong>Safe to proceed</strong>: Now safe to swap buffer roles for next iteration</li>
 </ol>
@@ -26057,7 +26057,7 @@ skills to real optimization</li>
 <li>NVIDIA GPU with CUDA toolkit</li>
 <li>Nsight Compute profiling tools</li>
 <li>The dependencies such as profiling are managed by <code>pixi</code></li>
-<li><a href="https://docs.modular.com/packages/#gpu-compatibility">Compatible GPU architecture</a></li>
+<li><a href="https://max.modular.com/packages/#gpu-compatibility">Compatible GPU architecture</a></li>
 </ul>
 <h2 id="the-optimization-impact"><a class="header" href="#the-optimization-impact">The optimization impact</a></h2>
 <p><strong>When bank conflicts matter most:</strong></p>
@@ -26779,7 +26779,7 @@ mma_op.store_d(C_mma_tile, d_reg)           # Store result
 </code></pre>
 <h2 id="tensor-core-api-in-mojo"><a class="header" href="#tensor-core-api-in-mojo">Tensor core API in Mojo</a></h2>
 <p>Mojo provides a clean interface to Tensor Cores through the
-<a href="https://docs.modular.com/api/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
+<a href="https://max.modular.com/api/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
 type:</p>
 <pre><code class="language-mojo">from layout.tensor_core import TensorCore
 
@@ -26797,7 +26797,7 @@ var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 different swizzle patterns for memory access optimization, and mixed-precision
 arithmetic. For complete documentation of all supported shapes, data types, and
 methods, see the
-<a href="https://docs.modular.com/api/mojo/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
+<a href="https://max.modular.com/api/mojo/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
 <h3 id="matrix-fragment-sizes"><a class="header" href="#matrix-fragment-sizes">Matrix fragment sizes</a></h3>
 <p>The TensorCore API supports different shapes and data types depending on the GPU
 hardware:</p>
@@ -27661,17 +27661,17 @@ hardware-accelerated synchronization and communication primitives.</p>
 <p><strong>Key capabilities:</strong></p>
 <ul>
 <li><strong>Inter-block synchronization</strong>: Coordinate multiple blocks with
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync</code></a>,
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive</code></a>,
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait</code></a></li>
 <li><strong>Block identification</strong>: Use
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a>
 for unique block coordination</li>
 <li><strong>Efficient coordination</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync</code></a>
 for optimized warp-level cooperation</li>
 <li><strong>Advanced patterns</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_mask_base"><code>cluster_mask_base</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_mask_base"><code>cluster_mask_base</code></a>
 for selective block coordination</li>
 </ul>
 <h2 id="the-cluster-programming-model"><a class="header" href="#the-cluster-programming-model">The cluster programming model</a></h2>
@@ -27714,14 +27714,14 @@ cluster programming expertise:</p>
 <h3 id="-multi-block-coordination-basics"><a class="header" href="#-multi-block-coordination-basics"><strong><a href="puzzle_34/./cluster_coordination_basics.html">🔰 Multi-Block Coordination Basics</a></strong></a></h3>
 <p><strong>Focus</strong>: Understanding fundamental cluster synchronization patterns</p>
 <p>Learn how multiple thread blocks coordinate their execution using
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 and
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 for basic inter-block communication and data distribution.</p>
 <p><strong>Key APIs</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>,
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
 <hr />
 <h3 id="-cluster-wide-collective-operations"><a class="header" href="#-cluster-wide-collective-operations"><strong><a href="puzzle_34/./cluster_collective_ops.html">📊 Cluster-Wide Collective Operations</a></strong></a></h3>
 <p><strong>Focus</strong>: Extending block-level patterns to cluster scale</p>
@@ -27729,8 +27729,8 @@ for basic inter-block communication and data distribution.</p>
 <code>block.sum()</code> concepts to coordinate across multiple thread blocks for
 large-scale computations.</p>
 <p><strong>Key APIs</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>,
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 for efficient cluster coordination</p>
 <hr />
 <h3 id="-advanced-cluster-algorithms"><a class="header" href="#-advanced-cluster-algorithms"><strong><a href="puzzle_34/./advanced_cluster_patterns.html">🚀 Advanced Cluster Algorithms</a></strong></a></h3>
@@ -27739,8 +27739,8 @@ for efficient cluster coordination</p>
 cluster-level coordination for maximum GPU utilization and complex computational
 workflows.</p>
 <p><strong>Key APIs</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>,
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
 advanced coordination patterns</p>
 <h2 id="why-cluster-programming-matters"><a class="header" href="#why-cluster-programming-matters">Why cluster programming matters</a></h2>
 <p><strong>Problem Scale</strong>: Modern AI and scientific workloads often require computations
@@ -27805,9 +27805,9 @@ APIs.</p>
 <strong>4 thread blocks coordinate</strong> to process different ranges of data and store
 results in a shared output array.</p>
 <p><strong>Key Learning</strong>: Learn the essential cluster synchronization pattern:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 → process →
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>,
 extending the synchronization concepts from
 <a href="puzzle_34/../puzzle_29/barrier.html">barrier() in Puzzle 29</a>.</p>
 <h2 id="the-problem-multi-block-scaled-reduction"><a class="header" href="#the-problem-multi-block-scaled-reduction">The problem: multi-block scaled reduction</a></h2>
@@ -27832,9 +27832,9 @@ processing completes before any block reads the final results.</p>
 <p><strong>Coordination Requirements:</strong></p>
 <ol>
 <li>Each block must signal completion using
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></li>
 <li>All blocks must wait for others using
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 <li>Final output shows each block’s processed sum in a 4-element array</li>
 </ol>
 <h2 id="configuration-42"><a class="header" href="#configuration-42">Configuration</a></h2>
@@ -27908,7 +27908,7 @@ processing completes before any block reads the final results.</p>
 <h3 id="block-identification-patterns"><a class="header" href="#block-identification-patterns"><strong>Block identification patterns</strong></a></h3>
 <ul>
 <li>Use
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>
 to get the cluster rank (0-3)</li>
 <li>Use <code>block_idx.x</code> for reliable block indexing in grid launch</li>
 <li>Scale data processing by block position for distinct results</li>
@@ -27927,11 +27927,11 @@ block</li>
 <ol>
 <li><strong>Process</strong>: Each block works on its portion of data</li>
 <li><strong>Signal</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 announces processing completion</li>
 <li><strong>Compute</strong>: Block-local operations (reduction, aggregation)</li>
 <li><strong>Wait</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 blocks until every block has arrived</li>
 </ol>
 <h3 id="thread-coordination-within-blocks"><a class="header" href="#thread-coordination-within-blocks"><strong>Thread coordination within blocks</strong></a></h3>
@@ -28068,7 +28068,7 @@ coordination</li>
 <h2 id="phase-2-cluster-coordination"><a class="header" href="#phase-2-cluster-coordination"><strong>Phase 2: Cluster coordination</strong></a></h2>
 <p><strong>Inter-block signaling:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<li><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 signals that this block has completed its local processing phase</li>
 <li>This is a <strong>non-blocking</strong> operation, and it makes this block’s earlier writes
 visible to the rest of the cluster</li>
@@ -28087,7 +28087,7 @@ location</li>
 </ul>
 <p><strong>Final synchronization:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<li><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 blocks until every block in the cluster has called <code>cluster_arrive()</code></li>
 <li>No block runs past this point until the whole cluster has signaled arrival</li>
 </ul>
@@ -28095,7 +28095,7 @@ blocks until every block in the cluster has called <code>cluster_arrive()</code>
 <p><strong>Why use <code>block_id</code> instead of <code>my_block_rank</code>?</strong></p>
 <ul>
 <li><code>block_idx.x</code> provides reliable grid-launch indexing (0, 1, 2, 3)</li>
-<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>
+<li><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>
 returns the rank <em>within</em> the cluster, so several blocks share a rank as soon
 as the grid holds more than one cluster</li>
 <li>Using <code>block_id</code> guarantees each block gets unique data portions and output
@@ -28110,9 +28110,9 @@ positions</li>
 <p><strong>Synchronization hierarchy:</strong></p>
 <ol>
 <li><strong><code>barrier()</code></strong>: Synchronizes threads within each block (intra-block)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 Signals completion to other blocks (inter-block, non-blocking)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
 Waits for all blocks to arrive (inter-block, blocking)</li>
 </ol>
 <p><strong>Performance characteristics:</strong></p>
@@ -28131,12 +28131,12 @@ structure:</p>
 <ol>
 <li><strong>Phase 1</strong>: Each block processes its assigned data portion independently</li>
 <li><strong>Signal</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 announces completion of processing</li>
 <li><strong>Phase 2</strong>: Each block carries on with block-local work while the others are
 still arriving</li>
 <li><strong>Synchronize</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 blocks until every block has arrived, and only past this point is another
 block’s result safe to read</li>
 </ol>
@@ -28150,16 +28150,16 @@ to cluster scale, building on
 <p>Building on basic cluster coordination from the previous section, this challenge
 teaches you to implement <strong>cluster-wide collective operations</strong> - extending the
 familiar
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/block/sum"><code>block.sum</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/block/sum"><code>block.sum</code></a>
 pattern from <a href="puzzle_34/../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across
 <strong>multiple thread blocks</strong>.</p>
 <p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024
 elements across 4 coordinated blocks, combining their individual reductions into
 a single global result.</p>
 <p><strong>Key Learning</strong>: Learn
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 for full cluster coordination and
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 for efficient final reductions.</p>
 <h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
 <p>Single blocks (as learned in <a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27</a>) are limited
@@ -28187,7 +28187,7 @@ by their thread count and
 <ol>
 <li><strong>Local reduction</strong>: Each block computes partial sum using tree reduction</li>
 <li><strong>Cluster sync</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 ensures all partial results are ready</li>
 <li><strong>Final aggregation</strong>: An elected thread in the first block combines all
 partial results</li>
@@ -28237,7 +28237,7 @@ partial results</li>
 <ul>
 <li>Store partial results in <code>temp_storage[block_id]</code> for reliable indexing</li>
 <li>Use
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 for full cluster synchronization, which is <code>cluster_arrive()</code> followed by
 <code>cluster_wait()</code></li>
 <li>Restrict the final global aggregation to the first block of the cluster</li>
@@ -28245,7 +28245,7 @@ for full cluster synchronization, which is <code>cluster_arrive()</code> followe
 <h3 id="election-pattern-for-efficiency"><a class="header" href="#election-pattern-for-efficiency"><strong>Election pattern for efficiency</strong></a></h3>
 <ul>
 <li>Use
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 within the first block (<code>my_block_rank == 0</code>) (pattern from
 <a href="puzzle_34/../puzzle_24/warp_sum.html">warp programming</a>)</li>
 <li>This keeps the final sum to one thread per warp in that block instead of all
@@ -28268,14 +28268,14 @@ communication</li>
 </details>
 <h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
 <p><strong>From
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/"><code>max.gpu.primitives.cluster</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/"><code>max.gpu.primitives.cluster</code></a>
 module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 Full cluster synchronization: <code>cluster_arrive()</code> followed by <code>cluster_wait()</code></li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 Elects single thread within warp for efficient coordination</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
 Returns unique block identifier within cluster</li>
 </ul>
 <h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
@@ -28415,11 +28415,11 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <h2 id="phase-2-cluster-synchronization"><a class="header" href="#phase-2-cluster-synchronization"><strong>Phase 2: Cluster synchronization</strong></a></h2>
 <p><strong>Full cluster barrier:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<li><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 is a convenience wrapper around
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 followed immediately by
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>,
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>,
 with no window between them for other work</li>
 <li>Ensures <strong>all blocks complete their local reductions</strong> before any block
 proceeds</li>
@@ -28435,7 +28435,7 @@ proceeds</li>
 </code></pre>
 <p><strong>Why this election strategy?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 Hardware primitive that selects exactly one thread per warp</li>
 <li><strong><code>my_block_rank == 0</code></strong>: Restricts the final sum to the first block of the
 cluster</li>
@@ -28463,7 +28463,7 @@ into final sum (4 → 1)</li>
 <ul>
 <li><strong><code>barrier()</code></strong>: Ensures all threads in block complete each tree reduction
 step</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
 <strong>Global barrier</strong> - all blocks reach same execution point</li>
 <li><strong>Benign write race</strong>: The elected threads of block rank 0 all store the same
 total to <code>output[0]</code>, so the result is well defined even though the write is
@@ -28535,15 +28535,15 @@ specialized roles in a coordinated computation pipeline, extending
 <p><strong>Your task</strong>: Implement a multi-stage algorithm where:</p>
 <ol>
 <li><strong><a href="puzzle_34/../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 for efficient intra-warp coordination (from
 <a href="puzzle_34/../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
 <li><strong><a href="puzzle_34/../puzzle_27/block_sum.html">Block-level</a></strong>: Aggregate warp results using
 <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory coordination</a></li>
 <li><strong>Cluster-level</strong>: Coordinate between blocks using
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 /
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 <a href="puzzle_34/../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
 </ol>
 <h3 id="algorithm-specification"><a class="header" href="#algorithm-specification">Algorithm specification</a></h3>
@@ -28554,9 +28554,9 @@ thread to sum 32 consecutive elements</li>
 <li><strong>Stage 2 (<a href="puzzle_34/../puzzle_27/puzzle_27.html">Block-level</a>)</strong>: Aggregate all warp
 sums within each block</li>
 <li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 /
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 </ol>
 <ul>
 <li><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing</li>
@@ -28604,7 +28604,7 @@ sums within each block</li>
 <h3 id="warp-level-optimization-patterns"><a class="header" href="#warp-level-optimization-patterns"><strong>Warp-level optimization patterns</strong></a></h3>
 <ul>
 <li>Use
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 to select one thread per warp for computation (from
 <a href="puzzle_34/../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
 <li>The elected thread should process 32 consecutive elements (leveraging
@@ -28629,11 +28629,11 @@ from <a href="puzzle_34/../puzzle_12/puzzle_12.html">reduction algorithms</a>)</
 <li><strong>Process</strong>: Each block processes its data with hierarchical warp
 optimization</li>
 <li><strong>Signal</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
 indicates completion of local processing</li>
 <li><strong>Store</strong>: Thread 0 writes the block result to output</li>
 <li><strong>Wait</strong>:
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
 ensures all blocks complete before termination</li>
 </ol>
 <h3 id="data-scaling-and-bounds-checking"><a class="header" href="#data-scaling-and-bounds-checking"><strong>Data scaling and bounds checking</strong></a></h3>
@@ -28650,16 +28650,16 @@ ensures all blocks complete before termination</li>
 </details>
 <h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced cluster APIs</a></h2>
 <p><strong>From
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/"><code>max.gpu.primitives.cluster</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/"><code>max.gpu.primitives.cluster</code></a>
 module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
 Warp-level thread election for efficient computation</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 Signal completion for staged cluster coordination</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
 Wait for all blocks to reach synchronization point</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
 Get unique block identifier within cluster</li>
 </ul>
 <h2 id="hierarchical-coordination-pattern"><a class="header" href="#hierarchical-coordination-pattern">Hierarchical coordination pattern</a></h2>
@@ -28840,12 +28840,12 @@ cluster_wait()    # Blocking: wait for all blocks to arrive
 </code></pre>
 <p><strong>Why staged synchronization?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>
 called <strong>before</strong> final computation allows overlapping work</li>
 <li>Block can compute its result while other blocks are still processing</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>
 then blocks until every block in the cluster has arrived</li>
-<li><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+<li><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
 is exactly these two calls back to back, so splitting them is what buys the
 overlap window for independent block computations</li>
 </ul>
@@ -28870,9 +28870,9 @@ memory</li>
 <ol>
 <li><strong><code>barrier()</code></strong>: Intra-block thread synchronization (after data loading and
 warp processing)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
 Inter-block signaling (non-blocking, enables work overlap)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
 Inter-block synchronization (blocking, no block proceeds until all arrive)</li>
 </ol>
 <p><strong>Why this is “advanced”:</strong></p>
@@ -28880,7 +28880,7 @@ Inter-block synchronization (blocking, no block proceeds until all arrive)</li>
 <li><strong>Multi-level optimization</strong>: Combines warp, block, and cluster programming
 techniques</li>
 <li><strong>Hardware efficiency</strong>: Leverages
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
 to pick one leader per warp instead of repeating the accumulation in all 32
 lanes</li>
 <li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible

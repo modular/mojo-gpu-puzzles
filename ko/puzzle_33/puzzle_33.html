@@ -279,7 +279,7 @@ mma_op.store_d(C_mma_tile, d_reg)           # Store result
 </code></pre>
 <h2 id="mojo의-텐서-코어-api"><a class="header" href="#mojo의-텐서-코어-api">Mojo의 텐서 코어 API</a></h2>
 <p>Mojo는
-<a href="https://docs.modular.com/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
+<a href="https://max.modular.com/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
 타입을 통해 텐서 코어에 대한 깔끔한 인터페이스를 제공합니다:</p>
 <pre><code class="language-mojo">from layout.tensor_core import TensorCore
 
@@ -297,7 +297,7 @@ mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 스위즐 패턴(<em>역주: 공유 메모리의 뱅크 충돌을 피하기 위해 데이터 주소를 비트
 연산으로 재배치하는 기법</em>), 혼합 정밀도 연산도 지원합니다. 지원되는 모든 형태,
 데이터 타입, 메서드에 대한 전체 문서는
-<a href="https://docs.modular.com/mojo/layout/tensor_core/TensorCore/">공식 TensorCore API 레퍼런스</a>를
+<a href="https://max.modular.com/mojo/layout/tensor_core/TensorCore/">공식 TensorCore API 레퍼런스</a>를
 참고하세요.</p>
 <h3 id="행렬-프래그먼트-크기"><a class="header" href="#행렬-프래그먼트-크기">행렬 프래그먼트 크기</a></h3>
 <p>TensorCore API는 GPU 하드웨어에 따라 다양한 형태와 데이터 타입을 지원합니다:</p>

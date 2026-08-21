@@ -281,7 +281,7 @@ mma_op.store_d(C_mma_tile, d_reg)           # Store result
 </code></pre>
 <h2 id="tensor-core-api-in-mojo"><a class="header" href="#tensor-core-api-in-mojo">Tensor core API in Mojo</a></h2>
 <p>Mojo provides a clean interface to Tensor Cores through the
-<a href="https://docs.modular.com/api/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
+<a href="https://max.modular.com/api/mojo/layout/tensor_core/TensorCore/"><code>TensorCore</code></a>
 type:</p>
 <pre><code class="language-mojo">from layout.tensor_core import TensorCore
 
@@ -299,7 +299,7 @@ var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 different swizzle patterns for memory access optimization, and mixed-precision
 arithmetic. For complete documentation of all supported shapes, data types, and
 methods, see the
-<a href="https://docs.modular.com/api/mojo/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
+<a href="https://max.modular.com/api/mojo/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
 <h3 id="matrix-fragment-sizes"><a class="header" href="#matrix-fragment-sizes">Matrix fragment sizes</a></h3>
 <p>The TensorCore API supports different shapes and data types depending on the GPU
 hardware:</p>

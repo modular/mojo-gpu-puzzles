@@ -224,14 +224,14 @@
                     <main>
                         <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blockbroadcast와-벡터-정규화"><a class="header" href="#blockbroadcast와-벡터-정규화">block.broadcast()와 벡터 정규화</a></h1>
-<p><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
+<p><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
 연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체
 모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을
 받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해
 어떻게 함께 동작하는지 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a>
 연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다:
 리덕션(전체→하나), 스캔(전체→각각), 브로드캐스트(하나→전체).</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
@@ -366,7 +366,7 @@ if local_i == 0:
 </code></pre>
 <p><strong>왜 스레드 0인가?</strong> <code>block.sum()</code> 패턴에서 스레드 0이 결과를 받는 것과 일관성을
 유지합니다.</p>
-<h3 id="4-blockbroadcast-api-개념"><a class="header" href="#4-blockbroadcast-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API 개념</strong></a></h3>
+<h3 id="4-blockbroadcast-api-개념"><a class="header" href="#4-blockbroadcast-api-개념">4. <strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API 개념</strong></a></h3>
 <p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
 <ul>
 <li>템플릿 파라미터: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>

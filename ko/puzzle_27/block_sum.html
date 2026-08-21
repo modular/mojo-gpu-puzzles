@@ -225,12 +225,12 @@
                         <!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 <h1 id="blocksum의-핵심---블록-레벨-내적"><a class="header" href="#blocksum의-핵심---블록-레벨-내적">block.sum()의 핵심 - 블록 레벨 내적</a></h1>
 <p><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>에서 살펴본 내적을 블록 레벨
-<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> 연산으로
+<a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> 연산으로
 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 블록 내 각
 스레드가 하나의 요소를 처리하고 <code>block.sum()</code>으로 결과를 자동으로 합산하여, 블록
 프로그래밍이 전체 스레드 블록에 걸친 GPU 동기화를 어떻게 변환하는지 보여줍니다.</p>
 <p><strong>핵심 통찰:</strong>
-<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a>
+<em><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a>
 연산은 블록 전체 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 블록 내
 모든 스레드에 걸쳐 워프 패턴을 사용하는 정교하게 최적화된 구현으로 대체합니다.
 LLVM 분석은 <a href="#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC%84%9D-blocksum%EC%9D%80-%EC%8B%A4%EC%A0%9C%EB%A1%9C-%EB%AC%B4%EC%97%87%EC%9C%BC%EB%A1%9C-%EC%BB%B4%ED%8C%8C%EC%9D%BC%EB%90%A0%EA%B9%8C">기술 분석</a>을
@@ -445,7 +445,7 @@ Just like warp.sum() but for the entire block
 <h3 id="3-tiletensor-인덱싱-패턴"><a class="header" href="#3-tiletensor-인덱싱-패턴">3. <strong>TileTensor 인덱싱 패턴</strong></a></h3>
 <p><code>TileTensor</code> 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요.
 산술 연산을 위해 스칼라 값을 추출해야 합니다.</p>
-<h3 id="4-blocksum-api-개념"><a class="header" href="#4-blocksum-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API 개념</strong></a></h3>
+<h3 id="4-blocksum-api-개념"><a class="header" href="#4-blocksum-api-개념">4. <strong><a href="https://max.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API 개념</strong></a></h3>
 <p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
 <ul>
 <li>블록 크기를 지정하는 템플릿 파라미터</li>

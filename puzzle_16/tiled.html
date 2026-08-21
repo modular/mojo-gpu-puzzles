@@ -724,7 +724,7 @@ var b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
 <p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)”
 without manual coordinate calculation. See the
-<a href="https://docs.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">documentation</a>
+<a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">documentation</a>
 for more details.</p>
 </li>
 <li>
@@ -746,7 +746,7 @@ async_copy_wait_all()
 <li>Issue the copy through the GPU’s asynchronous copy path (<code>cp.async</code> on
 NVIDIA), which moves global memory straight into shared memory without
 staging through registers, via
-<a href="https://docs.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
+<a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
 <li>Use specialized thread layouts for optimal memory access patterns</li>
 <li>Eliminate the need for manual memory initialization</li>
 <li><strong>Important</strong>:

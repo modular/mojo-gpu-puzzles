@@ -225,12 +225,12 @@
                         <!-- i18n-source-commit: 9880cfdfb6462fafe381b031a42c11b75f2437d6 -->
 <h1 id="더블-버퍼링-스텐실-연산"><a class="header" href="#더블-버퍼링-스텐실-연산">더블 버퍼링 스텐실 연산</a></h1>
 <p><strong>중요 사항</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요합니다.
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier</code> API</a>는
 NVIDIA 전용입니다.</p>
 <blockquote>
 <p><strong>🔬 세밀한 동기화: mbarrier vs barrier()</strong></p>
 <p>이 퍼즐은 이전 퍼즐에서 사용한 기본
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 함수보다 훨씬 강력한 제어를 제공하는 <strong>명시적 메모리 배리어 API</strong>를
 소개합니다.</p>
 <p><strong>기본 <code>barrier()</code>의 한계:</strong></p>
@@ -241,12 +241,12 @@ NVIDIA 전용입니다.</p>
 <li><strong>세밀도 부족</strong>: 메모리 순서와 타이밍에 대한 제한적 제어</li>
 <li><strong>정적 조정</strong>: 스레드 참여 패턴의 변화에 적응 불가</li>
 </ul>
-<p><strong>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier API</code></a>의
+<p><strong>고급 <a href="https://max.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier API</code></a>의
 기능:</strong></p>
 <ul>
-<li><strong>정밀한 제어</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>로 특정 스레드 수를 지정하여 재사용 가능한 배리어 객체를 설정</li>
-<li><strong>상태 추적</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>로 개별 스레드 완료를 알리고 도착 횟수를 유지</li>
-<li><strong>유연한 대기</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>로 특정 완료 상태를 기다릴 수 있음</li>
+<li><strong>정밀한 제어</strong>: <a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>로 특정 스레드 수를 지정하여 재사용 가능한 배리어 객체를 설정</li>
+<li><strong>상태 추적</strong>: <a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>로 개별 스레드 완료를 알리고 도착 횟수를 유지</li>
+<li><strong>유연한 대기</strong>: <a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>로 특정 완료 상태를 기다릴 수 있음</li>
 <li><strong>재사용 가능한 객체</strong>: 동일한 배리어를 여러 반복에 걸쳐 재초기화하고 재사용 가능</li>
 <li><strong>다중 배리어</strong>: 서로 다른 동기화 지점(초기화, 반복, 마무리)에 서로 다른 배리어 객체 사용</li>
 <li><strong>하드웨어 최적화</strong>: GPU 하드웨어 동기화 기본 요소에 직접 매핑하여 더 나은 성능</li>
@@ -310,7 +310,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <p>이 퍼즐에서는 다음을 배웁니다:</p>
 <ul>
 <li>반복 알고리즘을 위한 더블 버퍼링 패턴 구현</li>
-<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
+<li><a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
 명시적 메모리 배리어 조정</li>
 <li>반복에 걸쳐 교대하는 읽기/쓰기 버퍼 역할 관리</li>
 </ul>
@@ -327,9 +327,9 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <li><strong>이전 퍼즐 (<a href="../puzzle_08/puzzle_08.html">P8</a>,
 <a href="../puzzle_12/puzzle_12.html">P12</a>, <a href="../puzzle_15/puzzle_15.html">P15</a>):</strong> 단일
 패스 알고리즘을 위한 단순
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 호출</li>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 호출</li>
 <li><strong>이 퍼즐:</strong> 버퍼 교체 타이밍에 대한 정밀한 제어를 위한 명시적
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></li>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></li>
 </ul>
 <p><strong>메모리 배리어 특화:</strong> 기본적인 스레드 동기화와 달리, 이 퍼즐은 메모리 연산이
 언제 완료되는지에 대한 세밀한 제어를 제공하는 <strong>명시적 메모리 배리어</strong>를
@@ -360,7 +360,7 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <ul>
 <li><strong>버퍼 설정</strong>: buffer_A를 입력 데이터로, buffer_B를 0으로 초기화</li>
 <li><strong>배리어 초기화</strong>: 동기화 지점을 위한
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier 객체</a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier 객체</a>
 설정</li>
 <li><strong>스레드 조정</strong>: 모든 스레드가 초기화에 참여</li>
 </ul>
@@ -374,9 +374,9 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 </ul>
 <p><strong>메모리 배리어 조정:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
 각 스레드가 쓰기 단계 완료를 알림</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
 모든 스레드가 쓰기를 완료할 때까지 대기</li>
 <li><strong>버퍼 교체 안전성</strong>: 다른 스레드가 아직 쓰고 있는 동안 버퍼에서 읽는 것을
 방지</li>
@@ -514,18 +514,18 @@ buffer_B} &amp; \text{if} i \bmod 2 = 0 \\
 <h3 id="메모리-배리어-조정"><a class="header" href="#메모리-배리어-조정"><strong>메모리 배리어 조정</strong></a></h3>
 <ul>
 <li>각 스레드가 쓰기 연산을 완료한 후
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 호출</li>
 <li>그 다음
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
 를 폴링 루프로 호출: 이 API는 <strong>비차단</strong> 검사이므로
 <code>while not mbarrier_test_wait(...): pass</code> 안에서 호출해야 모든 스레드가
 도착할 때까지 실제로 대기할 수 있음</li>
 <li>재사용을 위해 반복 간에 배리어 재초기화:
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
 <li>경쟁 상태를 피하기 위해 스레드 0만 배리어를 재초기화</li>
 <li>모든 <code>mbarrier_init</code> 호출(초기 설정과 반복마다의 재초기화) 직후에는
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 를 삽입해, 어떤 스레드도 <code>mbarrier_arrive</code>를 호출하기 전에 모든 스레드가
 초기화된 배리어를 관찰하도록 보장하세요. 이는
 <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers 초기화 패턴</a>
@@ -719,7 +719,7 @@ GPU output sample: 1.0 1.0 1.0
 <p>이 퍼즐의 근본적인 돌파구는 단순한 스레드 동기화가 아닌
 <strong>명시적 메모리 배리어 제어</strong>입니다:</p>
 <p><strong>전통적인 접근 방식:</strong> 단순한 스레드 조정을 위해 기본
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 사용</p>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 사용</p>
 <ul>
 <li>모든 스레드가 서로 다른 데이터에 동일한 연산을 실행</li>
 <li>단일 배리어 호출로 스레드 완료를 동기화</li>
@@ -728,7 +728,7 @@ GPU output sample: 1.0 1.0 1.0
 <p><strong>이 퍼즐의 혁신:</strong> 명시적 메모리 배리어로 조정되는 서로 다른 버퍼 역할</p>
 <ul>
 <li>buffer_A와 buffer_B가 읽기 소스와 쓰기 대상 사이를 교대</li>
-<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>가 메모리 연산
+<li><a href="https://max.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>가 메모리 연산
 완료에 대한 정밀한 제어를 제공</li>
 <li>명시적 조정으로 버퍼 전환 중 경쟁 상태를 방지</li>
 </ul>
@@ -744,31 +744,31 @@ GPU output sample: 1.0 1.0 1.0
 <h2 id="메모리-배리어-api-사용법"><a class="header" href="#메모리-배리어-api-사용법"><strong>메모리 배리어 API 사용법</strong></a></h2>
 <p>mbarrier 조정 패턴의 이해:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
 특정 스레드 수(TPB)를 지정하여 배리어 초기화</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
 개별 스레드의 쓰기 단계 완료를 알림</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
+<li><strong><a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
 모든 스레드가 완료를 알릴 때까지 대기</li>
 <li><strong>재초기화</strong>: 재사용을 위해 반복 간에 배리어 상태를 재설정</li>
 </ul>
 <p><strong>핵심 타이밍 순서:</strong></p>
 <ol>
 <li><strong>초기화 + 동기화</strong>: 스레드 0이
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>
 를 호출한 다음, 모든 스레드가
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a>
 를 실행하여 어떤 스레드도 <code>mbarrier_arrive</code>를 호출하기 전에 초기화된
 상태가 블록 전체에 보이도록 합니다
 (<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers 문서</a>
 참조)</li>
 <li><strong>모든 스레드 쓰기</strong>: 각 스레드가 할당된 버퍼 요소를 업데이트</li>
 <li><strong>완료 알림</strong>: 각 스레드가
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
 호출</li>
 <li><strong>전원 도착까지 폴링</strong>: 모든 스레드가
 <code>while not mbarrier_test_wait(...): pass</code> 안에서 회전 —
-<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
+<a href="https://max.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
 는 비차단 검사이므로 단일 호출은 대기가 아닙니다</li>
 <li><strong>진행 안전</strong>: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능</li>
 </ol>

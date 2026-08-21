@@ -241,7 +241,7 @@
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p><a href="../puzzle_13/puzzle_13.html">Puzzle 13: 1D 합성곱</a>에서 GPU에서 효율적으로
 동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을
-<a href="https://docs.modular.com/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
+<a href="https://max.modular.com/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
 직접 호출할 수 있는 커스텀 연산으로 변환합니다.</p>
 <p>사용할 1D 합성곱 커널은 이미 구현되어 있습니다:</p>
 <pre><code class="language-mojo">comptime TPB = 15
@@ -444,8 +444,8 @@ Verification passed: Custom kernel results match NumPy calculation
 이 한 줄이 수행하는 중요한 작업들은 다음과 같습니다:
 <ol>
 <li>GPU 컨텍스트(<code>gpu_ctx</code>의 타입은
-<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)에서
-<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>을
+<a href="https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)에서
+<a href="https://max.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>을
 호출하여 커널 실행 예약</li>
 <li>필요한 레이아웃과 크기 정보를 <strong>컴파일 타임</strong> 파라미터로 전달</li>
 <li>출력, 입력, 커널 텐서를 런타임 인자로 제공</li>
@@ -461,19 +461,19 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <li>입력과 커널용 NumPy 배열 생성</li>
 <li>MAX 그래프로 연산을 감싸는 <code>conv_1d()</code> 함수 호출</li>
 <li>NumPy 배열을 <code>Buffer.from_numpy(input).to(device)</code>로
-<a href="https://docs.modular.com/api/python/driver">MAX driver</a> Buffer로 변환</li>
+<a href="https://max.modular.com/api/python/driver">MAX driver</a> Buffer로 변환</li>
 <li><code>custom_extensions=[mojo_kernels]</code>로 커스텀 연산 패키지 로드</li>
 </ul>
 </li>
 <li>
 <p><strong>그래프 구축</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
+<li><a href="https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
 입력 및 출력 텐서 타입 정의</li>
 <li><code>parameters={...}</code>를 통해 연산의 파라미터 지정</li>
-<li><a href="https://docs.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
+<li><a href="https://max.modular.com/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
 연산 그래프 생성</li>
-<li><a href="https://docs.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
+<li><a href="https://max.modular.com/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
 커스텀 연산 호출</li>
 </ul>
 </li>
@@ -481,7 +481,7 @@ class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <p><strong>커스텀 op 등록</strong>:</p>
 <ul>
 <li><code>@extensibility.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출.
-<a href="https://docs.modular.com/mojo/manual/decorators/extensibility-register/">@extensibility.register</a>
+<a href="https://max.modular.com/mojo/manual/decorators/extensibility-register/">@extensibility.register</a>
 참고</li>
 <li><code>execute</code> 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의</li>
 <li>입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환</li>
@@ -553,8 +553,8 @@ gpu_ctx.enqueue_function[...](...) # 커널 예약
 <blockquote>
 <p>더 자세한 내용은 아래 튜토리얼을 참고하세요:</p>
 <ul>
-<li><a href="https://docs.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
-<li><a href="https://docs.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
+<li><a href="https://max.modular.com/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
+<li><a href="https://max.modular.com/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
 </ul>
 </blockquote>
 <h3 id="커스텀-op-등록"><a class="header" href="#커스텀-op-등록">커스텀 op 등록</a></h3>
