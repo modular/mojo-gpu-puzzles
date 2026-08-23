@@ -41,12 +41,12 @@ def conv_1d_simple(
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared_a = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[SIZE]())
-    var shared_b = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[CONV]())
+    var shared_a = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[SIZE]()
+    )
+    var shared_b = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[CONV]()
+    )
     if global_i < SIZE:
         shared_a[local_i] = a[global_i]
 
@@ -103,12 +103,12 @@ def conv_1d_block_boundary(
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB + CONV_2 - 1]())
-    var shared_b = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[CONV_2]())
+    var shared_a = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB + CONV_2 - 1]()
+    )
+    var shared_b = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[CONV_2]()
+    )
     if global_i < SIZE_2:
         shared_a[local_i] = a[global_i]
     else:

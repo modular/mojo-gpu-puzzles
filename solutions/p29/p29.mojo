@@ -53,12 +53,12 @@ def multi_stage_image_blur_pipeline(
     """
 
     # Shared memory buffers for pipeline stages
-    var input_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
-    var blur_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var input_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
+    var blur_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -153,23 +153,23 @@ def double_buffered_stencil_computation(
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
-    var buffer_B = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var buffer_A = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
+    var buffer_B = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
-    ](row_major[1]())
-    var iter_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
-    ](row_major[1]())
-    var final_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
-    ](row_major[1]())
+    var init_barrier = stack_allocation[dtype=.uint64, address_space=.SHARED](
+        row_major[1]()
+    )
+    var iter_barrier = stack_allocation[dtype=.uint64, address_space=.SHARED](
+        row_major[1]()
+    )
+    var final_barrier = stack_allocation[dtype=.uint64, address_space=.SHARED](
+        row_major[1]()
+    )
 
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x

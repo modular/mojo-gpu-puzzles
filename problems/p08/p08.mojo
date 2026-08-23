@@ -37,9 +37,9 @@ def add_10_shared_tile_tensor(
     # Allocate shared memory. Unlike most kernel variables, which are private to
     # each thread, shared memory (`AddressSpace.SHARED`) is scoped per-block.
     # So, each thread in a block can use the same "scratchpad" to store data.
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x

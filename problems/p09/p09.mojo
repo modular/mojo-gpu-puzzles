@@ -72,9 +72,9 @@ def collaborative_filter(
     var thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
-    var shared_workspace = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[SIZE - 1]())
+    var shared_workspace = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[SIZE - 1]()
+    )
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:

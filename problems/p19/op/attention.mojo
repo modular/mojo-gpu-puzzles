@@ -66,12 +66,12 @@ def matmul_idiomatic_tiled[
     comptime shared_layout = row_major[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     ]()
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
     var acc: output.ElementType = 0
 
     var a_lt = a.to_layout_tensor()
@@ -154,12 +154,12 @@ def softmax_gpu_kernel[
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     comptime softmax_layout = row_major[SOFTMAX_BLOCK_DIM_X]()
-    var shared_max = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](softmax_layout)
-    var shared_sum = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](softmax_layout)
+    var shared_max = stack_allocation[dtype=dtype, address_space=.SHARED](
+        softmax_layout
+    )
+    var shared_sum = stack_allocation[dtype=dtype, address_space=.SHARED](
+        softmax_layout
+    )
     var global_i = thread_idx.x
     var input_lt = input.to_layout_tensor()
     var output_lt = output.to_layout_tensor()

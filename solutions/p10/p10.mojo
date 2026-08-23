@@ -39,9 +39,9 @@ def shared_memory_race(
     var row = thread_idx.y
     var col = thread_idx.x
 
-    var shared_sum = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[1]())
+    var shared_sum = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[1]()
+    )
 
     # Only thread 0 does all the accumulation work to prevent races
     if row == 0 and col == 0:

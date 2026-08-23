@@ -68,9 +68,9 @@ def traditional_dot_product[
     Educational but complex - shows the manual coordination needed."""
 
     var size = Int(size_dev)
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[tpb]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[tpb]()
+    )
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 

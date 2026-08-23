@@ -35,9 +35,9 @@ def pooling(
 ):
     var size = Int(size_dev)
     # Allocate shared memory using stack_allocation
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
