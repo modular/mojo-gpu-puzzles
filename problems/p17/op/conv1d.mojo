@@ -31,7 +31,7 @@ def conv1d_kernel[
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
     ConvLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
@@ -97,7 +97,7 @@ struct Conv1DCustomOp:
         target: StaticString,
         input_size: Int,
         conv_size: Int,
-        dtype: DType = DType.float32,
+        dtype: DType = .float32,
     ](
         output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],

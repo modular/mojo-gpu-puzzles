@@ -31,7 +31,7 @@ def embedding_kernel_coalesced[
     OutLayout: TensorLayout,
     IndicesLayout: TensorLayout,
     WeightsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
@@ -87,7 +87,7 @@ def embedding_kernel_2d[
     OutLayout: TensorLayout,
     IndicesLayout: TensorLayout,
     WeightsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],

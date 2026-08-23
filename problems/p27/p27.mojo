@@ -348,7 +348,7 @@ def main() raises:
                 # Create output buffers for this bin
                 var bin_data = ctx.enqueue_create_buffer[dtype](SIZE)
                 bin_data.enqueue_fill(0)
-                var bin_count = ctx.enqueue_create_buffer[DType.int32](1)
+                var bin_count = ctx.enqueue_create_buffer[.int32](1)
                 bin_count.enqueue_fill(0)
 
                 var bin_tensor = TileTensor(bin_data, bin_layout)

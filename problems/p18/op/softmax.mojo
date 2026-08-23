@@ -32,7 +32,7 @@ comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 # ANCHOR: softmax_gpu_kernel
 def softmax_gpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
@@ -49,7 +49,7 @@ def softmax_gpu_kernel[
 # ANCHOR: softmax_cpu_kernel
 def softmax_cpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
@@ -73,7 +73,7 @@ struct SoftmaxCustomOp:
     def execute[
         target: StaticString,  # "cpu" or "gpu"
         input_size: Int,
-        dtype: DType = DType.float32,
+        dtype: DType = .float32,
     ](
         output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],

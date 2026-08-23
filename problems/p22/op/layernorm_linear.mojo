@@ -39,7 +39,7 @@ def matmul_idiomatic_tiled[
     OutLayout: TensorLayout,
     ALayout: TensorLayout,
     BLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin],
@@ -125,7 +125,7 @@ def layernorm_kernel[
     OutputLayout: TensorLayout,
     InputLayout: TensorLayout,
     LnParamsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
@@ -164,7 +164,7 @@ def transpose_kernel[
     cols: Int,
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
@@ -214,7 +214,7 @@ def add_bias_kernel[
     OutputLayout: TensorLayout,
     InputLayout: TensorLayout,
     BiasLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
@@ -251,7 +251,7 @@ def minimal_fused_kernel[
     LnParamsLayout: TensorLayout,
     WeightLayout: TensorLayout,
     BiasLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
@@ -303,7 +303,7 @@ def minimal_fused_kernel_backward[
     InputLayout: TensorLayout,
     LnParamsLayout: TensorLayout,
     WeightLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    dtype: DType = .float32,
 ](
     grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
     grad_ln_weight: TileTensor[
@@ -396,7 +396,7 @@ struct LayerNormLinearCustomOp:
         seq_len: Int,
         hidden_dim: Int,
         output_dim: Int,
-        dtype: DType = DType.float32,
+        dtype: DType = .float32,
     ](
         output: OutputTensor[dtype=dtype, rank=3, static_spec=_],
         input: InputTensor[dtype=dtype, rank=3, static_spec=_],
@@ -651,7 +651,7 @@ struct LayerNormLinearBackwardCustomOp:
         seq_len: Int,
         hidden_dim: Int,
         output_dim: Int,
-        dtype: DType = DType.float32,
+        dtype: DType = .float32,
     ](
         grad_input: OutputTensor[dtype=dtype, rank=3, static_spec=_],
         grad_ln_weight: OutputTensor[dtype=dtype, rank=1, static_spec=_],
