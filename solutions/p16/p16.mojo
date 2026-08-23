@@ -64,12 +64,12 @@ def single_block_matmul[
     var local_row = thread_idx.y
     var local_col = thread_idx.x
 
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
 
     if row < size and col < size:
         a_shared[local_row, local_col] = a[row, col]
@@ -109,12 +109,12 @@ def matmul_tiled[
     var tiled_row = block_idx.y * TPB + local_row
     var tiled_col = block_idx.x * TPB + local_col
 
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
 
     var acc: output.ElementType = 0
 
@@ -171,12 +171,12 @@ def matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
 
     var acc: output.ElementType = 0
 

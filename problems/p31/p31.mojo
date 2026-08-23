@@ -60,9 +60,7 @@ def sophisticated_kernel(
     """
     var size = Int(size_dev)
     # Maximum shared memory allocation (close to 48KB limit)
-    var shared_cache = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](
+    var shared_cache = stack_allocation[dtype=dtype, address_space=.SHARED](
         row_major[1024 * 12]()
     )  # 48KB
 
@@ -155,9 +153,7 @@ def balanced_kernel(
     """
     var size = Int(size_dev)
     # Reasonable shared memory usage for effective caching (16KB)
-    var shared_cache = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](
+    var shared_cache = stack_allocation[dtype=dtype, address_space=.SHARED](
         row_major[1024 * 4]()
     )  # 16KB total
 

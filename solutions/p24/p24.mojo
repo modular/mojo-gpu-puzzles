@@ -62,9 +62,9 @@ def traditional_dot_product_p12_style[
     var a_lt = a.to_layout_tensor()
     var b_lt = b.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[WARP_SIZE]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[WARP_SIZE]()
+    )
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 

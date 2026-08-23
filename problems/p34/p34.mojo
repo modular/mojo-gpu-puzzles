@@ -55,9 +55,9 @@ def cluster_coordination_basics[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[tpb]())
+    var shared_data = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[tpb]()
+    )
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data

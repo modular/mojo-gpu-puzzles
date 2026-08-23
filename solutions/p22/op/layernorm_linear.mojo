@@ -58,12 +58,12 @@ def matmul_idiomatic_tiled[
     comptime shared_layout = row_major[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     ]()
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
     var acc: output.ElementType = 0
 
     var a_lt = a.to_layout_tensor()
@@ -189,9 +189,9 @@ def transpose_kernel[
     comptime shared_layout = row_major[
         TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
     ]()
-    var shared_tile = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
+    var shared_tile = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x

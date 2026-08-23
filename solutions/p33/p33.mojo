@@ -59,13 +59,13 @@ def matmul_idiomatic_tiled[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     var acc: output.ElementType = 0
@@ -180,13 +180,13 @@ def tensor_core_matrix_multiplication[
         A.dtype,
         Layout.row_major(BM, BK),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
@@ -194,7 +194,7 @@ def tensor_core_matrix_multiplication[
         C.dtype,
         Layout.row_major(WM, WN),
         MutAnyOrigin,
-        address_space=AddressSpace.LOCAL,
+        address_space=.LOCAL,
     ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)

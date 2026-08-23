@@ -38,9 +38,9 @@ def shared_memory_race(
     var row = thread_idx.y
     var col = thread_idx.x
 
-    var shared_sum = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[1]())
+    var shared_sum = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[1]()
+    )
 
     if row < size and col < size:
         shared_sum[0] += a[row, col]

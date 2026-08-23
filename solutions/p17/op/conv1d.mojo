@@ -43,12 +43,12 @@ def conv1d_kernel[
     var kernel_lt = kernel.to_layout_tensor()
     var output_lt = output.to_layout_tensor()
     # first: need to account for padding
-    var shared_a = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB + conv_size - 1]())
-    var shared_b = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[conv_size]())
+    var shared_a = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB + conv_size - 1]()
+    )
+    var shared_b = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[conv_size]()
+    )
     if global_i < input_size:
         shared_a[local_i] = rebind[Scalar[dtype]](input_lt[global_i])
 
