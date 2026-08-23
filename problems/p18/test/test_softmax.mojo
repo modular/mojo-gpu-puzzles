@@ -28,12 +28,12 @@ comptime dtype = DType.float32
 
 def test_softmax() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[DType.float32](SIZE)
+        var out = ctx.enqueue_create_buffer[.float32](SIZE)
         out.enqueue_fill(0)
-        var inp = ctx.enqueue_create_buffer[DType.float32](SIZE)
+        var inp = ctx.enqueue_create_buffer[.float32](SIZE)
         inp.enqueue_fill(0)
         # for CPU testing
-        var expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
+        var expected = ctx.enqueue_create_host_buffer[.float32](SIZE)
         expected.enqueue_fill(0)
         var expected_tensor = TileTensor[
             mut=True, dtype, LayoutType, MutAnyOrigin
