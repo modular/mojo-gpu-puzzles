@@ -107,7 +107,7 @@ def block_histogram_bin_extract[
 ](
     input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
-    count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
+    count_output: TileTensor[mut=True, .int32, OutLayout, MutAnyOrigin],
     size_dev: Int32,
     target_bin_dev: Int32,
     num_bins_dev: Int32,
