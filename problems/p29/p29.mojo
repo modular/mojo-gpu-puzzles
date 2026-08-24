@@ -112,15 +112,15 @@ def double_buffered_stencil_computation(
     )
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = stack_allocation[dtype=.uint64, address_space=.SHARED](
-        row_major[1]()
-    )
-    var iter_barrier = stack_allocation[dtype=.uint64, address_space=.SHARED](
-        row_major[1]()
-    )
-    var final_barrier = stack_allocation[dtype=.uint64, address_space=.SHARED](
-        row_major[1]()
-    )
+    var init_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=.SHARED
+    ](row_major[1]())
+    var iter_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=.SHARED
+    ](row_major[1]())
+    var final_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=.SHARED
+    ](row_major[1]())
 
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
