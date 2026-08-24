@@ -522,10 +522,7 @@ struct LayerNormLinearCustomOp:
                     transposed_weight_layout
                 )
                 var transposed_weight_tensor = TileTensor[
-                    mut=True,
-                    dtype,
-                    TransposedWeightLayout,
-                    MutAnyOrigin,
+                    mut=True, dtype, TransposedWeightLayout, MutAnyOrigin
                 ](transposed_weight_buffer, transposed_weight_layout)
 
                 # Transpose the weight matrix
