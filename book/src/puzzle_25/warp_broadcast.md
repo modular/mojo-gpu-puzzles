@@ -6,7 +6,7 @@ block-level computations, conditional logic coordination, and one-to-many
 communication patterns without shared memory or explicit synchronization.
 
 **Key insight:** _The
-[broadcast()](https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/)
+[broadcast()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/)
 operation leverages SIMT execution to let lane 0 share its computed value with
 all other lanes in the same warp, enabling efficient coordination patterns and
 collective decision-making._

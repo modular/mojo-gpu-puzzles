@@ -11,7 +11,7 @@
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
 from std.math import sqrt
-from std.gpu import thread_idx, block_idx, block_dim
+from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from std.atomic import Atomic
 from layout import TileTensor

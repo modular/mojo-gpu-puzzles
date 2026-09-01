@@ -8,7 +8,7 @@
 프로그래밍이 GPU 동기화를 어떻게 변환하는지 보여줍니다.
 
 **핵심 통찰:**
-_[warp.sum()](https://mojolang.org/docs/std/gpu/primitives/warp/sum) 연산은
+_[warp.sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/sum) 연산은
 SIMT 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 단일 하드웨어 가속
 명령으로 대체합니다._
 
@@ -324,8 +324,8 @@ if lane_id() == 0:
 ### 4. **import에서 사용 가능한 함수들**
 
 ```mojo
-from std.gpu import lane_id
-from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from max.gpu import lane_id
+from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # 함수 내에서:
 my_lane = lane_id()           # 0 ~ WARP_SIZE-1

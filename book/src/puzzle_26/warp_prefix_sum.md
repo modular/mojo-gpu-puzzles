@@ -7,7 +7,7 @@ partitioning, and advanced coordination algorithms that would otherwise require
 dozens of lines of shared memory and synchronization code.
 
 **Key insight:** _The
-[prefix_sum()](https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/)
+[prefix_sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)
 operation computes cumulative results across warp lanes in
 \\(O(\\log n)\\) steps, using the GPU's shuffle instructions rather than shared
 memory. There is no dedicated scan unit: `prefix_sum` expands to a

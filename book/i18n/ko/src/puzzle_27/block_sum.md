@@ -340,7 +340,7 @@ bar.sync           0;                        // 배리어 동기화
 성능 이점은 명령 수나 마법 같은 하드웨어가 아니라
 **정교하게 최적화된 알고리즘 선택**(버터플라이 > 트리)에서 비롯됩니다. 구현에
 대한 자세한 내용은 Mojo gpu 모듈의
-[block.mojo](https://github.com/modular/modular/blob/main/mojo/stdlib/std/gpu/primitives/block.mojo)를
+[block.mojo](https://github.com/modular/modular/blob/main/max/mojo/max/gpu/primitives/block.mojo)를
 참고하세요.
 
 ## 성능 인사이트
