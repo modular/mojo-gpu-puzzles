@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
-from std.gpu import thread_idx, block_dim, block_idx
+from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major

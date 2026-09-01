@@ -7,7 +7,7 @@ combine results automatically, demonstrating how warp programming transforms GPU
 synchronization.
 
 **Key insight:** _The
-[warp.sum()](https://mojolang.org/docs/std/gpu/primitives/warp/sum/)
+[warp.sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/sum/)
 operation leverages SIMT execution to replace shared memory + barriers + tree
 reduction with a `log2(WARP_SIZE)`-step shuffle reduction behind one function
 call._
@@ -346,8 +346,8 @@ functional approach.
 ### 4. **Available functions from imports**
 
 ```mojo
-from std.gpu import lane_id
-from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from max.gpu import lane_id
+from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 var my_lane = lane_id()           # 0 to WARP_SIZE-1

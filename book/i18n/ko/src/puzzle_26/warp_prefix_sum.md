@@ -8,7 +8,7 @@
 파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.
 
 **핵심 통찰:**
-_[prefix_sum()](https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum)
+_[prefix_sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum)
 연산은 하드웨어 가속 병렬 스캔을 활용하여 워프 레인에 걸쳐 \\(O(\\log n)\\)
 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로
 대체합니다._

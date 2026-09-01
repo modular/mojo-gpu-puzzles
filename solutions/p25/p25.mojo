@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
-from std.gpu import thread_idx, block_idx, block_dim, lane_id
+from max.gpu import thread_idx, block_idx, block_dim, lane_id
 from max.gpu.host import DeviceContext
-from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
+from max.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv

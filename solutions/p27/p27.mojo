@@ -10,10 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
-from std.gpu import thread_idx, block_idx, block_dim, grid_dim
+from max.gpu import thread_idx, block_idx, block_dim, grid_dim
 from max.gpu.sync import barrier
 from std.atomic import Atomic
-from std.gpu.primitives.warp import WARP_SIZE
+from max.gpu.primitives.warp import WARP_SIZE
 from max.gpu.primitives import block
 from max.gpu.host import DeviceContext
 from layout import TileTensor
