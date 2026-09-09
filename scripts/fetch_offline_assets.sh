@@ -50,9 +50,7 @@ LOTTIE_VERSION="2.0.12"
 fetch "https://unpkg.com/@lottiefiles/lottie-player@$LOTTIE_VERSION/dist/lottie-player.js" \
     "$CACHE_DIR/lottie-player.js"
 
-# Google Fonts — latin-only subset (this book is English + Korean; neither
-# typeface covers Hangul, so Korean already falls back to system fonts
-# regardless of online/offline mode). OFL license.
+# Google Fonts — latin-only subset. OFL license.
 fetch "https://fonts.gstatic.com/s/robotomono/v31/L0x7DF4xlVMF-BfR8bXMIjhOm32WWg.woff2" \
     "$CACHE_DIR/fonts/roboto-mono-italic.woff2"
 fetch "https://fonts.gstatic.com/s/robotomono/v31/L0x5DF4xlVMF-BfR8bXMIjhLq38.woff2" \

@@ -16,14 +16,8 @@ mdbook / mdbook-linkcheck are not guaranteed to be available, so this is a
 stdlib-only validator (Python 3.10+) that walks the book's Markdown sources and
 verifies that every local link and image target resolves to a file that exists.
 
-Resolution rules (derived from the verified build topology):
-
-  * English book builds ``book/src`` -> ``book/html`` with assets copied
-    adjacent to their sources, so English pages use relative paths.
-  * Korean book builds ``book/i18n/ko/src`` -> ``book/html/ko``, but the ko
-    source tree contains ZERO media files. Korean pages therefore reference
-    assets via site-absolute paths (``/puzzle_NN/media/...``) that resolve at
-    the site root, which the ENGLISH source tree mirrors once built.
+The book builds ``book/src`` -> ``book/html`` with assets copied adjacent to
+their sources, so pages reference them by relative path.
 
 Two kinds of references are extracted from each ``*.md`` file:
   (a) Markdown links/images ``[text](target)`` and ``![alt](target)``.
@@ -36,11 +30,9 @@ Each non-skipped target is resolved as follows:
     stripped first: per CommonMark, links/images do not parse inside code, and
     these pages contain code like ``out.tile[size](id)`` that otherwise looks
     like a Markdown link.
-  * A site-absolute target (starts with ``/``) resolves against ``book/src``
-    (the English source tree, which mirrors the built site root) for BOTH
-    English and Korean files.
-  * A relative target resolves against the directory of the ``.md`` file within
-    its own source tree (en -> book/src, ko -> book/i18n/ko/src).
+  * A site-absolute target (starts with ``/``) resolves against ``book/src``,
+    which mirrors the built site root.
+  * A relative target resolves against the directory of the ``.md`` file.
   * ``#fragments`` and ``?query`` suffixes are stripped before resolution.
 
 Exits nonzero and lists ``file:line  ->  target`` for every unresolved
@@ -73,17 +65,15 @@ def is_external(target: str) -> bool:
     return target.startswith(("http://", "https://", "mailto:", "#", "data:"))
 
 
-def resolve(target: str, md_file: Path, en_root: Path) -> Path:
+def resolve(target: str, md_file: Path, site_root: Path) -> Path:
     """Map a reference target to the filesystem path it should point at."""
     clean = unquote(target.split("#", 1)[0].split("?", 1)[0])
     if clean.startswith("/"):
-        # Site-absolute -> English source tree (mirrors the built site
-        # root) for en and ko alike.
-        return (en_root / clean.lstrip("/")).resolve()
+        return (site_root / clean.lstrip("/")).resolve()
     return (md_file.parent / clean).resolve()
 
 
-def check_tree(src_root: Path, en_root: Path) -> list[tuple[Path, int, str]]:
+def check_tree(src_root: Path, site_root: Path) -> list[tuple[Path, int, str]]:
     misses: list[tuple[Path, int, str]] = []
     for md_file in sorted(src_root.rglob("*.md")):
         in_fence = False
@@ -105,24 +95,17 @@ def check_tree(src_root: Path, en_root: Path) -> list[tuple[Path, int, str]]:
             for target in MD_REF.findall(line) + IMG_REF.findall(line):
                 if is_external(target) or not target or target in ALLOWLIST:
                     continue
-                if not resolve(target, md_file, en_root).exists():
+                if not resolve(target, md_file, site_root).exists():
                     misses.append((md_file, lineno, target))
     return misses
 
 
 def main() -> int:
     book = Path(__file__).resolve().parent.parent / "book"
-    en_root = book / "src"
-    ko_root = book / "i18n" / "ko" / "src"
-    trees = [(en_root, en_root), (ko_root, en_root)]
+    src_root = book / "src"
 
-    all_misses: list[tuple[Path, int, str]] = []
-    checked = 0
-    for src_root, site_root in trees:
-        if not src_root.is_dir():
-            continue
-        checked += sum(1 for _ in src_root.rglob("*.md"))
-        all_misses.extend(check_tree(src_root, site_root))
+    checked = sum(1 for _ in src_root.rglob("*.md"))
+    all_misses = check_tree(src_root, src_root)
 
     repo = book.parent
     if all_misses:
