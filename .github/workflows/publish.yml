@@ -20,6 +20,10 @@ on:
       - "pixi.lock"
       - ".github/workflows/publish.yml"
       - "book/**"
+      # 148 of the book's 205 include directives splice these in as text, so a
+      # change here changes the published page.
+      - "problems/**"
+      - "solutions/**"
   workflow_dispatch: {}
 
 permissions:
@@ -37,7 +41,7 @@ jobs:
           path: |
             ~/.modular
             ~/.cache/modular
-          key: ${{ runner.os }}-modular-${{ hashFiles('**/pixi.toml') }}
+          key: ${{ runner.os }}-modular-${{ hashFiles('**/pixi.toml', '**/pixi.lock') }}
 
       - uses: prefix-dev/setup-pixi@fef5c9568ca6c4ff7707bf840ab0692ba3f08293
         with:
