@@ -62,7 +62,7 @@ one scalar at a time.
 The `elementwise` function expects a nested function with this exact signature:
 
 ```mojo
-@always_inline
+@inline(.always)
 def your_function[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -> None:
@@ -71,7 +71,7 @@ def your_function[
 
 **Why each part matters:**
 
-- `@always_inline`: Forces inlining to eliminate function call overhead in GPU
+- `@inline(.always)`: Forces inlining to eliminate function call overhead in GPU
   kernels
 - `{var}`: The capture list - allows access to variables from the outer scope
   (the input/output tensors)
@@ -251,7 +251,7 @@ elementwise[simd_width=simd_width, target="gpu"](add_function, Coord(size), ctx)
 ### 2. **Deep dive: nested function architecture**
 
 ```mojo
-@always_inline
+@inline(.always)
 def add[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -> None:
@@ -262,7 +262,7 @@ def add[
 - **`simd_width: Int`**: A compile-time parameter, so the function is
   instantiated separately for each unique `simd_width`, allowing aggressive
   optimization.
-- **`@always_inline`**: Critical for GPU performance - eliminates function call
+- **`@inline(.always)`**: Critical for GPU performance - eliminates function call
   overhead by embedding the code directly into the kernel.
 - **`{var}`**: The capture list enables **lexical scoping** - the inner function
   can access variables from the outer scope without explicit parameter passing.

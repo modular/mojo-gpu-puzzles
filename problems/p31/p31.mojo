@@ -196,7 +196,7 @@ def balanced_kernel(
 # ANCHOR_END: balanced_kernel
 
 
-@always_inline
+@inline(.always)
 def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
     # the figure is about the kernel. SAXPY updates `y` in place, so successive
@@ -222,7 +222,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     )
     var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-    @always_inline
+    @inline(.always)
     def minimal_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
@@ -241,7 +241,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, minimal_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_sophisticated_parameterized[
     test_size: Int
 ](mut b: Bencher) raises:
@@ -269,7 +269,7 @@ def benchmark_sophisticated_parameterized[
     )
     var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-    @always_inline
+    @inline(.always)
     def sophisticated_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
@@ -288,7 +288,7 @@ def benchmark_sophisticated_parameterized[
     bencher_iter_custom(b, sophisticated_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
     # the figure is about the kernel. SAXPY updates `y` in place, so successive
@@ -314,7 +314,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     )
     var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-    @always_inline
+    @inline(.always)
     def balanced_workflow(
         ctx: DeviceContext,
     ) raises {imm}:

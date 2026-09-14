@@ -114,7 +114,7 @@ def two_way_conflict_kernel(
 # ANCHOR_END: two_way_conflict_kernel
 
 
-@always_inline
+@inline(.always)
 def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure.
     # Timing them here is what made the published table report milliseconds for
@@ -140,7 +140,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         input_buf, layout
     )
 
-    @always_inline
+    @inline(.always)
     def kernel_workflow(ctx: DeviceContext) raises {imm}:
         comptime kernel = no_conflict_kernel
         ctx.enqueue_function[kernel](
@@ -156,7 +156,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure.
     # Timing them here is what made the published table report milliseconds for
@@ -182,7 +182,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         input_buf, layout
     )
 
-    @always_inline
+    @inline(.always)
     def kernel_workflow(ctx: DeviceContext) raises {imm}:
         comptime kernel = two_way_conflict_kernel
         ctx.enqueue_function[kernel](

@@ -122,11 +122,11 @@ var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 Each benchmark follows a streamlined pattern:
 
 ```mojo
-@always_inline
+@inline(.always)
 def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     var bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    @always_inline
+    @inline(.always)
     def pattern_workflow(ctx: DeviceContext) raises {imm}:
       # Compute: Execute the algorithm being measured
 

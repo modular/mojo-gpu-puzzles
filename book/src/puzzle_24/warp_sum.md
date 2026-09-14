@@ -295,7 +295,7 @@ You need to complete the `compute_dot_product` function with
 **10 lines or fewer**:
 
 ```mojo
-@always_inline
+@inline(.always)
 def compute_dot_product[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -> None:

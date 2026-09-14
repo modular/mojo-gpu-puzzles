@@ -237,7 +237,7 @@ def test_aligned() raises:
 # ---------------------------------------------------------------------------- #
 
 
-@always_inline
+@inline(.always)
 def benchmark_scalar(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
     # at 1M elements the setup dominates the kernel and the reported figure
@@ -254,7 +254,7 @@ def benchmark_scalar(mut b: Bencher) raises:
         out, layout
     )
 
-    @always_inline
+    @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
         ctx.enqueue_function[scalar_kernel](
             out_tensor,
@@ -269,7 +269,7 @@ def benchmark_scalar(mut b: Bencher) raises:
     bencher_iter_custom(b, workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_unaligned(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
     # at 1M elements the setup dominates the kernel and the reported figure
@@ -286,7 +286,7 @@ def benchmark_unaligned(mut b: Bencher) raises:
         out, layout
     )
 
-    @always_inline
+    @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
         ctx.enqueue_function[unaligned_kernel](
             out_tensor,
@@ -301,7 +301,7 @@ def benchmark_unaligned(mut b: Bencher) raises:
     bencher_iter_custom(b, workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_aligned(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
     # at 1M elements the setup dominates the kernel and the reported figure
@@ -318,7 +318,7 @@ def benchmark_aligned(mut b: Bencher) raises:
         out, layout
     )
 
-    @always_inline
+    @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
         ctx.enqueue_function[aligned_kernel](
             out_tensor,

@@ -87,7 +87,7 @@ def kernel3(
 # ANCHOR_END: kernel3
 
 
-@always_inline
+@inline(.always)
 def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
     # closure. Timing them here dominated the measurement and compressed a
@@ -115,7 +115,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
     var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
 
-    @always_inline
+    @inline(.always)
     def kernel1_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
@@ -133,7 +133,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel1_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
     # closure. Timing them here dominated the measurement and compressed a
@@ -161,7 +161,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
     var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
 
-    @always_inline
+    @inline(.always)
     def kernel2_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
@@ -179,7 +179,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel2_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
     # closure. Timing them here dominated the measurement and compressed a
@@ -207,7 +207,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
     var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
 
-    @always_inline
+    @inline(.always)
     def kernel3_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
