@@ -45,6 +45,7 @@ def embedding_kernel_coalesced[
     - Simple 1D grid for maximum simplicity and correctness
     - Focus on getting memory access right first
     """
+    comptime assert output.flat_rank == 3
 
     # Simple 1D indexing - each thread = one output element
     var global_idx = block_idx.x * block_dim.x + thread_idx.x
@@ -53,10 +54,6 @@ def embedding_kernel_coalesced[
     if global_idx >= total_elements:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
-
     # Convert to (batch, seq, embed) coordinates
     var batch_idx = global_idx // (seq_len * embed_dim)
     var remaining = global_idx % (seq_len * embed_dim)
@@ -64,15 +61,15 @@ def embedding_kernel_coalesced[
     var embed_idx = remaining % embed_dim
 
     # Get token index
-    var token_idx_val = Int(indices_lt[batch_idx, seq_idx])
+    var token_idx_val = Int(indices[batch_idx, seq_idx])
 
     # Simple, correct assignment
     if token_idx_val >= 0 and token_idx_val < vocab_size:
-        output_lt[batch_idx, seq_idx, embed_idx] = weights_lt[
+        output[batch_idx, seq_idx, embed_idx] = weights[
             token_idx_val, embed_idx
         ]
     else:
-        output_lt[batch_idx, seq_idx, embed_idx] = 0
+        output[batch_idx, seq_idx, embed_idx] = 0
 
 
 # ANCHOR_END: embedding_kernel_coalesced_solution
@@ -101,6 +98,7 @@ def embedding_kernel_2d[
     - More complex indexing
     - Potentially worse memory access patterns
     """
+    comptime assert output.flat_rank == 3
 
     # 2D grid indexing
     var batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
@@ -112,24 +110,20 @@ def embedding_kernel_2d[
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
-
     # Convert to (batch, seq) coordinates
     var batch_idx = batch_seq_idx // seq_len
     var seq_idx = batch_seq_idx % seq_len
 
     # Get token index
-    var token_idx_val = Int(indices_lt[batch_idx, seq_idx])
+    var token_idx_val = Int(indices[batch_idx, seq_idx])
 
     # Assignment with 2D grid pattern
     if token_idx_val >= 0 and token_idx_val < vocab_size:
-        output_lt[batch_idx, seq_idx, embed_idx] = weights_lt[
+        output[batch_idx, seq_idx, embed_idx] = weights[
             token_idx_val, embed_idx
         ]
     else:
-        output_lt[batch_idx, seq_idx, embed_idx] = 0
+        output[batch_idx, seq_idx, embed_idx] = 0
 
 
 # ANCHOR_END: embedding_kernel_2d_solution

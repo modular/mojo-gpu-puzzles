@@ -13,9 +13,8 @@
 from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
-from layout import TileTensor
+from layout import Coord, TileTensor
 from layout.tile_layout import row_major
-from std.utils import Index
 from std.sys import argv, align_of, simd_width_of
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -74,12 +73,10 @@ def unaligned_kernel(
     `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
     `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     # Each thread owns one SIMD_WIDTH-wide chunk.
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load a SIMD_WIDTH-wide vector with `load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=SCALAR_ALIGN`.
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load a SIMD_WIDTH-wide vector with `a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))` and store `v * SCALE + BIAS` into `output` with the same `alignment=SCALAR_ALIGN`.
 
 
 # ANCHOR_END: unaligned_kernel
@@ -95,15 +92,14 @@ def aligned_kernel(
 
     Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
     float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
-    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
-    convenience wrapper that picks this alignment for you. Identical output to
-    the unaligned kernel — only the codegen (and the bandwidth) changes.
+    load and `st.global.v4.f32` store per chunk. `load` and `store` already
+    default to this alignment, so the vectorized form is what you get unless you
+    understate it. Identical output to the unaligned kernel — only the codegen
+    (and the bandwidth) changes.
     """
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load with the *correct* alignment via `a_lt.aligned_load[width=SIMD_WIDTH](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=VEC_ALIGN`.
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load with the *correct* alignment via `a.load[width=SIMD_WIDTH](Coord(base))` (`alignment` defaults to `VEC_ALIGN`) and store `v * SCALE + BIAS` into `output` with `alignment=VEC_ALIGN`.
 
 
 # ANCHOR_END: aligned_kernel

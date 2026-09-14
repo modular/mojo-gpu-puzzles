@@ -53,10 +53,6 @@ def embedding_kernel_coalesced[
     if global_idx >= total_elements:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
-
     # Convert to (batch, seq, embed) coordinates
     # FILL IN roughly 4 lines
 
@@ -103,10 +99,6 @@ def embedding_kernel_2d[
     # Bounds check
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:
         return
-
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq) coordinates
     # FILL IN 2 lines

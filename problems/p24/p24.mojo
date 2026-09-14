@@ -16,10 +16,9 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from max.algorithm.functional import elementwise
-from layout import TileTensor, LayoutTensor
+from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-from std.utils import Index, IndexList
 from std.utils.coord import Coord
 from std.sys import argv, simd_width_of, align_of
 from std.testing import assert_equal
@@ -59,9 +58,6 @@ def traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
     var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
         row_major[WARP_SIZE]()
     )
@@ -69,9 +65,9 @@ def traditional_dot_product_p12_style[
     var local_i = thread_idx.x
 
     if global_i < size:
-        shared[local_i] = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        shared[local_i] = rebind[Scalar[dtype]](a[global_i]) * rebind[
             Scalar[dtype]
-        ](b_lt[global_i])
+        ](b[global_i])
     else:
         shared[local_i] = 0.0
 
@@ -85,7 +81,7 @@ def traditional_dot_product_p12_style[
         stride //= 2
 
     if local_i == 0:
-        out_lt.store[1](Index(global_i // WARP_SIZE), shared[0])
+        output.store[1](Coord(global_i // WARP_SIZE), shared[0])
 
 
 # ANCHOR_END: traditional_approach_from_p12
@@ -99,9 +95,6 @@ def simple_warp_dot_product[
     a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
 ):
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 
@@ -129,10 +122,6 @@ def functional_warp_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
         var idx = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
         # FILL IN (10 lines at most)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements

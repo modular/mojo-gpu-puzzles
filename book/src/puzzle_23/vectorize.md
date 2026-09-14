@@ -80,12 +80,9 @@ This calculates the exact global position for each SIMD vector within the chunk.
 ### 3. **Direct tensor access**
 
 ```mojo
-var a_vec = a_lt.aligned_load[width=simd_width](Index(global_start))     # Load from global tensor
-out_lt.store[simd_width](Index(global_start), ret)  # Store to global tensor
+var a_vec = a.load[width=simd_width](Coord(global_start))  # Load from global tensor
+output.store[simd_width](Coord(global_start), ret)         # Store to global tensor
 ```
-
-Note: Access the whole-tensor `LayoutTensor` handles from
-`to_layout_tensor()`, not the tile views.
 
 ### 4. **Key characteristics**
 
@@ -245,15 +242,15 @@ with `width=1`.
 # Before: scalar loop over the tile (one element at a time)
 for i in range(actual_tile_size):
     var global_idx = tile_start + i
-    out_lt[global_idx] = a_lt[global_idx] + b_lt[global_idx]
+    output[global_idx] = a[global_idx] + b[global_idx]
 
 # After: same logic, but the body operates on a SIMD vector of `width`
-def vectorized_add[width: Int](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+def vectorized_add[width: Int](i: Int) {imm tile_start, var a, var b, var output}:
     global_idx = tile_start + i
-    if global_idx + width <= size:                       # bounds check
-        var a_vec = a_lt.aligned_load[width](Index(global_idx))
-        var b_vec = b_lt.aligned_load[width](Index(global_idx))
-        out_lt.store[width](Index(global_idx), a_vec + b_vec)
+    if global_idx + width <= size:                   # bounds check
+        var a_vec = a.load[width](Coord(global_idx))
+        var b_vec = b.load[width](Coord(global_idx))
+        output.store[width](Coord(global_idx), a_vec + b_vec)
 
 vectorize[simd_width](actual_tile_size, vectorized_add)  # drives the loop + remainder
 ```
@@ -275,7 +272,7 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+](i: Int) {imm tile_start, var a, var b, var output}:
     var global_idx = tile_start + i
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
@@ -368,7 +365,7 @@ var actual_tile_size = tile_end - tile_start
 ```mojo
 def vectorized_add[
   width: Int
-](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+](i: Int) {imm tile_start, var a, var b, var output}:
     var global_idx = tile_start + i
     if global_idx + width <= size:
         # Automatic SIMD optimization

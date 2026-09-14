@@ -75,12 +75,6 @@ def matmul_idiomatic_tiled[
     )
     var acc: output.ElementType = 0
 
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_tile_lt = out_tile.to_layout_tensor()
-    var a_shared_lt = a_shared.to_layout_tensor()
-    var b_shared_lt = b_shared.to_layout_tensor()
-
     comptime for idx in range(
         (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
     ):
@@ -94,16 +88,16 @@ def matmul_idiomatic_tiled[
         var a_global_row = a_tile_row_start + local_row
         var a_global_col = a_tile_col_start + local_col
         if a_global_row < rows and a_global_col < inner:
-            a_shared_lt[local_row, local_col] = a_lt[a_global_row, a_global_col]
+            a_shared[local_row, local_col] = a[a_global_row, a_global_col]
         else:
-            a_shared_lt[local_row, local_col] = 0
+            a_shared[local_row, local_col] = 0
 
         var b_global_row = b_tile_row_start + local_row
         var b_global_col = b_tile_col_start + local_col
         if b_global_row < inner and b_global_col < cols:
-            b_shared_lt[local_row, local_col] = b_lt[b_global_row, b_global_col]
+            b_shared[local_row, local_col] = b[b_global_row, b_global_col]
         else:
-            b_shared_lt[local_row, local_col] = 0
+            b_shared[local_row, local_col] = 0
 
         barrier()
 
@@ -113,15 +107,15 @@ def matmul_idiomatic_tiled[
         )
         comptime for k in range(k_max):
             if tiled_row < rows and tiled_col < cols:
-                acc += rebind[Scalar[dtype]](
-                    a_shared_lt[local_row, k]
-                ) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
+                acc += rebind[Scalar[dtype]](a_shared[local_row, k]) * rebind[
+                    Scalar[dtype]
+                ](b_shared[k, local_col])
 
         barrier()
 
     # Write final result with bounds checking (needed for attention's variable sizes)
     if tiled_row < rows and tiled_col < cols:
-        out_tile_lt[local_row, local_col] = acc
+        out_tile[local_row, local_col] = acc
 
 
 # ANCHOR: transpose_kernel_solution
@@ -136,6 +130,8 @@ def transpose_kernel[
     inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
+    comptime assert output.flat_rank == 2
+
     comptime shared_layout = row_major[
         TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
     ]()
@@ -149,12 +145,8 @@ def transpose_kernel[
     var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
     var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
-    var inp_lt = inp.to_layout_tensor()
-    var output_lt = output.to_layout_tensor()
-    var shared_tile_lt = shared_tile.to_layout_tensor()
-
     if global_row < rows and global_col < cols:
-        shared_tile_lt[local_row, local_col] = inp_lt[global_row, global_col]
+        shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
@@ -164,7 +156,7 @@ def transpose_kernel[
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
     if out_row < cols and out_col < rows:
-        output_lt[out_row, out_col] = shared_tile_lt[local_col, local_row]
+        output[out_row, out_col] = shared_tile[local_col, local_row]
 
 
 # ANCHOR_END: transpose_kernel_solution
@@ -179,6 +171,7 @@ def softmax_gpu_kernel[
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 ):
+    comptime assert output.flat_rank == 1
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
@@ -190,15 +183,13 @@ def softmax_gpu_kernel[
         softmax_layout
     )
     var global_i = thread_idx.x
-    var input_lt = input.to_layout_tensor()
-    var output_lt = output.to_layout_tensor()
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
     # do not influence the result (max(min_finite, x) == x for any x).
     var val: Scalar[dtype] = min_finite[dtype]()
     if global_i < input_size:
-        val = rebind[Scalar[dtype]](input_lt[global_i])
+        val = rebind[Scalar[dtype]](input[global_i])
     shared_max[global_i] = val
 
     barrier()
@@ -236,7 +227,7 @@ def softmax_gpu_kernel[
 
     # Normalize by sum
     if global_i < input_size:
-        output_lt[global_i] = exp_val / block_sum
+        output[global_i] = exp_val / block_sum
 
 
 # CPU implementation for vector attention
@@ -255,10 +246,8 @@ def attention_cpu_kernel[
     v: TileTensor[mut=True, dtype, VLayout, MutAnyOrigin],
 ):
     """CPU implementation of vector attention."""
-    var output_lt = output.to_layout_tensor()
-    var q_lt = q.to_layout_tensor()
-    var k_lt = k.to_layout_tensor()
-    var v_lt = v.to_layout_tensor()
+    comptime assert output.flat_rank == 1
+
     var scores = List[Float32]()
     var weights = List[Float32]()
     for _ in range(seq_len):
@@ -269,9 +258,7 @@ def attention_cpu_kernel[
     for i in range(seq_len):
         var score: Float32 = 0.0
         for dim in range(d):
-            score = score + rebind[Float32](q_lt[dim]) * rebind[Float32](
-                k_lt[i, dim]
-            )
+            score = score + rebind[Float32](q[dim]) * rebind[Float32](k[i, dim])
         scores[i] = score
 
     var max_score: Float32 = scores[0]
@@ -291,9 +278,9 @@ def attention_cpu_kernel[
         var weighted_sum: Float32 = 0.0
         for i in range(seq_len):
             weighted_sum = weighted_sum + weights[i] * rebind[Float32](
-                v_lt[i, dim]
+                v[i, dim]
             )
-        output_lt[dim] = rebind[Scalar[dtype]](weighted_sum)
+        output[dim] = rebind[Scalar[dtype]](weighted_sum)
 
 
 @extensibility.register("attention")

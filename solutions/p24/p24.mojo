@@ -16,10 +16,9 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from max.algorithm.functional import elementwise
-from layout import TileTensor, LayoutTensor
+from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-from std.utils import Index, IndexList
 from std.utils.coord import Coord
 from std.sys import argv, simd_width_of, align_of
 from std.testing import assert_equal
@@ -59,9 +58,6 @@ def traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
     var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
         row_major[WARP_SIZE]()
     )
@@ -69,9 +65,9 @@ def traditional_dot_product_p12_style[
     var local_i = thread_idx.x
 
     if global_i < size:
-        shared[local_i] = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        shared[local_i] = rebind[Scalar[dtype]](a[global_i]) * rebind[
             Scalar[dtype]
-        ](b_lt[global_i])
+        ](b[global_i])
     else:
         shared[local_i] = 0.0
 
@@ -85,7 +81,7 @@ def traditional_dot_product_p12_style[
         stride //= 2
 
     if local_i == 0:
-        out_lt.store[1](Index(global_i // WARP_SIZE), shared[0])
+        output.store[1](Coord(global_i // WARP_SIZE), shared[0])
 
 
 # ANCHOR_END: traditional_approach_from_p12
@@ -99,24 +95,21 @@ def simple_warp_dot_product[
     a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
 ):
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
     if global_i < size:
-        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        partial_product = rebind[Scalar[dtype]](a[global_i]) * rebind[
             Scalar[dtype]
-        ](b_lt[global_i])
+        ](b[global_i])
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
     var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
-        out_lt.store[1](Index(global_i // WARP_SIZE), total)
+        output.store[1](Coord(global_i // WARP_SIZE), total)
 
 
 # ANCHOR_END: simple_warp_kernel_solution
@@ -142,16 +135,12 @@ def functional_warp_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
         var idx = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
 
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx < size:
-            var a_val = a_lt.load[1](Index(idx))
-            var b_val = b_lt.load[1](Index(idx))
+            var a_val = a.load[1](Coord(idx))
+            var b_val = b.load[1](Coord(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -161,7 +150,7 @@ def functional_warp_dot_product[
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            out_lt.store[1](Index(idx // WARP_SIZE), total)
+            output.store[1](Coord(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[simd_width=1, target="gpu"](
