@@ -9,7 +9,7 @@
 ## Step 1: Benchmark the three variants
 
 ```bash
-pixi run mojo -I . solutions/p35/p35.mojo --benchmark
+pixi run mojo solutions/p35/p35.mojo --benchmark
 ```
 
 This times all three kernels on a 1M-element buffer. Representative numbers from
@@ -41,7 +41,7 @@ test is too coarse to see the codegen difference but the profiler is not.
 ## Step 2: Build for profiling
 
 ```bash
-mojo build --debug-level=full -I . solutions/p35/p35.mojo -o solutions/p35/p35_profiler
+mojo build --debug-level=full solutions/p35/p35.mojo -o solutions/p35/p35_profiler
 ```
 
 `--debug-level=full` keeps source-line mapping so Nsight Compute can attribute
@@ -103,5 +103,5 @@ instructions per byte moved.
    real-world kernel can ship with this bug unnoticed.
 
 The practice to take away from this is: at every vectorized memory access, state
-the alignment, by passing `alignment=align_of[SIMD[dtype, width]]()`.
+the alignment (`aligned_load`, or an explicit `align_of[SIMD[dtype, width]]()`).
 It costs nothing, and it ensures your kernel takes the vectorized fast path.

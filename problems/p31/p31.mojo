@@ -15,7 +15,6 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
-from layout.tensor_engine import TensorEngine
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_almost_equal
@@ -32,14 +31,12 @@ comptime LayoutType = type_of(layout)
 comptime ALPHA = Scalar[dtype](2.5)  # SAXPY coefficient
 
 
-def minimal_kernel[
-    Engine: TensorEngine,
-](
-    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
-    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def minimal_kernel(
+    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
     var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
@@ -53,14 +50,12 @@ def minimal_kernel[
 
 
 # ANCHOR: sophisticated_kernel
-def sophisticated_kernel[
-    Engine: TensorEngine,
-](
-    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
-    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def sophisticated_kernel(
+    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     var size = Int(size_dev)
@@ -116,12 +111,11 @@ def sophisticated_kernel[
 
         # Over-engineered shared memory usage with multiple caching strategies
         if local_i < 1024:
-            shared_cache[local_i] = rebind[SIMD[dtype, 1]](precision_x4)
-            shared_cache[local_i + 1024] = rebind[SIMD[dtype, 1]](precision_y4)
-            shared_cache[local_i + 2048] = rebind[SIMD[dtype, 1]](alpha4)
-            shared_cache[local_i + 3072] = rebind[SIMD[dtype, 1]](
-                series_correction
-            )
+            shared_cache[local_i] = precision_x4
+            shared_cache[local_i + 1024] = precision_y4
+            shared_cache[local_i + 2048] = alpha4
+            shared_cache[local_i + 3072] = series_correction
+        barrier()
 
         # Load from shared memory for "optimization"
         var cached_x = shared_cache[local_i] if local_i < 1024 else precision_x4
@@ -149,14 +143,12 @@ def sophisticated_kernel[
 
 
 # ANCHOR: balanced_kernel
-def balanced_kernel[
-    Engine: TensorEngine,
-](
-    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
-    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def balanced_kernel(
+    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     var size = Int(size_dev)
@@ -184,8 +176,9 @@ def balanced_kernel[
 
         # Efficient shared memory caching - only what we actually need
         if local_i < 1024:
-            shared_cache[local_i] = rebind[SIMD[dtype, 1]](enhanced_x)
-            shared_cache[local_i + 1024] = rebind[SIMD[dtype, 1]](enhanced_y)
+            shared_cache[local_i] = enhanced_x
+            shared_cache[local_i + 1024] = enhanced_y
+        barrier()
 
         # Use cached values efficiently
         var cached_x = shared_cache[local_i] if local_i < 1024 else enhanced_x
@@ -203,7 +196,7 @@ def balanced_kernel[
 # ANCHOR_END: balanced_kernel
 
 
-@always_inline
+@inline(.always)
 def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
     # the figure is about the kernel. SAXPY updates `y` in place, so successive
@@ -224,15 +217,17 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
     # Untracked origin so the closure can capture `y` for `keep()` without
     # aliasing the tensor that also references it.
-    var y_tensor = TileTensor(y, layout).as_unsafe_any_origin()
-    var x_tensor = TileTensor(x, layout)
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-    @always_inline
+    @inline(.always)
     def minimal_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
         comptime kernel = minimal_kernel
-        ctx.enqueue_function[kernel[y_tensor.Engine]](
+        ctx.enqueue_function[kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -246,7 +241,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, minimal_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_sophisticated_parameterized[
     test_size: Int
 ](mut b: Bencher) raises:
@@ -269,15 +264,17 @@ def benchmark_sophisticated_parameterized[
 
     # Untracked origin so the closure can capture `y` for `keep()` without
     # aliasing the tensor that also references it.
-    var y_tensor = TileTensor(y, layout).as_unsafe_any_origin()
-    var x_tensor = TileTensor(x, layout)
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-    @always_inline
+    @inline(.always)
     def sophisticated_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
         comptime kernel = sophisticated_kernel
-        ctx.enqueue_function[kernel[y_tensor.Engine]](
+        ctx.enqueue_function[kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -291,7 +288,7 @@ def benchmark_sophisticated_parameterized[
     bencher_iter_custom(b, sophisticated_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure so
     # the figure is about the kernel. SAXPY updates `y` in place, so successive
@@ -312,15 +309,17 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
 
     # Untracked origin so the closure can capture `y` for `keep()` without
     # aliasing the tensor that also references it.
-    var y_tensor = TileTensor(y, layout).as_unsafe_any_origin()
-    var x_tensor = TileTensor(x, layout)
+    var y_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        y, layout
+    )
+    var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-    @always_inline
+    @inline(.always)
     def balanced_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
         comptime kernel = balanced_kernel
-        ctx.enqueue_function[kernel[y_tensor.Engine]](
+        ctx.enqueue_function[kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -350,11 +349,11 @@ def test_minimal() raises:
                 y_host[i] = Scalar[dtype](i + 2)
 
         # Create TileTensors
-        var y_tensor = TileTensor(y, layout).as_unsafe_any_origin()
-        var x_tensor = TileTensor(x, layout)
-        comptime kernel = minimal_kernel
+        var y_tensor = TileTensor(y, layout)
+        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
-        ctx.enqueue_function[kernel[y_tensor.Engine]](
+        comptime kernel = minimal_kernel
+        ctx.enqueue_function[kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -393,11 +392,11 @@ def test_sophisticated() raises:
                 y_host[i] = Scalar[dtype](i + 2)
 
         # Create TileTensors
-        var y_tensor = TileTensor(y, layout).as_unsafe_any_origin()
-        var x_tensor = TileTensor(x, layout)
+        var y_tensor = TileTensor(y, layout)
+        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
         comptime kernel = sophisticated_kernel
-        ctx.enqueue_function[kernel[y_tensor.Engine]](
+        ctx.enqueue_function[kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -437,11 +436,11 @@ def test_balanced() raises:
                 y_host[i] = Scalar[dtype](i + 2)
 
         # Create TileTensors
-        var y_tensor = TileTensor(y, layout).as_unsafe_any_origin()
-        var x_tensor = TileTensor(x, layout)
+        var y_tensor = TileTensor(y, layout)
+        var x_tensor = TileTensor[mut=False, dtype, LayoutType](x, layout)
 
         comptime kernel = balanced_kernel
-        ctx.enqueue_function[kernel[y_tensor.Engine]](
+        ctx.enqueue_function[kernel](
             y_tensor,
             x_tensor,
             ALPHA,

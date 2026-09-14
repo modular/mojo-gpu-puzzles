@@ -14,7 +14,6 @@ from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
-from layout.tensor_engine import TensorEngine
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -32,16 +31,12 @@ comptime LayoutType = type_of(layout)
 
 
 # ANCHOR: kernel1
-def kernel1[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def kernel1(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     var size = Int(size_dev)
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
@@ -52,16 +47,12 @@ def kernel1[
 
 
 # ANCHOR: kernel2
-def kernel2[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def kernel2(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
@@ -76,16 +67,12 @@ def kernel2[
 
 
 # ANCHOR: kernel3
-def kernel3[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def kernel3(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     var size = Int(size_dev)
     var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
@@ -100,7 +87,7 @@ def kernel3[
 # ANCHOR_END: kernel3
 
 
-@always_inline
+@inline(.always)
 def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
     # closure. Timing them here dominated the measurement and compressed a
@@ -122,16 +109,17 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
 
     # Untracked origin so the closure can capture `out` for `keep()` without
     # aliasing the tensor that also references it.
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
 
-    var a_tensor = TileTensor(a, layout)
-    var b_tensor = TileTensor(b_buf, layout)
-
-    @always_inline
+    @inline(.always)
     def kernel1_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        ctx.enqueue_function[kernel1[out_tensor.Engine]](
+        ctx.enqueue_function[kernel1](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -145,7 +133,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel1_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
     # closure. Timing them here dominated the measurement and compressed a
@@ -167,16 +155,17 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
 
     # Untracked origin so the closure can capture `out` for `keep()` without
     # aliasing the tensor that also references it.
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
 
-    var a_tensor = TileTensor(a, layout)
-    var b_tensor = TileTensor(b_buf, layout)
-
-    @always_inline
+    @inline(.always)
     def kernel2_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        ctx.enqueue_function[kernel2[out_tensor.Engine]](
+        ctx.enqueue_function[kernel2](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -190,7 +179,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel2_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the 16M-element host fill loop stay OUTSIDE the timed
     # closure. Timing them here dominated the measurement and compressed a
@@ -212,16 +201,17 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
 
     # Untracked origin so the closure can capture `out` for `keep()` without
     # aliasing the tensor that also references it.
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b_buf, layout)
 
-    var a_tensor = TileTensor(a, layout)
-    var b_tensor = TileTensor(b_buf, layout)
-
-    @always_inline
+    @inline(.always)
     def kernel3_workflow(
         ctx: DeviceContext,
     ) raises {imm}:
-        ctx.enqueue_function[kernel3[out_tensor.Engine]](
+        ctx.enqueue_function[kernel3](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -253,11 +243,11 @@ def test_kernel1() raises:
                 b_host[i] = Scalar[dtype](i + 2)
 
         # Create TileTensors
-        var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
-        var a_tensor = TileTensor(a, layout)
+        var out_tensor = TileTensor(out, layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        ctx.enqueue_function[kernel1[out_tensor.Engine]](
+        ctx.enqueue_function[kernel1](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -296,11 +286,11 @@ def test_kernel2() raises:
                 b_host[i] = Scalar[dtype](i + 2)
 
         # Create TileTensors
-        var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
-        var a_tensor = TileTensor(a, layout)
+        var out_tensor = TileTensor(out, layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        ctx.enqueue_function[kernel2[out_tensor.Engine]](
+        ctx.enqueue_function[kernel2](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -342,11 +332,11 @@ def test_kernel3() raises:
                 b_host[i] = Scalar[dtype](i + 2)
 
         # Create TileTensors
-        var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
-        var a_tensor = TileTensor(a, layout)
+        var out_tensor = TileTensor(out, layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
         var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        ctx.enqueue_function[kernel3[out_tensor.Engine]](
+        ctx.enqueue_function[kernel3](
             out_tensor,
             a_tensor,
             b_tensor,

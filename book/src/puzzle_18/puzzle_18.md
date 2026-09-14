@@ -288,24 +288,19 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 ```mojo
 def softmax_gpu_kernel[
     input_size: Int,
-    OutLayout: TensorLayout,
-    InLayout: TensorLayout,
-    Engine: TensorEngine,
-    dtype: DType = .float32,
+    dtype: DType = DType.float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
-) where (Engine.element_size == 1)
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+)
 ```
 
 The kernel is parameterized with:
 
 - Vector size as an Integer parameter
-- Separate `OutLayout` and `InLayout` layout parameters, so the output and
-  input tiles are free to carry different layouts
-- An `Engine` parameter, constrained to a single-element engine by the
-  `where` clause, that both tensors share
 - Configurable data type with float32 as default
+- Layout supplied by the module-level `LayoutType` binding, shared by both
+  tensors
 - Both tensors mutable (`mut=True`)
 
 #### Shared memory allocation

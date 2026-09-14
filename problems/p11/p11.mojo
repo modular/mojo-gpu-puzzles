@@ -13,12 +13,10 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor, TensorEngine
+from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
-
-from harness.canary import PuzzleMemory
 
 # ANCHOR: pooling
 comptime TPB = 8
@@ -30,15 +28,11 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def pooling[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def pooling(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     var size = Int(size_dev)
     # Allocate shared memory using stack_allocation
     var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
@@ -55,8 +49,8 @@ def pooling[
 
 def main() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
-        var out = mem.output(SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
 
@@ -65,9 +59,9 @@ def main() raises:
                 a_host[i] = Scalar[dtype](i)
 
         var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor(a, layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[pooling[out_tensor.Engine]](
+        ctx.enqueue_function[pooling](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -92,5 +86,4 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
-        mem.verify()
-        print("Puzzle 11 complete ✅")
+            print("Puzzle 11 complete ✅")

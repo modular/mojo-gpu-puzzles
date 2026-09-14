@@ -12,11 +12,9 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.host import DeviceContext
-from layout import TileTensor, TensorEngine
+from layout import TileTensor
 from layout.tile_layout import row_major
 from std.testing import assert_equal
-
-from harness.canary import PuzzleMemory
 
 # ANCHOR: add_10_blocks_2d
 comptime SIZE = 5
@@ -29,13 +27,11 @@ comptime OutLayout = type_of(out_layout)
 comptime ALayout = type_of(a_layout)
 
 
-def add_10_blocks_2d[
-    Engine: TensorEngine,
-](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin, Engine=Engine],
+def add_10_blocks_2d(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     var size = Int(size_dev)
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -47,8 +43,8 @@ def add_10_blocks_2d[
 
 def main() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
-        var out_buf = mem.output(SIZE * SIZE)
+        var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        out_buf.enqueue_fill(0)
         var out_tensor = TileTensor(out_buf, out_layout)
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
@@ -64,9 +60,9 @@ def main() raises:
                     a_host[k] = Scalar[dtype](k)
                     expected_buf[k] = Scalar[dtype](k + 10)
 
-        var a_tensor = TileTensor(a, a_layout)
+        var a_tensor = TileTensor[mut=False, dtype, ALayout](a, a_layout)
 
-        ctx.enqueue_function[add_10_blocks_2d[out_tensor.Engine]](
+        ctx.enqueue_function[add_10_blocks_2d](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -89,5 +85,4 @@ def main() raises:
                     assert_equal(
                         out_buf_host[i * SIZE + j], expected_buf[i * SIZE + j]
                     )
-        mem.verify()
-        print("Puzzle 07 complete ✅")
+            print("Puzzle 07 complete ✅")

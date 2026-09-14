@@ -13,14 +13,13 @@
 from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
-from layout import Coord, TileTensor, TensorEngine
+from layout import TileTensor
 from layout.tile_layout import row_major
+from std.utils import Index
 from std.sys import argv, align_of, simd_width_of
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 from max.benchmark import bencher_iter_custom
-
-from harness.canary import PuzzleMemory
 
 # 1M float32 elements: large enough to be memory-bandwidth bound, so the
 # load/store path is what the benchmark actually measures.
@@ -45,15 +44,11 @@ comptime SCALAR_ALIGN = align_of[dtype]()
 
 
 # ANCHOR: scalar_kernel
-def scalar_kernel[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def scalar_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """One element per thread. No vectorization, so alignment is irrelevant.
 
     This is the baseline: each thread issues a scalar load and a scalar store.
@@ -66,15 +61,11 @@ def scalar_kernel[
 
 
 # ANCHOR: unaligned_kernel
-def unaligned_kernel[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def unaligned_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
 
     The data is naturally 16-byte aligned, but `load`/`store` are told only the
@@ -83,37 +74,36 @@ def unaligned_kernel[
     `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
     `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
+    var a_lt = a.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
 
     # Each thread owns one SIMD_WIDTH-wide chunk.
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load a SIMD_WIDTH-wide vector with `a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))` and store `v * SCALE + BIAS` into `output` with the same `alignment=SCALAR_ALIGN`.
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load a SIMD_WIDTH-wide vector with `load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=SCALAR_ALIGN`.
 
 
 # ANCHOR_END: unaligned_kernel
 
 
 # ANCHOR: aligned_kernel
-def aligned_kernel[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+def aligned_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Same vectorized kernel, but the access alignment is communicated.
 
     Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
     float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
-    load and `st.global.v4.f32` store per chunk. `load` and `store` already
-    default to this alignment, so the vectorized form is what you get unless you
-    understate it. Identical output to the unaligned kernel — only the codegen
-    (and the bandwidth) changes.
+    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
+    convenience wrapper that picks this alignment for you. Identical output to
+    the unaligned kernel — only the codegen (and the bandwidth) changes.
     """
+    var a_lt = a.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
 
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load with the *correct* alignment via `a.load[width=SIMD_WIDTH](Coord(base))` (`alignment` defaults to `VEC_ALIGN`) and store `v * SCALE + BIAS` into `output` with `alignment=VEC_ALIGN`.
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH <= size`, then load with the *correct* alignment via `a_lt.aligned_load[width=SIMD_WIDTH](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=VEC_ALIGN`.
 
 
 # ANCHOR_END: aligned_kernel
@@ -136,17 +126,21 @@ def vector_blocks(size: Int) -> Int:
 
 def test_scalar() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
-        var out = mem.output(SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i % 97)
 
-        var a_tensor = TileTensor(a, layout)
-        var out_tensor = TileTensor(out, layout)
-        ctx.enqueue_function[scalar_kernel[out_tensor.Engine]](
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+            a, layout
+        )
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
+        )
+        ctx.enqueue_function[scalar_kernel](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -158,23 +152,26 @@ def test_scalar() raises:
                 assert_almost_equal(
                     result[i], Scalar[dtype](i % 97) * SCALE + BIAS, atol=1e-5
                 )
-        mem.verify()
     print("scalar kernel: passed")
 
 
 def test_unaligned() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
-        var out = mem.output(SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i % 97)
 
-        var a_tensor = TileTensor(a, layout)
-        var out_tensor = TileTensor(out, layout)
-        ctx.enqueue_function[unaligned_kernel[out_tensor.Engine]](
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+            a, layout
+        )
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
+        )
+        ctx.enqueue_function[unaligned_kernel](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -186,23 +183,26 @@ def test_unaligned() raises:
                 assert_almost_equal(
                     result[i], Scalar[dtype](i % 97) * SCALE + BIAS, atol=1e-5
                 )
-        mem.verify()
     print("unaligned kernel: passed")
 
 
 def test_aligned() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
-        var out = mem.output(SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i % 97)
 
-        var a_tensor = TileTensor(a, layout)
-        var out_tensor = TileTensor(out, layout)
-        ctx.enqueue_function[aligned_kernel[out_tensor.Engine]](
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+            a, layout
+        )
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
+        )
+        ctx.enqueue_function[aligned_kernel](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -214,7 +214,6 @@ def test_aligned() raises:
                 assert_almost_equal(
                     result[i], Scalar[dtype](i % 97) * SCALE + BIAS, atol=1e-5
                 )
-        mem.verify()
     print("aligned kernel: passed")
 
 
@@ -223,7 +222,7 @@ def test_aligned() raises:
 # ---------------------------------------------------------------------------- #
 
 
-@always_inline
+@inline(.always)
 def benchmark_scalar(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
     # at 1M elements the setup dominates the kernel and the reported figure
@@ -233,12 +232,16 @@ def benchmark_scalar(mut b: Bencher) raises:
     out.enqueue_fill(0)
     var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(1)
-    var a_tensor = TileTensor(a, layout)
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
 
-    @always_inline
+    @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[scalar_kernel[out_tensor.Engine]](
+        ctx.enqueue_function[scalar_kernel](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -251,7 +254,7 @@ def benchmark_scalar(mut b: Bencher) raises:
     bencher_iter_custom(b, workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_unaligned(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
     # at 1M elements the setup dominates the kernel and the reported figure
@@ -261,12 +264,16 @@ def benchmark_unaligned(mut b: Bencher) raises:
     out.enqueue_fill(0)
     var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(1)
-    var a_tensor = TileTensor(a, layout)
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
 
-    @always_inline
+    @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[unaligned_kernel[out_tensor.Engine]](
+        ctx.enqueue_function[unaligned_kernel](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -279,7 +286,7 @@ def benchmark_unaligned(mut b: Bencher) raises:
     bencher_iter_custom(b, workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_aligned(mut b: Bencher) raises:
     # Allocation, fill and tensor construction stay OUTSIDE the timed closure:
     # at 1M elements the setup dominates the kernel and the reported figure
@@ -289,12 +296,16 @@ def benchmark_aligned(mut b: Bencher) raises:
     out.enqueue_fill(0)
     var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(1)
-    var a_tensor = TileTensor(a, layout)
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
 
-    @always_inline
+    @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[aligned_kernel[out_tensor.Engine]](
+        ctx.enqueue_function[aligned_kernel](
             out_tensor,
             a_tensor,
             Int32(SIZE),

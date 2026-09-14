@@ -30,7 +30,7 @@ programming in Mojo.
 — there is no manual shared memory or thread-index math here. The key shift from
 earlier puzzles is that each invocation of your nested function processes a whole
 SIMD vector, not a single element. That's why you load and store with
-`load[width=simd_width]` / `store[simd_width]` (vectorized) instead of indexing
+`aligned_load[simd_width]` / `store[simd_width]` (vectorized) instead of indexing
 one scalar at a time.
 
 ## Configuration
@@ -62,7 +62,7 @@ one scalar at a time.
 The `elementwise` function expects a nested function with this exact signature:
 
 ```mojo
-@always_inline
+@inline(.always)
 def your_function[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -> None:
@@ -71,7 +71,7 @@ def your_function[
 
 **Why each part matters:**
 
-- `@always_inline`: Forces inlining to eliminate function call overhead in GPU
+- `@inline(.always)`: Forces inlining to eliminate function call overhead in GPU
   kernels
 - `{var}`: The capture list - allows access to variables from the outer scope
   (the input/output tensors)
@@ -95,11 +95,13 @@ element. If `SIMD_WIDTH=4` (GPU-dependent), then:
 ### 3. **SIMD loading pattern**
 
 ```mojo
-var a_simd = a.load[width=simd_width](Coord(idx))  # Load 4 consecutive floats (GPU-dependent)
-var b_simd = b.load[width=simd_width](Coord(idx))  # Load 4 consecutive floats (GPU-dependent)
+var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
 ```
 
-This loads a **vectorized chunk** of data in a single
+`aligned_load` is a `LayoutTensor` method, so the receivers are the `a_lt` /
+`b_lt` handles produced by `to_layout_tensor()` inside the kernel—not the
+`TileTensor` parameters. This loads a **vectorized chunk** of data in a single
 operation. The exact number of elements loaded depends on your GPU's SIMD
 capabilities.
 
@@ -115,7 +117,7 @@ in parallel - much faster than 4 separate scalar additions.
 ### 5. **SIMD storing**
 
 ```mojo
-output.store[simd_width](Coord(idx), result)  # Store 4 results at once (GPU-dependent)
+out_lt.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
 ```
 
 Writes the entire SIMD vector back to memory in one operation.
@@ -249,7 +251,7 @@ elementwise[simd_width=simd_width, target="gpu"](add_function, Coord(size), ctx)
 ### 2. **Deep dive: nested function architecture**
 
 ```mojo
-@always_inline
+@inline(.always)
 def add[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -> None:
@@ -260,7 +262,7 @@ def add[
 - **`simd_width: Int`**: A compile-time parameter, so the function is
   instantiated separately for each unique `simd_width`, allowing aggressive
   optimization.
-- **`@always_inline`**: Critical for GPU performance - eliminates function call
+- **`@inline(.always)`**: Critical for GPU performance - eliminates function call
   overhead by embedding the code directly into the kernel.
 - **`{var}`**: The capture list enables **lexical scoping** - the inner function
   can access variables from the outer scope without explicit parameter passing.
@@ -270,11 +272,14 @@ def add[
 ### 3. **SIMD execution model deep dive**
 
 ```mojo
-var idx = Int(indices[0].value())                    # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-var a_simd = a.load[width=simd_width](Coord(idx))    # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-var b_simd = b.load[width=simd_width](Coord(idx))    # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-var ret = a_simd + b_simd                            # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](Coord(idx), ret)            # Store: 4 results simultaneously (GPU-dependent)
+var idx = Int(indices[0].value())                            # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+var a_lt = a.to_layout_tensor()                              # LayoutTensor views for vectorized access
+var b_lt = b.to_layout_tensor()
+var out_lt = output.to_layout_tensor()
+var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+var ret = a_simd + b_simd                                    # SIMD: 4 additions in parallel (GPU-dependent)
+out_lt.store[simd_width](Index(idx), ret)                    # Store: 4 results simultaneously (GPU-dependent)
 ```
 
 **Execution Hierarchy Visualization:**
@@ -307,7 +312,7 @@ gives `SIMD_WIDTH = 4` for `float32`.
 ### 4. **Memory access pattern analysis**
 
 ```mojo
-a.load[width=simd_width](Coord(idx))  # Coalesced memory access
+a_lt.aligned_load[width=simd_width](Index(idx))  # Coalesced memory access
 ```
 
 **Memory Coalescing Benefits:**

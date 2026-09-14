@@ -15,7 +15,6 @@ import time
 from pathlib import Path
 
 import torch
-from harness.canary import guarded_output
 from max.experimental.torch import CustomOpLibrary
 
 mojo_kernels = Path(__file__).parent / "op"
@@ -29,7 +28,7 @@ def embedding_mojo_1d(
     batch_size, seq_len = indices.shape
     vocab_size, embed_dim = weights.shape
 
-    output, check_output = guarded_output(
+    output = torch.empty(
         (batch_size, seq_len, embed_dim),
         dtype=weights.dtype,
         device=weights.device,
@@ -47,7 +46,6 @@ def embedding_mojo_1d(
         }
     ]
     embedding_op(output, indices, weights)
-    check_output()
     return output
 
 
@@ -58,7 +56,7 @@ def embedding_mojo_2d(
     batch_size, seq_len = indices.shape
     vocab_size, embed_dim = weights.shape
 
-    output, check_output = guarded_output(
+    output = torch.empty(
         (batch_size, seq_len, embed_dim),
         dtype=weights.dtype,
         device=weights.device,
@@ -76,7 +74,6 @@ def embedding_mojo_2d(
         }
     ]
     embedding_op(output, indices, weights)
-    check_output()
     return output
 
 

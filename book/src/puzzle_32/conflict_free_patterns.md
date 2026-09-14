@@ -244,11 +244,9 @@ optimization.
 Both kernels produce identical mathematical results:
 
 ```text
-Testing bank conflict kernels...
-No-conflict kernel test: passed
-Two-way conflict kernel test: passed
-Puzzle 32 complete ✅
-Now profile with NSight Compute to see performance differences!
+✅ No-conflict kernel: PASSED
+✅ Two-way conflict kernel: PASSED
+✅ Both kernels produce identical results
 ```
 
 **Step 2: Performance Baseline**

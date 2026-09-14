@@ -13,12 +13,10 @@
 from max.gpu import thread_idx, block_idx, block_dim, lane_id
 from max.gpu.host import DeviceContext
 from max.gpu.primitives.warp import shuffle_xor, prefix_sum, WARP_SIZE
-from layout import TileTensor, TensorEngine
+from layout import TileTensor
 from layout.tile_layout import row_major
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
-
-from harness.canary import PuzzleMemory
 
 
 comptime SIZE = WARP_SIZE
@@ -31,16 +29,11 @@ comptime LayoutType = type_of(layout)
 
 # ANCHOR: butterfly_pair_swap
 def butterfly_pair_swap[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+):
     """
     Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
     Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
@@ -57,16 +50,11 @@ def butterfly_pair_swap[
 
 # ANCHOR: butterfly_parallel_max
 def butterfly_parallel_max[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+):
     """
     Parallel maximum reduction using butterfly pattern.
     Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
@@ -90,16 +78,11 @@ comptime Layout2Type = type_of(layout_2)
 
 # ANCHOR: butterfly_conditional_max
 def butterfly_conditional_max[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, Layout2Type, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, Layout2Type, ImmutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
+):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
@@ -109,7 +92,7 @@ def butterfly_conditional_max[
     var lane = lane_id()
 
     if global_i < size:
-        var current_val = rebind[Scalar[dtype]](input[global_i])
+        var current_val = input[global_i]
         var min_val = current_val
 
         # FILL ME IN (roughly 11 lines)
@@ -120,16 +103,11 @@ def butterfly_conditional_max[
 
 # ANCHOR: warp_inclusive_prefix_sum
 def warp_inclusive_prefix_sum[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 14's complex shared memory + barrier approach.
@@ -159,17 +137,12 @@ def warp_inclusive_prefix_sum[
 
 # ANCHOR: warp_partition
 def warp_partition[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
-    ],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     pivot: Float32,
-) where (Engine.element_size == 1):
+):
     """
     Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
     This implements a warp-level quicksort partition step that places elements < pivot
@@ -189,7 +162,7 @@ def warp_partition[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i < size:
-        var current_val = rebind[Scalar[dtype]](input[global_i])
+        var current_val = input[global_i]
 
         # FILL ME IN (roughly 13 lines)
 
@@ -199,7 +172,6 @@ def warp_partition[
 
 def test_butterfly_pair_swap() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
         var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -209,10 +181,12 @@ def test_butterfly_pair_swap() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i)
 
-        var input_tensor = TileTensor(input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = butterfly_pair_swap[SIZE, output_tensor.Engine]
+        comptime kernel = butterfly_pair_swap[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -239,17 +213,16 @@ def test_butterfly_pair_swap() raises:
             print("expected:", expected_buf)
             for i in range(SIZE):
                 assert_equal(output_host[i], expected_buf[i])
-        mem.verify()
 
     print("Butterfly pair swap test: passed")
 
 
 def test_butterfly_parallel_max() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -257,10 +230,12 @@ def test_butterfly_parallel_max() raises:
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
-        var input_tensor = TileTensor(input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = butterfly_parallel_max[SIZE, output_tensor.Engine]
+        comptime kernel = butterfly_parallel_max[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -280,17 +255,16 @@ def test_butterfly_parallel_max() raises:
 
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], 1000.0, rtol=1e-5)
-        mem.verify()
 
     print("Butterfly parallel max test: passed")
 
 
 def test_butterfly_conditional_max() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE_2)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE_2):
@@ -300,12 +274,12 @@ def test_butterfly_conditional_max() raises:
                 else:
                     input_host[i] = Scalar[dtype](i % 10)
 
-        var input_tensor = TileTensor(input_buf, layout_2)
+        var input_tensor = TileTensor[mut=False, dtype, Layout2Type](
+            input_buf, layout_2
+        )
         var output_tensor = TileTensor(output_buf, layout_2)
 
-        comptime kernel = butterfly_conditional_max[
-            SIZE_2, output_tensor.Engine
-        ]
+        comptime kernel = butterfly_conditional_max[SIZE_2]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -345,26 +319,27 @@ def test_butterfly_conditional_max() raises:
                     assert_almost_equal(output_host[i], max_val, rtol=1e-5)
                 else:
                     assert_almost_equal(output_host[i], min_val, rtol=1e-5)
-        mem.verify()
 
     print("Butterfly conditional max test: passed")
 
 
 def test_warp_inclusive_prefix_sum() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor(input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = warp_inclusive_prefix_sum[SIZE, output_tensor.Engine]
+        comptime kernel = warp_inclusive_prefix_sum[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -388,17 +363,16 @@ def test_warp_inclusive_prefix_sum() raises:
             print("expected:", expected_buf)
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-5)
-        mem.verify()
 
     print("Warp inclusive prefix sum test: passed")
 
 
 def test_warp_partition() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         # Create test data: mix of values above and below pivot
         var pivot_value = Scalar[dtype](5.0)
@@ -425,10 +399,12 @@ def test_warp_partition() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](test_values[i % len(test_values)])
 
-        var input_tensor = TileTensor(input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
         var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = warp_partition[SIZE, output_tensor.Engine]
+        comptime kernel = warp_partition[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -481,7 +457,6 @@ def test_warp_partition() raises:
             for i in range(partition_point, SIZE):
                 if output_host[i] < pivot_value:
                     print("ERROR: Right partition contains value < pivot")
-        mem.verify()
 
     print("Warp partition test: passed")
 

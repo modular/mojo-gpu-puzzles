@@ -13,12 +13,10 @@
 from max.gpu import thread_idx, block_idx, block_dim, lane_id
 from max.gpu.host import DeviceContext
 from max.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
-from layout import TileTensor, TensorEngine
+from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
-
-from harness.canary import PuzzleMemory
 
 
 comptime SIZE = WARP_SIZE
@@ -31,16 +29,11 @@ comptime LayoutType = type_of(layout)
 
 # ANCHOR: neighbor_difference_solution
 def neighbor_difference[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
     Uses shuffle_down(val, 1) to get the next neighbor's value.
@@ -79,16 +72,11 @@ comptime Layout2Type = type_of(layout_2)
 
 # ANCHOR: moving_average_3_solution
 def moving_average_3[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, Layout2Type, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, Layout2Type, MutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, Layout2Type, MutAnyOrigin],
+):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
@@ -119,16 +107,11 @@ def moving_average_3[
 
 # ANCHOR: broadcast_shuffle_coordination_solution
 def broadcast_shuffle_coordination[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
@@ -170,16 +153,11 @@ def broadcast_shuffle_coordination[
 
 # ANCHOR: basic_broadcast_solution
 def basic_broadcast[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
@@ -210,16 +188,11 @@ def basic_broadcast[
 
 # ANCHOR: conditional_broadcast_solution
 def conditional_broadcast[
-    size: Int,
-    Engine: TensorEngine,
+    size: Int
 ](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-) where (Engine.element_size == 1):
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
@@ -256,20 +229,24 @@ def conditional_broadcast[
 
 def test_neighbor_difference() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [0, 1, 4, 9, 16, 25, ...] (squares)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i * i)
 
-        var input_tensor = TileTensor(input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
-        comptime kernel = neighbor_difference[SIZE, output_tensor.Engine]
+        comptime kernel = neighbor_difference[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -294,28 +271,31 @@ def test_neighbor_difference() raises:
             print("expected:", expected_buf)
             for i in range(SIZE):
                 assert_equal(output_host[i], expected_buf[i])
-        mem.verify()
 
     print("Neighbor difference test: passed")
 
 
 def test_moving_average() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [1, 2, 4, 7, 11, 16, 22, 29, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE_2)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             input_host[0] = 1
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor(input_buf, layout_2)
-        var output_tensor = TileTensor(output_buf, layout_2)
+        var input_tensor = TileTensor[mut=False, dtype, Layout2Type](
+            input_buf, layout_2
+        )
+        var output_tensor = TileTensor[mut=True, dtype, Layout2Type](
+            output_buf, layout_2
+        )
 
-        comptime kernel = moving_average_3[SIZE_2, output_tensor.Engine]
+        comptime kernel = moving_average_3[SIZE_2]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -359,18 +339,17 @@ def test_moving_average() raises:
             # Verify results
             for i in range(SIZE_2):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-5)
-        mem.verify()
 
     print("Moving average test: passed")
 
 
 def test_broadcast_shuffle_coordination() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [2, 4, 6, 8, 1, 3, 5, 7, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern: [2, 4, 6, 8, 1, 3, 5, 7, ...]
@@ -380,12 +359,14 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = Scalar[dtype](((i - 4) % 4) * 2 + 1)
 
-        var input_tensor = TileTensor(input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
-        comptime kernel = broadcast_shuffle_coordination[
-            SIZE, output_tensor.Engine
-        ]
+        comptime kernel = broadcast_shuffle_coordination[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -417,27 +398,30 @@ def test_broadcast_shuffle_coordination() raises:
             # Verify results
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
-        mem.verify()
 
     print("Broadcast + shuffle coordination test: passed")
 
 
 def test_basic_broadcast() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [1, 2, 3, 4, 5, 6, 7, 8, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor(input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
-        comptime kernel = basic_broadcast[SIZE, output_tensor.Engine]
+        comptime kernel = basic_broadcast[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -464,18 +448,17 @@ def test_basic_broadcast() raises:
             # Verify results
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
-        mem.verify()
 
     print("Basic broadcast test: passed")
 
 
 def test_conditional_broadcast() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [3, 1, 7, 2, 9, 4, 6, 8, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = mem.output(SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern with known max
@@ -492,10 +475,14 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = TileTensor(input_buf, layout)
-        var output_tensor = TileTensor(output_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType](
+            output_buf, layout
+        )
 
-        comptime kernel = conditional_broadcast[SIZE, output_tensor.Engine]
+        comptime kernel = conditional_broadcast[SIZE]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
@@ -526,7 +513,6 @@ def test_conditional_broadcast() raises:
             # Verify results
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
-        mem.verify()
 
     print("Conditional broadcast test: passed")
 

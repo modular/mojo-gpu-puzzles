@@ -322,20 +322,13 @@ pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 ```
 
-**`pixi` cannot supply `cuda-gdb` on its own.** Conda's `cuda-gdb` package
-ships only a dispatcher script, not the binaries that script dispatches to, so
-step 4 fails in a fresh environment however `pixi.toml` is configured. That is
-what `pixi run setup-cuda-gdb` works around: it looks for a CUDA Toolkit
-installed on the system, outside `pixi`, and links that toolkit's `cuda-gdb`
-binaries into the conda environment.
+If any of these commands fail, double-check your `pixi.toml` configuration and
+ensure the CUDA toolkit feature is enabled.
 
-So a system CUDA Toolkit is a prerequisite for this puzzle, not an
-alternative to the `pixi` environment. If step 2 reports that it found
-nothing to link, install the toolkit from
-[NVIDIA's CUDA Toolkit downloads](https://developer.nvidia.com/cuda-downloads)
-and run step 2 again. If step 4 still fails afterwards, the interactive
-walkthrough on the following pages will not reproduce on your machine — read
-the transcripts rather than following along.
+**Important**: The `pixi run setup-cuda-gdb` command is required because conda's
+`cuda-gdb` package only provides a wrapper script. This command auto-detects and
+links the actual CUDA-GDB binaries from your system CUDA installation to the
+conda environment, enabling full GPU debugging capabilities.
 
 **What this command does:**
 
@@ -411,7 +404,7 @@ Fire up the LLDB debugger directly from source:
 
 ```bash
 # This compiles and debugs p01.mojo in one step
-pixi run mojo debug -I . solutions/p01/p01.mojo
+pixi run mojo debug solutions/p01/p01.mojo
 ```
 
 You'll see the LLDB prompt: `(lldb)`. You're now inside the debugger, ready to
@@ -577,7 +570,7 @@ more control and faster debugging iterations.
 
 ```bash
 # Create a debug build (notice the clear naming)
-pixi run mojo build -O0 -g -I . solutions/p01/p01.mojo -o solutions/p01/p01_debug
+pixi run mojo build -O0 -g solutions/p01/p01.mojo -o solutions/p01/p01_debug
 ```
 
 **What happens here:**
@@ -660,7 +653,7 @@ Choose your approach:
 pixi run setup-cuda-gdb
 
 # We'll use Source + CUDA-GDB (Approach 2 from above)
-pixi run mojo debug --cuda-gdb --break-on-launch -I . solutions/p01/p01.mojo
+pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
 ```
 
 We'll use the **Source + CUDA-GDB approach** since it's perfect for learning

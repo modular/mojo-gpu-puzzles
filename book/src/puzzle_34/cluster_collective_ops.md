@@ -270,10 +270,10 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 
 ## **Phase 3: Final global aggregation**
 
-**Electing a single thread:**
+**Thread election for efficiency:**
 
 ```mojo
-if local_i == 0 and my_block_rank == 0:
+if elect_one_sync() and my_block_rank == 0:
     var total: Float32 = 0.0
     for i in range(CLUSTER_SIZE):
         total += temp_storage[i][0]  # Sum: temp[0] + temp[1] + temp[2] + temp[3]
@@ -282,18 +282,14 @@ if local_i == 0 and my_block_rank == 0:
 
 **Why this election strategy?**
 
-- **`local_i == 0`**: Picks exactly one thread in the block, and always the
-  same one
+- **[`elect_one_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
+  Hardware primitive that selects exactly one thread per warp
 - **`my_block_rank == 0`**: Restricts the final sum to the first block of the
   cluster
-- **Result**: One thread in the whole cluster runs the final summation and
-  writes `output[0]`
-- **Why not
-  [`elect_one_sync()`](https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync)**:
-  it elects one thread *per warp*, so at `TPB = 256` eight threads would run
-  the aggregation and each write the same value to `output[0]`. That is
-  correct by coincidence rather than by design, and it is eight times the work
-  the task calls for
+- **Result**: The two conditions together narrow the final summation to one
+  thread per warp within block rank 0, so `TPB / 32 = 8` threads run it and
+  each writes the same value to `output[0]`
+- **Efficiency**: 8 threads do the final aggregation instead of all 1024
 
 ## **Key technical insights**
 

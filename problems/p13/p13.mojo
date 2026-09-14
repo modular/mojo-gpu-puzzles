@@ -13,13 +13,11 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor, TensorEngine
+from layout import TileTensor
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal
-
-from harness.canary import PuzzleMemory
 
 comptime TPB = 8
 comptime SIZE = 6
@@ -36,13 +34,11 @@ comptime ConvLayout = type_of(conv_layout)
 
 
 # ANCHOR: conv_1d_simple
-def conv_1d_simple[
-    Engine: TensorEngine,
-](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin, Engine=Engine],
-) where (Engine.element_size == 1):
+def conv_1d_simple(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
+):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 14 lines)
@@ -63,15 +59,11 @@ comptime Conv2Layout = type_of(conv_2_layout)
 
 
 # ANCHOR: conv_1d_block_boundary
-def conv_1d_block_boundary[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, Out2Layout, MutAnyOrigin, Engine=Engine
-    ],
-    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin, Engine=Engine],
-) where (Engine.element_size == 1):
+def conv_1d_block_boundary(
+    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
+):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
@@ -82,10 +74,10 @@ def conv_1d_block_boundary[
 
 def main() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
         var size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
         var conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
-        var out = mem.output(size)
+        var out = ctx.enqueue_create_buffer[dtype](size)
+        out.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
         var b = ctx.enqueue_create_buffer[dtype](conv)
@@ -100,9 +92,11 @@ def main() raises:
 
         if argv()[1] == "--simple":
             var out_tensor = TileTensor(out, out_layout)
-            var a_tensor = TileTensor(a, in_layout)
-            var b_tensor = TileTensor(b, conv_layout)
-            ctx.enqueue_function[conv_1d_simple[out_tensor.Engine]](
+            var a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
+            var b_tensor = TileTensor[mut=False, dtype, ConvLayout](
+                b, conv_layout
+            )
+            ctx.enqueue_function[conv_1d_simple](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -111,9 +105,13 @@ def main() raises:
             )
         elif argv()[1] == "--block-boundary":
             var out_tensor = TileTensor(out, out_2_layout)
-            var a_tensor = TileTensor(a, in_2_layout)
-            var b_tensor = TileTensor(b, conv_2_layout)
-            ctx.enqueue_function[conv_1d_block_boundary[out_tensor.Engine]](
+            var a_tensor = TileTensor[mut=False, dtype, In2Layout](
+                a, in_2_layout
+            )
+            var b_tensor = TileTensor[mut=False, dtype, Conv2Layout](
+                b, conv_2_layout
+            )
+            ctx.enqueue_function[conv_1d_block_boundary](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -138,5 +136,4 @@ def main() raises:
             print("expected:", expected)
             for i in range(size):
                 assert_equal(out_host[i], expected[i])
-        mem.verify()
-        print("Puzzle 13 complete ✅")
+            print("Puzzle 13 complete ✅")

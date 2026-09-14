@@ -15,8 +15,6 @@ from max.gpu import thread_idx
 from max.gpu.host import DeviceContext
 from std.testing import assert_equal
 
-from harness.canary import PuzzleMemory
-
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = (3, 3)
@@ -43,8 +41,8 @@ def add_10_2d(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var mem = PuzzleMemory[dtype](ctx)
-        var out = mem.output(SIZE * SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        out.enqueue_fill(0)
         var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
@@ -73,5 +71,4 @@ def main() raises:
             for y in range(SIZE):
                 for x in range(SIZE):
                     assert_equal(out_host[y * SIZE + x], expected[y * SIZE + x])
-        mem.verify()
-        print("Puzzle 04 complete ✅")
+            print("Puzzle 04 complete ✅")

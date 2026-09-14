@@ -80,14 +80,11 @@ nsys stats --force-export=true timeline.nsys-rep
 # See the help
 pixi run ncu --help
 
-# Build first: ncu profiles a binary, not a source file
-pixi run mojo build --debug-level=full your_program.mojo -o your_program
-
 # Detailed kernel profiling
-pixi run ncu --set full -o kernel_profile ./your_program
+pixi run ncu --set full -o kernel_profile mojo your_program.mojo
 
 # Focus on specific kernels
-pixi run ncu --kernel-name regex:your_kernel_name ./your_program
+pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
 ```
 
 ## Tool selection decision tree
@@ -138,7 +135,7 @@ Let's profile the Matrix Multiplication implementations from
 ```bash
 pixi shell -e nvidia
 # Build with full debug info for comprehensive source mapping
-mojo build --debug-level=full -I . solutions/p16/p16.mojo -o solutions/p16/p16_optimized
+mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
 
 # Test the build
 ./solutions/p16/p16_optimized --naive

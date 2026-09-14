@@ -14,7 +14,6 @@ from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from layout import TileTensor
-from layout.tensor_engine import TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
@@ -32,17 +31,11 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def no_conflict_kernel[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
-    ],
+def no_conflict_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Perfect shared memory access - no bank conflicts.
 
     Each thread accesses a different bank: thread_idx.x maps to bank thread_idx.x % 32.
@@ -60,7 +53,7 @@ def no_conflict_kernel[
 
     # Load from global memory to shared memory - no conflicts
     if global_i < size:
-        shared_buf[local_i] = rebind[SIMD[dtype, 1]](
+        shared_buf[local_i] = (
             input[global_i] + 10.0
         )  # Add 10 as simple operation
 
@@ -77,17 +70,11 @@ def no_conflict_kernel[
 
 
 # ANCHOR: two_way_conflict_kernel
-def two_way_conflict_kernel[
-    Engine: TensorEngine,
-](
-    output: TileTensor[
-        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
-    ],
-    input: TileTensor[
-        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
-    ],
+def two_way_conflict_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size_dev: Int32,
-) where (Engine.element_size == 1):
+):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
     Stride-2 means thread i reads index 2i, so threads i and i+16 share bank
@@ -109,7 +96,7 @@ def two_way_conflict_kernel[
 
     # Load with bank conflicts
     if global_i < size:
-        shared_buf[conflict_index] = rebind[SIMD[dtype, 1]](
+        shared_buf[conflict_index] = (
             input[global_i] + 10.0
         )  # Same operation as no-conflict
 
@@ -127,7 +114,7 @@ def two_way_conflict_kernel[
 # ANCHOR_END: two_way_conflict_kernel
 
 
-@always_inline
+@inline(.always)
 def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure.
     # Timing them here is what made the published table report milliseconds for
@@ -146,14 +133,17 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
 
     # `MutAnyOrigin` matches p35 and keeps the tensor's origin untracked, so the
     # closure can capture the buffer for `keep()` without aliasing the tensor.
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
-    var input_tensor = (
-        TileTensor(input_buf, layout).as_unsafe_any_origin().as_immut()
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+        input_buf, layout
     )
 
-    @always_inline
+    @inline(.always)
     def kernel_workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[no_conflict_kernel[out_tensor.Engine]](
+        comptime kernel = no_conflict_kernel
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             Int32(test_size),
@@ -166,7 +156,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     bencher_iter_custom(b, kernel_workflow, bench_ctx)
 
 
-@always_inline
+@inline(.always)
 def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     # Allocation, fill and the host fill loop stay OUTSIDE the timed closure.
     # Timing them here is what made the published table report milliseconds for
@@ -185,14 +175,17 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
 
     # `MutAnyOrigin` matches p35 and keeps the tensor's origin untracked, so the
     # closure can capture the buffer for `keep()` without aliasing the tensor.
-    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
-    var input_tensor = (
-        TileTensor(input_buf, layout).as_unsafe_any_origin().as_immut()
+    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+        out, layout
+    )
+    var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+        input_buf, layout
     )
 
-    @always_inline
+    @inline(.always)
     def kernel_workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[two_way_conflict_kernel[out_tensor.Engine]](
+        comptime kernel = two_way_conflict_kernel
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             Int32(test_size),
@@ -218,9 +211,12 @@ def test_no_conflict() raises:
                 input_host[i] = Scalar[dtype](i + 1)
 
         var out_tensor = TileTensor(out, layout)
-        var input_tensor = TileTensor(input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
 
-        ctx.enqueue_function[no_conflict_kernel[out_tensor.Engine]](
+        comptime kernel = no_conflict_kernel
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             Int32(SIZE),
@@ -249,9 +245,12 @@ def test_two_way_conflict() raises:
                 input_host[i] = Scalar[dtype](i + 1)
 
         var out_tensor = TileTensor(out, layout)
-        var input_tensor = TileTensor(input_buf, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
+        )
 
-        ctx.enqueue_function[two_way_conflict_kernel[out_tensor.Engine]](
+        comptime kernel = two_way_conflict_kernel
+        ctx.enqueue_function[kernel](
             out_tensor,
             input_tensor,
             Int32(SIZE),

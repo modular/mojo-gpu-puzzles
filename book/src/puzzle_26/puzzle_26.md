@@ -7,9 +7,9 @@ introduces you to sophisticated GPU
 **warp-level butterfly communication and parallel scan operations** -
 shuffle-based primitives that enable efficient tree-based algorithms and
 parallel reductions within warps. You'll learn about using
-[shuffle_xor](https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/)
+[shuffle_xor](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/)
 for butterfly networks and
-[prefix_sum](https://max.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)
+[prefix_sum](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)
 for shuffle-based parallel scan without complex multi-phase shared memory
 algorithms.
 
@@ -57,9 +57,9 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 Learn the sophisticated communication primitives from `max.gpu.primitives.warp`:
 
 1. **[`shuffle_xor(value,
-   mask)`](https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/)**:
+   mask)`](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/)**:
    XOR-based butterfly communication for tree algorithms
-2. **[`prefix_sum(value)`](https://max.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)**:
+2. **[`prefix_sum(value)`](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)**:
    Shuffle-based parallel scan operations
 3. **Advanced coordination patterns**: Combining multiple primitives for complex
    algorithms
@@ -90,7 +90,7 @@ for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
     offset *= 2
 
 # Advanced warp primitives eliminate all this complexity:
-var current_val = rebind[Scalar[dtype]](input[global_i])
+var current_val = input[global_i]
 var scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
 output[global_i] = scan_result
 ```
@@ -165,7 +165,7 @@ multi-phase algorithms with single function calls.
 **Key pattern:**
 
 ```mojo
-var current_val = rebind[Scalar[dtype]](input[global_i])
+var current_val = input[global_i]
 var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result  # Hardware-optimized cumulative sum
 ```

@@ -48,8 +48,7 @@ failures=()
 compile_target() {
     local label="$1"
     shift
-    # The import path has to come after the subcommand.
-    if mojo "$1" -I "${REPO_ROOT}" "${@:2}" >/tmp/compile_problems_out 2>&1; then
+    if mojo "$@" >/tmp/compile_problems_out 2>&1; then
         echo "  PASS  ${label}"
         pass=$((pass + 1))
     else

@@ -53,7 +53,7 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 <div class="solution-tips">
 
 1. Use `batch = block_idx.y` to select row
-2. Load elements: `cache[local_i] = rebind[Scalar[dtype]](a[batch, local_i])`
+2. Load elements: `cache[local_i] = a[batch, local_i]`
 3. Perform parallel reduction with halving stride
 4. Thread 0 writes final sum to `output[batch, 0]`
 
@@ -169,7 +169,7 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    ```mojo
    var stride = TPB // 2
    while stride > 0:
-       var temp_val: Scalar[dtype] = 0
+       var temp_val: output.ElementType = 0
        if local_i < stride:
            temp_val = cache[local_i + stride]  # Read phase
        barrier()
