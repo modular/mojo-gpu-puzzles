@@ -75,9 +75,9 @@ Check out the
 
 ```mojo
 var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
-var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+var output_tile = output.tile[tile_size](tile_id)
+var a_tile = a.tile[tile_size](tile_id)
+var b_tile = b.tile[tile_size](tile_id)
 ```
 
 The `tile[size](id)` method creates a view of `size` consecutive elements
@@ -97,10 +97,10 @@ This `comptime for` loop unrolls at compile-time for optimal performance.
 ### 4. **Load and store within tile elements**
 
 ```mojo
-var a_vec = a_tile.aligned_load[width=simd_width](Index(i))  # Load from position i in tile
-var b_vec = b_tile.aligned_load[width=simd_width](Index(i))  # Load from position i in tile
-var result = a_vec + b_vec                       # Addition at width simd_width
-output_tile.store[simd_width](Index(i), result)  # Store to position i in tile
+var a_vec = a_tile.load[width=simd_width](Coord(i))  # Load from position i in tile
+var b_vec = b_tile.load[width=simd_width](Coord(i))  # Load from position i in tile
+var result = a_vec + b_vec                           # Addition at width simd_width
+output_tile.store[simd_width](Coord(i), result)      # Store to position i in tile
 ```
 
 Here `simd_width` is the inner function's own parameter, which the launch below
@@ -217,9 +217,9 @@ Tiling represents a fundamental shift in how we think about parallel processing:
 
 ```mojo
 var tile_id = Int(indices[0].value())
-var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+var output_tile = output.tile[tile_size](tile_id)
+var a_tile = a.tile[tile_size](tile_id)
+var b_tile = b.tile[tile_size](tile_id)
 ```
 
 **Tile mapping visualization (TILE_SIZE=32):**
@@ -244,10 +244,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 
 ```mojo
 comptime for i in range(tile_size):
-    var a_vec = a_tile.aligned_load[width=simd_width](Index(i))
-    var b_vec = b_tile.aligned_load[width=simd_width](Index(i))
+    var a_vec = a_tile.load[width=simd_width](Coord(i))
+    var b_vec = b_tile.load[width=simd_width](Coord(i))
     var ret = a_vec + b_vec
-    output_tile.store[simd_width](Index(i), ret)
+    output_tile.store[simd_width](Coord(i), ret)
 ```
 
 **Why sequential processing?**
@@ -275,7 +275,7 @@ Total: 32 scalar operations per thread (comptime for i in range(tile_size))
 The width here is 1, not `SIMD_WIDTH`. The inner `process_tiles` declares its
 own `simd_width` parameter, which shadows the enclosing function's, and
 `elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)`
-instantiates it with 1. So `aligned_load[width=simd_width]` loads a single element and the loop
+instantiates it with 1. So `load[width=simd_width]` loads a single element and the loop
 walks the tile one element at a time. The two vectorized kernels later in this
 puzzle avoid the shadowing by naming their inner parameter
 `num_threads_per_tile`, which is why they really do load `SIMD_WIDTH` elements

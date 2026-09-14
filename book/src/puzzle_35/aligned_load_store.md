@@ -39,29 +39,28 @@ comptime VEC_ALIGN = align_of[SIMD[dtype, SIMD_WIDTH]]()   # 16 bytes for float3
 comptime SCALAR_ALIGN = align_of[dtype]()                  # 4 bytes
 ```
 
-The vectorized kernels take `TileTensor` arguments, convert them with
-`to_layout_tensor()`, and then use `LayoutTensor`'s `load` and `store`, whose
-alignment you set explicitly:
+The vectorized kernels take `TileTensor` arguments and call `load` and `store`,
+whose `alignment` parameter you set explicitly:
 
 ```mojo
 # Under-stated: compiler can't prove 16-byte alignment -> scalar codegen
-var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))
-out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
-    Index(base), v * SCALE + BIAS
+var v = a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))
+output.store[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](
+    Coord(base), v * SCALE + BIAS
 )
 
 # Aligned: 16-byte alignment -> ld.global.nc.v4.f32 / st.global.v4.f32
-# `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`
-var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
-out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
-    Index(base), v * SCALE + BIAS
+# `alignment` defaults to `VEC_ALIGN`, so the load needn't pass it
+var v = a.load[width=SIMD_WIDTH](Coord(base))
+output.store[width=SIMD_WIDTH, alignment=VEC_ALIGN](
+    Coord(base), v * SCALE + BIAS
 )
 ```
 
-`aligned_load[w]` is the convenience wrapper: it picks
-`align_of[SIMD[dtype, w]]()` for you. `aligned_store` exists too, but only in a
-2D `(m, n)` form—there is no coordinate-list overload—so this rank-1 kernel
-passes `store_alignment=VEC_ALIGN` explicitly.
+On GPU, `alignment` defaults to `align_of[SIMD[dtype, width]]()`, so a
+`SIMD_WIDTH`-wide access is already described as 16-byte aligned unless you
+understate it. The aligned kernel passes `alignment=VEC_ALIGN` on the store to
+keep the pairing visible next to the unaligned one.
 
 ## Running it
 
@@ -87,9 +86,9 @@ the [next section](./benchmark_and_profile.md).
   *value you pass* to `load`/`store`.
 - Guard the tail: each vectorized thread handles `SIMD_WIDTH` elements, so
   guard with `if base + SIMD_WIDTH <= size:` to avoid reading past the end.
-- `aligned_load[w]` is the same as
-  `load[w, load_alignment=align_of[SIMD[dtype, w]]()]`. Use whichever reads
-  more clearly.
+- `load[w]` already means `load[w, alignment=align_of[SIMD[dtype, w]]()]` on
+  GPU. Understating the alignment is the deliberate mistake this puzzle asks
+  you to make.
 - Don't expect a wall-clock gap on a tiny input or on a non-NVIDIA GPU. The
   codegen difference instead shows up in Nsight Compute's instruction/sector
   metrics. We'll cover this in the next section.

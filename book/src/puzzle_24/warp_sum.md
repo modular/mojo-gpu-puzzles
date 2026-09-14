@@ -144,15 +144,13 @@ def simple_warp_dot_product[...](output, a, b):
 ```mojo
 var partial_product: Scalar[dtype] = 0
 if global_i < size:
-    partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+    partial_product = rebind[Scalar[dtype]](a[global_i]) * rebind[
         Scalar[dtype]
-    ](b_lt[global_i])
+    ](b[global_i])
 ```
 
-**Why `rebind`?** Indexing a `LayoutTensor` yields a SIMD value, so each element
-is narrowed to `Scalar[dtype]` with `rebind` before the multiply. Note the
-receivers are `a_lt` and `b_lt`—the `LayoutTensor` handles obtained from
-`to_layout_tensor()` inside the kernel, not the `TileTensor` parameters.
+**Why `rebind`?** Indexing a `TileTensor` yields a SIMD value, so each element
+is narrowed to `Scalar[dtype]` with `rebind` before the multiply.
 
 **Bounds checking:** Essential because not all threads may have valid data to
 process.
@@ -174,7 +172,7 @@ var total = warp_sum(partial_product)
 
 ```mojo
 if lane_id() == 0:
-    out_lt.store[1](Index(global_i // WARP_SIZE), total)
+    output.store[1](Coord(global_i // WARP_SIZE), total)
 ```
 
 **Why only lane 0?** All lanes have the same `total` value after `warp_sum()`,
@@ -314,16 +312,16 @@ def compute_dot_product[
 ```mojo
 var partial_product: Scalar[dtype] = 0.0
 if idx < size:
-    var a_val = a_lt.load[1](Index(idx))
-    var b_val = b_lt.load[1](Index(idx))
+    var a_val = a.load[1](Coord(idx))
+    var b_val = b.load[1](Coord(idx))
     partial_product = a_val * b_val
 else:
     partial_product = 0.0
 ```
 
-**Loading pattern:** `a_lt.load[1](Index(idx))` loads exactly 1 element at
-position `idx` (not SIMD vectorized). The tensor is 1-D, so the index is a
-single `Index(idx)`.
+**Loading pattern:** `a.load[1](Coord(idx))` loads exactly 1 element at
+position `idx` (not SIMD vectorized). The tensor is 1-D, so the coordinate is a
+single `Coord(idx)`.
 
 **Bounds handling:** Set `partial_product = 0.0` for out-of-bounds threads so
 they don't contribute to the sum.
@@ -334,10 +332,10 @@ they don't contribute to the sum.
 var total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    out_lt.store[1](Index(idx // WARP_SIZE), total)
+    output.store[1](Coord(idx // WARP_SIZE), total)
 ```
 
-**Storage pattern:** `out_lt.store[1](Index(idx // WARP_SIZE), total)` stores
+**Storage pattern:** `output.store[1](Coord(idx // WARP_SIZE), total)` stores
 1 element at position `idx // WARP_SIZE` in the 1-D output tensor.
 
 **Same warp logic:** `warp_sum()` and lane 0 writing work identically in

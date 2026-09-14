@@ -14,10 +14,9 @@ from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
-from layout import TileTensor, LayoutTensor
+from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-from std.utils import Index
 from std.utils.coord import Coord
 from std.math import log2
 from std.algorithm.functional import vectorize
@@ -79,9 +78,9 @@ def tiled_elementwise_add[
     ](indices: Coord) {var} -> None:
         var tile_id = Int(indices[0].value())
 
-        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
         # FILL IN (6 lines at most)
 
@@ -117,10 +116,6 @@ def manual_vectorized_tiled_elementwise_add[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
         var tile_id = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
 
         # FILL IN (7 lines at most)
 
@@ -158,10 +153,6 @@ def vectorize_within_tiles_elementwise_add[
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
 
         # FILL IN (9 lines at most)
 

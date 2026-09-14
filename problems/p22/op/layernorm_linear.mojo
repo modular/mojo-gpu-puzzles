@@ -66,12 +66,6 @@ def matmul_idiomatic_tiled[
     )
     var acc: output.ElementType = 0
 
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_tile_lt = out_tile.to_layout_tensor()
-    var a_shared_lt = a_shared.to_layout_tensor()
-    var b_shared_lt = b_shared.to_layout_tensor()
-
     comptime for idx in range(
         (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
     ):
@@ -84,16 +78,16 @@ def matmul_idiomatic_tiled[
         var a_global_row = a_tile_row_start + local_row
         var a_global_col = a_tile_col_start + local_col
         if a_global_row < rows and a_global_col < inner:
-            a_shared_lt[local_row, local_col] = a_lt[a_global_row, a_global_col]
+            a_shared[local_row, local_col] = a[a_global_row, a_global_col]
         else:
-            a_shared_lt[local_row, local_col] = 0
+            a_shared[local_row, local_col] = 0
 
         var b_global_row = b_tile_row_start + local_row
         var b_global_col = b_tile_col_start + local_col
         if b_global_row < inner and b_global_col < cols:
-            b_shared_lt[local_row, local_col] = b_lt[b_global_row, b_global_col]
+            b_shared[local_row, local_col] = b[b_global_row, b_global_col]
         else:
-            b_shared_lt[local_row, local_col] = 0
+            b_shared[local_row, local_col] = 0
 
         barrier()
 
@@ -103,15 +97,15 @@ def matmul_idiomatic_tiled[
         )
         comptime for k in range(k_max):
             if tiled_row < rows and tiled_col < cols:
-                acc += rebind[Scalar[dtype]](
-                    a_shared_lt[local_row, k]
-                ) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
+                acc += rebind[Scalar[dtype]](a_shared[local_row, k]) * rebind[
+                    Scalar[dtype]
+                ](b_shared[k, local_col])
 
         barrier()
 
     # Write final result with bounds checking (needed for variable matrix sizes)
     if tiled_row < rows and tiled_col < cols:
-        out_tile_lt[local_row, local_col] = acc
+        out_tile[local_row, local_col] = acc
 
 
 # ANCHOR_END: matmul_idiomatic_tiled
@@ -143,11 +137,6 @@ def layernorm_kernel[
     ):
         return
 
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
-
     # Compute statistics for this sequence position (redundant but simple)
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
@@ -172,6 +161,8 @@ def transpose_kernel[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
+    comptime assert output.flat_rank == 2
+
     comptime shared_layout = row_major[
         TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
     ]()
@@ -182,15 +173,11 @@ def transpose_kernel[
     var local_row = thread_idx.y
     var local_col = thread_idx.x
 
-    var inp_lt = inp.to_layout_tensor()
-    var output_lt = output.to_layout_tensor()
-    var shared_tile_lt = shared_tile.to_layout_tensor()
-
     var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
     var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row < rows and global_col < cols:
-        shared_tile_lt[local_row, local_col] = inp_lt[global_row, global_col]
+        shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
@@ -200,7 +187,7 @@ def transpose_kernel[
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
     if out_row < cols and out_col < rows:
-        output_lt[out_row, out_col] = shared_tile_lt[local_col, local_row]
+        output[out_row, out_col] = shared_tile[local_col, local_row]
 
 
 # ANCHOR_END: transpose_kernel
@@ -221,6 +208,8 @@ def add_bias_kernel[
     bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin],
 ):
     """Simple bias addition."""
+    comptime assert output.flat_rank == 3
+
     var batch_idx = block_idx.x
     var seq_idx = block_idx.y
     var out_idx = thread_idx.x
@@ -228,13 +217,9 @@ def add_bias_kernel[
     if batch_idx >= batch_size or seq_idx >= seq_len or out_idx >= output_dim:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var bias_lt = bias.to_layout_tensor()
-
-    output_lt[batch_idx, seq_idx, out_idx] = input_lt[
+    output[batch_idx, seq_idx, out_idx] = input[
         batch_idx, seq_idx, out_idx
-    ] + rebind[Scalar[dtype]](bias_lt[out_idx])
+    ] + rebind[Scalar[dtype]](bias[out_idx])
 
 
 # ANCHOR_END: add_bias_kernel
@@ -268,13 +253,6 @@ def minimal_fused_kernel[
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
-
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
-    var linear_weight_lt = linear_weight.to_layout_tensor()
-    var linear_bias_lt = linear_bias.to_layout_tensor()
 
     # Step 1: Compute LayerNorm statistics once per sequence position
 
@@ -326,17 +304,6 @@ def minimal_fused_kernel_backward[
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
-
-    var grad_input_lt = grad_input.to_layout_tensor()
-    var grad_ln_weight_lt = grad_ln_weight.to_layout_tensor()
-    var grad_ln_bias_lt = grad_ln_bias.to_layout_tensor()
-    var grad_weight_lt = grad_weight.to_layout_tensor()
-    var grad_bias_lt = grad_bias.to_layout_tensor()
-    var grad_output_lt = grad_output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
-    var linear_weight_lt = linear_weight.to_layout_tensor()
 
     # Initialize gradient tensors to zero (block 0,0 only to avoid UB with atomic ops)
     if batch_idx == 0 and seq_idx == 0:

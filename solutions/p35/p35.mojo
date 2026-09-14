@@ -13,9 +13,8 @@
 from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
-from layout import TileTensor
+from layout import Coord, TileTensor
 from layout.tile_layout import row_major
-from std.utils import Index
 from std.sys import argv, align_of, simd_width_of
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -77,17 +76,13 @@ def unaligned_kernel(
     `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
     var size = Int(size_dev)
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     # Each thread owns one SIMD_WIDTH-wide chunk.
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
     if base + SIMD_WIDTH <= size:
-        var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](
-            Index(base)
-        )
-        out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
-            Index(base), v * SCALE + BIAS
+        var v = a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))
+        output.store[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](
+            Coord(base), v * SCALE + BIAS
         )
 
 
@@ -104,20 +99,19 @@ def aligned_kernel(
 
     Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
     float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
-    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
-    convenience wrapper that picks this alignment for you. Identical output to
-    the unaligned kernel — only the codegen (and the bandwidth) changes.
+    load and `st.global.v4.f32` store per chunk. `load` and `store` already
+    default to this alignment, so the vectorized form is what you get unless you
+    understate it. Identical output to the unaligned kernel — only the codegen
+    (and the bandwidth) changes.
     """
     var size = Int(size_dev)
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
     if base + SIMD_WIDTH <= size:
-        # `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`.
-        var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
-        out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
-            Index(base), v * SCALE + BIAS
+        # `alignment` defaults to `VEC_ALIGN` for a SIMD_WIDTH-wide load.
+        var v = a.load[width=SIMD_WIDTH](Coord(base))
+        output.store[width=SIMD_WIDTH, alignment=VEC_ALIGN](
+            Coord(base), v * SCALE + BIAS
         )
 
 

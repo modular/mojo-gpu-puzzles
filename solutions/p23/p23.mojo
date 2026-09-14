@@ -14,10 +14,9 @@ from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
-from layout import TileTensor, LayoutTensor
+from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-from std.utils import Index
 from std.utils.coord import Coord
 from std.math import log2
 from std.algorithm.functional import vectorize
@@ -48,17 +47,13 @@ def elementwise_add[
     @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -> None:
         var idx = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))
-        var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))
+        var a_simd = a.load[width=simd_width](Coord(idx))
+        var b_simd = b.load[width=simd_width](Coord(idx))
         var ret = a_simd + b_simd
-        out_lt.store[simd_width](Index(idx), ret)
+        output.store[simd_width](Coord(idx), ret)
 
     elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
 
@@ -89,15 +84,15 @@ def tiled_elementwise_add[
     ](indices: Coord) {var} -> None:
         var tile_id = Int(indices[0].value())
 
-        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
         comptime for i in range(tile_size):
-            var a_vec = a_tile.aligned_load[width=simd_width](Index(i))
-            var b_vec = b_tile.aligned_load[width=simd_width](Index(i))
+            var a_vec = a_tile.load[width=simd_width](Coord(i))
+            var b_vec = b_tile.load[width=simd_width](Coord(i))
             var ret = a_vec + b_vec
-            output_tile.store[simd_width](Index(i), ret)
+            output_tile.store[simd_width](Coord(i), ret)
 
     var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[simd_width=1, target="gpu"](
@@ -131,18 +126,14 @@ def manual_vectorized_tiled_elementwise_add[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
         var tile_id = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
 
         comptime for i in range(tile_size):
             var global_start = tile_id * chunk_size + i * simd_width
 
-            var a_vec = a_lt.aligned_load[width=simd_width](Index(global_start))
-            var b_vec = b_lt.aligned_load[width=simd_width](Index(global_start))
+            var a_vec = a.load[width=simd_width](Coord(global_start))
+            var b_vec = b.load[width=simd_width](Coord(global_start))
             var ret = a_vec + b_vec
-            out_lt.store[simd_width](Index(global_start), ret)
+            output.store[simd_width](Coord(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     var num_tiles = (size + chunk_size - 1) // chunk_size
@@ -178,20 +169,16 @@ def vectorize_within_tiles_elementwise_add[
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
 
         def vectorized_add[
             width: Int
-        ](i: Int) {imm tile_start, imm a_lt, imm b_lt, mut out_lt}:
+        ](i: Int) {imm tile_start, var a, var b, var output}:
             var global_idx = tile_start + i
             if global_idx + width <= size:
-                var a_vec = a_lt.aligned_load[width](Index(global_idx))
-                var b_vec = b_lt.aligned_load[width](Index(global_idx))
+                var a_vec = a.load[width](Coord(global_idx))
+                var b_vec = b.load[width](Coord(global_idx))
                 var result = a_vec + b_vec
-                out_lt.store[width](Index(global_idx), result)
+                output.store[width](Coord(global_idx), result)
 
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)
