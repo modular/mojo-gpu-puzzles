@@ -160,9 +160,9 @@ p19 = "bash solutions/gate.sh p19 mojo package problems/p19/op -o problems/p19/o
 
 p20 = "python problems/p20/p20.py"
 
-p21 = "python problems/p21/p21.py"
+p21 = { cmd = "python problems/p21/p21.py", env = { PYTHONPATH = "." } }
 
-p22 = "bash solutions/gate.sh p22 python problems/p22/p22.py"
+p22 = { cmd = "bash solutions/gate.sh p22 python problems/p22/p22.py", env = { PYTHONPATH = "." } }
 
 p23 = "mojo -I . problems/p23/p23.mojo"
 

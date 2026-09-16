@@ -19,6 +19,7 @@ import warnings
 from pathlib import Path
 
 import torch
+from harness.canary import guarded_output
 from max.experimental.torch import CustomOpLibrary
 
 # Suppress PyTorch internal logging that causes cudagraphs messages
@@ -407,7 +408,7 @@ def run_mojo_implementation(
         linear_bias = linear_bias.cpu()
 
     try:
-        output = torch.empty(
+        output, check_output = guarded_output(
             (batch_size, seq_len, output_dim),
             dtype=input.dtype,
             device=input.device,
@@ -429,6 +430,7 @@ def run_mojo_implementation(
         compiled_op(
             output, input, ln_weight, ln_bias, linear_weight, linear_bias
         )
+        check_output()
         return output, None
 
     except Exception as e:
