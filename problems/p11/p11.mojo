@@ -18,6 +18,8 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 # ANCHOR: pooling
 comptime TPB = 8
 comptime SIZE = 8
@@ -49,8 +51,8 @@ def pooling(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(SIZE)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
 
@@ -86,4 +88,5 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 11 complete ✅")
+        mem.verify()
+        print("Puzzle 11 complete ✅")

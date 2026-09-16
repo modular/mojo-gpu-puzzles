@@ -16,6 +16,8 @@ from layout import TileTensor
 from layout.tile_layout import row_major
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 # ANCHOR: add_10_blocks_2d
 comptime SIZE = 5
 comptime BLOCKS_PER_GRID = (2, 2)
@@ -43,8 +45,8 @@ def add_10_blocks_2d(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-        out_buf.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out_buf = mem.output(SIZE * SIZE)
         var out_tensor = TileTensor(out_buf, out_layout)
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
@@ -85,4 +87,5 @@ def main() raises:
                     assert_equal(
                         out_buf_host[i * SIZE + j], expected_buf[i * SIZE + j]
                     )
-            print("Puzzle 07 complete ✅")
+        mem.verify()
+        print("Puzzle 07 complete ✅")

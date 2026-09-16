@@ -19,6 +19,8 @@ from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 comptime TPB = 3
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = (1, 1)
@@ -89,12 +91,12 @@ def matmul_tiled[
 
 def main() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var size = (
             SIZE_TILED if argv()[1] == "--idiomatic-tiled"
             or argv()[1] == "--tiled" else SIZE
         )
-        var out = ctx.enqueue_create_buffer[dtype](size * size)
-        out.enqueue_fill(0)
+        var out = mem.output(size * size)
         var inp1 = ctx.enqueue_create_buffer[dtype](size * size)
         inp1.enqueue_fill(0)
         var inp2 = ctx.enqueue_create_buffer[dtype](size * size)
@@ -176,4 +178,5 @@ def main() raises:
                     assert_equal(
                         out_host[col * size + row], expected[col * size + row]
                     )
-            print("Puzzle 16 complete ✅")
+        mem.verify()
+        print("Puzzle 16 complete ✅")

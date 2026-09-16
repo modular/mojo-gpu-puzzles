@@ -20,6 +20,8 @@ from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 from max.benchmark import bencher_iter_custom
 
+from harness.canary import PuzzleMemory
+
 # 1M float32 elements: large enough to be memory-bandwidth bound, so the
 # load/store path is what the benchmark actually measures.
 comptime SIZE = 1024 * 1024
@@ -135,8 +137,8 @@ def vector_blocks(size: Int) -> Int:
 
 def test_scalar() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(SIZE)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
@@ -161,13 +163,14 @@ def test_scalar() raises:
                 assert_almost_equal(
                     result[i], Scalar[dtype](i % 97) * SCALE + BIAS, atol=1e-5
                 )
+        mem.verify()
     print("scalar kernel: passed")
 
 
 def test_unaligned() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(SIZE)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
@@ -192,13 +195,14 @@ def test_unaligned() raises:
                 assert_almost_equal(
                     result[i], Scalar[dtype](i % 97) * SCALE + BIAS, atol=1e-5
                 )
+        mem.verify()
     print("unaligned kernel: passed")
 
 
 def test_aligned() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(SIZE)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
@@ -223,6 +227,7 @@ def test_aligned() raises:
                 assert_almost_equal(
                     result[i], Scalar[dtype](i % 97) * SCALE + BIAS, atol=1e-5
                 )
+        mem.verify()
     print("aligned kernel: passed")
 
 

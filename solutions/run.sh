@@ -13,6 +13,10 @@
 ##===----------------------------------------------------------------------===##
 # Source shared configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Puzzles run from their own directory, so `mojo` needs the repo root to
+# find the `harness` package.
+PUZZLES_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
 # Unicode symbols
@@ -380,7 +384,7 @@ run_mojo_files() {
       if [ -n "$specific_flag" ]; then
         # Check if the file supports this flag
         if grep -q "argv()\[1\] == \"$specific_flag\"" "$f" || grep -q "test_type == \"$specific_flag\"" "$f"; then
-          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "mojo \"$f\" \"$specific_flag\""
+          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "mojo -I \"$PUZZLES_ROOT\" \"$f\" \"$specific_flag\""
         else
           print_test_result "${path_prefix}$f" "$specific_flag" "SKIP"
         fi
@@ -389,10 +393,10 @@ run_mojo_files() {
         flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
 
         if [ -z "$flags" ]; then
-          execute_or_skip_test "${path_prefix}$f" "" "mojo \"$f\""
+          execute_or_skip_test "${path_prefix}$f" "" "mojo -I \"$PUZZLES_ROOT\" \"$f\""
         else
           for flag in $flags; do
-            execute_or_skip_test "${path_prefix}$f" "$flag" "mojo \"$f\" \"$flag\""
+            execute_or_skip_test "${path_prefix}$f" "$flag" "mojo -I \"$PUZZLES_ROOT\" \"$f\" \"$flag\""
           done
         fi
       fi
@@ -521,7 +525,7 @@ test_puzzle_directory() {
     # Check for test directory and run mojo run (only if no specific flag)
     if [ -z "$specific_flag" ] && ([ -d "test" ] || [ -d "tests" ]); then
         echo ""
-        command="mojo run -I . test/*.mojo"
+        command="mojo run -I . -I \"$PUZZLES_ROOT\" test/*.mojo"
         echo -e "  ${CYAN}${ARROW}${NC} Running ${YELLOW}${command}${NC} in ${PURPLE}${dir}${NC}"
         if capture_output "$command" "$VERBOSE_MODE"; then
             print_test_result "$command" "" "PASS"

@@ -19,6 +19,8 @@ from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 comptime TPB = 8
 comptime SIZE = 6
 comptime CONV = 3
@@ -145,10 +147,10 @@ def conv_1d_block_boundary(
 
 def main() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
         var conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
-        var out = ctx.enqueue_create_buffer[dtype](size)
-        out.enqueue_fill(0)
+        var out = mem.output(size)
         var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
         var b = ctx.enqueue_create_buffer[dtype](conv)
@@ -207,4 +209,5 @@ def main() raises:
             print("expected:", expected)
             for i in range(size):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 13 complete ✅")
+        mem.verify()
+        print("Puzzle 13 complete ✅")

@@ -15,6 +15,8 @@ from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.host import DeviceContext
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 # ANCHOR: add_10_blocks
 comptime SIZE = 9
 comptime BLOCKS_PER_GRID = (3, 1)
@@ -37,8 +39,8 @@ def add_10_blocks(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(SIZE)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
@@ -66,4 +68,5 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 06 complete ✅")
+        mem.verify()
+        print("Puzzle 06 complete ✅")
