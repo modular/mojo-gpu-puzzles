@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
@@ -32,12 +32,14 @@ comptime LayoutType = type_of(layout)
 comptime OutLayout = type_of(out_layout)
 
 
-def dot_product(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def dot_product[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     # FILL ME IN (roughly 13 lines)
     ...
@@ -61,10 +63,10 @@ def main() raises:
                 b_host[i] = Scalar[dtype](i)
 
         var out_tensor = TileTensor(out, out_layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
-        var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
+        var a_tensor = TileTensor(a, layout)
+        var b_tensor = TileTensor(b, layout)
 
-        ctx.enqueue_function[dot_product](
+        ctx.enqueue_function[dot_product[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             b_tensor,

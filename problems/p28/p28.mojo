@@ -14,7 +14,12 @@ from max.gpu import thread_idx, block_idx, block_dim, grid_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from max.gpu.memory import async_copy_wait_all
-from layout import Layout, LayoutTensor, TileTensor
+from layout import (
+    Layout,
+    LayoutTensor,
+    TileTensor,
+    TensorEngine,
+)
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from layout.layout_tensor import copy_dram_to_sram_async
@@ -41,12 +46,17 @@ comptime kernel_layout = Layout.row_major(KERNEL_SIZE)
 
 # ANCHOR: async_copy_overlap_convolution
 def async_copy_overlap_convolution[
-    dtype: DType
+    dtype: DType,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
+    ],
     kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
-):
+) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
     This shows how to use copy_dram_to_sram_async and async_copy_wait_all
@@ -93,17 +103,15 @@ def test_async_copy_overlap_convolution() raises:
             for i in range(KERNEL_SIZE):
                 kernel_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[mut=False, dtype, AsyncLayoutType](
-            input_buf, layout_async
-        )
-        var output_tensor = TileTensor[mut=True, dtype, AsyncLayoutType](
-            output_buf, layout_async
-        )
+        var input_tensor = TileTensor(input_buf, layout_async)
+        var output_tensor = TileTensor(output_buf, layout_async)
         var kernel_tensor = LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin](
             kernel_buf
         )
 
-        comptime kernel = async_copy_overlap_convolution[dtype]
+        comptime kernel = async_copy_overlap_convolution[
+            dtype, output_tensor.Engine
+        ]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,

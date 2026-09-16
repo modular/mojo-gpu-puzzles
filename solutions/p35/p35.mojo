@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
-from layout import Coord, TileTensor
+from layout import Coord, TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from std.sys import argv, align_of, simd_width_of
 from std.testing import assert_almost_equal
@@ -45,11 +45,15 @@ comptime SCALAR_ALIGN = align_of[dtype]()
 
 
 # ANCHOR: scalar_kernel_solution
-def scalar_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def scalar_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """One element per thread. No vectorization, so alignment is irrelevant.
 
     This is the baseline: each thread issues a scalar load and a scalar store.
@@ -64,11 +68,15 @@ def scalar_kernel(
 
 
 # ANCHOR: unaligned_kernel_solution
-def unaligned_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def unaligned_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
 
     The data is naturally 16-byte aligned, but `load`/`store` are told only the
@@ -92,11 +100,15 @@ def unaligned_kernel(
 
 
 # ANCHOR: aligned_kernel_solution
-def aligned_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def aligned_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Same vectorized kernel, but the access alignment is communicated.
 
     Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
@@ -145,13 +157,9 @@ def test_scalar() raises:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i % 97)
 
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            a, layout
-        )
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-            out, layout
-        )
-        ctx.enqueue_function[scalar_kernel](
+        var a_tensor = TileTensor(a, layout)
+        var out_tensor = TileTensor(out, layout)
+        ctx.enqueue_function[scalar_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -177,13 +185,9 @@ def test_unaligned() raises:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i % 97)
 
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            a, layout
-        )
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-            out, layout
-        )
-        ctx.enqueue_function[unaligned_kernel](
+        var a_tensor = TileTensor(a, layout)
+        var out_tensor = TileTensor(out, layout)
+        ctx.enqueue_function[unaligned_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -209,13 +213,9 @@ def test_aligned() raises:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i % 97)
 
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            a, layout
-        )
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-            out, layout
-        )
-        ctx.enqueue_function[aligned_kernel](
+        var a_tensor = TileTensor(a, layout)
+        var out_tensor = TileTensor(out, layout)
+        ctx.enqueue_function[aligned_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -246,16 +246,12 @@ def benchmark_scalar(mut b: Bencher) raises:
     out.enqueue_fill(0)
     var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(1)
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-        a, layout
-    )
-    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-        out, layout
-    )
+    var a_tensor = TileTensor(a, layout)
+    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
 
     @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[scalar_kernel](
+        ctx.enqueue_function[scalar_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -278,16 +274,12 @@ def benchmark_unaligned(mut b: Bencher) raises:
     out.enqueue_fill(0)
     var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(1)
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-        a, layout
-    )
-    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-        out, layout
-    )
+    var a_tensor = TileTensor(a, layout)
+    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
 
     @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[unaligned_kernel](
+        ctx.enqueue_function[unaligned_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),
@@ -310,16 +302,12 @@ def benchmark_aligned(mut b: Bencher) raises:
     out.enqueue_fill(0)
     var a = bench_ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(1)
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-        a, layout
-    )
-    var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
-        out, layout
-    )
+    var a_tensor = TileTensor(a, layout)
+    var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
 
     @inline(.always)
     def workflow(ctx: DeviceContext) raises {imm}:
-        ctx.enqueue_function[aligned_kernel](
+        ctx.enqueue_function[aligned_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),

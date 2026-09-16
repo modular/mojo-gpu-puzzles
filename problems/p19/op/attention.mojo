@@ -13,7 +13,8 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from layout import TileTensor
+from layout import TileTensor, Coord
+from layout.tensor_engine import TensorEngine
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.math import exp
@@ -47,12 +48,13 @@ def matmul_idiomatic_tiled[
     OutLayout: TensorLayout,
     ALayout: TensorLayout,
     BLayout: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin],
-    b: TileTensor[mut=True, dtype, BLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=True, dtype, BLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """Updated idiomatic tiled matrix multiplication from p16."""
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -87,14 +89,18 @@ def matmul_idiomatic_tiled[
         var a_global_row = a_tile_row_start + local_row
         var a_global_col = a_tile_col_start + local_col
         if a_global_row < rows and a_global_col < inner:
-            a_shared[local_row, local_col] = a[a_global_row, a_global_col]
+            a_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                a[a_global_row, a_global_col]
+            )
         else:
             a_shared[local_row, local_col] = 0
 
         var b_global_row = b_tile_row_start + local_row
         var b_global_col = b_tile_col_start + local_col
         if b_global_row < inner and b_global_col < cols:
-            b_shared[local_row, local_col] = b[b_global_row, b_global_col]
+            b_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                b[b_global_row, b_global_col]
+            )
         else:
             b_shared[local_row, local_col] = 0
 
@@ -114,7 +120,7 @@ def matmul_idiomatic_tiled[
 
     # Write final result with bounds checking (needed for attention's variable sizes)
     if tiled_row < rows and tiled_col < cols:
-        out_tile[local_row, local_col] = acc
+        out_tile[Coord(local_row, local_col)] = rebind[Scalar[dtype]](acc)
 
 
 # ANCHOR: transpose_kernel
@@ -123,11 +129,12 @@ def transpose_kernel[
     cols: Int,
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     # FILL ME IN (roughly 18 lines)
     ...
 
@@ -139,12 +146,16 @@ def transpose_kernel[
 def softmax_gpu_kernel[
     input_size: Int,
     LayoutType: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
-    comptime assert output.flat_rank == 1
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
@@ -200,7 +211,7 @@ def softmax_gpu_kernel[
 
     # Normalize by sum
     if global_i < input_size:
-        output[global_i] = exp_val / block_sum
+        output[Coord(global_i)] = exp_val / block_sum
 
 
 # CPU implementation for vector attention
@@ -211,13 +222,14 @@ def attention_cpu_kernel[
     QLayout: TensorLayout,
     KLayout: TensorLayout,
     VLayout: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    q: TileTensor[mut=True, dtype, QLayout, MutAnyOrigin],
-    k: TileTensor[mut=True, dtype, KLayout, MutAnyOrigin],
-    v: TileTensor[mut=True, dtype, VLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    q: TileTensor[mut=True, dtype, QLayout, MutAnyOrigin, Engine=Engine],
+    k: TileTensor[mut=True, dtype, KLayout, MutAnyOrigin, Engine=Engine],
+    v: TileTensor[mut=True, dtype, VLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """CPU implementation of vector attention."""
     comptime assert output.flat_rank == 1
 
@@ -278,31 +290,13 @@ struct AttentionCustomOp:
         ctx: DeviceContext,
     ) raises:
         # Define layouts
-        comptime layout_q = row_major[d]()
-        comptime layout_k = row_major[seq_len, d]()
-        comptime layout_v = row_major[seq_len, d]()
-        comptime layout_out = row_major[d]()
         comptime layout_scores = row_major[seq_len]()
-        comptime QLayout = type_of(layout_q)
-        comptime KLayout = type_of(layout_k)
-        comptime VLayout = type_of(layout_v)
-        comptime OutLayout = type_of(layout_out)
-        comptime ScoresLayout = type_of(layout_scores)
 
         # Convert to layout tensors
-        var output_tensor = TileTensor[
-            mut=True, dtype, OutLayout, MutAnyOrigin
-        ](output.unsafe_ptr(), layout_out)
-        var q_tensor = TileTensor[mut=True, dtype, QLayout, MutAnyOrigin](
-            q.unsafe_ptr(), layout_q
-        )
-        var k_tensor = TileTensor[mut=True, dtype, KLayout, MutAnyOrigin](
-            k.unsafe_ptr(), layout_k
-        )
-        var v_tensor = TileTensor[mut=True, dtype, VLayout, MutAnyOrigin](
-            v.unsafe_ptr(), layout_v
-        )
-
+        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
+        var q_tensor = q.to_tile_tensor().as_unsafe_any_origin()
+        var k_tensor = k.to_tile_tensor().as_unsafe_any_origin()
+        var v_tensor = v.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             # ANCHOR: attention_orchestration
             # Define layouts for matrix multiplication
@@ -387,7 +381,14 @@ struct AttentionCustomOp:
 
         elif target == "cpu":
             attention_cpu_kernel[
-                seq_len, d, OutLayout, QLayout, KLayout, VLayout, dtype
+                seq_len,
+                d,
+                output_tensor.LayoutType,
+                q_tensor.LayoutType,
+                k_tensor.LayoutType,
+                v_tensor.LayoutType,
+                output_tensor.Engine,
+                dtype,
             ](output_tensor, q_tensor, k_tensor, v_tensor)
 
         else:

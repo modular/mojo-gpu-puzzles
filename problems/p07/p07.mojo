@@ -12,7 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from std.testing import assert_equal
 
@@ -29,11 +29,13 @@ comptime OutLayout = type_of(out_layout)
 comptime ALayout = type_of(a_layout)
 
 
-def add_10_blocks_2d(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+def add_10_blocks_2d[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -62,9 +64,9 @@ def main() raises:
                     a_host[k] = Scalar[dtype](k)
                     expected_buf[k] = Scalar[dtype](k + 10)
 
-        var a_tensor = TileTensor[mut=False, dtype, ALayout](a, a_layout)
+        var a_tensor = TileTensor(a, a_layout)
 
-        ctx.enqueue_function[add_10_blocks_2d](
+        ctx.enqueue_function[add_10_blocks_2d[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),

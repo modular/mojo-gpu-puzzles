@@ -148,7 +148,7 @@ Here's the detailed breakdown:
 Each thread performs one multiplication with natural indexing:
 
 ```mojo
-shared[local_i] = a[global_i] * b[global_i]
+shared[local_i] = rebind[Scalar[dtype]](a[global_i] * b[global_i])
 ```
 
 ### Phase 2: parallel reduction

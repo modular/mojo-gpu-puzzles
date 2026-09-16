@@ -18,7 +18,7 @@ from max.gpu.sync import (
     mbarrier_test_wait,
 )
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from layout.layout_tensor import copy_dram_to_sram_async
@@ -42,11 +42,17 @@ comptime BLUR_RADIUS = 2
 
 
 # ANCHOR: multi_stage_pipeline_solution
-def multi_stage_image_blur_pipeline(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+def multi_stage_image_blur_pipeline[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Multi-stage image blur pipeline with barrier coordination.
 
     Stage 1 (threads 0-127): Load input data and apply 1.1x preprocessing
@@ -69,10 +75,10 @@ def multi_stage_image_blur_pipeline(
     # Stage 1: Load and preprocess (threads 0-127)
     if local_i < STAGE1_THREADS:
         if global_i < size:
-            input_shared[local_i] = input[global_i] * 1.1
+            input_shared[local_i] = rebind[Scalar[dtype]](input[global_i] * 1.1)
             # Each thread loads 2 elements
             if local_i + STAGE1_THREADS < size:
-                input_shared[local_i + STAGE1_THREADS] = (
+                input_shared[local_i + STAGE1_THREADS] = rebind[Scalar[dtype]](
                     input[global_i + STAGE1_THREADS] * 1.1
                 )
         else:
@@ -143,11 +149,17 @@ comptime BUFFER_COUNT = 2
 
 
 # ANCHOR: double_buffered_stencil_solution
-def double_buffered_stencil_computation(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+def double_buffered_stencil_computation[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Double-buffered stencil computation with memory barrier coordination.
 
     Iteratively applies 3-point stencil using alternating buffers.
@@ -189,7 +201,7 @@ def double_buffered_stencil_computation(
 
     # Initialize buffer_A with input data
     if local_i < TPB and global_i < size:
-        buffer_A[local_i] = input[global_i]
+        buffer_A[local_i] = rebind[Scalar[dtype]](input[global_i])
     else:
         buffer_A[local_i] = 0.0
 
@@ -288,11 +300,11 @@ def test_multi_stage_pipeline() raises:
                 inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / 100.0
 
         # Create TileTensors
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType](out, layout)
-        var inp_tensor = TileTensor[mut=False, dtype, LayoutType](inp, layout)
+        var out_tensor = TileTensor(out, layout)
+        var inp_tensor = TileTensor(inp, layout)
 
         comptime kernel = multi_stage_image_blur_pipeline
-        ctx.enqueue_function[kernel](
+        ctx.enqueue_function[kernel[out_tensor.Engine]](
             out_tensor,
             inp_tensor,
             Int32(SIZE),
@@ -351,11 +363,11 @@ def test_double_buffered_stencil() raises:
                 inp_host[i] = Scalar[dtype](1.0 if i % 20 < 10 else 0.0)
 
         # Create TileTensors for Puzzle 29B
-        var out_tensor = TileTensor[mut=True, dtype, LayoutType](out, layout)
-        var inp_tensor = TileTensor[mut=False, dtype, LayoutType](inp, layout)
+        var out_tensor = TileTensor(out, layout)
+        var inp_tensor = TileTensor(inp, layout)
 
         comptime kernel = double_buffered_stencil_computation
-        ctx.enqueue_function[kernel](
+        ctx.enqueue_function[kernel[out_tensor.Engine]](
             out_tensor,
             inp_tensor,
             Int32(SIZE),

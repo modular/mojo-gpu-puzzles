@@ -20,7 +20,7 @@ from max.gpu.primitives.cluster import (
     cluster_wait,
     elect_one_sync,
 )
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
@@ -42,12 +42,15 @@ comptime ClusterLayout = type_of(cluster_layout)
 
 # ANCHOR: cluster_coordination_basics_solution
 def cluster_coordination_basics[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Real cluster coordination using SM90+ cluster APIs."""
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -69,7 +72,9 @@ def cluster_coordination_basics[
 
     # Phase 1: Each block processes its portion
     if global_i < size:
-        shared_data[local_i] = input[global_i] * data_scale
+        shared_data[local_i] = rebind[Scalar[dtype]](
+            input[global_i] * data_scale
+        )
     else:
         shared_data[local_i] = 0.0
 
@@ -95,13 +100,16 @@ def cluster_coordination_basics[
 
 # ANCHOR: cluster_collective_operations_solution
 def cluster_collective_operations[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    temp_storage: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Cluster-wide collective operations using real cluster APIs."""
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -149,12 +157,15 @@ def cluster_collective_operations[
 
 # ANCHOR: advanced_cluster_patterns_solution
 def advanced_cluster_patterns[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Advanced cluster programming with masks and relaxed sync."""
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -172,7 +183,9 @@ def advanced_cluster_patterns[
     # FIX: Process data with block_idx-based scaling for guaranteed uniqueness
     var data_scale = Scalar[dtype](block_id + 1)
     if global_i < size:
-        shared_data[local_i] = input[global_i] * data_scale
+        shared_data[local_i] = rebind[Scalar[dtype]](
+            input[global_i] * data_scale
+        )
     else:
         shared_data[local_i] = 0.0
 
@@ -227,14 +240,12 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = Scalar[dtype](i % 10) * 0.1
 
-            var input_tensor = TileTensor[mut=False, dtype, InLayout](
-                input_buf, in_layout
-            )
-            var output_tensor = TileTensor[mut=True, dtype, ClusterLayout](
-                output_buf, cluster_layout
-            )
+            var input_tensor = TileTensor(input_buf, in_layout)
+            var output_tensor = TileTensor(output_buf, cluster_layout)
 
-            comptime kernel = cluster_coordination_basics[TPB]
+            comptime kernel = cluster_coordination_basics[
+                TPB, output_tensor.Engine
+            ]
             ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
@@ -289,17 +300,13 @@ def main() raises:
 
             print("Expected sum:", expected_sum)
 
-            var input_tensor = TileTensor[mut=False, dtype, InLayout](
-                input_buf, in_layout
-            )
-            var output_tensor = TileTensor[mut=True, dtype, OutLayout](
-                output_buf, out_layout
-            )
-            var temp_tensor = TileTensor[mut=True, dtype, ClusterLayout](
-                temp_buf, cluster_layout
-            )
+            var input_tensor = TileTensor(input_buf, in_layout)
+            var output_tensor = TileTensor(output_buf, out_layout)
+            var temp_tensor = TileTensor(temp_buf, cluster_layout)
 
-            comptime kernel = cluster_collective_operations[TPB]
+            comptime kernel = cluster_collective_operations[
+                TPB, output_tensor.Engine
+            ]
             ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
@@ -339,14 +346,12 @@ def main() raises:
                         Scalar[dtype](i % 50) * 0.02
                     )  # Pattern for testing
 
-            var input_tensor = TileTensor[mut=False, dtype, InLayout](
-                input_buf, in_layout
-            )
-            var output_tensor = TileTensor[mut=True, dtype, ClusterLayout](
-                output_buf, cluster_layout
-            )
+            var input_tensor = TileTensor(input_buf, in_layout)
+            var output_tensor = TileTensor(output_buf, cluster_layout)
 
-            comptime kernel = advanced_cluster_patterns[TPB]
+            comptime kernel = advanced_cluster_patterns[
+                TPB, output_tensor.Engine
+            ]
             ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,

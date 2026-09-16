@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
@@ -36,11 +36,13 @@ comptime ConvLayout = type_of(conv_layout)
 
 
 # ANCHOR: conv_1d_simple_solution
-def conv_1d_simple(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
-):
+def conv_1d_simple[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var shared_a = stack_allocation[dtype=dtype, address_space=.SHARED](
@@ -50,10 +52,10 @@ def conv_1d_simple(
         row_major[CONV]()
     )
     if global_i < SIZE:
-        shared_a[local_i] = a[global_i]
+        shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])
 
     if global_i < CONV:
-        shared_b[local_i] = b[global_i]
+        shared_b[local_i] = rebind[Scalar[dtype]](b[global_i])
 
     barrier()
 
@@ -97,11 +99,15 @@ comptime Conv2Layout = type_of(conv_2_layout)
 
 
 # ANCHOR: conv_1d_block_boundary_solution
-def conv_1d_block_boundary(
-    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
-):
+def conv_1d_block_boundary[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, Out2Layout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
@@ -112,7 +118,7 @@ def conv_1d_block_boundary(
         row_major[CONV_2]()
     )
     if global_i < SIZE_2:
-        shared_a[local_i] = a[global_i]
+        shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])
     else:
         shared_a[local_i] = 0
 
@@ -121,14 +127,14 @@ def conv_1d_block_boundary(
         # indices from next block
         var next_idx = global_i + TPB
         if next_idx < SIZE_2:
-            shared_a[TPB + local_i] = a[next_idx]
+            shared_a[TPB + local_i] = rebind[Scalar[dtype]](a[next_idx])
         else:
             # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
             # which is an undefined behavior
             shared_a[TPB + local_i] = 0
 
     if local_i < CONV_2:
-        shared_b[local_i] = b[local_i]
+        shared_b[local_i] = rebind[Scalar[dtype]](b[local_i])
 
     barrier()
 
@@ -165,11 +171,9 @@ def main() raises:
 
         if argv()[1] == "--simple":
             var out_tensor = TileTensor(out, out_layout)
-            var a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
-            var b_tensor = TileTensor[mut=False, dtype, ConvLayout](
-                b, conv_layout
-            )
-            ctx.enqueue_function[conv_1d_simple](
+            var a_tensor = TileTensor(a, in_layout)
+            var b_tensor = TileTensor(b, conv_layout)
+            ctx.enqueue_function[conv_1d_simple[out_tensor.Engine]](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -178,13 +182,9 @@ def main() raises:
             )
         elif argv()[1] == "--block-boundary":
             var out_tensor = TileTensor(out, out_2_layout)
-            var a_tensor = TileTensor[mut=False, dtype, In2Layout](
-                a, in_2_layout
-            )
-            var b_tensor = TileTensor[mut=False, dtype, Conv2Layout](
-                b, conv_2_layout
-            )
-            ctx.enqueue_function[conv_1d_block_boundary](
+            var a_tensor = TileTensor(a, in_2_layout)
+            var b_tensor = TileTensor(b, conv_2_layout)
+            ctx.enqueue_function[conv_1d_block_boundary[out_tensor.Engine]](
                 out_tensor,
                 a_tensor,
                 b_tensor,

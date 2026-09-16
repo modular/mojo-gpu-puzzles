@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
@@ -30,11 +30,15 @@ comptime LayoutType = type_of(layout)
 
 
 # ANCHOR: pooling_solution
-def pooling(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def pooling[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     # Allocate shared memory using stack_allocation
     var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
@@ -46,7 +50,7 @@ def pooling(
 
     # Load data into shared memory
     if global_i < size:
-        shared[local_i] = a[global_i]
+        shared[local_i] = rebind[Scalar[dtype]](a[global_i])
 
     # Synchronize threads within block
     barrier()
@@ -78,9 +82,9 @@ def main() raises:
                 a_host[i] = Scalar[dtype](i)
 
         var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+        var a_tensor = TileTensor(a, layout)
 
-        ctx.enqueue_function[pooling](
+        ctx.enqueue_function[pooling[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),

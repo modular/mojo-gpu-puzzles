@@ -15,6 +15,7 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
+from layout.tensor_engine import TensorEngine
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 from std.sys import argv
@@ -42,10 +43,16 @@ def add_10(
 
 
 # ANCHOR: second_crash
-def process_sliding_window(
-    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
-):
+def process_sliding_window[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, VectorLayout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, VectorLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var thread_id = thread_idx.x
 
     # Each thread processes a sliding window of 3 elements
@@ -55,8 +62,7 @@ def process_sliding_window(
     for offset in range(ITER):
         var idx = Int(thread_id) + offset - 1
         if 0 <= idx < SIZE:
-            var value = a[idx]
-            window_sum += value
+            window_sum += rebind[Scalar[dtype]](a[idx])
 
     output[thread_id] = window_sum
 
@@ -65,10 +71,16 @@ def process_sliding_window(
 
 
 # ANCHOR: third_crash
-def collaborative_filter(
-    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
-):
+def collaborative_filter[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, VectorLayout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, VectorLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
@@ -78,7 +90,7 @@ def collaborative_filter(
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
-        shared_workspace[thread_id] = a[thread_id]
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing
@@ -151,9 +163,7 @@ def main() raises:
                     input_host[i] = Scalar[dtype](i)
 
             # Create TileTensors for structured access
-            var input_tensor = TileTensor[mut=False, dtype, VectorLayout](
-                input_buf, vector_layout
-            )
+            var input_tensor = TileTensor(input_buf, vector_layout)
             var output_tensor = TileTensor(output_buf, vector_layout)
 
             print("Input array: [0, 1, 2, 3]")
@@ -163,7 +173,7 @@ def main() raises:
                 " right]"
             )
 
-            ctx.enqueue_function[process_sliding_window](
+            ctx.enqueue_function[process_sliding_window[output_tensor.Engine]](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,
@@ -224,9 +234,7 @@ def main() raises:
                     input_host[i] = Scalar[dtype](i + 1)
 
             # Create TileTensors
-            var input_tensor = TileTensor[mut=False, dtype, VectorLayout](
-                input_buf, vector_layout
-            )
+            var input_tensor = TileTensor(input_buf, vector_layout)
             var output_tensor = TileTensor(output_buf, vector_layout)
 
             print("Input array: [1, 2, 3, 4]")
@@ -234,7 +242,7 @@ def main() raises:
             print("Each thread cooperates with neighbors for smoothing...")
 
             # This will likely hang due to barrier deadlock
-            ctx.enqueue_function[collaborative_filter](
+            ctx.enqueue_function[collaborative_filter[output_tensor.Engine]](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,

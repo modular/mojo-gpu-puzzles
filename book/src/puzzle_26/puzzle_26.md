@@ -90,7 +90,7 @@ for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
     offset *= 2
 
 # Advanced warp primitives eliminate all this complexity:
-var current_val = input[global_i]
+var current_val = rebind[Scalar[dtype]](input[global_i])
 var scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
 output[global_i] = scan_result
 ```
@@ -165,7 +165,7 @@ multi-phase algorithms with single function calls.
 **Key pattern:**
 
 ```mojo
-var current_val = input[global_i]
+var current_val = rebind[Scalar[dtype]](input[global_i])
 var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result  # Hardware-optimized cumulative sum
 ```
