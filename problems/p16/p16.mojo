@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
@@ -32,12 +32,15 @@ comptime LayoutType = type_of(layout)
 
 # ANCHOR: naive_matmul
 def naive_matmul[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 6 lines)
@@ -48,12 +51,15 @@ def naive_matmul[
 
 # ANCHOR: single_block_matmul
 def single_block_matmul[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
     var local_row = thread_idx.y
@@ -73,12 +79,19 @@ comptime LayoutTiledType = type_of(layout_tiled)
 
 # ANCHOR: matmul_tiled
 def matmul_tiled[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutTiledType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+    b: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
@@ -123,11 +136,11 @@ def main() raises:
                         )
 
         var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](inp1, layout)
-        var b_tensor = TileTensor[mut=False, dtype, LayoutType](inp2, layout)
+        var a_tensor = TileTensor(inp1, layout)
+        var b_tensor = TileTensor(inp2, layout)
 
         if argv()[1] == "--naive":
-            comptime kernel = naive_matmul[SIZE]
+            comptime kernel = naive_matmul[SIZE, out_tensor.Engine]
             ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
@@ -136,7 +149,7 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            comptime kernel = single_block_matmul[SIZE]
+            comptime kernel = single_block_matmul[SIZE, out_tensor.Engine]
             ctx.enqueue_function[kernel](
                 out_tensor,
                 a_tensor,
@@ -147,14 +160,10 @@ def main() raises:
         elif argv()[1] == "--tiled":
             # Need to update the layout of the tensors to the tiled layout
             var out_tensor_tiled = TileTensor(out, layout_tiled)
-            var a_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
-                inp1, layout_tiled
-            )
-            var b_tensor_tiled = TileTensor[mut=False, dtype, LayoutTiledType](
-                inp2, layout_tiled
-            )
+            var a_tensor_tiled = TileTensor(inp1, layout_tiled)
+            var b_tensor_tiled = TileTensor(inp2, layout_tiled)
 
-            comptime kernel = matmul_tiled[SIZE_TILED]
+            comptime kernel = matmul_tiled[SIZE_TILED, out_tensor_tiled.Engine]
             ctx.enqueue_function[kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,

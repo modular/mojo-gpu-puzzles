@@ -165,8 +165,8 @@ Matrix B:                           b_shared: (similar layout)
    ```mojo
    # Load data into shared memory using TileTensor indexing
    if row < size and col < size:
-       a_shared[local_row, local_col] = a[row, col]
-       b_shared[local_row, local_col] = b[row, col]
+       a_shared[local_row, local_col] = rebind[Scalar[dtype]](a[row, col])
+       b_shared[local_row, local_col] = rebind[Scalar[dtype]](b[row, col])
 
    # Every thread reaches this, including the ones the guard skipped
    barrier()

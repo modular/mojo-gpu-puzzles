@@ -244,7 +244,9 @@ coordination for maximum GPU utilization:**
 ```mojo
 var data_scale = Scalar[dtype](block_id + 1)  # Block-specific scaling factor
 if global_i < size:
-    shared_data[local_i] = input[global_i] * data_scale
+    shared_data[local_i] = rebind[Scalar[dtype]](
+        input[global_i] * data_scale
+    )
 else:
     shared_data[local_i] = 0.0  # Zero-pad for out-of-bounds
 barrier()  # Ensure all threads complete data loading

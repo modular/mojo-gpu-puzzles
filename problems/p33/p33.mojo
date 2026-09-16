@@ -13,7 +13,12 @@
 from max.gpu import thread_idx, block_idx, block_dim, WARP_SIZE
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor, TileTensor
+from layout import (
+    Layout,
+    LayoutTensor,
+    TileTensor,
+    TensorEngine,
+)
 from layout.tile_layout import row_major
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
@@ -40,12 +45,15 @@ comptime THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
 
 # ANCHOR: matmul_idiomatic_tiled_solution
 def matmul_idiomatic_tiled[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     # Use block_dim to get actual tile size dynamically
     var tile_size_x = block_dim.x
     var tile_size_y = block_dim.y
@@ -116,7 +124,7 @@ def matmul_idiomatic_tiled[
 
     # Write final result to output tile
     if tiled_row < size and tiled_col < size:
-        out_tile[local_row, local_col] = acc
+        out_tile[local_row, local_col] = rebind[Scalar[dtype]](acc)
 
 
 # ANCHOR_END: matmul_idiomatic_tiled_solution
@@ -308,12 +316,8 @@ def main() raises:
 
         # Create TileTensors for the tiled kernel
         var out_tile_tensor = TileTensor(out_tensor_core, layout)
-        var a_tile_tensor = TileTensor[mut=False, dtype, LayoutType](
-            inp1, layout
-        )
-        var b_tile_tensor = TileTensor[mut=False, dtype, LayoutType](
-            inp2, layout
-        )
+        var a_tile_tensor = TileTensor(inp1, layout)
+        var b_tile_tensor = TileTensor(inp2, layout)
 
         if mode == "--tensor-core":
             print("\n=== Running ACTUAL Tensor Core Matrix Multiplication ===")
@@ -350,7 +354,9 @@ def main() raises:
             var out_tiled_layout = TileTensor(out_tiled, layout)
 
             # Run idiomatic tiled version with proper 2D block configuration
-            comptime kernel = matmul_idiomatic_tiled[SIZE]
+            comptime kernel = matmul_idiomatic_tiled[
+                SIZE, out_tiled_layout.Engine
+            ]
             ctx.enqueue_function[kernel](
                 out_tiled_layout,
                 a_tile_tensor,
@@ -454,7 +460,9 @@ def main() raises:
             var out_tiled = mem.output(SIZE * SIZE)
             var out_tiled_layout = TileTensor(out_tiled, layout)
 
-            comptime kernel2 = matmul_idiomatic_tiled[SIZE]
+            comptime kernel2 = matmul_idiomatic_tiled[
+                SIZE, out_tiled_layout.Engine
+            ]
             ctx.enqueue_function[kernel2](
                 out_tiled_layout,
                 a_tile_tensor,

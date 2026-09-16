@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
@@ -30,11 +30,15 @@ comptime LayoutType = type_of(layout)
 
 
 # ANCHOR: add_10_shared_solution
-def add_10_shared_tile_tensor(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def add_10_shared_tile_tensor[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     # Allocate shared memory. Unlike most kernel variables, which are private to
     # each thread, shared memory (`AddressSpace.SHARED`) is scoped per-block.
@@ -47,7 +51,7 @@ def add_10_shared_tile_tensor(
     var local_i = thread_idx.x
 
     if global_i < size:
-        shared[local_i] = a[global_i]
+        shared[local_i] = rebind[Scalar[dtype]](a[global_i])
 
     # Note: barrier is not strictly needed here since each thread only accesses
     # its own shared memory location. However, it's included to teach proper
@@ -70,9 +74,9 @@ def main() raises:
         a.enqueue_fill(1)
 
         var out_tensor = TileTensor(out, layout)
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+        var a_tensor = TileTensor(a, layout)
 
-        ctx.enqueue_function[add_10_shared_tile_tensor](
+        ctx.enqueue_function[add_10_shared_tile_tensor[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             Int32(SIZE),

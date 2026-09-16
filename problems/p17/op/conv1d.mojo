@@ -14,6 +14,7 @@ from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from layout import Coord, TileTensor
+from layout.tensor_engine import TensorEngine
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
@@ -30,12 +31,15 @@ def conv1d_kernel[
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
     ConvLayout: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
-    kernel: TileTensor[mut=True, dtype, ConvLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    kernel: TileTensor[
+        mut=True, dtype, ConvLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
@@ -100,21 +104,9 @@ struct Conv1DCustomOp:
         # the context is needed for some GPU calls
         ctx: DeviceContext,
     ) raises:
-        comptime out_layout_val = row_major[input_size]()
-        comptime OutLayout = type_of(out_layout_val)
-        comptime conv_layout_val = row_major[conv_size]()
-        comptime ConvLayout = type_of(conv_layout_val)
-
-        var output_tensor = TileTensor[
-            mut=True, dtype, OutLayout, MutAnyOrigin
-        ](output.unsafe_ptr(), out_layout_val)
-        var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-            input.unsafe_ptr(), out_layout_val
-        )
-        var kernel_tensor = TileTensor[
-            mut=True, dtype, ConvLayout, MutAnyOrigin
-        ](kernel.unsafe_ptr(), conv_layout_val)
-
+        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
+        var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
+        var kernel_tensor = kernel.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called

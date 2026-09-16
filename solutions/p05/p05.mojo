@@ -12,7 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu import thread_idx
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from std.testing import assert_equal
 
@@ -31,12 +31,14 @@ comptime BLayout = type_of(b_layout)
 
 
 # ANCHOR: broadcast_add_solution
-def broadcast_add(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
+def broadcast_add[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
@@ -71,10 +73,10 @@ def main() raises:
                 for j in range(SIZE):
                     expected_tensor[i, j] = a_host[j] + b_host[i]
 
-        var a_tensor = TileTensor[mut=False, dtype, ALayout](a, a_layout)
-        var b_tensor = TileTensor[mut=False, dtype, BLayout](b, b_layout)
+        var a_tensor = TileTensor(a, a_layout)
+        var b_tensor = TileTensor(b, b_layout)
 
-        ctx.enqueue_function[broadcast_add](
+        ctx.enqueue_function[broadcast_add[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             b_tensor,

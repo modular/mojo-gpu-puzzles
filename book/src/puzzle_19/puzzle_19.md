@@ -431,7 +431,9 @@ access patterns. Key implementation details:
 
 ```mojo
 # Load with normal indexing
-shared_tile[local_row, local_col] = inp[global_row, global_col]
+shared_tile[local_row, local_col] = rebind[Scalar[dtype]](
+    inp[global_row, global_col]
+)
 barrier()
 # Store with swapped indexing for transpose
 output[out_row, out_col] = shared_tile[local_col, local_row]

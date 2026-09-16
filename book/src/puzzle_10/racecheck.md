@@ -145,8 +145,8 @@ Equipped with these tools, fix the failing kernel.
 
 ### Understanding the hazard breakdown
 
-The `shared_sum[0] += a[row, col]` operation creates hazards because it's
-actually **three separate memory operations**:
+The `shared_sum[0] += rebind[Scalar[dtype]](a[row, col])` operation creates
+hazards because it's actually **three separate memory operations**:
 
 1. **READ** `shared_sum[0]`
 2. **ADD** `a[row, col]` to the read value
@@ -218,7 +218,7 @@ can interleave:
 The original failing code had this critical line:
 
 ```mojo
-shared_sum[0] += a[row, col]  # RACE CONDITION!
+shared_sum[0] += rebind[Scalar[dtype]](a[row, col])  # RACE CONDITION!
 ```
 
 This single line creates multiple hazards among the 4 valid threads:
@@ -302,7 +302,7 @@ if row == 0 and col == 0:
     var local_sum = Scalar[dtype](0.0)
     for r in range(size):
         for c in range(size):
-            local_sum += a[r, c]
+            local_sum += rebind[Scalar[dtype]](a[r, c])
     shared_sum[0] = local_sum  # Single write operation
 ```
 
