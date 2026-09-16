@@ -20,6 +20,8 @@ from std.sys import argv
 from std.math import log2
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 # ANCHOR: prefix_sum_simple
 comptime TPB = 8
 comptime SIZE = 8
@@ -82,6 +84,7 @@ def prefix_sum_block_sum_phase(
 
 def main() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var use_simple = argv()[1] == "--simple"
         var size = SIZE if use_simple else SIZE_2
         var num_blocks = (size + TPB - 1) // TPB
@@ -90,8 +93,7 @@ def main() raises:
             raise Error("Extended buffer too small for the number of blocks")
 
         var buffer_size = size if use_simple else EXTENDED_SIZE
-        var out = ctx.enqueue_create_buffer[dtype](buffer_size)
-        out.enqueue_fill(0)
+        var out = mem.output(buffer_size)
         var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
 
@@ -158,4 +160,5 @@ def main() raises:
             size = size if use_simple else SIZE_2
             for i in range(size):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 14 complete ✅")
+        mem.verify()
+        print("Puzzle 14 complete ✅")

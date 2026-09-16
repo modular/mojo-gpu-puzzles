@@ -18,6 +18,8 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 comptime TPB = 8
 comptime BATCH = 4
 comptime SIZE = 6
@@ -48,8 +50,8 @@ def axis_sum(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](BATCH)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(BATCH)
         var inp = ctx.enqueue_create_buffer[dtype](BATCH * SIZE)
         inp.enqueue_fill(0)
         with inp.map_to_host() as inp_host:
@@ -82,4 +84,5 @@ def main() raises:
             print("expected:", expected)
             for i in range(BATCH):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 15 complete ✅")
+        mem.verify()
+        print("Puzzle 15 complete ✅")

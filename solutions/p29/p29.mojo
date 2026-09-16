@@ -25,6 +25,8 @@ from layout.layout_tensor import copy_dram_to_sram_async
 from std.sys import argv, info
 from std.testing import assert_true, assert_almost_equal
 
+from harness.canary import PuzzleMemory
+
 comptime TPB = 256  # Threads per block for pipeline stages
 comptime SIZE = 1024  # Image size (1D for simplicity)
 comptime BLOCKS_PER_GRID = (4, 1)
@@ -274,8 +276,8 @@ def double_buffered_stencil_computation(
 def test_multi_stage_pipeline() raises:
     """Test Puzzle 29A: Multi-Stage Pipeline Coordination."""
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(SIZE)
         var inp = ctx.enqueue_create_buffer[dtype](SIZE)
         inp.enqueue_fill(0)
 
@@ -329,15 +331,16 @@ def test_multi_stage_pipeline() raises:
                     out_host[i] < 1000.0, "Output values should be reasonable"
                 )
 
-            print("Puzzle 29 complete ✅")
+        mem.verify()
+        print("Puzzle 29 complete ✅")
 
 
 def test_double_buffered_stencil() raises:
     """Test Puzzle 29B: Double-Buffered Stencil Computation."""
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Test Puzzle 29B: Double-Buffered Stencil Computation
-        var out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out.enqueue_fill(0)
+        var out = mem.output(SIZE)
         var inp = ctx.enqueue_create_buffer[dtype](SIZE)
         inp.enqueue_fill(0)
 
@@ -406,7 +409,8 @@ def test_double_buffered_stencil() raises:
                 smooth_transitions, "Stencil should smooth sharp transitions"
             )
 
-            print("Puzzle 29 complete ✅")
+        mem.verify()
+        print("Puzzle 29 complete ✅")
 
 
 def main() raises:

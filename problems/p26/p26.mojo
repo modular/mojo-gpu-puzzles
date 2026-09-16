@@ -18,6 +18,8 @@ from layout.tile_layout import row_major
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
+from harness.canary import PuzzleMemory
+
 
 comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
@@ -172,6 +174,7 @@ def warp_partition[
 
 def test_butterfly_pair_swap() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
         var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -213,16 +216,17 @@ def test_butterfly_pair_swap() raises:
             print("expected:", expected_buf)
             for i in range(SIZE):
                 assert_equal(output_host[i], expected_buf[i])
+        mem.verify()
 
     print("Butterfly pair swap test: passed")
 
 
 def test_butterfly_parallel_max() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -255,16 +259,17 @@ def test_butterfly_parallel_max() raises:
 
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], 1000.0, rtol=1e-5)
+        mem.verify()
 
     print("Butterfly parallel max test: passed")
 
 
 def test_butterfly_conditional_max() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE_2)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE_2):
@@ -319,16 +324,17 @@ def test_butterfly_conditional_max() raises:
                     assert_almost_equal(output_host[i], max_val, rtol=1e-5)
                 else:
                     assert_almost_equal(output_host[i], min_val, rtol=1e-5)
+        mem.verify()
 
     print("Butterfly conditional max test: passed")
 
 
 def test_warp_inclusive_prefix_sum() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -363,16 +369,17 @@ def test_warp_inclusive_prefix_sum() raises:
             print("expected:", expected_buf)
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-5)
+        mem.verify()
 
     print("Warp inclusive prefix sum test: passed")
 
 
 def test_warp_partition() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         # Create test data: mix of values above and below pivot
         var pivot_value = Scalar[dtype](5.0)
@@ -457,6 +464,7 @@ def test_warp_partition() raises:
             for i in range(partition_point, SIZE):
                 if output_host[i] < pivot_value:
                     print("ERROR: Right partition contains value < pivot")
+        mem.verify()
 
     print("Warp partition test: passed")
 

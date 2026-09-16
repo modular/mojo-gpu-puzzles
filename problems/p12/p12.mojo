@@ -18,6 +18,8 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
+from harness.canary import PuzzleMemory
+
 # ANCHOR: dot_product
 comptime TPB = 8
 comptime SIZE = 8
@@ -46,8 +48,8 @@ def dot_product(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](1)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(1)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         var b = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -83,4 +85,5 @@ def main() raises:
             print("out:", out_host)
             print("expected:", expected)
             assert_equal(out_host[0], expected[0])
-            print("Puzzle 12 complete ✅")
+        mem.verify()
+        print("Puzzle 12 complete ✅")

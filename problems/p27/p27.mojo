@@ -23,6 +23,8 @@ from std.sys import argv
 from std.testing import assert_equal
 from std.math import floor
 
+from harness.canary import PuzzleMemory
+
 comptime SIZE = 128
 comptime TPB = 128
 comptime NUM_BINS = 8
@@ -209,9 +211,9 @@ def main() raises:
         return
 
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         if argv()[1] == "--traditional-dot-product":
-            var out = ctx.enqueue_create_buffer[dtype](1)
-            out.enqueue_fill(0)
+            var out = mem.output(1)
             var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
             var b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -255,8 +257,7 @@ def main() raises:
                 print("Complex: shared memory + barriers + tree reduction")
 
         elif argv()[1] == "--block-sum-dot-product":
-            var out = ctx.enqueue_create_buffer[dtype](1)
-            out.enqueue_fill(0)
+            var out = mem.output(1)
             var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
             var b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -396,8 +397,7 @@ def main() raises:
             # Create input data with known values for easy verification
             var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-            output_buf.enqueue_fill(0)
+            var output_buf = mem.output(SIZE)
 
             # Create test data: values like [1, 2, 3, 4, 5, ..., 8, 1, 2, 3, ...]
             # Mean value will be 4.5, so normalized values will be input[i] / 4.5
@@ -466,3 +466,4 @@ def main() raises:
                 "Available options: [--traditional-dot-product |"
                 " --block-sum-dot-product | --histogram | --normalize]"
             )
+        mem.verify()

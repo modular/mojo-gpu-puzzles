@@ -21,6 +21,8 @@ from layout.layout_tensor import copy_dram_to_sram_async
 from std.sys import argv, info
 from std.testing import assert_equal, assert_almost_equal
 
+from harness.canary import PuzzleMemory
+
 
 comptime VECTOR_SIZE = 16384
 comptime CONV_TILE_SIZE = 256
@@ -110,10 +112,10 @@ def async_copy_overlap_convolution[
 def test_async_copy_overlap_convolution() raises:
     """Test async copy overlap with 1D convolution."""
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var input_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(VECTOR_SIZE)
         var kernel_buf = ctx.enqueue_create_buffer[dtype](KERNEL_SIZE)
         kernel_buf.enqueue_fill(0)
 
@@ -198,6 +200,7 @@ def test_async_copy_overlap_convolution() raises:
                     print("Puzzle 28 complete ✅")
                 else:
                     print("Async copy overlap convolution test FAILED!")
+        mem.verify()
 
 
 def main() raises:

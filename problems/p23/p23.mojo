@@ -27,6 +27,8 @@ from std.testing import assert_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 from max.benchmark import bencher_iter_custom
 
+from harness.canary import PuzzleMemory
+
 comptime SIZE = 1024
 comptime rank = 1
 comptime layout = row_major[SIZE]()
@@ -327,8 +329,8 @@ def benchmark_vectorized_parameterized[
 
 def main() raises:
     var ctx = DeviceContext()
-    var out = ctx.enqueue_create_buffer[dtype](SIZE)
-    out.enqueue_fill(0)
+    var mem = PuzzleMemory[dtype](ctx)
+    var out = mem.output(SIZE)
     var a = ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(0)
     var b = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -517,3 +519,4 @@ def main() raises:
             "Usage: --elementwise | --tiled | --manual-vectorized |"
             " --vectorized | --benchmark"
         )
+    mem.verify()

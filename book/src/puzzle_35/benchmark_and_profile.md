@@ -9,7 +9,7 @@
 ## Step 1: Benchmark the three variants
 
 ```bash
-pixi run mojo solutions/p35/p35.mojo --benchmark
+pixi run mojo -I . solutions/p35/p35.mojo --benchmark
 ```
 
 This times all three kernels on a 1M-element buffer. Representative numbers from
@@ -41,7 +41,7 @@ test is too coarse to see the codegen difference but the profiler is not.
 ## Step 2: Build for profiling
 
 ```bash
-mojo build --debug-level=full solutions/p35/p35.mojo -o solutions/p35/p35_profiler
+mojo build --debug-level=full -I . solutions/p35/p35.mojo -o solutions/p35/p35_profiler
 ```
 
 `--debug-level=full` keeps source-line mapping so Nsight Compute can attribute

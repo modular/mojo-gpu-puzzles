@@ -65,9 +65,9 @@ keep the pairing visible next to the unaligned one.
 ## Running it
 
 ```bash
-pixi run mojo solutions/p35/p35.mojo --scalar
-pixi run mojo solutions/p35/p35.mojo --unaligned
-pixi run mojo solutions/p35/p35.mojo --aligned
+pixi run mojo -I . solutions/p35/p35.mojo --scalar
+pixi run mojo -I . solutions/p35/p35.mojo --unaligned
+pixi run mojo -I . solutions/p35/p35.mojo --aligned
 ```
 
 `--scalar` runs `scalar_kernel`. Each command prints `<kernel> kernel: passed`,

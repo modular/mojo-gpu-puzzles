@@ -22,6 +22,8 @@ from std.utils import Index
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
+from harness.canary import PuzzleMemory
+
 comptime dtype = DType.float32
 comptime SIZE = 1024
 comptime layout = row_major[SIZE, SIZE]()
@@ -271,9 +273,9 @@ def main() raises:
     var mode = argv()[1]
 
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Create buffers
-        var out_tensor_core = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-        out_tensor_core.enqueue_fill(0)
+        var out_tensor_core = mem.output(SIZE * SIZE)
         var inp1 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         var inp2 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
@@ -344,8 +346,7 @@ def main() raises:
             print("\n=== Running Idiomatic Tiled Matrix Multiplication ===")
 
             # Create separate buffer for tiled result
-            var out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-            out_tiled.enqueue_fill(0)
+            var out_tiled = mem.output(SIZE * SIZE)
             var out_tiled_layout = TileTensor(out_tiled, layout)
 
             # Run idiomatic tiled version with proper 2D block configuration
@@ -450,8 +451,7 @@ def main() raises:
 
             # Test 2: Idiomatic Tiled vs CPU
             print("\n--- Test 2: Idiomatic Tiled vs CPU Reference ---")
-            var out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-            out_tiled.enqueue_fill(0)
+            var out_tiled = mem.output(SIZE * SIZE)
             var out_tiled_layout = TileTensor(out_tiled, layout)
 
             comptime kernel2 = matmul_idiomatic_tiled[SIZE]
@@ -504,6 +504,7 @@ def main() raises:
         else:
             print("ERROR: Unknown option:", mode)
             return
+        mem.verify()
 
     print("\nACTUAL TensorCore API Implementation:")
     print("  - TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()")

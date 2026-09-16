@@ -135,7 +135,7 @@ Let's profile the Matrix Multiplication implementations from
 ```bash
 pixi shell -e nvidia
 # Build with full debug info for comprehensive source mapping
-mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
+mojo build --debug-level=full -I . solutions/p16/p16.mojo -o solutions/p16/p16_optimized
 
 # Test the build
 ./solutions/p16/p16_optimized --naive

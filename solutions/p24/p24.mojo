@@ -36,6 +36,8 @@ from std.benchmark import (
 )
 from max.benchmark import bencher_iter_custom
 
+from harness.canary import PuzzleMemory
+
 comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # optimal choice for warp kernel
@@ -375,8 +377,8 @@ def main() raises:
         comptime main_out_layout = row_major[n_warps]()
         comptime MainOutLayout = type_of(main_out_layout)
         with DeviceContext() as ctx:
-            var out = ctx.enqueue_create_buffer[dtype](n_warps)
-            out.enqueue_fill(0)
+            var mem = PuzzleMemory[dtype](ctx)
+            var out = mem.output(n_warps)
             var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
             var b = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -429,6 +431,7 @@ def main() raises:
             check_result[dtype, n_warps, True](out, expected)
             print("Puzzle 24 complete ✅")
             ctx.synchronize()
+            mem.verify()
     elif argv()[1] == "--benchmark":
         print("-" * 80)
         var bench_config = BenchConfig(max_iters=100, num_warmup_iters=1)

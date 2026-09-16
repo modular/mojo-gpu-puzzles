@@ -18,6 +18,8 @@ from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
+from harness.canary import PuzzleMemory
+
 
 comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
@@ -155,11 +157,11 @@ def conditional_broadcast[
 
 def test_neighbor_difference() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [0, 1, 4, 9, 16, 25, ...] (squares)
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -197,17 +199,18 @@ def test_neighbor_difference() raises:
             print("expected:", expected_buf)
             for i in range(SIZE):
                 assert_equal(output_host[i], expected_buf[i])
+        mem.verify()
 
     print("Neighbor difference test: passed")
 
 
 def test_moving_average() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [1, 2, 4, 7, 11, 16, 22, 29, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE_2)
 
         with input_buf.map_to_host() as input_host:
             input_host[0] = 1
@@ -265,17 +268,18 @@ def test_moving_average() raises:
             # Verify results
             for i in range(SIZE_2):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-5)
+        mem.verify()
 
     print("Moving average test: passed")
 
 
 def test_broadcast_shuffle_coordination() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [2, 4, 6, 8, 1, 3, 5, 7, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern: [2, 4, 6, 8, 1, 3, 5, 7, ...]
@@ -324,17 +328,18 @@ def test_broadcast_shuffle_coordination() raises:
             # Verify results
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
+        mem.verify()
 
     print("Broadcast + shuffle coordination test: passed")
 
 
 def test_basic_broadcast() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [1, 2, 3, 4, 5, 6, 7, 8, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -374,17 +379,18 @@ def test_basic_broadcast() raises:
             # Verify results
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
+        mem.verify()
 
     print("Basic broadcast test: passed")
 
 
 def test_conditional_broadcast() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         # Create test data: [3, 1, 7, 2, 9, 4, 6, 8, ...]
         var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
-        output_buf.enqueue_fill(0)
+        var output_buf = mem.output(SIZE)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern with known max
@@ -439,6 +445,7 @@ def test_conditional_broadcast() raises:
             # Verify results
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
+        mem.verify()
 
     print("Conditional broadcast test: passed")
 

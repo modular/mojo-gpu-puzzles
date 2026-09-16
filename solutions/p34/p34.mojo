@@ -26,6 +26,8 @@ from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal, assert_true
 
+from harness.canary import PuzzleMemory
+
 comptime SIZE = 1024
 comptime TPB = 256
 comptime CLUSTER_SIZE = 4
@@ -212,14 +214,14 @@ def main() raises:
         return
 
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         if argv()[1] == "--coordination":
             print("Testing Multi-Block Coordination")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
             var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            var output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
-            output_buf.enqueue_fill(0)
+            var output_buf = mem.output(CLUSTER_SIZE)
 
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
@@ -275,8 +277,7 @@ def main() raises:
 
             var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            var output_buf = ctx.enqueue_create_buffer[dtype](1)
-            output_buf.enqueue_fill(0)
+            var output_buf = mem.output(1)
             var temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
             temp_buf.enqueue_fill(0)
 
@@ -330,8 +331,7 @@ def main() raises:
 
             var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            var output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
-            output_buf.enqueue_fill(0)
+            var output_buf = mem.output(CLUSTER_SIZE)
 
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
@@ -387,3 +387,4 @@ def main() raises:
             print(
                 "Available options: [--coordination | --reduction | --advanced]"
             )
+        mem.verify()
