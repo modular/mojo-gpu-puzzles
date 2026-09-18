@@ -760,6 +760,25 @@ this book describes.</p>
 include your platform with <code>-e platform</code> such as <code>-e amd</code>)</li>
 <li>Compare with <code>solutions/pXX/</code> to learn different approaches</li>
 </ol>
+<h3 id="guarded-output-buffers"><a class="header" href="#guarded-output-buffers">Guarded output buffers</a></h3>
+<p>Most puzzles allocate their output inside a larger buffer whose margins hold
+NaN. When the puzzle finishes it checks those margins, and fails if your
+kernel wrote into one:</p>
+<pre><code class="language-text">❌ Write detected outside of output buffer
+</code></pre>
+<p>A kernel can write every expected value into <code>output</code> and still write past the
+end of it, which comparing values alone cannot detect. This message means the
+indexing ran outside the output region, most often a missing bounds check on
+the last block, where the thread count exceeds the size of the data.</p>
+<p>The margins extend a fixed number of elements past each end, so a write far
+enough beyond them lands outside the guarded region and goes unreported. A
+clean check is good evidence, not proof.</p>
+<p>Nor does the check reach every puzzle. Puzzles 17 to 22 keep their kernels
+behind a Python driver and allocate through the MAX graph rather than a
+device context, so they have no guarded buffer, and neither do puzzles 9, 10
+and 30 to 32, which drive external tools instead of asking you to write a
+kernel. Those puzzles never print the message above, whatever your kernel
+does.</p>
 <h3 id="essential-commands"><a class="header" href="#essential-commands">Essential commands</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -809,6 +828,9 @@ uv run mojo -I . solutions/pXX/pXX.mojo  # Reference solution
 </code></pre>
   </div>
 </div>
+<p>Puzzles 30, 31 and 32 ship no reference solution, so the
+<code>solutions/pXX/pXX.mojo</code> commands above have nothing to run for them. Work
+through those three from the book pages and the profiling output instead.</p>
 <h2 id="gpu-support-matrix"><a class="header" href="#gpu-support-matrix">GPU support matrix</a></h2>
 <p>The following table shows GPU platform compatibility for each puzzle. Different
 puzzles require different GPU features and vendor-specific tools.</p>
@@ -919,8 +941,8 @@ advanced Mojo GPU features</li>
 tools rather than GPU features. <code>compute-sanitizer</code> (9, 10) comes with the
 environment. Profiling with <code>ncu</code> (30-32) needs GPU performance-counter
 access, which shared platforms often restrict, and <code>nsys</code> (30, 31) needs a
-system CUDA installation. Interactive debugging with <code>cuda-gdb</code> (9) expects a
-terminal rather than a notebook cell</li>
+system CUDA installation. Interactive debugging with <code>cuda-gdb</code> (9) needs
+one too, and expects a terminal rather than a notebook cell</li>
 <li><strong>Compute capability limits</strong>: T4 is compute capability 7.5, so puzzles
 requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won’t run</li>
 <li><strong>Package installation restrictions</strong>: May require workarounds for Mojo/MAX
@@ -954,8 +976,8 @@ features</li>
 tools rather than GPU features. <code>compute-sanitizer</code> (9, 10) comes with the
 environment. Profiling with <code>ncu</code> (30-32) needs GPU performance-counter
 access, which shared platforms often restrict, and <code>nsys</code> (30, 31) needs a
-system CUDA installation. Interactive debugging with <code>cuda-gdb</code> (9) expects a
-terminal rather than a notebook cell</li>
+system CUDA installation. Interactive debugging with <code>cuda-gdb</code> (9) needs
+one too, and expects a terminal rather than a notebook cell</li>
 <li><strong>Mojo installation complexity</strong>: Requires manual setup of Mojo environment</li>
 <li><strong>Compute capability limits</strong>: T4 is compute capability 7.5, so puzzles
 requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won’t run</li>
@@ -2780,7 +2802,7 @@ debugging concepts to advanced parallel coordination failures:</p>
 <h3 id="-step-2-detective-work-first-case"><a class="header" href="#-step-2-detective-work-first-case">🧐 <strong>Step 2: <a href="puzzle_09/./first_case.html">Detective Work: First Case</a></strong></a></h3>
 <p><strong>Memory crash investigation</strong> - Debug a GPU program that crashes</p>
 <ul>
-<li>Investigate <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> crashes</li>
+<li>Investigate <code>CUDA_ERROR_MISALIGNED_ADDRESS</code> crashes</li>
 <li>Learn systematic pointer inspection techniques</li>
 <li>Learn null pointer detection and validation</li>
 <li>Practice professional crash analysis workflow</li>
@@ -3109,12 +3131,19 @@ pixi run mojo debug --help
 pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 </code></pre>
-<p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and
-ensure the CUDA toolkit feature is enabled.</p>
-<p><strong>Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s
-<code>cuda-gdb</code> package only provides a wrapper script. This command auto-detects and
-links the actual CUDA-GDB binaries from your system CUDA installation to the
-conda environment, enabling full GPU debugging capabilities.</p>
+<p><strong><code>pixi</code> cannot supply <code>cuda-gdb</code> on its own.</strong> Conda’s <code>cuda-gdb</code> package
+ships only a dispatcher script, not the binaries that script dispatches to, so
+step 4 fails in a fresh environment however <code>pixi.toml</code> is configured. That is
+what <code>pixi run setup-cuda-gdb</code> works around: it looks for a CUDA Toolkit
+installed on the system, outside <code>pixi</code>, and links that toolkit’s <code>cuda-gdb</code>
+binaries into the conda environment.</p>
+<p>So a system CUDA Toolkit is a prerequisite for this puzzle, not an
+alternative to the <code>pixi</code> environment. If step 2 reports that it found
+nothing to link, install the toolkit from
+<a href="https://developer.nvidia.com/cuda-downloads">NVIDIA’s CUDA Toolkit downloads</a>
+and run step 2 again. If step 4 still fails afterwards, the interactive
+walkthrough on the following pages will not reproduce on your machine — read
+the transcripts rather than following along.</p>
 <p><strong>What this command does:</strong></p>
 <p>The script automatically detects CUDA from multiple common locations:</p>
 <ul>
@@ -3882,10 +3911,10 @@ debugging.</p>
 <p>You’ll see output like this when the program crashes:</p>
 <pre><code class="language-txt">First Case: Try to identify what's wrong without looking at the code!
 
-stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At open-source/max/Mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+CUDA call failed: CUDA_ERROR_MISALIGNED_ADDRESS (misaligned address)
 To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
-/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
+mojo: error: execution crashed
+To get a symbolicated stack trace, compile your program using `mojo build` with debug info enabled (e.g., `-debug-level=line-tables`) and execute it separately.
 </code></pre>
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
 <p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging
@@ -3897,8 +3926,8 @@ strategy to investigate this crash?</p>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> means the
-GPU tried to access invalid memory</li>
+<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_MISALIGNED_ADDRESS</code> means
+the GPU tried to access memory it cannot address</li>
 <li><strong>Check the breakpoint information</strong> - Look at the function parameters shown
 when CUDA-GDB stops</li>
 <li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer
@@ -3971,7 +4000,7 @@ elements.</li>
 null pointer.</li>
 <li>This null pointer gets passed to the GPU kernel.</li>
 <li>When the kernel evaluates <code>a[unsafe_offset=i]</code>, it dereferences null →
-<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>.</li>
+<code>CUDA_ERROR_MISALIGNED_ADDRESS</code>.</li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
@@ -4038,7 +4067,7 @@ incorrect results without crashing.</p>
 <p><strong>The debugging shift:</strong></p>
 <ul>
 <li><strong><a href="puzzle_09/./first_case.html">First Case</a></strong>: Clear crash signals
-(<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>) guided your investigation</li>
+(<code>CUDA_ERROR_MISALIGNED_ADDRESS</code>) guided your investigation</li>
 <li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results
 that require detective work</li>
 </ul>
@@ -4701,10 +4730,16 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 barrier()                   # ALL threads reach this
 </code></pre>
 <p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
-<pre><code class="language-mojo">def collaborative_filter(
-    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
-):
+<pre><code class="language-mojo">def collaborative_filter[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, VectorLayout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, VectorLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var thread_id = thread_idx.x
     var shared_workspace = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -4712,7 +4747,7 @@ barrier()                   # ALL threads reach this
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
-        shared_workspace[thread_id] = a[thread_id]
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing
@@ -5283,8 +5318,8 @@ def shared_memory_race[
 Running race condition example...
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
-stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:148:33: AssertionError: `left == right` comparison failed:
+stack trace was not collected. Enable stack trace collection with environment variable `MODULAR_DEBUG=stack-trace-on-error`
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:156:33: AssertionError: `left == right` comparison failed:
    left: 0.0
   right: 6.0
 </code></pre>
@@ -5927,7 +5962,7 @@ def dot_product[
 <div class="solution-tips">
 <ol>
 <li>Create shared memory with TileTensor using address_space</li>
-<li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
+<li>Store <code>rebind[Scalar[dtype]](a[global_i] * b[global_i])</code> in <code>shared[local_i]</code></li>
 <li>Use parallel reduction pattern with <code>barrier()</code></li>
 <li>Let thread 0 write final result to <code>output[0]</code></li>
 </ol>
@@ -7756,7 +7791,7 @@ Stride 1: [15 9  2  3  4  5  0  0]
 <p><strong>Parallel Reduction Logic</strong>:</p>
 <pre><code class="language-mojo">var stride = TPB // 2
 while stride &gt; 0:
-    var temp_val: output.ElementType = 0
+    var temp_val: Scalar[dtype] = 0
     if local_i &lt; stride:
         temp_val = cache[local_i + stride]  # Read phase
     barrier()
@@ -8739,7 +8774,7 @@ allocation, so write every element you later read)</p>
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 4176.0, 4248.0, 9504.0, 9738.0, 9972.0, 10206.0, 10440.0, 10674.0, 10908.0, 11142.0, 11376.0, 15336.0, 15732.0, 16128.0, 16524.0, 16920.0, 17316.0, 17712.0, 18108.0, 18504.0, 21168.0, 21726.0, 22284.0, 22842.0, 23400.0, 23958.0, 24516.0, 25074.0, 25632.0, 27000.0, 27720.0, 28440.0, 29160.0, 29880.0, 30600.0, 31320.0, 32040.0, 32760.0, 32832.0, 33714.0, 34596.0, 35478.0, 36360.0, 37242.0, 38124.0, 39006.0, 39888.0, 38664.0, 39708.0, 40752.0, 41796.0, 42840.0, 43884.0, 44928.0, 45972.0, 47016.0, 44496.0, 45702.0, 46908.0, 48114.0, 49320.0, 50526.0, 51732.0, 52938.0, 54144.0, 50328.0, 51696.0, 53064.0, 54432.0, 55800.0, 57168.0, 58536.0, 59904.0, 61272.0])
 </code></pre>
 <h2 id="solution-manual-tiling"><a class="header" href="#solution-manual-tiling">Solution: Manual tiling</a></h2>
@@ -9558,7 +9593,7 @@ context)</li>
 <pre><code class="language-mojo">@extensibility.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
-    def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
+    def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = .float32](
         output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
@@ -10040,18 +10075,23 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 <h4 id="kernel-signature-and-memory-management"><a class="header" href="#kernel-signature-and-memory-management">Kernel signature and memory management</a></h4>
 <pre><code class="language-mojo">def softmax_gpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-)
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1)
 </code></pre>
 <p>The kernel is parameterized with:</p>
 <ul>
 <li>Vector size as an Integer parameter</li>
+<li>Separate <code>OutLayout</code> and <code>InLayout</code> layout parameters, so the output and
+input tiles are free to carry different layouts</li>
+<li>An <code>Engine</code> parameter, constrained to a single-element engine by the
+<code>where</code> clause, that both tensors share</li>
 <li>Configurable data type with float32 as default</li>
-<li>Layout supplied by the module-level <code>LayoutType</code> binding, shared by both
-tensors</li>
 <li>Both tensors mutable (<code>mut=True</code>)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
@@ -11609,7 +11649,6 @@ registration pattern is the same as MAX custom ops explained in
 <pre><code class="language-mojo">import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("embedding")
@@ -11638,17 +11677,6 @@ struct EmbeddingCustomOp:
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
-
-            # Zero out output tensor
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
-                    gpu_ctx,
-                    output.unsafe_ptr(),
-                    batch_size * seq_len * embed_dim,
-                    owning=False,
-                ),
-                0,
-            )
 
             # Calculate 1D grid dimensions (matching kernel's flat indexing)
             var total_elements = batch_size * seq_len * embed_dim
@@ -11696,8 +11724,9 @@ struct EmbeddingCustomOp:
 <ul>
 <li><strong>Simple grid configuration</strong>: Uses a straightforward 1D grid with
 <code>ceildiv(total_elements, THREADS_PER_BLOCK)</code> blocks</li>
-<li><strong>Output initialization</strong>: A single <code>enqueue_memset</code> zeroes the output buffer
-before the launch</li>
+<li><strong>No output initialization</strong>: every in-range thread writes its own element
+on both branches, so the kernel leaves nothing for a pre-launch zeroing pass
+to do</li>
 <li><strong>Compile-time parameters</strong>: All tensor dimensions passed as compile-time
 parameters for optimal performance</li>
 <li><strong>Device abstraction</strong>: Handles both GPU execution and CPU fallback seamlessly</li>
@@ -11730,17 +11759,6 @@ struct Embedding2DCustomOp:
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
-
-            # Zero out output tensor
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
-                    gpu_ctx,
-                    output.unsafe_ptr(),
-                    batch_size * seq_len * embed_dim,
-                    owning=False,
-                ),
-                0,
-            )
 
             # Calculate 2D grid dimensions for non-coalesced access
             var total_positions = batch_size * seq_len
@@ -11805,7 +11823,6 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 <li>
 <p><strong>Memory management</strong>:</p>
 <ul>
-<li>Zero-initialization of output tensors with <code>enqueue_memset</code></li>
 <li>Proper buffer creation and memory layout handling</li>
 <li>Automatic cleanup and resource management</li>
 </ul>
@@ -11837,7 +11854,7 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 </ol>
 <h3 id="integration-with-pytorch"><a class="header" href="#integration-with-pytorch">Integration with PyTorch</a></h3>
 <p>These registered operations can be called from Python using the
-<a href="https://max.modular.com/api/python/torch/">CustomOpLibrary</a>:</p>
+<a href="https://max.modular.com/api/python/experimental.torch/">CustomOpLibrary</a>:</p>
 <pre><code class="language-python"># Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
 
@@ -11881,20 +11898,20 @@ characteristics.</p>
 <p>When successful, you should see output similar to:</p>
 <pre><code class="language-text">Puzzle 21: Mojo Embedding Kernel Comparison
 ======================================================================
+
 Configuration: B=8, L=512, V=10000, E=512
 ------------------------------------------------------------
-
 Testing Correctness...
-   1D Coalesced - Max difference: 1.19e-07
-   2D Non-coalesced - Max difference: 1.19e-07
+   1D Coalesced - Max difference: 0.00e+00
+   2D Non-coalesced - Max difference: 0.00e+00
    ✅ Both implementations CORRECT
 
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     2.145 ms
-   2D Non-coalesced: 3.867 ms
-   1D is 1.80x faster than 2D
+   1D Coalesced:     0.486 ms
+   2D Non-coalesced: 0.625 ms
+   1D is 1.29x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -11902,6 +11919,18 @@ Key Learning Points:
 • Coalesced memory access should be faster
 • Grid configuration affects GPU utilization
 </code></pre>
+<blockquote>
+<p>These numbers are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20). Run this on a fast GPU and the two times will look the same:
+on a B200 they land within a few percent of each other and the
+non-coalesced kernel often comes out marginally ahead. That is the benchmark, not the kernels. It wall-clocks a Python-level
+call, and the roughly 0.3ms of per-call dispatch swamps the kernels
+themselves. Profiled so that only GPU time is counted, the coalesced kernel
+wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us
+on a B200. The faster the GPU, the more the fixed cost hides what you came
+to see — which is worth remembering the next time a wall-clock benchmark
+reports no difference.</p>
+</blockquote>
 <h2 id="solution-23"><a class="header" href="#solution-23">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
@@ -12135,11 +12164,12 @@ consecutive addresses</li>
 memory</li>
 </ul>
 <h2 id="performance-results"><a class="header" href="#performance-results">Performance results</a></h2>
-<p>Typical benchmark results:</p>
+<p>Benchmark results from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20):</p>
 <pre><code class="language-text">Performance Results:
-   1D Coalesced:     2.145 ms
-   2D Non-coalesced: 3.867 ms
-   1D is 1.80x faster than 2D
+   1D Coalesced:     0.486 ms
+   2D Non-coalesced: 0.625 ms
+   1D is 1.29x faster than 2D
 </code></pre>
 <p>These are end-to-end wall-clock times per call, measured around the Python
 wrapper. Each trial also allocates a fresh output tensor and re-enters the
@@ -12748,7 +12778,7 @@ memory tiling:</p>
 <p><strong>Memory access</strong>:</p>
 <ul>
 <li>Access input tensor with <code>[batch_idx, seq_idx, hidden_idx]</code></li>
-<li>Access output tensor with <code>[batch_idx, seq_idx, hidden_idx]</code></li>
+<li>Write to the output tensor with <code>[Coord(batch_idx, seq_idx, hidden_idx)]</code></li>
 <li>Access LayerNorm parameters with <code>[hidden_idx]</code></li>
 </ul>
 </li>
@@ -12799,24 +12829,24 @@ memory tiling:</p>
    Puzzle 22: UNFUSED Algorithm Test &amp; Benchmark
 ============================================================
 
-🧪 Correctness Testing for UNFUSED Algorithm
+Correctness Testing for UNFUSED Algorithm
 ====================================================
 
 Testing Reference PyTorch Implementation
 -----------------------------------------------
-✅ Reference PyTorch
+Reference PyTorch passed
    Max difference: 0.00e+00
    Result: ✅ CORRECT
 
 Testing CPU Implementation
 ---------------------------------
-✅ Using Mojo fused kernel (CPU)
+Using Mojo fused kernel (CPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
 Testing GPU Unfused Implementation
 -----------------------------------------
-✅ Using Mojo unfused kernel (GPU)
+Using Mojo unfused kernel (GPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
@@ -12827,18 +12857,42 @@ Correctness Summary:
 
    Overall Correctness: ✅ ALL CORRECT
 
-Benchmarking CPU vs GPU UNFUSED
+⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 3173.70ms (50 iterations)
+   CPU: 24.13ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 3183.57ms (50 iterations)
+   GPU unfused: 27.95ms (50 iterations)
 
-   GPU unfused vs CPU: 1.00x slower
+   GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead &gt; computation benefit)
 
 UNFUSED Algorithm Test Completed!
+
+What we verified:
+✅ Numerical correctness against PyTorch reference
+✅ CPU implementation accuracy
+✅ GPU unfused implementation accuracy
+✅ Performance comparison CPU vs GPU
+
+Learning outcomes:
+- Unfused kernel implementation and optimization
+- Cross-platform correctness verification
+- Performance characterization and bottleneck analysis
+- Multi-kernel pipeline composition
+- Memory bandwidth vs compute trade-offs
 </code></pre>
+<blockquote>
+<p>These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
+both modes in every run, and on an A10G it still does: the tensors are
+small enough that launch and synchronization cost more than the work
+saved. On a B200 that reverses and the GPU wins, but not steadily —
+across eight runs of each mode the margin ranged from 1.1x to 2x, and the
+unfused comparison flipped back to the CPU once. Read the direction
+rather than the number, and expect your own hardware to land somewhere
+across that spread.</p>
+</blockquote>
 <h2 id="solution-24"><a class="header" href="#solution-24">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
@@ -12961,7 +13015,7 @@ var inv_std = 1.0 / sqrt(var_val + 1e-5)
 var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
     ln_weight[hidden_idx]
 ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
-output[batch_idx, seq_idx, hidden_idx] = normalized
+output[Coord(batch_idx, seq_idx, hidden_idx)] = normalized
 </code></pre>
 <ul>
 <li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x -
@@ -13123,7 +13177,7 @@ deliberately the simplest fusion that works, not a tuned one.</p>
 <p><strong>Memory access</strong>:</p>
 <ul>
 <li>Access input tensor with <code>[batch_idx, seq_idx, h]</code></li>
-<li>Access output tensor with <code>[batch_idx, seq_idx, out_idx]</code></li>
+<li>Write to the output tensor with <code>[Coord(batch_idx, seq_idx, out_idx)]</code></li>
 <li>Access weights with <code>[out_idx, h]</code> for linear layer</li>
 </ul>
 </li>
@@ -13175,24 +13229,24 @@ dimension</li>
    Puzzle 22: FUSED Algorithm Test &amp; Benchmark
 ============================================================
 
-🧪 Correctness Testing for FUSED Algorithm
+Correctness Testing for FUSED Algorithm
 ==================================================
 
 Testing Reference PyTorch Implementation
 -----------------------------------------------
-✅ Reference PyTorch
+Reference PyTorch passed
    Max difference: 0.00e+00
    Result: ✅ CORRECT
 
 Testing CPU Implementation
 ---------------------------------
-✅ Using Mojo fused kernel (CPU)
+Using Mojo fused kernel (CPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
 Testing GPU Fused Implementation
 ---------------------------------------
-✅ Using Mojo fused kernel (GPU)
+Using Mojo fused kernel (GPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
@@ -13206,14 +13260,27 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU FUSED
 ----------------------------------------
    Testing CPU performance...
-   CPU: 3144.75ms (50 iterations)
+   CPU: 25.00ms (50 iterations)
    Testing GPU fused performance...
-   GPU fused: 3116.11ms (50 iterations)
+   GPU fused: 28.32ms (50 iterations)
 
-   GPU fused vs CPU: 1.01x faster
-   GPU fused wins!
+   GPU fused vs CPU: 0.88x slower
+   CPU wins (GPU overhead &gt; computation benefit)
 
 FUSED Algorithm Test Completed!
+
+What we verified:
+✅ Numerical correctness against PyTorch reference
+✅ CPU implementation accuracy
+✅ GPU fused implementation accuracy
+✅ Performance comparison CPU vs GPU
+
+Learning outcomes:
+- Fused kernel implementation and optimization
+- Cross-platform correctness verification
+- Performance characterization and bottleneck analysis
+- Single-kernel fusion benefits and limitations
+- Computation density optimization
 </code></pre>
 <h2 id="solution-25"><a class="header" href="#solution-25">Solution</a></h2>
 <details class="solution-details">
@@ -13325,7 +13392,7 @@ FUSED Algorithm Test Completed!
 <li>Add linear bias: \[\Large \text{output} = \text{acc} + b_{out} \]</li>
 </ul>
 </li>
-<li>Store result in <code>output[batch_idx, seq_idx, out_idx]</code></li>
+<li>Store the result in <code>output[Coord(batch_idx, seq_idx, out_idx)]</code></li>
 </ul>
 </li>
 <li>
@@ -15790,8 +15857,8 @@ reveals the true performance story on your specific hardware.</em></p>
   </div>
 </div>
 <p>Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.5.0 / Mojo 1.0.0 — read the ranking, not the absolute
-times):</p>
+is a B200 with MAX 26.6.0 / Mojo 1.1.0, driver 595.71.05 — read the ranking,
+not the absolute times):</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
 Running P23 GPU Benchmarks...
@@ -15818,18 +15885,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0045024             | 10    |
-| tiled_16_4                | 0.0043072             | 10    |
-| manual_vectorized_16_4    | 0.0041248             | 10    |
-| vectorized_16_4           | 0.0040704             | 10    |
-| elementwise_128_16        | 0.0040926999999999995 | 10    |
-| tiled_128_16              | 0.0041567             | 10    |
-| manual_vectorized_128_16  | 0.0042144             | 10    |
-| vectorized_128_16         | 0.0042014999999999995 | 10    |
-| elementwise_1M_1024       | 0.0054303             | 10    |
-| tiled_1M_1024             | 0.2601023             | 10    |
-| manual_vectorized_1M_1024 | 0.5849376000000001    | 10    |
-| vectorized_1M_1024        | 0.1486304             | 10    |
+| elementwise_16_4          | 0.0046815             | 10    |
+| tiled_16_4                | 0.0040383             | 10    |
+| manual_vectorized_16_4    | 0.0041983             | 10    |
+| vectorized_16_4           | 0.0041183999999999995 | 10    |
+| elementwise_128_16        | 0.004086299999999999  | 10    |
+| tiled_128_16              | 0.0038911             | 10    |
+| manual_vectorized_128_16  | 0.0040447             | 10    |
+| vectorized_128_16         | 0.0047263             | 10    |
+| elementwise_1M_1024       | 0.0054142999999999995 | 10    |
+| tiled_1M_1024             | 0.2654655             | 10    |
+| manual_vectorized_1M_1024 | 0.2462431             | 10    |
+| vectorized_1M_1024        | 0.0834783             | 10    |
 
 Benchmarks completed!
 </code></pre>
@@ -15930,11 +15997,13 @@ issues <code>SIMD_WIDTH</code> times as many memory operations for the same data
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
 <tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.005ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.15ms</td><td>Uncoalesced memory access hurts performance</td></tr>
-<tr><td>🥉</td><td><strong>Tiled</strong></td><td>~0.26ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
-<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~0.58ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads costs the most</td></tr>
+<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.084ms</td><td>Uncoalesced memory access hurts performance</td></tr>
+<tr><td>🥉</td><td><strong>Manual vectorized</strong></td><td>~0.25ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads</td></tr>
+<tr><td>4th</td><td><strong>Tiled</strong></td><td>~0.27ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
 </tbody></table>
 </div>
+<p>The last two sit within about 8% of each other, so treat them as a pair rather
+than as two distinct places.</p>
 <h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
 <blockquote>
 <p><strong>For simple memory-bound operations:</strong> Maximum parallelism (elementwise)
@@ -15953,20 +16022,20 @@ outperforms complex memory optimizations at scale.</p>
 <li><strong>Balanced approach</strong> between parallelism and memory locality</li>
 <li><strong>Good thread utilization</strong> without excessive complexity</li>
 </ul>
-<p><strong>Why tiled falls behind:</strong></p>
+<p><strong>Why manual vectorization trails:</strong></p>
+<ul>
+<li><strong>Only 256 threads</strong> limit parallelism</li>
+<li><strong>Complex indexing</strong> adds computational overhead</li>
+<li><strong>Cache pressure</strong> from large chunks per thread</li>
+<li><strong>Diminishing returns</strong> for simple arithmetic</li>
+</ul>
+<p><strong>Why tiled comes last:</strong></p>
 <ul>
 <li><strong>Width-1 loads</strong> issue four times as many memory operations for the same
 data</li>
 <li><strong>Uncoalesced access</strong>: adjacent threads read tiles a full <code>tile_size</code> apart,
 so a warp’s loads never merge into one transaction</li>
 <li><strong>Locality within a tile</strong> doesn’t make up for that lost coalescing</li>
-</ul>
-<p><strong>Why manual vectorization comes last:</strong></p>
-<ul>
-<li><strong>Only 256 threads</strong> limit parallelism</li>
-<li><strong>Complex indexing</strong> adds computational overhead</li>
-<li><strong>Cache pressure</strong> from large chunks per thread</li>
-<li><strong>Diminishing returns</strong> for simple arithmetic</li>
 </ul>
 <p><strong>Framework intelligence:</strong></p>
 <ul>
@@ -15977,7 +16046,7 @@ so a warp’s loads never merge into one transaction</li>
 <h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
 <h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
 <pre><code class="language-txt">| name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 0.0054303          | 10    |
+| elementwise_1M_1024      | 0.0054623          | 10    |
 </code></pre>
 <ul>
 <li><strong><code>met (ms)</code></strong>: Execution time for a single iteration</li>
@@ -16601,7 +16670,7 @@ function calls. Each warp lane will process one element and use <code>warp.sum()
 combine results automatically, demonstrating how warp programming transforms GPU
 synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/sum/">warp.sum()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/sum/">warp.sum()</a>
 operation leverages SIMT execution to replace shared memory + barriers + tree
 reduction with a <code>log2(WARP_SIZE)</code>-step shuffle reduction behind one function
 call.</em></p>
@@ -16808,7 +16877,7 @@ Apple; 0-63 on AMD CDNA) - identifies which lane within the warp.</p>
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">SIZE: 32
 WARP_SIZE: 32
-SIMD_WIDTH: 8
+SIMD_WIDTH: 4
 === RESULT ===
 actual: HostBuffer([10416.0])
 expected: HostBuffer([10416.0])
@@ -16989,7 +17058,7 @@ var warp_size = WARP_SIZE         # 32 on NVIDIA, AMD RDNA, Apple; 64 on CDNA
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">SIZE: 32
 WARP_SIZE: 32
-SIMD_WIDTH: 8
+SIMD_WIDTH: 4
 === RESULT ===
 actual: HostBuffer([10416.0])
 expected: HostBuffer([10416.0])
@@ -17088,11 +17157,10 @@ approaches; only the launch mechanism differs</li>
 </code></pre>
   </div>
 </div>
-<p>Here’s example output from a complete benchmark run:</p>
-<pre><code class="language-text">SIZE: 32
-WARP_SIZE: 32
-SIMD_WIDTH: 8
---------------------------------------------------------------------------------
+<p>Here’s example output from a complete benchmark run (a B200 with MAX 26.6.0 /
+Mojo 1.1.0 — read the ranking, not the absolute times; the iteration count is
+chosen by the framework, bounded by <code>max_iters</code>):</p>
+<pre><code class="language-text">--------------------------------------------------------------------------------
 Testing SIZE=1 x WARP_SIZE, BLOCKS=1
 Running traditional_1x
 Running simple_warp_1x
@@ -17129,27 +17197,27 @@ Running simple_warp_65536x
 Running functional_warp_65536x
 | name                   | met (ms)              | iters |
 | ---------------------- | --------------------- | ----- |
-| traditional_1x         | 0.00460128            | 100   |
-| simple_warp_1x         | 0.00574047            | 100   |
-| functional_warp_1x     | 0.00484192            | 100   |
-| traditional_4x         | 0.00492671            | 100   |
-| simple_warp_4x         | 0.00485247            | 100   |
-| functional_warp_4x     | 0.00587679            | 100   |
-| traditional_32x        | 0.0062406399999999996 | 100   |
-| simple_warp_32x        | 0.0054918400000000004 | 100   |
-| functional_warp_32x    | 0.00552447            | 100   |
-| traditional_256x       | 0.0050614300000000004 | 100   |
-| simple_warp_256x       | 0.00488768            | 100   |
-| functional_warp_256x   | 0.00461472            | 100   |
-| traditional_2048x      | 0.01120031            | 100   |
-| simple_warp_2048x      | 0.00884383            | 100   |
-| functional_warp_2048x  | 0.007038720000000001  | 100   |
-| traditional_16384x     | 0.038533750000000005  | 100   |
-| simple_warp_16384x     | 0.0323264             | 100   |
-| functional_warp_16384x | 0.01674271            | 100   |
-| traditional_65536x     | 0.19784991999999998   | 100   |
-| simple_warp_65536x     | 0.12870176            | 100   |
-| functional_warp_65536x | 0.048680310000000004  | 100   |
+| traditional_1x         | 0.0044927000000000005 | 10    |
+| simple_warp_1x         | 0.0046112             | 10    |
+| functional_warp_1x     | 0.00416               | 10    |
+| traditional_4x         | 0.0043935             | 10    |
+| simple_warp_4x         | 0.004163200000000001  | 10    |
+| functional_warp_4x     | 0.004086299999999999  | 10    |
+| traditional_32x        | 0.004326399999999999  | 10    |
+| simple_warp_32x        | 0.0049695             | 10    |
+| functional_warp_32x    | 0.003936              | 10    |
+| traditional_256x       | 0.0041728             | 10    |
+| simple_warp_256x       | 0.0041728             | 10    |
+| functional_warp_256x   | 0.0038495             | 10    |
+| traditional_2048x      | 0.004377600000000001  | 10    |
+| simple_warp_2048x      | 0.004022400000000001  | 10    |
+| functional_warp_2048x  | 0.0037344             | 10    |
+| traditional_16384x     | 0.012451199999999999  | 10    |
+| simple_warp_16384x     | 0.0125279             | 10    |
+| functional_warp_16384x | 0.007955199999999999  | 10    |
+| traditional_65536x     | 0.0396447             | 10    |
+| simple_warp_65536x     | 0.0395007             | 10    |
+| functional_warp_65536x | 0.0210879             | 10    |
 
 Benchmarks completed!
 
@@ -17159,6 +17227,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
    - 2048 x WARP_SIZE: Warp primitive benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
+   - Note: AMD GPUs process 2 x elements per warp vs NVIDIA!
 
    Expected Results at Large Scales:
    • Traditional: Slower due to more barrier overhead
@@ -17173,8 +17242,8 @@ measurement to separate them, which is why the analysis text says so</li>
 <li><strong>Medium scale (2048x)</strong>: The warp approaches start to pull ahead of the
 traditional tree reduction</li>
 <li><strong>Large scales (16K-65K)</strong>: The gap widens rather than closing - in this run
-the functional warp approach finishes about 4x faster than the traditional
-one at 65536x</li>
+the functional warp approach finishes about 1.6x faster than the traditional
+one at 16384x and about 1.9x faster at 65536x</li>
 <li><strong>Variability</strong>: Performance depends heavily on specific GPU architecture and
 memory subsystem</li>
 </ul>
@@ -17308,8 +17377,8 @@ guide your decision.</p>
 <strong>warp-level communication operations</strong> - hardware-accelerated primitives that
 enable efficient data exchange and coordination patterns within warps. You’ll
 learn about using
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/">shuffle_down</a>
-and <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/">broadcast</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/">shuffle_down</a>
+and <a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/">broadcast</a>
 to implement neighbor communication and collective coordination without complex
 shared memory patterns.</p>
 <p><strong>Part VII: GPU Warp Communication</strong> introduces warp-level data movement
@@ -17344,20 +17413,20 @@ the top <code>offset</code> lanes, so guard those lanes with a lane check</li>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
 <p>Learn the core communication primitives from <code>max.gpu.primitives.warp</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/"><code>shuffle_down(value, offset)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/"><code>shuffle_down(value, offset)</code></a></strong>:
 Get value from lane at higher index (neighbor access)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/"><code>broadcast(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/"><code>broadcast(value)</code></a></strong>:
 Share lane 0’s value with all other lanes (one-to-many)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_idx/"><code>shuffle_idx(value, lane)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_idx/"><code>shuffle_idx(value, lane)</code></a></strong>:
 Get value from specific lane (random access)</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_up/"><code>shuffle_up(value, offset)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_up/"><code>shuffle_up(value, offset)</code></a></strong>:
 Get value from lane at lower index (reverse neighbor)</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong> This puzzle focuses on <code>shuffle_down()</code> and <code>broadcast()</code> as the
 most commonly used communication patterns. For complete coverage of all warp
 operations, see the
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/">Mojo GPU Warp Documentation</a>.</p>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/">Mojo GPU Warp Documentation</a>.</p>
 </blockquote>
 <h3 id="performance-transformation-example-1"><a class="header" href="#performance-transformation-example-1"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
@@ -17484,7 +17553,7 @@ from adjacent lanes within a warp. This powerful primitive enables efficient
 finite differences, moving averages, and neighbor-based computations without
 shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/">shuffle_down()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/">shuffle_down()</a>
 operation leverages SIMT execution to let each lane access data from its
 neighbors within the same warp, enabling efficient stencil patterns and sliding
 window operations.</em></p>
@@ -17663,8 +17732,8 @@ value</li>
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">WARP_SIZE:  32
 SIZE:  32
-output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
-expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
+output: HostBuffer([1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0])
+expected: HostBuffer([1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0])
 Neighbor difference test: passed
 Puzzle 25 complete ✅
 </code></pre>
@@ -18051,7 +18120,7 @@ to all other lanes within a warp. This powerful primitive enables efficient
 block-level computations, conditional logic coordination, and one-to-many
 communication patterns without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/">broadcast()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/">broadcast()</a>
 operation leverages SIMT execution to let lane 0 share its computed value with
 all other lanes in the same warp, enabling efficient coordination patterns and
 collective decision-making.</em></p>
@@ -18890,9 +18959,9 @@ introduces you to sophisticated GPU
 <strong>warp-level butterfly communication and parallel scan operations</strong> -
 shuffle-based primitives that enable efficient tree-based algorithms and
 parallel reductions within warps. You’ll learn about using
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/">shuffle_xor</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/">shuffle_xor</a>
 for butterfly networks and
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/">prefix_sum</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/">prefix_sum</a>
 for shuffle-based parallel scan without complex multi-phase shared memory
 algorithms.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier +
@@ -18930,9 +18999,9 @@ memory and no barriers</li>
 <h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
 <p>Learn the sophisticated communication primitives from <code>max.gpu.primitives.warp</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/"><code>shuffle_xor(value, mask)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/"><code>shuffle_xor(value, mask)</code></a></strong>:
 XOR-based butterfly communication for tree algorithms</li>
-<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/"><code>prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/"><code>prefix_sum(value)</code></a></strong>:
 Shuffle-based parallel scan operations</li>
 <li><strong>Advanced coordination patterns</strong>: Combining multiple primitives for complex
 algorithms</li>
@@ -19085,7 +19154,7 @@ sophisticated tree-based communication patterns within a warp. This powerful
 primitive enables efficient parallel reductions, sorting networks, and advanced
 coordination algorithms without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/">shuffle_xor()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/">shuffle_xor()</a>
 operation leverages SIMT execution to create XOR-based communication trees,
 enabling efficient butterfly networks and parallel algorithms that scale with
 \(O(\log n)\) complexity relative to warp size.</em></p>
@@ -19255,8 +19324,8 @@ lane ID with 1?</p>
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">WARP_SIZE:  32
 SIZE:  32
-output: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
-expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
+output: HostBuffer([1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0])
+expected: HostBuffer([1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0])
 Butterfly pair swap test: passed
 Puzzle 26 complete ✅
 </code></pre>
@@ -19492,8 +19561,8 @@ Result: All lanes have global maximum = 7
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">WARP_SIZE:  32
 SIZE:  32
-output: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
-expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
+output: HostBuffer([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0])
+expected: HostBuffer([1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0])
 Butterfly parallel max test: passed
 Puzzle 26 complete ✅
 </code></pre>
@@ -19716,8 +19785,8 @@ same butterfly communication pattern.</p>
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">WARP_SIZE:  32
 SIZE:  64
-output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0]
-expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0]
+output: HostBuffer([9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0])
+expected: HostBuffer([9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0])
 Butterfly conditional max test: passed
 Puzzle 26 complete ✅
 </code></pre>
@@ -19919,7 +19988,7 @@ powerful operation enables efficient cumulative computations, parallel
 partitioning, and advanced coordination algorithms that would otherwise require
 dozens of lines of shared memory and synchronization code.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/">prefix_sum()</a>
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/">prefix_sum()</a>
 operation computes cumulative results across warp lanes in
 \(O(\log n)\) steps, using the GPU’s shuffle instructions rather than shared
 memory. There is no dedicated scan unit: <code>prefix_sum</code> expands to a
@@ -20118,8 +20187,8 @@ one, so no cast is needed—pass the loaded value straight through.</p>
 <p>Expected output when solved:</p>
 <pre><code class="language-txt">WARP_SIZE:  32
 SIZE:  32
-output: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
-expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
+output: HostBuffer([1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0])
+expected: HostBuffer([1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0])
 Warp inclusive prefix sum test: passed
 Puzzle 26 complete ✅
 </code></pre>
@@ -24499,11 +24568,14 @@ nsys stats --force-export=true timeline.nsys-rep
 <pre><code class="language-bash"># See the help
 pixi run ncu --help
 
+# Build first: ncu profiles a binary, not a source file
+pixi run mojo build --debug-level=full your_program.mojo -o your_program
+
 # Detailed kernel profiling
-pixi run ncu --set full -o kernel_profile mojo your_program.mojo
+pixi run ncu --set full -o kernel_profile ./your_program
 
 # Focus on specific kernels
-pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
+pixi run ncu --kernel-name regex:your_kernel_name ./your_program
 </code></pre>
 <h2 id="tool-selection-decision-tree"><a class="header" href="#tool-selection-decision-tree">Tool selection decision tree</a></h2>
 <pre><code class="language-text">Performance Problem
@@ -26876,9 +26948,11 @@ optimization.</p>
 <h2 id="investigation-results-from-profiling"><a class="header" href="#investigation-results-from-profiling"><strong>Investigation results from profiling</strong></a></h2>
 <p><strong>Step 1: Correctness Verification</strong>
 Both kernels produce identical mathematical results:</p>
-<pre><code class="language-text">✅ No-conflict kernel: PASSED
-✅ Two-way conflict kernel: PASSED
-✅ Both kernels produce identical results
+<pre><code class="language-text">Testing bank conflict kernels...
+No-conflict kernel test: passed
+Two-way conflict kernel test: passed
+Puzzle 32 complete ✅
+Now profile with NSight Compute to see performance differences!
 </code></pre>
 <p><strong>Step 2: Performance Baseline</strong>
 Benchmark results show similar execution times (B200, MAX 26.5.0 / Mojo 1.0.0 —
@@ -28737,7 +28811,7 @@ compute the final result</li>
     cluster_sync()
 
     # Final cluster reduction (elect one thread to do the final work)
-    if elect_one_sync() and my_block_rank == 0:
+    if local_i == 0 and my_block_rank == 0:
         var total: Float32 = 0.0
         for i in range(CLUSTER_SIZE):
             total += temp_storage[i][0]
@@ -28795,8 +28869,8 @@ proceeds</li>
 <li>Hardware-accelerated synchronization across all blocks in the cluster</li>
 </ul>
 <h2 id="phase-3-final-global-aggregation"><a class="header" href="#phase-3-final-global-aggregation"><strong>Phase 3: Final global aggregation</strong></a></h2>
-<p><strong>Thread election for efficiency:</strong></p>
-<pre><code class="language-mojo">if elect_one_sync() and my_block_rank == 0:
+<p><strong>Electing a single thread:</strong></p>
+<pre><code class="language-mojo">if local_i == 0 and my_block_rank == 0:
     var total: Float32 = 0.0
     for i in range(CLUSTER_SIZE):
         total += temp_storage[i][0]  # Sum: temp[0] + temp[1] + temp[2] + temp[3]
@@ -28804,14 +28878,18 @@ proceeds</li>
 </code></pre>
 <p><strong>Why this election strategy?</strong></p>
 <ul>
-<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
-Hardware primitive that selects exactly one thread per warp</li>
+<li><strong><code>local_i == 0</code></strong>: Picks exactly one thread in the block, and always the
+same one</li>
 <li><strong><code>my_block_rank == 0</code></strong>: Restricts the final sum to the first block of the
 cluster</li>
-<li><strong>Result</strong>: The two conditions together narrow the final summation to one
-thread per warp within block rank 0, so <code>TPB / 32 = 8</code> threads run it and
-each writes the same value to <code>output[0]</code></li>
-<li><strong>Efficiency</strong>: 8 threads do the final aggregation instead of all 1024</li>
+<li><strong>Result</strong>: One thread in the whole cluster runs the final summation and
+writes <code>output[0]</code></li>
+<li><strong>Why not
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+it elects one thread <em>per warp</em>, so at <code>TPB = 256</code> eight threads would run
+the aggregation and each write the same value to <code>output[0]</code>. That is
+correct by coincidence rather than by design, and it is eight times the work
+the task calls for</li>
 </ul>
 <h2 id="key-technical-insights-4"><a class="header" href="#key-technical-insights-4"><strong>Key technical insights</strong></a></h2>
 <p><strong>Two-level reduction hierarchy:</strong></p>
@@ -29129,7 +29207,7 @@ results</li>
         for i in range(32):  # Sum across warp
             if warp_start + i &lt; tpb:
                 warp_sum += shared_data[warp_start + i][0]
-        shared_data[local_i] = warp_sum
+        shared_data[warp_start] = warp_sum
 
     barrier()
 
@@ -29171,7 +29249,7 @@ barrier()  # Ensure all threads complete data loading
     for i in range(32):  # Process entire warp's data
         if warp_start + i &lt; tpb:
             warp_sum += shared_data[warp_start + i][0]
-    shared_data[local_i] = warp_sum  # Store result at elected thread's position
+    shared_data[warp_start] = warp_sum  # Store at the warp's first index
 </code></pre>
 <p><strong>Warp boundary calculation explained:</strong></p>
 <p><code>(local_i // 32) * 32</code> rounds any thread index down to the first index of its
@@ -29182,15 +29260,20 @@ warp:</p>
 <li><strong>Thread 199</strong> (in warp 6): <code>warp_start = (199 // 32) * 32 = 6 * 32 = 192</code></li>
 </ul>
 <p><strong>Election pattern visualization (TPB=256, 8 warps):</strong></p>
-<pre><code class="language-text">Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
-Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
-Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
-Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
-Warp 4 (threads 128-159):elect_one_sync() → Thread 128 processes elements 128-159
-Warp 5 (threads 160-191):elect_one_sync() → Thread 160 processes elements 160-191
-Warp 6 (threads 192-223):elect_one_sync() → Thread 192 processes elements 192-223
-Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-255
+<pre><code class="language-text">Warp 0 (threads 0-31):   1 elected thread sums 0-31,      stores shared_data[0]
+Warp 1 (threads 32-63):  1 elected thread sums 32-63,     stores shared_data[32]
+Warp 2 (threads 64-95):  1 elected thread sums 64-95,     stores shared_data[64]
+Warp 3 (threads 96-127): 1 elected thread sums 96-127,    stores shared_data[96]
+Warp 4 (threads 128-159):1 elected thread sums 128-159,  stores shared_data[128]
+Warp 5 (threads 160-191):1 elected thread sums 160-191,  stores shared_data[160]
+Warp 6 (threads 192-223):1 elected thread sums 192-223,  stores shared_data[192]
+Warp 7 (threads 224-255):1 elected thread sums 224-255,  stores shared_data[224]
 </code></pre>
+<p>Note which thread each warp elects is not specified — <code>elect.sync</code> makes no
+promise about the lane. That is why the store uses <code>warp_start</code> rather than
+the elected thread’s own <code>local_i</code>: the aggregation below reads
+<code>shared_data[0]</code>, <code>[32]</code>, <code>[64]</code> and so on, and those two only agree if the
+write lands on the warp’s first index no matter who does it.</p>
 <h2 id="level-2-block-level-aggregation-warp-leader-coordination"><a class="header" href="#level-2-block-level-aggregation-warp-leader-coordination"><strong>Level 2: Block-level aggregation (Warp Leader Coordination)</strong></a></h2>
 <p><strong>Inter-warp synchronization:</strong></p>
 <pre><code class="language-mojo">barrier()  # Ensure all warps complete their elected computations
@@ -29358,8 +29441,8 @@ separate scalar loads, quadrupling the instruction count on the memory pipeline.
 <li>How alignment controls whether the compiler emits vectorized memory
 instructions</li>
 <li>Why three kernels with identical output can have very different bandwidth</li>
-<li>How to communicate alignment through the <code>LayoutTensor</code> API
-(<code>aligned_load</code>, <code>load</code>/<code>store</code> with explicit alignment)</li>
+<li>How to communicate alignment through the <code>TileTensor</code> API, by passing an
+explicit <code>alignment</code> to <code>load</code> and <code>store</code></li>
 <li>How to confirm the codegen change with Nsight Compute</li>
 </ul>
 <h2 id="key-concepts-46"><a class="header" href="#key-concepts-46">Key concepts</a></h2>
@@ -29369,8 +29452,8 @@ alignment of a full vector, <code>align_of[SIMD[dtype, width]]()</code> (16 byte
 <code>float32x4</code>).</li>
 <li><strong>The under-stated-alignment trap</strong>: passing the scalar alignment to a
 vectorized <code>load</code>/<code>store</code> so the compiler can’t vectorize.</li>
-<li><strong>The aligned fast path</strong>: <code>aligned_load</code> / explicit <code>store_alignment</code>, which
-lower to <code>ld.global.nc.v4</code> / <code>st.global.v4</code>.</li>
+<li><strong>The aligned fast path</strong>: <code>load</code>/<code>store</code> given the full vector alignment,
+which lower to <code>ld.global.nc.v4</code> / <code>st.global.v4</code>.</li>
 <li><strong>Memory-bound vs compute-bound</strong>: alignment matters most when load/store is
 the bottleneck.</li>
 </ul>
@@ -29392,7 +29475,7 @@ does not.</p>
 <li>SIMD and vectorization from
 <a href="puzzle_35/../puzzle_23/puzzle_23.html">Puzzle 23</a></li>
 <li>GPU profiling from <a href="puzzle_35/../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
-<li><code>LayoutTensor</code> load/store from earlier puzzles</li>
+<li><code>TileTensor</code> load/store from earlier puzzles</li>
 </ul>
 <p><strong>Hardware requirements:</strong></p>
 <ul>
@@ -29779,7 +29862,7 @@ profiler even when wall-clock looks similar, which is exactly why a
 real-world kernel can ship with this bug unnoticed.</li>
 </ol>
 <p>The practice to take away from this is: at every vectorized memory access, state
-the alignment (<code>aligned_load</code>, or an explicit <code>align_of[SIMD[dtype, width]]()</code>).
+the alignment, by passing <code>alignment=align_of[SIMD[dtype, width]]()</code>.
 It costs nothing, and it ensures your kernel takes the vectorized fast path.</p>
 
                     </main>

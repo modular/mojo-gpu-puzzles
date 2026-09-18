@@ -275,11 +275,12 @@ consecutive addresses</li>
 memory</li>
 </ul>
 <h2 id="performance-results"><a class="header" href="#performance-results">Performance results</a></h2>
-<p>Typical benchmark results:</p>
+<p>Benchmark results from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20):</p>
 <pre><code class="language-text">Performance Results:
-   1D Coalesced:     2.145 ms
-   2D Non-coalesced: 3.867 ms
-   1D is 1.80x faster than 2D
+   1D Coalesced:     0.486 ms
+   2D Non-coalesced: 0.625 ms
+   1D is 1.29x faster than 2D
 </code></pre>
 <p>These are end-to-end wall-clock times per call, measured around the Python
 wrapper. Each trial also allocates a fresh output tensor and re-enters the

@@ -467,12 +467,19 @@ pixi run mojo debug --help
 pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 </code></pre>
-<p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and
-ensure the CUDA toolkit feature is enabled.</p>
-<p><strong>Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s
-<code>cuda-gdb</code> package only provides a wrapper script. This command auto-detects and
-links the actual CUDA-GDB binaries from your system CUDA installation to the
-conda environment, enabling full GPU debugging capabilities.</p>
+<p><strong><code>pixi</code> cannot supply <code>cuda-gdb</code> on its own.</strong> Conda’s <code>cuda-gdb</code> package
+ships only a dispatcher script, not the binaries that script dispatches to, so
+step 4 fails in a fresh environment however <code>pixi.toml</code> is configured. That is
+what <code>pixi run setup-cuda-gdb</code> works around: it looks for a CUDA Toolkit
+installed on the system, outside <code>pixi</code>, and links that toolkit’s <code>cuda-gdb</code>
+binaries into the conda environment.</p>
+<p>So a system CUDA Toolkit is a prerequisite for this puzzle, not an
+alternative to the <code>pixi</code> environment. If step 2 reports that it found
+nothing to link, install the toolkit from
+<a href="https://developer.nvidia.com/cuda-downloads">NVIDIA’s CUDA Toolkit downloads</a>
+and run step 2 again. If step 4 still fails afterwards, the interactive
+walkthrough on the following pages will not reproduce on your machine — read
+the transcripts rather than following along.</p>
 <p><strong>What this command does:</strong></p>
 <p>The script automatically detects CUDA from multiple common locations:</p>
 <ul>

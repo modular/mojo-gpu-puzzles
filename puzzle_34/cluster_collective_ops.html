@@ -449,7 +449,7 @@ compute the final result</li>
     cluster_sync()
 
     # Final cluster reduction (elect one thread to do the final work)
-    if elect_one_sync() and my_block_rank == 0:
+    if local_i == 0 and my_block_rank == 0:
         var total: Float32 = 0.0
         for i in range(CLUSTER_SIZE):
             total += temp_storage[i][0]
@@ -507,8 +507,8 @@ proceeds</li>
 <li>Hardware-accelerated synchronization across all blocks in the cluster</li>
 </ul>
 <h2 id="phase-3-final-global-aggregation"><a class="header" href="#phase-3-final-global-aggregation"><strong>Phase 3: Final global aggregation</strong></a></h2>
-<p><strong>Thread election for efficiency:</strong></p>
-<pre><code class="language-mojo">if elect_one_sync() and my_block_rank == 0:
+<p><strong>Electing a single thread:</strong></p>
+<pre><code class="language-mojo">if local_i == 0 and my_block_rank == 0:
     var total: Float32 = 0.0
     for i in range(CLUSTER_SIZE):
         total += temp_storage[i][0]  # Sum: temp[0] + temp[1] + temp[2] + temp[3]
@@ -516,14 +516,18 @@ proceeds</li>
 </code></pre>
 <p><strong>Why this election strategy?</strong></p>
 <ul>
-<li><strong><a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
-Hardware primitive that selects exactly one thread per warp</li>
+<li><strong><code>local_i == 0</code></strong>: Picks exactly one thread in the block, and always the
+same one</li>
 <li><strong><code>my_block_rank == 0</code></strong>: Restricts the final sum to the first block of the
 cluster</li>
-<li><strong>Result</strong>: The two conditions together narrow the final summation to one
-thread per warp within block rank 0, so <code>TPB / 32 = 8</code> threads run it and
-each writes the same value to <code>output[0]</code></li>
-<li><strong>Efficiency</strong>: 8 threads do the final aggregation instead of all 1024</li>
+<li><strong>Result</strong>: One thread in the whole cluster runs the final summation and
+writes <code>output[0]</code></li>
+<li><strong>Why not
+<a href="https://max.modular.com/api/mojo/max/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+it elects one thread <em>per warp</em>, so at <code>TPB = 256</code> eight threads would run
+the aggregation and each write the same value to <code>output[0]</code>. That is
+correct by coincidence rather than by design, and it is eight times the work
+the task calls for</li>
 </ul>
 <h2 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h2>
 <p><strong>Two-level reduction hierarchy:</strong></p>

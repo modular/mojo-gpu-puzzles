@@ -258,8 +258,8 @@ reveals the true performance story on your specific hardware.</em></p>
   </div>
 </div>
 <p>Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.5.0 / Mojo 1.0.0 — read the ranking, not the absolute
-times):</p>
+is a B200 with MAX 26.6.0 / Mojo 1.1.0, driver 595.71.05 — read the ranking,
+not the absolute times):</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
 Running P23 GPU Benchmarks...
@@ -286,18 +286,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0045024             | 10    |
-| tiled_16_4                | 0.0043072             | 10    |
-| manual_vectorized_16_4    | 0.0041248             | 10    |
-| vectorized_16_4           | 0.0040704             | 10    |
-| elementwise_128_16        | 0.0040926999999999995 | 10    |
-| tiled_128_16              | 0.0041567             | 10    |
-| manual_vectorized_128_16  | 0.0042144             | 10    |
-| vectorized_128_16         | 0.0042014999999999995 | 10    |
-| elementwise_1M_1024       | 0.0054303             | 10    |
-| tiled_1M_1024             | 0.2601023             | 10    |
-| manual_vectorized_1M_1024 | 0.5849376000000001    | 10    |
-| vectorized_1M_1024        | 0.1486304             | 10    |
+| elementwise_16_4          | 0.0046815             | 10    |
+| tiled_16_4                | 0.0040383             | 10    |
+| manual_vectorized_16_4    | 0.0041983             | 10    |
+| vectorized_16_4           | 0.0041183999999999995 | 10    |
+| elementwise_128_16        | 0.004086299999999999  | 10    |
+| tiled_128_16              | 0.0038911             | 10    |
+| manual_vectorized_128_16  | 0.0040447             | 10    |
+| vectorized_128_16         | 0.0047263             | 10    |
+| elementwise_1M_1024       | 0.0054142999999999995 | 10    |
+| tiled_1M_1024             | 0.2654655             | 10    |
+| manual_vectorized_1M_1024 | 0.2462431             | 10    |
+| vectorized_1M_1024        | 0.0834783             | 10    |
 
 Benchmarks completed!
 </code></pre>
@@ -398,11 +398,13 @@ issues <code>SIMD_WIDTH</code> times as many memory operations for the same data
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
 <tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.005ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.15ms</td><td>Uncoalesced memory access hurts performance</td></tr>
-<tr><td>🥉</td><td><strong>Tiled</strong></td><td>~0.26ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
-<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~0.58ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads costs the most</td></tr>
+<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.084ms</td><td>Uncoalesced memory access hurts performance</td></tr>
+<tr><td>🥉</td><td><strong>Manual vectorized</strong></td><td>~0.25ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads</td></tr>
+<tr><td>4th</td><td><strong>Tiled</strong></td><td>~0.27ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
 </tbody></table>
 </div>
+<p>The last two sit within about 8% of each other, so treat them as a pair rather
+than as two distinct places.</p>
 <h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
 <blockquote>
 <p><strong>For simple memory-bound operations:</strong> Maximum parallelism (elementwise)
@@ -421,20 +423,20 @@ outperforms complex memory optimizations at scale.</p>
 <li><strong>Balanced approach</strong> between parallelism and memory locality</li>
 <li><strong>Good thread utilization</strong> without excessive complexity</li>
 </ul>
-<p><strong>Why tiled falls behind:</strong></p>
+<p><strong>Why manual vectorization trails:</strong></p>
+<ul>
+<li><strong>Only 256 threads</strong> limit parallelism</li>
+<li><strong>Complex indexing</strong> adds computational overhead</li>
+<li><strong>Cache pressure</strong> from large chunks per thread</li>
+<li><strong>Diminishing returns</strong> for simple arithmetic</li>
+</ul>
+<p><strong>Why tiled comes last:</strong></p>
 <ul>
 <li><strong>Width-1 loads</strong> issue four times as many memory operations for the same
 data</li>
 <li><strong>Uncoalesced access</strong>: adjacent threads read tiles a full <code>tile_size</code> apart,
 so a warp’s loads never merge into one transaction</li>
 <li><strong>Locality within a tile</strong> doesn’t make up for that lost coalescing</li>
-</ul>
-<p><strong>Why manual vectorization comes last:</strong></p>
-<ul>
-<li><strong>Only 256 threads</strong> limit parallelism</li>
-<li><strong>Complex indexing</strong> adds computational overhead</li>
-<li><strong>Cache pressure</strong> from large chunks per thread</li>
-<li><strong>Diminishing returns</strong> for simple arithmetic</li>
 </ul>
 <p><strong>Framework intelligence:</strong></p>
 <ul>
@@ -445,7 +447,7 @@ so a warp’s loads never merge into one transaction</li>
 <h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
 <h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
 <pre><code class="language-txt">| name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 0.0054303          | 10    |
+| elementwise_1M_1024      | 0.0054623          | 10    |
 </code></pre>
 <ul>
 <li><strong><code>met (ms)</code></strong>: Execution time for a single iteration</li>

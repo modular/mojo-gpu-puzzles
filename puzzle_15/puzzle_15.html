@@ -418,7 +418,7 @@ Stride 1: [15 9  2  3  4  5  0  0]
 <p><strong>Parallel Reduction Logic</strong>:</p>
 <pre><code class="language-mojo">var stride = TPB // 2
 while stride &gt; 0:
-    var temp_val: output.ElementType = 0
+    var temp_val: Scalar[dtype] = 0
     if local_i &lt; stride:
         temp_val = cache[local_i + stride]  # Read phase
     barrier()

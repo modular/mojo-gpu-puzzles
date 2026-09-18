@@ -467,7 +467,7 @@ results</li>
         for i in range(32):  # Sum across warp
             if warp_start + i &lt; tpb:
                 warp_sum += shared_data[warp_start + i][0]
-        shared_data[local_i] = warp_sum
+        shared_data[warp_start] = warp_sum
 
     barrier()
 
@@ -509,7 +509,7 @@ barrier()  # Ensure all threads complete data loading
     for i in range(32):  # Process entire warp's data
         if warp_start + i &lt; tpb:
             warp_sum += shared_data[warp_start + i][0]
-    shared_data[local_i] = warp_sum  # Store result at elected thread's position
+    shared_data[warp_start] = warp_sum  # Store at the warp's first index
 </code></pre>
 <p><strong>Warp boundary calculation explained:</strong></p>
 <p><code>(local_i // 32) * 32</code> rounds any thread index down to the first index of its
@@ -520,15 +520,20 @@ warp:</p>
 <li><strong>Thread 199</strong> (in warp 6): <code>warp_start = (199 // 32) * 32 = 6 * 32 = 192</code></li>
 </ul>
 <p><strong>Election pattern visualization (TPB=256, 8 warps):</strong></p>
-<pre><code class="language-text">Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
-Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
-Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
-Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
-Warp 4 (threads 128-159):elect_one_sync() → Thread 128 processes elements 128-159
-Warp 5 (threads 160-191):elect_one_sync() → Thread 160 processes elements 160-191
-Warp 6 (threads 192-223):elect_one_sync() → Thread 192 processes elements 192-223
-Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-255
+<pre><code class="language-text">Warp 0 (threads 0-31):   1 elected thread sums 0-31,      stores shared_data[0]
+Warp 1 (threads 32-63):  1 elected thread sums 32-63,     stores shared_data[32]
+Warp 2 (threads 64-95):  1 elected thread sums 64-95,     stores shared_data[64]
+Warp 3 (threads 96-127): 1 elected thread sums 96-127,    stores shared_data[96]
+Warp 4 (threads 128-159):1 elected thread sums 128-159,  stores shared_data[128]
+Warp 5 (threads 160-191):1 elected thread sums 160-191,  stores shared_data[160]
+Warp 6 (threads 192-223):1 elected thread sums 192-223,  stores shared_data[192]
+Warp 7 (threads 224-255):1 elected thread sums 224-255,  stores shared_data[224]
 </code></pre>
+<p>Note which thread each warp elects is not specified — <code>elect.sync</code> makes no
+promise about the lane. That is why the store uses <code>warp_start</code> rather than
+the elected thread’s own <code>local_i</code>: the aggregation below reads
+<code>shared_data[0]</code>, <code>[32]</code>, <code>[64]</code> and so on, and those two only agree if the
+write lands on the warp’s first index no matter who does it.</p>
 <h2 id="level-2-block-level-aggregation-warp-leader-coordination"><a class="header" href="#level-2-block-level-aggregation-warp-leader-coordination"><strong>Level 2: Block-level aggregation (Warp Leader Coordination)</strong></a></h2>
 <p><strong>Inter-warp synchronization:</strong></p>
 <pre><code class="language-mojo">barrier()  # Ensure all warps complete their elected computations

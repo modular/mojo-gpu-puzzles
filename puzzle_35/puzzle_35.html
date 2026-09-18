@@ -245,8 +245,8 @@ separate scalar loads, quadrupling the instruction count on the memory pipeline.
 <li>How alignment controls whether the compiler emits vectorized memory
 instructions</li>
 <li>Why three kernels with identical output can have very different bandwidth</li>
-<li>How to communicate alignment through the <code>LayoutTensor</code> API
-(<code>aligned_load</code>, <code>load</code>/<code>store</code> with explicit alignment)</li>
+<li>How to communicate alignment through the <code>TileTensor</code> API, by passing an
+explicit <code>alignment</code> to <code>load</code> and <code>store</code></li>
 <li>How to confirm the codegen change with Nsight Compute</li>
 </ul>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -256,8 +256,8 @@ alignment of a full vector, <code>align_of[SIMD[dtype, width]]()</code> (16 byte
 <code>float32x4</code>).</li>
 <li><strong>The under-stated-alignment trap</strong>: passing the scalar alignment to a
 vectorized <code>load</code>/<code>store</code> so the compiler can’t vectorize.</li>
-<li><strong>The aligned fast path</strong>: <code>aligned_load</code> / explicit <code>store_alignment</code>, which
-lower to <code>ld.global.nc.v4</code> / <code>st.global.v4</code>.</li>
+<li><strong>The aligned fast path</strong>: <code>load</code>/<code>store</code> given the full vector alignment,
+which lower to <code>ld.global.nc.v4</code> / <code>st.global.v4</code>.</li>
 <li><strong>Memory-bound vs compute-bound</strong>: alignment matters most when load/store is
 the bottleneck.</li>
 </ul>
@@ -279,7 +279,7 @@ does not.</p>
 <li>SIMD and vectorization from
 <a href="../puzzle_23/puzzle_23.html">Puzzle 23</a></li>
 <li>GPU profiling from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
-<li><code>LayoutTensor</code> load/store from earlier puzzles</li>
+<li><code>TileTensor</code> load/store from earlier puzzles</li>
 </ul>
 <p><strong>Hardware requirements:</strong></p>
 <ul>

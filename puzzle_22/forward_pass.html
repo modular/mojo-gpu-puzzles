@@ -658,7 +658,7 @@ memory tiling:</p>
 <p><strong>Memory access</strong>:</p>
 <ul>
 <li>Access input tensor with <code>[batch_idx, seq_idx, hidden_idx]</code></li>
-<li>Access output tensor with <code>[batch_idx, seq_idx, hidden_idx]</code></li>
+<li>Write to the output tensor with <code>[Coord(batch_idx, seq_idx, hidden_idx)]</code></li>
 <li>Access LayerNorm parameters with <code>[hidden_idx]</code></li>
 </ul>
 </li>
@@ -709,24 +709,24 @@ memory tiling:</p>
    Puzzle 22: UNFUSED Algorithm Test &amp; Benchmark
 ============================================================
 
-🧪 Correctness Testing for UNFUSED Algorithm
+Correctness Testing for UNFUSED Algorithm
 ====================================================
 
 Testing Reference PyTorch Implementation
 -----------------------------------------------
-✅ Reference PyTorch
+Reference PyTorch passed
    Max difference: 0.00e+00
    Result: ✅ CORRECT
 
 Testing CPU Implementation
 ---------------------------------
-✅ Using Mojo fused kernel (CPU)
+Using Mojo fused kernel (CPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
 Testing GPU Unfused Implementation
 -----------------------------------------
-✅ Using Mojo unfused kernel (GPU)
+Using Mojo unfused kernel (GPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
@@ -737,18 +737,42 @@ Correctness Summary:
 
    Overall Correctness: ✅ ALL CORRECT
 
-Benchmarking CPU vs GPU UNFUSED
+⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 3173.70ms (50 iterations)
+   CPU: 24.13ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 3183.57ms (50 iterations)
+   GPU unfused: 27.95ms (50 iterations)
 
-   GPU unfused vs CPU: 1.00x slower
+   GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead &gt; computation benefit)
 
 UNFUSED Algorithm Test Completed!
+
+What we verified:
+✅ Numerical correctness against PyTorch reference
+✅ CPU implementation accuracy
+✅ GPU unfused implementation accuracy
+✅ Performance comparison CPU vs GPU
+
+Learning outcomes:
+- Unfused kernel implementation and optimization
+- Cross-platform correctness verification
+- Performance characterization and bottleneck analysis
+- Multi-kernel pipeline composition
+- Memory bandwidth vs compute trade-offs
 </code></pre>
+<blockquote>
+<p>These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
+both modes in every run, and on an A10G it still does: the tensors are
+small enough that launch and synchronization cost more than the work
+saved. On a B200 that reverses and the GPU wins, but not steadily —
+across eight runs of each mode the margin ranged from 1.1x to 2x, and the
+unfused comparison flipped back to the CPU once. Read the direction
+rather than the number, and expect your own hardware to land somewhere
+across that spread.</p>
+</blockquote>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
@@ -871,7 +895,7 @@ var inv_std = 1.0 / sqrt(var_val + 1e-5)
 var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
     ln_weight[hidden_idx]
 ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
-output[batch_idx, seq_idx, hidden_idx] = normalized
+output[Coord(batch_idx, seq_idx, hidden_idx)] = normalized
 </code></pre>
 <ul>
 <li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x -
@@ -1033,7 +1057,7 @@ deliberately the simplest fusion that works, not a tuned one.</p>
 <p><strong>Memory access</strong>:</p>
 <ul>
 <li>Access input tensor with <code>[batch_idx, seq_idx, h]</code></li>
-<li>Access output tensor with <code>[batch_idx, seq_idx, out_idx]</code></li>
+<li>Write to the output tensor with <code>[Coord(batch_idx, seq_idx, out_idx)]</code></li>
 <li>Access weights with <code>[out_idx, h]</code> for linear layer</li>
 </ul>
 </li>
@@ -1085,24 +1109,24 @@ dimension</li>
    Puzzle 22: FUSED Algorithm Test &amp; Benchmark
 ============================================================
 
-🧪 Correctness Testing for FUSED Algorithm
+Correctness Testing for FUSED Algorithm
 ==================================================
 
 Testing Reference PyTorch Implementation
 -----------------------------------------------
-✅ Reference PyTorch
+Reference PyTorch passed
    Max difference: 0.00e+00
    Result: ✅ CORRECT
 
 Testing CPU Implementation
 ---------------------------------
-✅ Using Mojo fused kernel (CPU)
+Using Mojo fused kernel (CPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
 Testing GPU Fused Implementation
 ---------------------------------------
-✅ Using Mojo fused kernel (GPU)
+Using Mojo fused kernel (GPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
@@ -1116,14 +1140,27 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU FUSED
 ----------------------------------------
    Testing CPU performance...
-   CPU: 3144.75ms (50 iterations)
+   CPU: 25.00ms (50 iterations)
    Testing GPU fused performance...
-   GPU fused: 3116.11ms (50 iterations)
+   GPU fused: 28.32ms (50 iterations)
 
-   GPU fused vs CPU: 1.01x faster
-   GPU fused wins!
+   GPU fused vs CPU: 0.88x slower
+   CPU wins (GPU overhead &gt; computation benefit)
 
 FUSED Algorithm Test Completed!
+
+What we verified:
+✅ Numerical correctness against PyTorch reference
+✅ CPU implementation accuracy
+✅ GPU fused implementation accuracy
+✅ Performance comparison CPU vs GPU
+
+Learning outcomes:
+- Fused kernel implementation and optimization
+- Cross-platform correctness verification
+- Performance characterization and bottleneck analysis
+- Single-kernel fusion benefits and limitations
+- Computation density optimization
 </code></pre>
 <h2 id="solution-1"><a class="header" href="#solution-1">Solution</a></h2>
 <details class="solution-details">
@@ -1235,7 +1272,7 @@ FUSED Algorithm Test Completed!
 <li>Add linear bias: \[\Large \text{output} = \text{acc} + b_{out} \]</li>
 </ul>
 </li>
-<li>Store result in <code>output[batch_idx, seq_idx, out_idx]</code></li>
+<li>Store the result in <code>output[Coord(batch_idx, seq_idx, out_idx)]</code></li>
 </ul>
 </li>
 <li>

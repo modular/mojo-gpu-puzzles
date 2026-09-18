@@ -303,7 +303,7 @@ def dot_product[
 <div class="solution-tips">
 <ol>
 <li>Create shared memory with TileTensor using address_space</li>
-<li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
+<li>Store <code>rebind[Scalar[dtype]](a[global_i] * b[global_i])</code> in <code>shared[local_i]</code></li>
 <li>Use parallel reduction pattern with <code>barrier()</code></li>
 <li>Let thread 0 write final result to <code>output[0]</code></li>
 </ol>

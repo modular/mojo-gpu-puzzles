@@ -505,9 +505,11 @@ optimization.</p>
 <h2 id="investigation-results-from-profiling"><a class="header" href="#investigation-results-from-profiling"><strong>Investigation results from profiling</strong></a></h2>
 <p><strong>Step 1: Correctness Verification</strong>
 Both kernels produce identical mathematical results:</p>
-<pre><code class="language-text">✅ No-conflict kernel: PASSED
-✅ Two-way conflict kernel: PASSED
-✅ Both kernels produce identical results
+<pre><code class="language-text">Testing bank conflict kernels...
+No-conflict kernel test: passed
+Two-way conflict kernel test: passed
+Puzzle 32 complete ✅
+Now profile with NSight Compute to see performance differences!
 </code></pre>
 <p><strong>Step 2: Performance Baseline</strong>
 Benchmark results show similar execution times (B200, MAX 26.5.0 / Mojo 1.0.0 —

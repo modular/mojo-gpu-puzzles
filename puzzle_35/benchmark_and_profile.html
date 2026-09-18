@@ -301,7 +301,7 @@ profiler even when wall-clock looks similar, which is exactly why a
 real-world kernel can ship with this bug unnoticed.</li>
 </ol>
 <p>The practice to take away from this is: at every vectorized memory access, state
-the alignment (<code>aligned_load</code>, or an explicit <code>align_of[SIMD[dtype, width]]()</code>).
+the alignment, by passing <code>alignment=align_of[SIMD[dtype, width]]()</code>.
 It costs nothing, and it ensures your kernel takes the vectorized fast path.</p>
 
                     </main>

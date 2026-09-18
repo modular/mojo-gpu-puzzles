@@ -407,7 +407,6 @@ registration pattern is the same as MAX custom ops explained in
 <pre><code class="language-mojo">import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("embedding")
@@ -436,17 +435,6 @@ struct EmbeddingCustomOp:
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
-
-            # Zero out output tensor
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
-                    gpu_ctx,
-                    output.unsafe_ptr(),
-                    batch_size * seq_len * embed_dim,
-                    owning=False,
-                ),
-                0,
-            )
 
             # Calculate 1D grid dimensions (matching kernel's flat indexing)
             var total_elements = batch_size * seq_len * embed_dim
@@ -494,8 +482,9 @@ struct EmbeddingCustomOp:
 <ul>
 <li><strong>Simple grid configuration</strong>: Uses a straightforward 1D grid with
 <code>ceildiv(total_elements, THREADS_PER_BLOCK)</code> blocks</li>
-<li><strong>Output initialization</strong>: A single <code>enqueue_memset</code> zeroes the output buffer
-before the launch</li>
+<li><strong>No output initialization</strong>: every in-range thread writes its own element
+on both branches, so the kernel leaves nothing for a pre-launch zeroing pass
+to do</li>
 <li><strong>Compile-time parameters</strong>: All tensor dimensions passed as compile-time
 parameters for optimal performance</li>
 <li><strong>Device abstraction</strong>: Handles both GPU execution and CPU fallback seamlessly</li>
@@ -528,17 +517,6 @@ struct Embedding2DCustomOp:
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
-
-            # Zero out output tensor
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
-                    gpu_ctx,
-                    output.unsafe_ptr(),
-                    batch_size * seq_len * embed_dim,
-                    owning=False,
-                ),
-                0,
-            )
 
             # Calculate 2D grid dimensions for non-coalesced access
             var total_positions = batch_size * seq_len
@@ -603,7 +581,6 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 <li>
 <p><strong>Memory management</strong>:</p>
 <ul>
-<li>Zero-initialization of output tensors with <code>enqueue_memset</code></li>
 <li>Proper buffer creation and memory layout handling</li>
 <li>Automatic cleanup and resource management</li>
 </ul>
@@ -635,7 +612,7 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 </ol>
 <h3 id="integration-with-pytorch"><a class="header" href="#integration-with-pytorch">Integration with PyTorch</a></h3>
 <p>These registered operations can be called from Python using the
-<a href="https://max.modular.com/api/python/torch/">CustomOpLibrary</a>:</p>
+<a href="https://max.modular.com/api/python/experimental.torch/">CustomOpLibrary</a>:</p>
 <pre><code class="language-python"># Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
 
@@ -679,20 +656,20 @@ characteristics.</p>
 <p>When successful, you should see output similar to:</p>
 <pre><code class="language-text">Puzzle 21: Mojo Embedding Kernel Comparison
 ======================================================================
+
 Configuration: B=8, L=512, V=10000, E=512
 ------------------------------------------------------------
-
 Testing Correctness...
-   1D Coalesced - Max difference: 1.19e-07
-   2D Non-coalesced - Max difference: 1.19e-07
+   1D Coalesced - Max difference: 0.00e+00
+   2D Non-coalesced - Max difference: 0.00e+00
    ✅ Both implementations CORRECT
 
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     2.145 ms
-   2D Non-coalesced: 3.867 ms
-   1D is 1.80x faster than 2D
+   1D Coalesced:     0.486 ms
+   2D Non-coalesced: 0.625 ms
+   1D is 1.29x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -700,6 +677,18 @@ Key Learning Points:
 • Coalesced memory access should be faster
 • Grid configuration affects GPU utilization
 </code></pre>
+<blockquote>
+<p>These numbers are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20). Run this on a fast GPU and the two times will look the same:
+on a B200 they land within a few percent of each other and the
+non-coalesced kernel often comes out marginally ahead. That is the benchmark, not the kernels. It wall-clocks a Python-level
+call, and the roughly 0.3ms of per-call dispatch swamps the kernels
+themselves. Profiled so that only GPU time is counted, the coalesced kernel
+wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us
+on a B200. The faster the GPU, the more the fixed cost hides what you came
+to see — which is worth remembering the next time a wall-clock benchmark
+reports no difference.</p>
+</blockquote>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
