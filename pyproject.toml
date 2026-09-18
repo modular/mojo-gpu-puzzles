@@ -10,8 +10,8 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     # Pinned to the release the book targets. Bump both with the release-branch
     # channel edit in `pixi.toml`; they must not drift apart again.
-    "mojo==1.0.0",
-    "max==26.5.0",
+    "mojo==1.1.0",
+    "max==26.6.0",
     "poethepoet>=0.34.0",
     "scipy>=1.15.3",
     # Matches the version `pixi.toml` pins and the suite is tested against.
