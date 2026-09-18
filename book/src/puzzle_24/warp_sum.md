@@ -7,7 +7,7 @@ combine results automatically, demonstrating how warp programming transforms GPU
 synchronization.
 
 **Key insight:** _The
-[warp.sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/sum/)
+[warp.sum()](https://max.modular.com/api/mojo/max/gpu/primitives/warp/sum/)
 operation leverages SIMT execution to replace shared memory + barriers + tree
 reduction with a `log2(WARP_SIZE)`-step shuffle reduction behind one function
 call._
@@ -215,7 +215,7 @@ Expected output when solved:
 ```txt
 SIZE: 32
 WARP_SIZE: 32
-SIMD_WIDTH: 8
+SIMD_WIDTH: 4
 === RESULT ===
 actual: HostBuffer([10416.0])
 expected: HostBuffer([10416.0])
@@ -383,7 +383,7 @@ Expected output when solved:
 ```txt
 SIZE: 32
 WARP_SIZE: 32
-SIMD_WIDTH: 8
+SIMD_WIDTH: 4
 === RESULT ===
 actual: HostBuffer([10416.0])
 expected: HostBuffer([10416.0])
@@ -458,12 +458,12 @@ pixi run p24 --benchmark
   </div>
 </div>
 
-Here's example output from a complete benchmark run:
+Here's example output from a complete benchmark run (a B200 with MAX
+26.7.0.dev2026091605 / Mojo 1.2.0.dev2026091605 — read the ranking, not the
+absolute times; the iteration count is chosen by the framework, bounded by
+`max_iters`):
 
 ```text
-SIZE: 32
-WARP_SIZE: 32
-SIMD_WIDTH: 8
 --------------------------------------------------------------------------------
 Testing SIZE=1 x WARP_SIZE, BLOCKS=1
 Running traditional_1x
@@ -501,27 +501,27 @@ Running simple_warp_65536x
 Running functional_warp_65536x
 | name                   | met (ms)              | iters |
 | ---------------------- | --------------------- | ----- |
-| traditional_1x         | 0.00460128            | 100   |
-| simple_warp_1x         | 0.00574047            | 100   |
-| functional_warp_1x     | 0.00484192            | 100   |
-| traditional_4x         | 0.00492671            | 100   |
-| simple_warp_4x         | 0.00485247            | 100   |
-| functional_warp_4x     | 0.00587679            | 100   |
-| traditional_32x        | 0.0062406399999999996 | 100   |
-| simple_warp_32x        | 0.0054918400000000004 | 100   |
-| functional_warp_32x    | 0.00552447            | 100   |
-| traditional_256x       | 0.0050614300000000004 | 100   |
-| simple_warp_256x       | 0.00488768            | 100   |
-| functional_warp_256x   | 0.00461472            | 100   |
-| traditional_2048x      | 0.01120031            | 100   |
-| simple_warp_2048x      | 0.00884383            | 100   |
-| functional_warp_2048x  | 0.007038720000000001  | 100   |
-| traditional_16384x     | 0.038533750000000005  | 100   |
-| simple_warp_16384x     | 0.0323264             | 100   |
-| functional_warp_16384x | 0.01674271            | 100   |
-| traditional_65536x     | 0.19784991999999998   | 100   |
-| simple_warp_65536x     | 0.12870176            | 100   |
-| functional_warp_65536x | 0.048680310000000004  | 100   |
+| traditional_1x         | 0.0048255             | 10    |
+| simple_warp_1x         | 0.005878400000000001  | 10    |
+| functional_warp_1x     | 0.0043072             | 10    |
+| traditional_4x         | 0.0047648000000000005 | 10    |
+| simple_warp_4x         | 0.0045632             | 10    |
+| functional_warp_4x     | 0.004284700000000001  | 10    |
+| traditional_32x        | 0.0046207999999999996 | 10    |
+| simple_warp_32x        | 0.0048032             | 10    |
+| functional_warp_32x    | 0.0044927000000000005 | 10    |
+| traditional_256x       | 0.0044704             | 10    |
+| simple_warp_256x       | 0.0046463             | 10    |
+| functional_warp_256x   | 0.0051615             | 10    |
+| traditional_2048x      | 0.0045088             | 10    |
+| simple_warp_2048x      | 0.0044319             | 10    |
+| functional_warp_2048x  | 0.0040352             | 10    |
+| traditional_16384x     | 0.012761600000000001  | 10    |
+| simple_warp_16384x     | 0.012447999999999999  | 10    |
+| functional_warp_16384x | 0.0075231000000000004 | 10    |
+| traditional_65536x     | 0.0397632             | 10    |
+| simple_warp_65536x     | 0.0394847             | 10    |
+| functional_warp_65536x | 0.0211007             | 10    |
 
 Benchmarks completed!
 
@@ -531,6 +531,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
    - 2048 x WARP_SIZE: Warp primitive benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
+   - Note: AMD GPUs process 2 x elements per warp vs NVIDIA!
 
    Expected Results at Large Scales:
    • Traditional: Slower due to more barrier overhead
@@ -546,8 +547,8 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 - **Medium scale (2048x)**: The warp approaches start to pull ahead of the
   traditional tree reduction
 - **Large scales (16K-65K)**: The gap widens rather than closing - in this run
-  the functional warp approach finishes about 4x faster than the traditional
-  one at 65536x
+  the functional warp approach finishes about 1.7x faster than the traditional
+  one at 16384x and about 1.9x faster at 65536x
 - **Variability**: Performance depends heavily on specific GPU architecture and
   memory subsystem
 

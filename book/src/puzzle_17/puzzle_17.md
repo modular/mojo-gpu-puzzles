@@ -188,7 +188,7 @@ Let's break down how this works in the larger context:
    @extensibility.register("conv1d")
    struct Conv1DCustomOp:
        @staticmethod
-       def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
+       def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = .float32](
            output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
            input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
            kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],

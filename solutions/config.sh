@@ -109,7 +109,7 @@ should_skip_puzzle() {
 
     # Check compute 9.0 requirements
     if is_in_array "$puzzle_name" "${NVIDIA_COMPUTE_90_REQUIRED_PUZZLES[@]}"; then
-        if [[ -z "$compute_capability" ]] || (( $(echo "$compute_capability < 9.0" | bc -l) )); then
+        if [[ -z "$compute_capability" ]] || awk -v c="$compute_capability" 'BEGIN { exit !(c < 9.0) }'; then
             echo "requires compute capability >= 9.0 (Hopper)"
             return 0
         fi
@@ -117,7 +117,7 @@ should_skip_puzzle() {
 
     # Check compute 8.0 requirements
     if is_in_array "$puzzle_name" "${NVIDIA_COMPUTE_80_REQUIRED_PUZZLES[@]}"; then
-        if [[ -z "$compute_capability" ]] || (( $(echo "$compute_capability < 8.0" | bc -l) )); then
+        if [[ -z "$compute_capability" ]] || awk -v c="$compute_capability" 'BEGIN { exit !(c < 8.0) }'; then
             echo "requires compute capability >= 8.0 (Ampere)"
             return 0
         fi

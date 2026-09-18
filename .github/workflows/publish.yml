@@ -24,6 +24,9 @@ on:
       # change here changes the published page.
       - "problems/**"
       - "solutions/**"
+      # book.toml runs scripts/youtube_preprocessor.py on every render and
+      # build-book is scripts/build_book.sh, so these change the rendered page.
+      - "scripts/**"
   workflow_dispatch: {}
 
 permissions:

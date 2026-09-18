@@ -30,8 +30,8 @@ separate scalar loads, quadrupling the instruction count on the memory pipeline.
 - How alignment controls whether the compiler emits vectorized memory
   instructions
 - Why three kernels with identical output can have very different bandwidth
-- How to communicate alignment through the `LayoutTensor` API
-  (`aligned_load`, `load`/`store` with explicit alignment)
+- How to communicate alignment through the `TileTensor` API, by passing an
+  explicit `alignment` to `load` and `store`
 - How to confirm the codegen change with Nsight Compute
 
 ## Key concepts
@@ -41,8 +41,8 @@ separate scalar loads, quadrupling the instruction count on the memory pipeline.
   `float32x4`).
 - **The under-stated-alignment trap**: passing the scalar alignment to a
   vectorized `load`/`store` so the compiler can't vectorize.
-- **The aligned fast path**: `aligned_load` / explicit `store_alignment`, which
-  lower to `ld.global.nc.v4` / `st.global.v4`.
+- **The aligned fast path**: `load`/`store` given the full vector alignment,
+  which lower to `ld.global.nc.v4` / `st.global.v4`.
 - **Memory-bound vs compute-bound**: alignment matters most when load/store is
   the bottleneck.
 
@@ -72,7 +72,7 @@ does not.
 - SIMD and vectorization from
   [Puzzle 23](../puzzle_23/puzzle_23.md)
 - GPU profiling from [Puzzle 30](../puzzle_30/puzzle_30.md)
-- `LayoutTensor` load/store from earlier puzzles
+- `TileTensor` load/store from earlier puzzles
 
 **Hardware requirements:**
 

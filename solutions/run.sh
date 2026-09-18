@@ -390,7 +390,10 @@ run_mojo_files() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
+        # Also match a comparison against a local bound from argv, as in
+        # `var mode = argv()[1]` ... `mode == "--flag"`. Matching only the
+        # direct form skipped the modes of every puzzle written that way.
+        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|[a-zA-Z_][a-zA-Z_0-9]* == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
 
         if [ -z "$flags" ]; then
           execute_or_skip_test "${path_prefix}$f" "" "mojo -I \"$PUZZLES_ROOT\" \"$f\""
@@ -414,7 +417,7 @@ run_python_files() {
       if [ -n "$specific_flag" ]; then
         # Check if the file supports this flag
         if grep -q "sys\.argv\[1\] == \"$specific_flag\"" "$f"; then
-          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "python \"$f\" \"$specific_flag\""
+          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "PYTHONPATH=\"$PUZZLES_ROOT\" python \"$f\" \"$specific_flag\""
         else
           print_test_result "${path_prefix}$f" "$specific_flag" "SKIP"
         fi
@@ -424,10 +427,10 @@ run_python_files() {
         flags=$(grep -oE 'sys\.argv\[1\] == "--[^"]*"|"--[a-z-]+"' "$f" | grep -oE -- '--[a-z-]+' | sort -u | grep -v '^--demo')
 
         if [ -z "$flags" ]; then
-          execute_or_skip_test "${path_prefix}$f" "" "python \"$f\""
+          execute_or_skip_test "${path_prefix}$f" "" "PYTHONPATH=\"$PUZZLES_ROOT\" python \"$f\""
         else
           for flag in $flags; do
-            execute_or_skip_test "${path_prefix}$f" "$flag" "python \"$f\" \"$flag\""
+            execute_or_skip_test "${path_prefix}$f" "$flag" "PYTHONPATH=\"$PUZZLES_ROOT\" python \"$f\" \"$flag\""
           done
         fi
       fi

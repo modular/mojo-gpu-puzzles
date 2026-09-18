@@ -123,8 +123,9 @@ This operation registers the optimized 1D embedding kernel as `"embedding"`:
 
 - **Simple grid configuration**: Uses a straightforward 1D grid with
   `ceildiv(total_elements, THREADS_PER_BLOCK)` blocks
-- **Output initialization**: A single `enqueue_memset` zeroes the output buffer
-  before the launch
+- **No output initialization**: every in-range thread writes its own element
+  on both branches, so the kernel leaves nothing for a pre-launch zeroing pass
+  to do
 - **Compile-time parameters**: All tensor dimensions passed as compile-time
   parameters for optimal performance
 - **Device abstraction**: Handles both GPU execution and CPU fallback seamlessly
@@ -153,7 +154,6 @@ This operation registers the comparison 2D embedding kernel as `"embedding_2d"`:
 Both custom operations provide essential infrastructure:
 
 1. **Memory management**:
-   - Zero-initialization of output tensors with `enqueue_memset`
    - Proper buffer creation and memory layout handling
    - Automatic cleanup and resource management
 
@@ -237,20 +237,20 @@ When successful, you should see output similar to:
 ```text
 Puzzle 21: Mojo Embedding Kernel Comparison
 ======================================================================
+
 Configuration: B=8, L=512, V=10000, E=512
 ------------------------------------------------------------
-
 Testing Correctness...
-   1D Coalesced - Max difference: 1.19e-07
-   2D Non-coalesced - Max difference: 1.19e-07
+   1D Coalesced - Max difference: 0.00e+00
+   2D Non-coalesced - Max difference: 0.00e+00
    ✅ Both implementations CORRECT
 
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     2.145 ms
-   2D Non-coalesced: 3.867 ms
-   1D is 1.80x faster than 2D
+   1D Coalesced:     0.529 ms
+   2D Non-coalesced: 0.669 ms
+   1D is 1.27x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -258,6 +258,17 @@ Key Learning Points:
 • Coalesced memory access should be faster
 • Grid configuration affects GPU utilization
 ```
+
+> These numbers are from a Tesla T4 (MAX 26.7.0.dev2026091705, driver
+> 570.133.20). Run this on a fast GPU and the two times will look the same:
+> on a B200 they land within run-to-run noise and the winner changes between
+> runs. That is the benchmark, not the kernels. It wall-clocks a Python-level
+> call, and the roughly 0.3ms of per-call dispatch swamps the kernels
+> themselves. Profiled so that only GPU time is counted, the coalesced kernel
+> wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us
+> on a B200. The faster the GPU, the more the fixed cost hides what you came
+> to see — which is worth remembering the next time a wall-clock benchmark
+> reports no difference.
 
 ## Solution
 

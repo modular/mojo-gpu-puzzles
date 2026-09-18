@@ -14,6 +14,7 @@ from std.math import ceildiv
 from max.gpu import thread_idx, block_idx, block_dim, lane_id
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from max.gpu.host.compile import get_gpu_target
 from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from max.algorithm.functional import elementwise
 from layout import TileTensor, TensorEngine
@@ -42,7 +43,7 @@ comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # optimal choice for warp kernel
 comptime dtype = DType.float32
-comptime SIMD_WIDTH = simd_width_of[dtype]()
+comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 comptime in_layout = row_major[SIZE]()
 comptime out_layout = row_major[1]()
 comptime InLayout = type_of(in_layout)

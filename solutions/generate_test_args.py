@@ -23,9 +23,11 @@ import re
 import sys
 from pathlib import Path
 
-# Mojo: argv()[1] == "--flag" or test_type == "--flag"
+# Mojo: argv()[1] == "--flag", or a comparison against a local bound earlier
+# from argv, as in `var mode = argv()[1]` ... `mode == "--flag"`. Matching only
+# the direct form left puzzles that use a local with no per-flag test target.
 _MOJO_PATTERN = re.compile(
-    r'argv\(\)\[1\]\s*==\s*"(--[^"]+)"|test_type\s*==\s*"(--[^"]+)"'
+    r'argv\(\)\[1\]\s*==\s*"(--[^"]+)"|\b\w+\s*==\s*"(--[^"]+)"'
 )
 # Python: sys.argv[1] == "--flag" or any quoted "--flag" (covers argparse add_argument)
 _PY_PATTERN = re.compile(r'"(--[a-z][a-z-]*)"')

@@ -331,6 +331,32 @@ this book describes.
    include your platform with `-e platform` such as `-e amd`)
 4. Compare with `solutions/pXX/` to learn different approaches
 
+### Guarded output buffers
+
+Most puzzles allocate their output inside a larger buffer whose margins hold
+NaN. When the puzzle finishes it checks those margins, and fails if your
+kernel wrote into one:
+
+```text
+❌ Write detected outside of output buffer
+```
+
+A kernel can write every expected value into `output` and still write past the
+end of it, which comparing values alone cannot detect. This message means the
+indexing ran outside the output region, most often a missing bounds check on
+the last block, where the thread count exceeds the size of the data.
+
+The margins extend a fixed number of elements past each end, so a write far
+enough beyond them lands outside the guarded region and goes unreported. A
+clean check is good evidence, not proof.
+
+Nor does the check reach every puzzle. Puzzles 17 to 22 keep their kernels
+behind a Python driver and allocate through the MAX graph rather than a
+device context, so they have no guarded buffer, and neither do puzzles 9, 10
+and 30 to 32, which drive external tools instead of asking you to write a
+kernel. Those puzzles never print the message above, whatever your kernel
+does.
+
 ### Essential commands
 
 <div class="code-tabs" data-tab-group="package-manager">
@@ -387,6 +413,10 @@ uv run mojo -I . solutions/pXX/pXX.mojo  # Reference solution
 
   </div>
 </div>
+
+Puzzles 30, 31 and 32 ship no reference solution, so the
+`solutions/pXX/pXX.mojo` commands above have nothing to run for them. Work
+through those three from the book pages and the profiling output instead.
 
 ## GPU support matrix
 
@@ -505,8 +535,8 @@ programming:
   tools rather than GPU features. `compute-sanitizer` (9, 10) comes with the
   environment. Profiling with `ncu` (30-32) needs GPU performance-counter
   access, which shared platforms often restrict, and `nsys` (30, 31) needs a
-  system CUDA installation. Interactive debugging with `cuda-gdb` (9) expects a
-  terminal rather than a notebook cell
+  system CUDA installation. Interactive debugging with `cuda-gdb` (9) needs
+  one too, and expects a terminal rather than a notebook cell
 - **Compute capability limits**: T4 is compute capability 7.5, so puzzles
   requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won't run
 - **Package installation restrictions**: May require workarounds for Mojo/MAX
@@ -543,8 +573,8 @@ Kaggle offers more generous free GPU access:
   tools rather than GPU features. `compute-sanitizer` (9, 10) comes with the
   environment. Profiling with `ncu` (30-32) needs GPU performance-counter
   access, which shared platforms often restrict, and `nsys` (30, 31) needs a
-  system CUDA installation. Interactive debugging with `cuda-gdb` (9) expects a
-  terminal rather than a notebook cell
+  system CUDA installation. Interactive debugging with `cuda-gdb` (9) needs
+  one too, and expects a terminal rather than a notebook cell
 - **Mojo installation complexity**: Requires manual setup of Mojo environment
 - **Compute capability limits**: T4 is compute capability 7.5, so puzzles
   requiring 8.0 (16, 28, 29, 33) and 9.0 (34) won't run

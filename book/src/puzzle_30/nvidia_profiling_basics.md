@@ -80,11 +80,14 @@ nsys stats --force-export=true timeline.nsys-rep
 # See the help
 pixi run ncu --help
 
+# Build first: ncu profiles a binary, not a source file
+pixi run mojo build --debug-level=full your_program.mojo -o your_program
+
 # Detailed kernel profiling
-pixi run ncu --set full -o kernel_profile mojo your_program.mojo
+pixi run ncu --set full -o kernel_profile ./your_program
 
 # Focus on specific kernels
-pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
+pixi run ncu --kernel-name regex:your_kernel_name ./your_program
 ```
 
 ## Tool selection decision tree

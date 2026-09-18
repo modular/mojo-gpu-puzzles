@@ -169,7 +169,7 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    ```mojo
    var stride = TPB // 2
    while stride > 0:
-       var temp_val: output.ElementType = 0
+       var temp_val: Scalar[dtype] = 0
        if local_i < stride:
            temp_val = cache[local_i + stride]  # Read phase
        barrier()
