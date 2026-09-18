@@ -13,10 +13,12 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
+
+from harness.canary import PuzzleMemory
 
 comptime TPB = 8
 comptime BATCH = 4
@@ -31,11 +33,13 @@ comptime OutLayout = type_of(out_layout)
 
 
 # ANCHOR: axis_sum
-def axis_sum(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+def axis_sum[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -48,8 +52,8 @@ def axis_sum(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out = ctx.enqueue_create_buffer[dtype](BATCH)
-        out.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out = mem.output(BATCH)
         var inp = ctx.enqueue_create_buffer[dtype](BATCH * SIZE)
         inp.enqueue_fill(0)
         with inp.map_to_host() as inp_host:
@@ -58,9 +62,9 @@ def main() raises:
                     inp_host[row * SIZE + col] = Scalar[dtype](row * SIZE + col)
 
         var out_tensor = TileTensor(out, out_layout)
-        var inp_tensor = TileTensor[mut=False, dtype, InLayout](inp, in_layout)
+        var inp_tensor = TileTensor(inp, in_layout)
 
-        ctx.enqueue_function[axis_sum](
+        ctx.enqueue_function[axis_sum[out_tensor.Engine]](
             out_tensor,
             inp_tensor,
             Int32(SIZE),
@@ -82,4 +86,5 @@ def main() raises:
             print("expected:", expected)
             for i in range(BATCH):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 15 complete ✅")
+        mem.verify()
+        print("Puzzle 15 complete ✅")

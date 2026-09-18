@@ -404,7 +404,7 @@ Fire up the LLDB debugger directly from source:
 
 ```bash
 # This compiles and debugs p01.mojo in one step
-pixi run mojo debug solutions/p01/p01.mojo
+pixi run mojo debug -I . solutions/p01/p01.mojo
 ```
 
 You'll see the LLDB prompt: `(lldb)`. You're now inside the debugger, ready to
@@ -570,7 +570,7 @@ more control and faster debugging iterations.
 
 ```bash
 # Create a debug build (notice the clear naming)
-pixi run mojo build -O0 -g solutions/p01/p01.mojo -o solutions/p01/p01_debug
+pixi run mojo build -O0 -g -I . solutions/p01/p01.mojo -o solutions/p01/p01_debug
 ```
 
 **What happens here:**
@@ -653,7 +653,7 @@ Choose your approach:
 pixi run setup-cuda-gdb
 
 # We'll use Source + CUDA-GDB (Approach 2 from above)
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
+pixi run mojo debug --cuda-gdb --break-on-launch -I . solutions/p01/p01.mojo
 ```
 
 We'll use the **Source + CUDA-GDB approach** since it's perfect for learning

@@ -62,7 +62,7 @@ Notes:
 <div class="solution-tips">
 
 1. Create shared memory with TileTensor using address_space
-2. Load data with natural indexing: `shared[local_i] = a[global_i]`
+2. Load data with indexing: `shared[local_i] = rebind[Scalar[dtype]](a[global_i])`
 3. Handle special cases for first two elements
 4. Use shared memory for window operations
 5. Guard against out-of-bounds access

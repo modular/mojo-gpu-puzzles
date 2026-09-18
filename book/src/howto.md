@@ -354,12 +354,12 @@ pixi run tests           # Test all solutions
 pixi run tests pXX       # Test specific puzzle
 
 # Run manually
-pixi run mojo problems/pXX/pXX.mojo     # Your implementation
-pixi run mojo solutions/pXX/pXX.mojo    # Reference solution
+pixi run mojo -I . problems/pXX/pXX.mojo   # Your implementation
+pixi run mojo -I . solutions/pXX/pXX.mojo  # Reference solution
 
 # Interactive shell
 pixi shell               # Enter environment
-mojo problems/p01/p01.mojo              # Direct execution
+mojo -I . problems/p01/p01.mojo              # Direct execution
 exit                     # Leave shell
 
 # Development
@@ -381,8 +381,8 @@ uv run poe tests        # Test all solutions
 uv run poe tests pXX    # Test specific puzzle
 
 # Run manually
-uv run mojo problems/pXX/pXX.mojo      # Your implementation
-uv run mojo solutions/pXX/pXX.mojo     # Reference solution
+uv run mojo -I . problems/pXX/pXX.mojo   # Your implementation
+uv run mojo -I . solutions/pXX/pXX.mojo  # Reference solution
 ```
 
   </div>

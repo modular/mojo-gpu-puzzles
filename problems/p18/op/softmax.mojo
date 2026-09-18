@@ -13,8 +13,9 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from layout import TileTensor
-from layout.tile_layout import row_major
+from layout import TileTensor, Coord
+from layout.tensor_engine import TensorEngine
+from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.math import exp
 from std.bit import log2_ceil
@@ -22,8 +23,6 @@ from std.utils.numerics import max_finite, min_finite
 
 
 comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
-comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
 comptime GRID_DIM_X = 1
 # Tree-based reduction require the number of threads to be the next power of two >= SIZE for correctness.
 comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
@@ -32,15 +31,18 @@ comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 # ANCHOR: softmax_gpu_kernel
 def softmax_gpu_kernel[
     input_size: Int,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    # FILL IN (roughly 31 lines)
+    # FILL IN (roughly 33 lines)
 
 
 # ANCHOR_END: softmax_gpu_kernel
@@ -49,15 +51,18 @@ def softmax_gpu_kernel[
 # ANCHOR: softmax_cpu_kernel
 def softmax_cpu_kernel[
     input_size: Int,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
     dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    # FILL IN (roughly 10 lines)
+    # FILL IN (roughly 12 lines)
 
 
 # ANCHOR_END: softmax_cpu_kernel
@@ -79,13 +84,8 @@ struct SoftmaxCustomOp:
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         ctx: DeviceContext,
     ) raises:
-        var output_tensor = TileTensor[
-            mut=True, dtype, LayoutType, MutAnyOrigin
-        ](output.unsafe_ptr(), layout)
-        var input_tensor = TileTensor[
-            mut=True, dtype, LayoutType, MutAnyOrigin
-        ](input.unsafe_ptr(), layout)
-
+        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
+        var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
@@ -99,7 +99,13 @@ struct SoftmaxCustomOp:
                 0,
             )
 
-            comptime kernel = softmax_gpu_kernel[input_size, dtype]
+            comptime kernel = softmax_gpu_kernel[
+                input_size,
+                output_tensor.LayoutType,
+                input_tensor.LayoutType,
+                output_tensor.Engine,
+                dtype,
+            ]
             gpu_ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
@@ -108,6 +114,12 @@ struct SoftmaxCustomOp:
             )
 
         elif target == "cpu":
-            softmax_cpu_kernel[input_size, dtype](output_tensor, input_tensor)
+            softmax_cpu_kernel[
+                input_size,
+                output_tensor.LayoutType,
+                input_tensor.LayoutType,
+                output_tensor.Engine,
+                dtype,
+            ](output_tensor, input_tensor)
         else:
             raise Error("Unsupported target: " + target)

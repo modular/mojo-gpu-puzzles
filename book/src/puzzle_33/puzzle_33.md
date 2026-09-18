@@ -477,14 +477,14 @@ the idiomatic tiled approach.
   <div class="tab-content">
 
 ```bash
-uv run mojo build problems/p33/p33.mojo -o problems/p33/p33_profiler
+uv run mojo build -I . problems/p33/p33.mojo -o problems/p33/p33_profiler
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run mojo build problems/p33/p33.mojo -o problems/p33/p33_profiler
+pixi run mojo build -I . problems/p33/p33.mojo -o problems/p33/p33_profiler
 ```
 
   </div>

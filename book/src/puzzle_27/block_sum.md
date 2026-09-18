@@ -308,7 +308,7 @@ To understand what `block.sum()` actually generates, we compiled the puzzle with
 debug information:
 
 ```bash
-pixi run mojo build --emit llvm --debug-level=line-tables solutions/p27/p27.mojo -o solutions/p27/p27.ll
+pixi run mojo build --emit llvm --debug-level=line-tables -I . solutions/p27/p27.mojo -o solutions/p27/p27.ll
 ```
 
 This generated **LLVM file** `solutions/p27/p27.ll`. For example, on a

@@ -12,9 +12,11 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu import thread_idx
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from std.testing import assert_equal
+
+from harness.canary import PuzzleMemory
 
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
@@ -29,12 +31,14 @@ comptime BLayout = type_of(b_layout)
 
 
 # ANCHOR: broadcast_add_solution
-def broadcast_add(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
+def broadcast_add[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
@@ -47,8 +51,8 @@ def broadcast_add(
 
 def main() raises:
     with DeviceContext() as ctx:
-        var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-        out_buf.enqueue_fill(0)
+        var mem = PuzzleMemory[dtype](ctx)
+        var out_buf = mem.output(SIZE * SIZE)
         var out_tensor = TileTensor(out_buf, out_layout)
         print("out shape:", out_tensor.dim[0](), "x", out_tensor.dim[1]())
 
@@ -69,10 +73,10 @@ def main() raises:
                 for j in range(SIZE):
                     expected_tensor[i, j] = a_host[j] + b_host[i]
 
-        var a_tensor = TileTensor[mut=False, dtype, ALayout](a, a_layout)
-        var b_tensor = TileTensor[mut=False, dtype, BLayout](b, b_layout)
+        var a_tensor = TileTensor(a, a_layout)
+        var b_tensor = TileTensor(b, b_layout)
 
-        ctx.enqueue_function[broadcast_add](
+        ctx.enqueue_function[broadcast_add[out_tensor.Engine]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -91,4 +95,5 @@ def main() raises:
                     assert_equal(
                         out_buf_host[i * SIZE + j], expected_buf[i * SIZE + j]
                     )
-            print("Puzzle 05 complete ✅")
+        mem.verify()
+        print("Puzzle 05 complete ✅")

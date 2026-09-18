@@ -38,9 +38,9 @@ Notes:
 1. Use
    `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())`
    for shared memory
-2. Load main data: `shared_a[local_i] = a[global_i]`
+2. Load main data: `shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])`
 3. Load boundary: `if local_i < CONV_2 - 1` handle next block data
-4. Load filter: `shared_b[local_i] = b[local_i]`
+4. Load filter: `shared_b[local_i] = rebind[Scalar[dtype]](b[local_i])`
 5. Sum within input bounds: `if global_i + j < SIZE_2`
 
 </div>
@@ -143,7 +143,7 @@ Size calculation:
    ```mojo
    # Main block data
    if global_i < SIZE_2:
-       shared_a[local_i] = a[global_i]
+       shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])
    else:
        shared_a[local_i] = 0
 
@@ -151,7 +151,7 @@ Size calculation:
    if local_i < CONV_2 - 1:
        var next_idx = global_i + TPB
        if next_idx < SIZE_2:
-           shared_a[TPB + local_i] = a[next_idx]
+           shared_a[TPB + local_i] = rebind[Scalar[dtype]](a[next_idx])
        else:
            # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
            # which is an undefined behavior
@@ -167,7 +167,7 @@ Size calculation:
 
    ```mojo
    if local_i < CONV_2:
-       shared_b[local_i] = b[local_i]
+       shared_b[local_i] = rebind[Scalar[dtype]](b[local_i])
    ```
 
    - Single load per thread

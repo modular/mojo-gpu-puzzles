@@ -247,15 +247,15 @@ it works:
      ```mojo
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row < size and (tile * TPB + local_col) < size:
-            a_shared[local_row, local_col] = a[
-                tiled_row, tile * TPB + local_col
-            ]
+            a_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                a[tiled_row, tile * TPB + local_col]
+            )
 
         # Load B tile - row determined by tile, global col stays the same
         if (tile * TPB + local_row) < size and tiled_col < size:
-            b_shared[local_row, local_col] = b[
-                tile * TPB + local_row, tiled_col
-            ]
+            b_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                b[tile * TPB + local_row, tiled_col]
+            )
      ```
 
 4. **Computation within tile**
@@ -496,7 +496,7 @@ all boundary checks:
    ```mojo
    # Defensive bounds checking included even with perfect tiling
    if tiled_row < size and tiled_col < size:
-       out_tile[local_row, local_col] = acc
+       out_tile[local_row, local_col] = rebind[Scalar[dtype]](acc)
    ```
 
    With perfect \\((9 \times 9)\\) tiling, this bounds check is technically

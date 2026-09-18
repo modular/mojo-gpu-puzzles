@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
@@ -29,11 +29,15 @@ comptime layout = row_major[SIZE, SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def shared_memory_race(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def shared_memory_race[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
@@ -43,7 +47,7 @@ def shared_memory_race(
     )
 
     if row < size and col < size:
-        shared_sum[0] += a[row, col]
+        shared_sum[0] += rebind[Scalar[dtype]](a[row, col])
 
     barrier()
 
@@ -55,11 +59,15 @@ def shared_memory_race(
 
 
 # ANCHOR: add_10_2d_no_guard
-def add_10_2d(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def add_10_2d[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     _ = size
     var row = thread_idx.y
@@ -94,7 +102,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 a_host[i] = Scalar[dtype](i)
 
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+        var a_tensor = TileTensor(a, layout)
 
         if flag == "--memory-bug":
             print("Running memory bug example (bounds checking issue)...")
@@ -102,7 +110,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 expected[i] = Scalar[dtype](i + 10)
 
-            ctx.enqueue_function[add_10_2d](
+            ctx.enqueue_function[add_10_2d[out_tensor.Engine]](
                 out_tensor,
                 a_tensor,
                 Int32(SIZE),
@@ -131,7 +139,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 expected[i] = total_sum
 
-            ctx.enqueue_function[shared_memory_race](
+            ctx.enqueue_function[shared_memory_race[out_tensor.Engine]](
                 out_tensor,
                 a_tensor,
                 Int32(SIZE),

@@ -13,12 +13,14 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor
+from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.math import log2
 from std.testing import assert_equal
+
+from harness.canary import PuzzleMemory
 
 # ANCHOR: prefix_sum_simple
 comptime TPB = 8
@@ -30,11 +32,15 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def prefix_sum_simple(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def prefix_sum_simple[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -56,11 +62,15 @@ comptime ExtendedLayout = type_of(extended_layout)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-def prefix_sum_local_phase(
-    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
+def prefix_sum_local_phase[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, ExtendedLayout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -68,10 +78,14 @@ def prefix_sum_local_phase(
 
 
 # Kernel 2: Add block sums to their respective blocks
-def prefix_sum_block_sum_phase(
-    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
+def prefix_sum_block_sum_phase[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, ExtendedLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
@@ -82,6 +96,7 @@ def prefix_sum_block_sum_phase(
 
 def main() raises:
     with DeviceContext() as ctx:
+        var mem = PuzzleMemory[dtype](ctx)
         var use_simple = argv()[1] == "--simple"
         var size = SIZE if use_simple else SIZE_2
         var num_blocks = (size + TPB - 1) // TPB
@@ -90,8 +105,7 @@ def main() raises:
             raise Error("Extended buffer too small for the number of blocks")
 
         var buffer_size = size if use_simple else EXTENDED_SIZE
-        var out = ctx.enqueue_create_buffer[dtype](buffer_size)
-        out.enqueue_fill(0)
+        var out = mem.output(buffer_size)
         var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
 
@@ -100,10 +114,10 @@ def main() raises:
                 a_host[i] = Scalar[dtype](i)
 
         if use_simple:
-            var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+            var a_tensor = TileTensor(a, layout)
             var out_tensor = TileTensor(out, layout)
 
-            ctx.enqueue_function[prefix_sum_simple](
+            ctx.enqueue_function[prefix_sum_simple[out_tensor.Engine]](
                 out_tensor,
                 a_tensor,
                 Int32(size),
@@ -111,14 +125,12 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         else:
-            var a_tensor = TileTensor[mut=False, dtype, Layout2Type](
-                a, layout_2
-            )
+            var a_tensor = TileTensor(a, layout_2)
             var out_tensor = TileTensor(out, extended_layout)
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            ctx.enqueue_function[prefix_sum_local_phase](
+            ctx.enqueue_function[prefix_sum_local_phase[out_tensor.Engine]](
                 out_tensor,
                 a_tensor,
                 Int32(size),
@@ -127,7 +139,7 @@ def main() raises:
             )
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[prefix_sum_block_sum_phase](
+            ctx.enqueue_function[prefix_sum_block_sum_phase[out_tensor.Engine]](
                 out_tensor,
                 Int32(size),
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -158,4 +170,5 @@ def main() raises:
             size = size if use_simple else SIZE_2
             for i in range(size):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 14 complete ✅")
+        mem.verify()
+        print("Puzzle 14 complete ✅")

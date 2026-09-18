@@ -72,14 +72,15 @@ default = { features = ["nvidia"] }
 
 [tasks]
 install-pre-commit = "pre-commit install"
-format = { cmd="mojo format problems solutions", depends-on = ["install-pre-commit"] }
-format-check = { cmd = "bash -c 'mojo format problems solutions && git diff --exit-code problems solutions || (echo \"Error: Code is not formatted. Run \\\"pixi run format\\\" to fix.\" && exit 1)'", description = "Check if code is formatted without modifying files" }
+format = { cmd="mojo format harness problems solutions", depends-on = ["install-pre-commit"] }
+format-check = { cmd = "bash -c 'mojo format harness problems solutions && git diff --exit-code harness problems solutions || (echo \"Error: Code is not formatted. Run \\\"pixi run format\\\" to fix.\" && exit 1)'", description = "Check if code is formatted without modifying files" }
 
 tests = { cmd = "bash solutions/run.sh" }
 
 check-book-refs = { cmd = "python3 scripts/check_book_refs.py", description = "Validate book links/images resolve" }
 
 check-skeletons = { cmd = "python3 scripts/check_skeletons.py", description = "Verify each problem skeleton matches its solution outside the fill-in regions" }
+check-canaries = { cmd = "python3 scripts/check_canaries.py", description = "Check that every puzzle with a learner-written kernel uses the canary" }
 compile-problems = { cmd = "bash scripts/compile_problems.sh", description = "Compile every problem skeleton so a stale starter file fails CI" }
 
 # Setup CUDA-GDB by linking system CUDA installation to conda environment
@@ -99,53 +100,53 @@ book-offline = { cmd = "bash scripts/serve_book.sh --offline", description = "Se
 fetch-offline-assets = { cmd = "bash scripts/fetch_offline_assets.sh", description = "Pre-fetch the CDN fallback assets (fonts, lottie-player) into book/theme/vendor-cache/" }
 clean = { cmd = "cd book && mdbook clean && rm -rf html-*", description = "Remove all book build artifacts" }
 
-p01 = "mojo problems/p01/p01.mojo"
+p01 = "mojo -I . problems/p01/p01.mojo"
 viz01 = "cd book/src/puzzle_01 && python puzzle_01_viz.py"
 
-p02 = "mojo problems/p02/p02.mojo"
+p02 = "mojo -I . problems/p02/p02.mojo"
 viz02 = "cd book/src/puzzle_02 && python puzzle_02_viz.py"
 
-p03 = "mojo problems/p03/p03.mojo"
+p03 = "mojo -I . problems/p03/p03.mojo"
 viz03 = "cd book/src/puzzle_03 && python puzzle_03_viz.py"
 
-p04 = "mojo problems/p04/p04.mojo"
-p04_tile_tensor = "mojo problems/p04/p04_tile_tensor.mojo"
+p04 = "mojo -I . problems/p04/p04.mojo"
+p04_tile_tensor = "mojo -I . problems/p04/p04_tile_tensor.mojo"
 viz04 = "cd book/src/puzzle_04 && python puzzle_04_viz.py"
 thread_indexing = "cd book/src/puzzle_04 && python thread_indexing_viz.py"
 tile_tensor_intro = "mojo book/src/puzzle_04/intro.mojo"
 
-p05 = "mojo problems/p05/p05.mojo"
+p05 = "mojo -I . problems/p05/p05.mojo"
 viz05 = "cd book/src/puzzle_05 && python puzzle_05_viz.py"
 
-p06 = "mojo problems/p06/p06.mojo"
+p06 = "mojo -I . problems/p06/p06.mojo"
 viz06 = "cd book/src/puzzle_06 && python puzzle_06_viz.py"
 
-p07 = "mojo problems/p07/p07.mojo"
+p07 = "mojo -I . problems/p07/p07.mojo"
 viz07 = "cd book/src/puzzle_07 && python puzzle_07_viz.py"
 
-p08 = "mojo problems/p08/p08.mojo"
+p08 = "mojo -I . problems/p08/p08.mojo"
 viz08 = "cd book/src/puzzle_08 && python puzzle_08_viz.py"
 
 p09 = "mojo problems/p09/p09.mojo"
 
 p10 = "mojo problems/p10/p10.mojo"
 
-p11 = "mojo problems/p11/p11.mojo"
+p11 = "mojo -I . problems/p11/p11.mojo"
 viz11 = "cd book/src/puzzle_11 && python puzzle_11_viz.py"
 
-p12 = "mojo problems/p12/p12.mojo"
+p12 = "mojo -I . problems/p12/p12.mojo"
 viz12 = "cd book/src/puzzle_12 && python puzzle_12_viz.py"
 
-p13 = "mojo problems/p13/p13.mojo"
+p13 = "mojo -I . problems/p13/p13.mojo"
 viz13 = "cd book/src/puzzle_13 && python puzzle_13_viz.py"
 
-p14 = "mojo problems/p14/p14.mojo"
+p14 = "mojo -I . problems/p14/p14.mojo"
 viz14 = "cd book/src/puzzle_14 && python puzzle_14_viz.py"
 
-p15 = "mojo problems/p15/p15.mojo"
+p15 = "mojo -I . problems/p15/p15.mojo"
 viz15 = "cd book/src/puzzle_15 && python puzzle_15_viz.py"
 
-p16 = "bash solutions/gate.sh p16 mojo problems/p16/p16.mojo"
+p16 = "bash solutions/gate.sh p16 mojo -I . problems/p16/p16.mojo"
 viz16 = "cd book/src/puzzle_16 && python puzzle_16_viz.py"
 rooflineviz = "cd book/src/puzzle_16 && python roofline_viz.py"
 
@@ -159,23 +160,23 @@ p19 = "bash solutions/gate.sh p19 mojo package problems/p19/op -o problems/p19/o
 
 p20 = "python problems/p20/p20.py"
 
-p21 = "python problems/p21/p21.py"
+p21 = { cmd = "python problems/p21/p21.py", env = { PYTHONPATH = "." } }
 
-p22 = "bash solutions/gate.sh p22 python problems/p22/p22.py"
+p22 = { cmd = "bash solutions/gate.sh p22 python problems/p22/p22.py", env = { PYTHONPATH = "." } }
 
-p23 = "mojo problems/p23/p23.mojo"
+p23 = "mojo -I . problems/p23/p23.mojo"
 
-p24 = "mojo problems/p24/p24.mojo"
+p24 = "mojo -I . problems/p24/p24.mojo"
 
-p25 = "mojo problems/p25/p25.mojo"
+p25 = "mojo -I . problems/p25/p25.mojo"
 
-p26 = "mojo problems/p26/p26.mojo"
+p26 = "mojo -I . problems/p26/p26.mojo"
 
-p27 = "mojo problems/p27/p27.mojo"
+p27 = "mojo -I . problems/p27/p27.mojo"
 
-p28 = "bash solutions/gate.sh p28 mojo problems/p28/p28.mojo"
+p28 = "bash solutions/gate.sh p28 mojo -I . problems/p28/p28.mojo"
 
-p29 = "bash solutions/gate.sh p29 mojo problems/p29/p29.mojo"
+p29 = "bash solutions/gate.sh p29 mojo -I . problems/p29/p29.mojo"
 
 p30 = "mojo problems/p30/p30.mojo"
 
@@ -183,11 +184,11 @@ p31 = "mojo problems/p31/p31.mojo"
 
 p32 = "mojo problems/p32/p32.mojo"
 
-p33 = "bash solutions/gate.sh p33 mojo problems/p33/p33.mojo"
+p33 = "bash solutions/gate.sh p33 mojo -I . problems/p33/p33.mojo"
 
-p34 = "bash solutions/gate.sh p34 mojo problems/p34/p34.mojo"
+p34 = "bash solutions/gate.sh p34 mojo -I . problems/p34/p34.mojo"
 
-p35 = "mojo problems/p35/p35.mojo"
+p35 = "mojo -I . problems/p35/p35.mojo"
 
 # GPU information and profiling utilities
 gpu-info = { cmd = "python3 scripts/gpu_specs.py --summary", description = "Get concise GPU information (cross-platform)" }

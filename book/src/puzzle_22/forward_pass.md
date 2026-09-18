@@ -345,16 +345,6 @@ handles one element of the output tensor. Let's break down the key components:
          return
      ```
 
-   - Convert each `TileTensor` argument with `to_layout_tensor()` before
-     indexing it:
-
-     ```mojo
-     var output_lt = output.to_layout_tensor()
-     var input_lt = input.to_layout_tensor()
-     var ln_weight_lt = ln_weight.to_layout_tensor()
-     var ln_bias_lt = ln_bias.to_layout_tensor()
-     ```
-
 2. **Statistics Computation**:
 
    ```mojo
@@ -362,7 +352,7 @@ handles one element of the output tensor. Let's break down the key components:
    var sq_sum: Scalar[dtype] = 0
 
    comptime for h in range(hidden_dim):
-       var val = input_lt[batch_idx, seq_idx, h]
+       var val = input[batch_idx, seq_idx, h]
        sum_val += rebind[Scalar[dtype]](val)
        sq_sum += rebind[Scalar[dtype]](val * val)
    ```
@@ -381,11 +371,11 @@ handles one element of the output tensor. Let's break down the key components:
 3. **Normalization and Scaling**:
 
    ```mojo
-   var input_val = input_lt[batch_idx, seq_idx, hidden_idx]
+   var input_val = input[batch_idx, seq_idx, hidden_idx]
    var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
-       ln_weight_lt[hidden_idx]
-   ) + rebind[Scalar[dtype]](ln_bias_lt[hidden_idx])
-   output_lt[batch_idx, seq_idx, hidden_idx] = normalized
+       ln_weight[hidden_idx]
+   ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
+   output[batch_idx, seq_idx, hidden_idx] = normalized
    ```
 
    - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x -

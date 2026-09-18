@@ -20,7 +20,6 @@ from op import softmax_gpu_kernel, softmax_cpu_kernel
 
 comptime SIZE = 128
 comptime layout = row_major[SIZE]()
-comptime LayoutType = type_of(layout)
 comptime GRID_DIM_X = 1
 comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 comptime dtype = DType.float32
@@ -35,9 +34,7 @@ def test_softmax() raises:
         # for CPU testing
         var expected = ctx.enqueue_create_host_buffer[.float32](SIZE)
         expected.enqueue_fill(0)
-        var expected_tensor = TileTensor[
-            mut=True, dtype, LayoutType, MutAnyOrigin
-        ](expected, layout)
+        var expected_tensor = TileTensor(expected, layout)
 
         # Initialize input and compute expected (CPU) inside map_to_host block
         with inp.map_to_host() as inp_host:
@@ -49,20 +46,28 @@ def test_softmax() raises:
                 print(inp_host[i], end=" ")
             print()
             # Create layout tensor for CPU calculation (must stay inside with block)
-            var input_host_tensor = TileTensor[
-                mut=True, dtype, LayoutType, MutAnyOrigin
-            ](inp_host, layout)
+            var input_host_tensor = TileTensor(inp_host, layout)
             # Compute expected results using our CPU kernel while inp_host is valid
-            softmax_cpu_kernel[SIZE, dtype](expected_tensor, input_host_tensor)
+            softmax_cpu_kernel[
+                SIZE,
+                expected_tensor.LayoutType,
+                input_host_tensor.LayoutType,
+                expected_tensor.Engine,
+                dtype,
+            ](expected_tensor, input_host_tensor)
 
         # for GPU testing
         var output_tensor = TileTensor(out, layout)
-        var input_tensor = TileTensor[
-            mut=True, dtype, LayoutType, MutAnyOrigin
-        ](inp, layout)
+        var input_tensor = TileTensor(inp, layout)
 
         # Run GPU kernel
-        comptime kernel = softmax_gpu_kernel[SIZE, dtype]
+        comptime kernel = softmax_gpu_kernel[
+            SIZE,
+            output_tensor.LayoutType,
+            input_tensor.LayoutType,
+            output_tensor.Engine,
+            dtype,
+        ]
         ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
