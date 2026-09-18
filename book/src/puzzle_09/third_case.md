@@ -355,10 +355,16 @@ barrier()                   # ALL threads reach this
 **The Fix**: Move the barrier outside the conditional block:
 
 ```mojo
-def collaborative_filter(
-    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
-):
+def collaborative_filter[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, VectorLayout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, VectorLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var thread_id = thread_idx.x
     var shared_workspace = stack_allocation[
         dtype=dtype, address_space=AddressSpace.SHARED
@@ -366,7 +372,7 @@ def collaborative_filter(
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
-        shared_workspace[thread_id] = a[thread_id]
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing

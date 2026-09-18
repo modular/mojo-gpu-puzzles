@@ -53,8 +53,8 @@ uv run poe p23 --benchmark
 </div>
 
 Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.5.0 / Mojo 1.0.0 — read the ranking, not the absolute
-times):
+is a B200 with MAX 26.7.0.dev2026091605 / Mojo 1.2.0.dev2026091605, driver
+595.71.05 — read the ranking, not the absolute times):
 
 ```txt
 SIZE: 1024
@@ -83,18 +83,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0045024             | 10    |
-| tiled_16_4                | 0.0043072             | 10    |
-| manual_vectorized_16_4    | 0.0041248             | 10    |
-| vectorized_16_4           | 0.0040704             | 10    |
-| elementwise_128_16        | 0.0040926999999999995 | 10    |
-| tiled_128_16              | 0.0041567             | 10    |
-| manual_vectorized_128_16  | 0.0042144             | 10    |
-| vectorized_128_16         | 0.0042014999999999995 | 10    |
-| elementwise_1M_1024       | 0.0054303             | 10    |
-| tiled_1M_1024             | 0.2601023             | 10    |
-| manual_vectorized_1M_1024 | 0.5849376000000001    | 10    |
-| vectorized_1M_1024        | 0.1486304             | 10    |
+| elementwise_16_4          | 0.0044767             | 10    |
+| tiled_16_4                | 0.0044511             | 10    |
+| manual_vectorized_16_4    | 0.0039583             | 10    |
+| vectorized_16_4           | 0.0049023999999999995 | 10    |
+| elementwise_128_16        | 0.0041183999999999995 | 10    |
+| tiled_128_16              | 0.004233499999999999  | 10    |
+| manual_vectorized_128_16  | 0.0042304000000000005 | 10    |
+| vectorized_128_16         | 0.0040479             | 10    |
+| elementwise_1M_1024       | 0.0054623             | 10    |
+| tiled_1M_1024             | 0.2664864             | 10    |
+| manual_vectorized_1M_1024 | 0.24737589999999998   | 10    |
+| vectorized_1M_1024        | 0.0842719             | 10    |
 
 Benchmarks completed!
 ```
@@ -213,9 +213,12 @@ Based on empirical benchmark results across different hardware:
 | Rank | Pattern               | Typical time | Key insight                                                                                   |
 |------|-----------------------|--------------|-----------------------------------------------------------------------------------------------|
 | 🥇   | **Elementwise**       | ~0.005ms     | Coalesced memory access wins for memory-bound ops                                             |
-| 🥈   | **Mojo vectorize**    | ~0.15ms      | Uncoalesced memory access hurts performance                                                   |
-| 🥉   | **Tiled**             | ~0.26ms      | Uncoalesced memory access, and width-1 loads issue four times as many memory operations       |
-| 4th  | **Manual vectorized** | ~0.58ms      | Uncoalesced memory access, and complex manual indexing on only 256 threads costs the most     |
+| 🥈   | **Mojo vectorize**    | ~0.084ms     | Uncoalesced memory access hurts performance                                                   |
+| 🥉   | **Manual vectorized** | ~0.25ms      | Uncoalesced memory access, and complex manual indexing on only 256 threads                    |
+| 4th  | **Tiled**             | ~0.27ms      | Uncoalesced memory access, and width-1 loads issue four times as many memory operations       |
+
+The last two sit within about 8% of each other, so treat them as a pair rather
+than as two distinct places.
 
 ### Key performance insights
 
@@ -235,20 +238,20 @@ Based on empirical benchmark results across different hardware:
 - **Balanced approach** between parallelism and memory locality
 - **Good thread utilization** without excessive complexity
 
-**Why tiled falls behind:**
+**Why manual vectorization trails:**
+
+- **Only 256 threads** limit parallelism
+- **Complex indexing** adds computational overhead
+- **Cache pressure** from large chunks per thread
+- **Diminishing returns** for simple arithmetic
+
+**Why tiled comes last:**
 
 - **Width-1 loads** issue four times as many memory operations for the same
   data
 - **Uncoalesced access**: adjacent threads read tiles a full `tile_size` apart,
   so a warp's loads never merge into one transaction
 - **Locality within a tile** doesn't make up for that lost coalescing
-
-**Why manual vectorization comes last:**
-
-- **Only 256 threads** limit parallelism
-- **Complex indexing** adds computational overhead
-- **Cache pressure** from large chunks per thread
-- **Diminishing returns** for simple arithmetic
 
 **Framework intelligence:**
 
@@ -262,7 +265,7 @@ Based on empirical benchmark results across different hardware:
 
 ```txt
 | name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 0.0054303          | 10    |
+| elementwise_1M_1024      | 0.0054623          | 10    |
 ```
 
 - **`met (ms)`**: Execution time for a single iteration

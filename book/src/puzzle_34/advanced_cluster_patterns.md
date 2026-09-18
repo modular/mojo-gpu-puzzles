@@ -261,7 +261,7 @@ if elect_one_sync():  # Hardware elects exactly 1 thread per warp
     for i in range(32):  # Process entire warp's data
         if warp_start + i < tpb:
             warp_sum += shared_data[warp_start + i][0]
-    shared_data[local_i] = warp_sum  # Store result at elected thread's position
+    shared_data[warp_start] = warp_sum  # Store at the warp's first index
 ```
 
 **Warp boundary calculation explained:**
@@ -276,15 +276,21 @@ warp:
 **Election pattern visualization (TPB=256, 8 warps):**
 
 ```text
-Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
-Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
-Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
-Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
-Warp 4 (threads 128-159):elect_one_sync() → Thread 128 processes elements 128-159
-Warp 5 (threads 160-191):elect_one_sync() → Thread 160 processes elements 160-191
-Warp 6 (threads 192-223):elect_one_sync() → Thread 192 processes elements 192-223
-Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-255
+Warp 0 (threads 0-31):   1 elected thread sums 0-31,      stores shared_data[0]
+Warp 1 (threads 32-63):  1 elected thread sums 32-63,     stores shared_data[32]
+Warp 2 (threads 64-95):  1 elected thread sums 64-95,     stores shared_data[64]
+Warp 3 (threads 96-127): 1 elected thread sums 96-127,    stores shared_data[96]
+Warp 4 (threads 128-159):1 elected thread sums 128-159,  stores shared_data[128]
+Warp 5 (threads 160-191):1 elected thread sums 160-191,  stores shared_data[160]
+Warp 6 (threads 192-223):1 elected thread sums 192-223,  stores shared_data[192]
+Warp 7 (threads 224-255):1 elected thread sums 224-255,  stores shared_data[224]
 ```
+
+Note which thread each warp elects is not specified — `elect.sync` makes no
+promise about the lane. That is why the store uses `warp_start` rather than
+the elected thread's own `local_i`: the aggregation below reads
+`shared_data[0]`, `[32]`, `[64]` and so on, and those two only agree if the
+write lands on the warp's first index no matter who does it.
 
 ## **Level 2: Block-level aggregation (Warp Leader Coordination)**
 

@@ -21,6 +21,7 @@ Files present in this mapping get one test target per flag.
 """
 
 TEST_ARGS = {
+    "p10/p10.mojo": ["--memory-bug", "--race-condition"],
     "p13/p13.mojo": ["--block-boundary", "--simple"],
     "p14/p14.mojo": ["--simple"],
     "p16/p16.mojo": ["--idiomatic-tiled", "--naive", "--single-block", "--tiled"],
@@ -31,6 +32,7 @@ TEST_ARGS = {
     "p26/p26.mojo": ["--conditional-max", "--pair-swap", "--parallel-max", "--partition", "--prefix-sum"],
     "p27/p27.mojo": ["--block-sum-dot-product", "--histogram", "--normalize", "--traditional-dot-product"],
     "p29/p29.mojo": ["--double-buffer", "--multi-stage"],
+    "p33/p33.mojo": ["--tensor-core", "--test", "--tiled"],
     "p34/p34.mojo": ["--advanced", "--coordination", "--reduction"],
     "p35/p35.mojo": ["--aligned", "--benchmark", "--scalar", "--unaligned"],
 }

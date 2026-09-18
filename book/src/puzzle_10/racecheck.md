@@ -40,8 +40,8 @@ out shape: 2 x 2
 Running race condition example...
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
-stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:148:33: AssertionError: `left == right` comparison failed:
+stack trace was not collected. Enable stack trace collection with environment variable `MODULAR_DEBUG=stack-trace-on-error`
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:156:33: AssertionError: `left == right` comparison failed:
    left: 0.0
   right: 6.0
 ```
