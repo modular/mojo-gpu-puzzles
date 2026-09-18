@@ -7,7 +7,7 @@ partitioning, and advanced coordination algorithms that would otherwise require
 dozens of lines of shared memory and synchronization code.
 
 **Key insight:** _The
-[prefix_sum()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)
+[prefix_sum()](https://max.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/)
 operation computes cumulative results across warp lanes in
 \\(O(\\log n)\\) steps, using the GPU's shuffle instructions rather than shared
 memory. There is no dedicated scan unit: `prefix_sum` expands to a
@@ -178,8 +178,8 @@ Expected output when solved:
 ```txt
 WARP_SIZE:  32
 SIZE:  32
-output: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
-expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
+output: HostBuffer([1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0])
+expected: HostBuffer([1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0])
 Warp inclusive prefix sum test: passed
 Puzzle 26 complete ✅
 ```

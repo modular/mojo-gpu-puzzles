@@ -9,7 +9,7 @@ incorrect results without crashing.
 **The debugging shift:**
 
 - **[First Case](./first_case.md)**: Clear crash signals
-  (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
+  (`CUDA_ERROR_MISALIGNED_ADDRESS`) guided your investigation
 - **Second Case**: No crashes, no error messages - just subtly wrong results
   that require detective work
 

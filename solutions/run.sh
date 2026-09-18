@@ -390,7 +390,10 @@ run_mojo_files() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
+        # Also match a comparison against a local bound from argv, as in
+        # `var mode = argv()[1]` ... `mode == "--flag"`. Matching only the
+        # direct form skipped the modes of every puzzle written that way.
+        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|[a-zA-Z_][a-zA-Z_0-9]* == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
 
         if [ -z "$flags" ]; then
           execute_or_skip_test "${path_prefix}$f" "" "mojo -I \"$PUZZLES_ROOT\" \"$f\""

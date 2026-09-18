@@ -45,10 +45,10 @@ You'll see output like this when the program crashes:
 ```txt
 First Case: Try to identify what's wrong without looking at the code!
 
-stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
-Unhandled exception caught during execution: At open-source/max/Mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+CUDA call failed: CUDA_ERROR_MISALIGNED_ADDRESS (misaligned address)
 To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
-/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
+mojo: error: execution crashed
+To get a symbolicated stack trace, compile your program using `mojo build` with debug info enabled (e.g., `-debug-level=line-tables`) and execute it separately.
 ```
 
 ## Your task: detective work
@@ -67,8 +67,8 @@ pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo
 
 <div class="solution-tips">
 
-1. **Read the crash message carefully** - `CUDA_ERROR_ILLEGAL_ADDRESS` means the
-   GPU tried to access invalid memory
+1. **Read the crash message carefully** - `CUDA_ERROR_MISALIGNED_ADDRESS` means
+   the GPU tried to access memory it cannot address
 2. **Check the breakpoint information** - Look at the function parameters shown
    when CUDA-GDB stops
 3. **Inspect all pointers systematically** - Use `print` to examine each pointer
@@ -163,7 +163,7 @@ var input_buf = ctx.enqueue_create_buffer[dtype](0)
    null pointer.
 3. This null pointer gets passed to the GPU kernel.
 4. When the kernel evaluates `a[unsafe_offset=i]`, it dereferences null →
-   `CUDA_ERROR_ILLEGAL_ADDRESS`.
+   `CUDA_ERROR_MISALIGNED_ADDRESS`.
 
 ## The fix
 

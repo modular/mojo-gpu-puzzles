@@ -74,7 +74,7 @@ Notes:
 <div class="solution-tips">
 
 1. Create shared memory with TileTensor using address_space
-2. Store `a[global_i] * b[global_i]` in `shared[local_i]`
+2. Store `rebind[Scalar[dtype]](a[global_i] * b[global_i])` in `shared[local_i]`
 3. Use parallel reduction pattern with `barrier()`
 4. Let thread 0 write final result to `output[0]`
 

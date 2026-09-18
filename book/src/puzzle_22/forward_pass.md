@@ -214,7 +214,7 @@ Now complete this kernel to implement the LayerNorm operation. You'll need to:
 
 2. **Memory access**:
    - Access input tensor with `[batch_idx, seq_idx, hidden_idx]`
-   - Access output tensor with `[batch_idx, seq_idx, hidden_idx]`
+   - Write to the output tensor with `[Coord(batch_idx, seq_idx, hidden_idx)]`
    - Access LayerNorm parameters with `[hidden_idx]`
 
 3. **Numerical stability**:
@@ -272,24 +272,24 @@ Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
    Puzzle 22: UNFUSED Algorithm Test & Benchmark
 ============================================================
 
-🧪 Correctness Testing for UNFUSED Algorithm
+Correctness Testing for UNFUSED Algorithm
 ====================================================
 
 Testing Reference PyTorch Implementation
 -----------------------------------------------
-✅ Reference PyTorch
+Reference PyTorch passed
    Max difference: 0.00e+00
    Result: ✅ CORRECT
 
 Testing CPU Implementation
 ---------------------------------
-✅ Using Mojo fused kernel (CPU)
+Using Mojo fused kernel (CPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
 Testing GPU Unfused Implementation
 -----------------------------------------
-✅ Using Mojo unfused kernel (GPU)
+Using Mojo unfused kernel (GPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
@@ -300,18 +300,41 @@ Correctness Summary:
 
    Overall Correctness: ✅ ALL CORRECT
 
-Benchmarking CPU vs GPU UNFUSED
+⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 3173.70ms (50 iterations)
+   CPU: 24.13ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 3183.57ms (50 iterations)
+   GPU unfused: 27.95ms (50 iterations)
 
-   GPU unfused vs CPU: 1.00x slower
+   GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead > computation benefit)
 
 UNFUSED Algorithm Test Completed!
+
+What we verified:
+✅ Numerical correctness against PyTorch reference
+✅ CPU implementation accuracy
+✅ GPU unfused implementation accuracy
+✅ Performance comparison CPU vs GPU
+
+Learning outcomes:
+- Unfused kernel implementation and optimization
+- Cross-platform correctness verification
+- Performance characterization and bottleneck analysis
+- Multi-kernel pipeline composition
+- Memory bandwidth vs compute trade-offs
 ```
+
+> These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+> 570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
+> both modes in every run, and on an A10G it still does: the tensors are
+> small enough that launch and synchronization cost more than the work
+> saved. On a B200 that reverses and the GPU wins, but not steadily —
+> across eight runs of each mode the margin ranged from 1.1x to 2x, and the
+> unfused comparison flipped back to the CPU once. Read the direction
+> rather than the number, and expect your own hardware to land somewhere
+> across that spread.
 
 ## Solution
 
@@ -375,7 +398,7 @@ handles one element of the output tensor. Let's break down the key components:
    var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
        ln_weight[hidden_idx]
    ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
-   output[batch_idx, seq_idx, hidden_idx] = normalized
+   output[Coord(batch_idx, seq_idx, hidden_idx)] = normalized
    ```
 
    - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x -
@@ -463,7 +486,7 @@ deliberately the simplest fusion that works, not a tuned one.
 
 2. **Memory access**:
    - Access input tensor with `[batch_idx, seq_idx, h]`
-   - Access output tensor with `[batch_idx, seq_idx, out_idx]`
+   - Write to the output tensor with `[Coord(batch_idx, seq_idx, out_idx)]`
    - Access weights with `[out_idx, h]` for linear layer
 
 3. **Computation flow**:
@@ -522,24 +545,24 @@ Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
    Puzzle 22: FUSED Algorithm Test & Benchmark
 ============================================================
 
-🧪 Correctness Testing for FUSED Algorithm
+Correctness Testing for FUSED Algorithm
 ==================================================
 
 Testing Reference PyTorch Implementation
 -----------------------------------------------
-✅ Reference PyTorch
+Reference PyTorch passed
    Max difference: 0.00e+00
    Result: ✅ CORRECT
 
 Testing CPU Implementation
 ---------------------------------
-✅ Using Mojo fused kernel (CPU)
+Using Mojo fused kernel (CPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
 Testing GPU Fused Implementation
 ---------------------------------------
-✅ Using Mojo fused kernel (GPU)
+Using Mojo fused kernel (GPU) passed
    Max difference: 1.86e-08
    Result: ✅ CORRECT
 
@@ -553,14 +576,27 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU FUSED
 ----------------------------------------
    Testing CPU performance...
-   CPU: 3144.75ms (50 iterations)
+   CPU: 25.00ms (50 iterations)
    Testing GPU fused performance...
-   GPU fused: 3116.11ms (50 iterations)
+   GPU fused: 28.32ms (50 iterations)
 
-   GPU fused vs CPU: 1.01x faster
-   GPU fused wins!
+   GPU fused vs CPU: 0.88x slower
+   CPU wins (GPU overhead > computation benefit)
 
 FUSED Algorithm Test Completed!
+
+What we verified:
+✅ Numerical correctness against PyTorch reference
+✅ CPU implementation accuracy
+✅ GPU fused implementation accuracy
+✅ Performance comparison CPU vs GPU
+
+Learning outcomes:
+- Fused kernel implementation and optimization
+- Cross-platform correctness verification
+- Performance characterization and bottleneck analysis
+- Single-kernel fusion benefits and limitations
+- Computation density optimization
 ```
 
 ## Solution
@@ -596,7 +632,7 @@ The fused implementation combines operations efficiently:
      - Multiply with linear weight and accumulate: \\[\Large \text{acc} =
        \sum_{h=1}^{H} \text{normalized}_h \cdot W_{out,h} \\]
      - Add linear bias: \\[\Large \text{output} = \text{acc} + b_{out} \\]
-   - Store result in `output[batch_idx, seq_idx, out_idx]`
+   - Store the result in `output[Coord(batch_idx, seq_idx, out_idx)]`
 
 4. **Performance optimizations**:
    - Single kernel launch for both operations

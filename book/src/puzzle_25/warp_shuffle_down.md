@@ -6,7 +6,7 @@ finite differences, moving averages, and neighbor-based computations without
 shared memory or explicit synchronization.
 
 **Key insight:** _The
-[shuffle_down()](https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/)
+[shuffle_down()](https://max.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/)
 operation leverages SIMT execution to let each lane access data from its
 neighbors within the same warp, enabling efficient stencil patterns and sliding
 window operations._
@@ -201,8 +201,8 @@ Expected output when solved:
 ```txt
 WARP_SIZE:  32
 SIZE:  32
-output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
-expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
+output: HostBuffer([1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0])
+expected: HostBuffer([1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0])
 Neighbor difference test: passed
 Puzzle 25 complete ✅
 ```

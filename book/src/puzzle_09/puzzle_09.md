@@ -84,7 +84,7 @@ debugging concepts to advanced parallel coordination failures:
 
 **Memory crash investigation** - Debug a GPU program that crashes
 
-- Investigate `CUDA_ERROR_ILLEGAL_ADDRESS` crashes
+- Investigate `CUDA_ERROR_MISALIGNED_ADDRESS` crashes
 - Learn systematic pointer inspection techniques
 - Learn null pointer detection and validation
 - Practice professional crash analysis workflow

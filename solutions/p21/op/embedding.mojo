@@ -143,7 +143,6 @@ def embedding_kernel_2d[
 import extensibility
 
 from extensibility import InputTensor, OutputTensor
-from max.gpu.host import DeviceBuffer
 
 
 @extensibility.register("embedding")
@@ -172,17 +171,6 @@ struct EmbeddingCustomOp:
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
-
-            # Zero out output tensor
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
-                    gpu_ctx,
-                    output.unsafe_ptr(),
-                    batch_size * seq_len * embed_dim,
-                    owning=False,
-                ),
-                0,
-            )
 
             # Calculate 1D grid dimensions (matching kernel's flat indexing)
             var total_elements = batch_size * seq_len * embed_dim
@@ -255,17 +243,6 @@ struct Embedding2DCustomOp:
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
-
-            # Zero out output tensor
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
-                    gpu_ctx,
-                    output.unsafe_ptr(),
-                    batch_size * seq_len * embed_dim,
-                    owning=False,
-                ),
-                0,
-            )
 
             # Calculate 2D grid dimensions for non-coalesced access
             var total_positions = batch_size * seq_len

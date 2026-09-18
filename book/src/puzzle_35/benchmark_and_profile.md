@@ -103,5 +103,5 @@ instructions per byte moved.
    real-world kernel can ship with this bug unnoticed.
 
 The practice to take away from this is: at every vectorized memory access, state
-the alignment (`aligned_load`, or an explicit `align_of[SIMD[dtype, width]]()`).
+the alignment, by passing `alignment=align_of[SIMD[dtype, width]]()`.
 It costs nothing, and it ensures your kernel takes the vectorized fast path.

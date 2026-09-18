@@ -145,7 +145,7 @@ def cluster_collective_operations[
     cluster_sync()
 
     # Final cluster reduction (elect one thread to do the final work)
-    if elect_one_sync() and my_block_rank == 0:
+    if local_i == 0 and my_block_rank == 0:
         var total: Float32 = 0.0
         for i in range(CLUSTER_SIZE):
             total += temp_storage[i][0]
@@ -198,7 +198,7 @@ def advanced_cluster_patterns[
         for i in range(32):  # Sum across warp
             if warp_start + i < tpb:
                 warp_sum += shared_data[warp_start + i][0]
-        shared_data[local_i] = warp_sum
+        shared_data[warp_start] = warp_sum
 
     barrier()
 
