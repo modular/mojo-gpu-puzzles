@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -271,27 +269,29 @@ def tiled_elementwise_add[
     rank: Int,
     size: Int,
     tile_size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
-) raises:
-    @parameter
+) raises where (Engine.element_size == 1):
     @always_inline
     def process_tiles[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -&gt; None:
+        simd_width: Int, alignment: Int = 1
+    ](indices: Coord) {var} -&gt; None:
         var tile_id = Int(indices[0].value())
 
-        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
         # FILL IN (6 lines at most)
 
     var num_tiles = (size + tile_size - 1) // tile_size
-    elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
+    elementwise[simd_width=1, target="gpu"](
+        process_tiles, Coord(num_tiles), ctx
+    )
 
 
 </code></pre>
@@ -308,9 +308,9 @@ def tiled_elementwise_add[
 <p>Check out the
 <a href="https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
 <pre><code class="language-mojo">var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
-var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+var output_tile = output.tile[tile_size](tile_id)
+var a_tile = a.tile[tile_size](tile_id)
+var b_tile = b.tile[tile_size](tile_id)
 </code></pre>
 <p>The <code>tile[size](id)</code> method creates a view of <code>size</code> consecutive elements
 starting at <code>id × size</code>.</p>
@@ -321,18 +321,18 @@ starting at <code>id × size</code>.</p>
 </code></pre>
 <p>This <code>comptime for</code> loop unrolls at compile-time for optimal performance.</p>
 <h3 id="4-load-and-store-within-tile-elements"><a class="header" href="#4-load-and-store-within-tile-elements">4. <strong>Load and store within tile elements</strong></a></h3>
-<pre><code class="language-mojo">var a_vec = a_tile.aligned_load[width=simd_width](Index(i))  # Load from position i in tile
-var b_vec = b_tile.aligned_load[width=simd_width](Index(i))  # Load from position i in tile
-var result = a_vec + b_vec                       # Addition at width simd_width
-output_tile.store[simd_width](Index(i), result)  # Store to position i in tile
+<pre><code class="language-mojo">var a_vec = a_tile.load[width=simd_width](Coord(i))  # Load from position i in tile
+var b_vec = b_tile.load[width=simd_width](Coord(i))  # Load from position i in tile
+var result = a_vec + b_vec                           # Addition at width simd_width
+output_tile.store[simd_width](Coord(i), result)      # Store to position i in tile
 </code></pre>
 <p>Here <code>simd_width</code> is the inner function’s own parameter, which the launch below
 binds to 1—see the solution for why.</p>
 <h3 id="5-thread-configuration-difference"><a class="header" href="#5-thread-configuration-difference">5. <strong>Thread configuration difference</strong></a></h3>
-<pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
+<pre><code class="language-mojo">elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)
 </code></pre>
-<p>Note the <code>1</code> instead of <code>SIMD_WIDTH</code> - each thread processes one entire tile
-sequentially.</p>
+<p>Note the <code>simd_width=1</code> instead of <code>SIMD_WIDTH</code> - each thread processes one
+entire tile sequentially.</p>
 <h3 id="6-memory-access-pattern-insight"><a class="header" href="#6-memory-access-pattern-insight">6. <strong>Memory access pattern insight</strong></a></h3>
 <p>Each thread accesses a contiguous block of memory (the tile), then moves to the
 next tile. This creates excellent <strong>spatial locality</strong> within each thread’s
@@ -391,31 +391,33 @@ def tiled_elementwise_add[
     rank: Int,
     size: Int,
     tile_size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
-) raises:
-    @parameter
+) raises where (Engine.element_size == 1):
     @always_inline
     def process_tiles[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -&gt; None:
+        simd_width: Int, alignment: Int = 1
+    ](indices: Coord) {var} -&gt; None:
         var tile_id = Int(indices[0].value())
 
-        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
         comptime for i in range(tile_size):
-            var a_vec = a_tile.aligned_load[width=simd_width](Index(i))
-            var b_vec = b_tile.aligned_load[width=simd_width](Index(i))
+            var a_vec = a_tile.load[width=simd_width](Coord(i))
+            var b_vec = b_tile.load[width=simd_width](Coord(i))
             var ret = a_vec + b_vec
-            output_tile.store[simd_width](Index(i), ret)
+            output_tile.store[simd_width](Coord(i), ret)
 
     var num_tiles = (size + tile_size - 1) // tile_size
-    elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
+    elementwise[simd_width=1, target="gpu"](
+        process_tiles, Coord(num_tiles), ctx
+    )
 
 
 </code></pre>
@@ -439,9 +441,9 @@ warp-level coalescing (see below)</li>
 </ul>
 <h3 id="2-tile-organization-and-indexing"><a class="header" href="#2-tile-organization-and-indexing">2. <strong>Tile organization and indexing</strong></a></h3>
 <pre><code class="language-mojo">var tile_id = Int(indices[0].value())
-var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
-var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
-var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
+var output_tile = output.tile[tile_size](tile_id)
+var a_tile = a.tile[tile_size](tile_id)
+var b_tile = b.tile[tile_size](tile_id)
 </code></pre>
 <p><strong>Tile mapping visualization (TILE_SIZE=32):</strong></p>
 <pre><code class="language-text">Original array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
@@ -460,10 +462,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 </ul>
 <h3 id="3-sequential-processing-deep-dive"><a class="header" href="#3-sequential-processing-deep-dive">3. <strong>Sequential processing deep dive</strong></a></h3>
 <pre><code class="language-mojo">comptime for i in range(tile_size):
-    var a_vec = a_tile.aligned_load[width=simd_width](Index(i))
-    var b_vec = b_tile.aligned_load[width=simd_width](Index(i))
+    var a_vec = a_tile.load[width=simd_width](Coord(i))
+    var b_vec = b_tile.load[width=simd_width](Coord(i))
     var ret = a_vec + b_vec
-    output_tile.store[simd_width](Index(i), ret)
+    output_tile.store[simd_width](Coord(i), ret)
 </code></pre>
 <p><strong>Why sequential processing?</strong></p>
 <ul>
@@ -486,8 +488,8 @@ Total: 32 scalar operations per thread (comptime for i in range(tile_size))
 </code></pre>
 <p>The width here is 1, not <code>SIMD_WIDTH</code>. The inner <code>process_tiles</code> declares its
 own <code>simd_width</code> parameter, which shadows the enclosing function’s, and
-<code>elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)</code> instantiates it
-with 1. So <code>aligned_load[width=simd_width]</code> loads a single element and the loop
+<code>elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)</code>
+instantiates it with 1. So <code>load[width=simd_width]</code> loads a single element and the loop
 walks the tile one element at a time. The two vectorized kernels later in this
 puzzle avoid the shadowing by naming their inner parameter
 <code>num_threads_per_tile</code>, which is why they really do load <code>SIMD_WIDTH</code> elements
@@ -518,9 +520,9 @@ apart - this pattern buys per-thread sequentiality at the cost of warp-level
 coalescing</li>
 </ul>
 <h3 id="5-thread-configuration-strategy"><a class="header" href="#5-thread-configuration-strategy">5. <strong>Thread configuration strategy</strong></a></h3>
-<pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
+<pre><code class="language-mojo">elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)
 </code></pre>
-<p><strong>Why <code>1</code> instead of <code>SIMD_WIDTH</code>?</strong></p>
+<p><strong>Why <code>simd_width=1</code> instead of <code>SIMD_WIDTH</code>?</strong></p>
 <ul>
 <li><strong>Thread count</strong>: Launch exactly <code>num_tiles</code> threads, not
 <code>num_tiles × SIMD_WIDTH</code></li>
@@ -650,7 +652,6 @@ with memory hierarchy optimization.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

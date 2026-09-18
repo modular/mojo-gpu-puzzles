@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -238,7 +236,7 @@ coalescing for you.</em></p>
 <li><strong>Automatic SIMD vectorization</strong> within GPU threads</li>
 <li><strong>TileTensor operations</strong> for safe memory access</li>
 <li><strong>GPU thread hierarchy</strong> vs SIMD operations</li>
-<li><strong>Capturing semantics</strong> in nested functions</li>
+<li><strong>Capture semantics</strong> in nested closures</li>
 </ul>
 <p>The mathematical operation is simple element-wise addition:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
@@ -248,7 +246,7 @@ programming in Mojo.</p>
 — there is no manual shared memory or thread-index math here. The key shift from
 earlier puzzles is that each invocation of your nested function processes a whole
 SIMD vector, not a single element. That’s why you load and store with
-<code>aligned_load[simd_width]</code> / <code>store[simd_width]</code> (vectorized) instead of indexing
+<code>load[width=simd_width]</code> / <code>store[simd_width]</code> (vectorized) instead of indexing
 one scalar at a time.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -264,22 +262,24 @@ cross-thread or cross-block communication to reason about here.</p>
 </blockquote>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def elementwise_add[
-    LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
+    LayoutT: TensorLayout,
+    dtype: DType,
+    simd_width: Int,
+    rank: Int,
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
-) raises:
-    @parameter
+) raises where (Engine.element_size == 1):
     @always_inline
-    def add[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -&gt; None:
+    def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
         # FILL IN (2 to 4 lines)
 
-    elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
+    elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
 
 
 </code></pre>
@@ -289,21 +289,18 @@ cross-thread or cross-block communication to reason about here.</p>
 <div class="solution-tips">
 <h3 id="1-understanding-the-function-structure"><a class="header" href="#1-understanding-the-function-structure">1. <strong>Understanding the function structure</strong></a></h3>
 <p>The <code>elementwise</code> function expects a nested function with this exact signature:</p>
-<pre><code class="language-mojo">@parameter
-@always_inline
+<pre><code class="language-mojo">@always_inline
 def your_function[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -&gt; None:
+    simd_width: Int, alignment: Int = 1
+](indices: Coord) {var} -&gt; None:
     # Your implementation here
 </code></pre>
 <p><strong>Why each part matters:</strong></p>
 <ul>
-<li><code>@parameter</code>: Enables compile-time specialization for optimal GPU code
-generation</li>
 <li><code>@always_inline</code>: Forces inlining to eliminate function call overhead in GPU
 kernels</li>
-<li><code>capturing</code>: Allows access to variables from the outer scope (the input/output
-tensors)</li>
+<li><code>{var}</code>: The capture list - allows access to variables from the outer scope
+(the input/output tensors)</li>
 <li><code>Coord</code>: Carries the per-dimension indices for the current SIMD chunk; use
 <code>indices[0]</code> for 1D operations</li>
 </ul>
@@ -319,12 +316,10 @@ element. If <code>SIMD_WIDTH=4</code> (GPU-dependent), then:</p>
 <li>And so on…</li>
 </ul>
 <h3 id="3-simd-loading-pattern"><a class="header" href="#3-simd-loading-pattern">3. <strong>SIMD loading pattern</strong></a></h3>
-<pre><code class="language-mojo">var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
-var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+<pre><code class="language-mojo">var a_simd = a.load[width=simd_width](Coord(idx))  # Load 4 consecutive floats (GPU-dependent)
+var b_simd = b.load[width=simd_width](Coord(idx))  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
-<p><code>aligned_load</code> is a <code>LayoutTensor</code> method, so the receivers are the <code>a_lt</code> /
-<code>b_lt</code> handles produced by <code>to_layout_tensor()</code> inside the kernel—not the
-<code>TileTensor</code> parameters. This loads a <strong>vectorized chunk</strong> of data in a single
+<p>This loads a <strong>vectorized chunk</strong> of data in a single
 operation. The exact number of elements loaded depends on your GPU’s SIMD
 capabilities.</p>
 <h3 id="4-vector-arithmetic"><a class="header" href="#4-vector-arithmetic">4. <strong>Vector arithmetic</strong></a></h3>
@@ -333,13 +328,15 @@ capabilities.</p>
 <p>This performs element-wise addition across the entire SIMD vector (if supported)
 in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
-<pre><code class="language-mojo">out_lt.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
+<pre><code class="language-mojo">output.store[simd_width](Coord(idx), result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
 <p>Writes the entire SIMD vector back to memory in one operation.</p>
 <h3 id="6-calling-the-elementwise-function"><a class="header" href="#6-calling-the-elementwise-function">6. <strong>Calling the elementwise function</strong></a></h3>
-<pre><code class="language-mojo">elementwise[your_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
+<pre><code class="language-mojo">elementwise[simd_width=SIMD_WIDTH, target="gpu"](your_function, Coord(total_size), ctx)
 </code></pre>
 <ul>
+<li>Your nested function is passed as a runtime argument, and the problem shape
+is wrapped in a <code>Coord</code></li>
 <li><code>total_size</code> is the <code>size</code> compile-time parameter of the enclosing
 function—the template already passes it</li>
 <li><code>elementwise</code> sizes the grid itself and drives a grid-stride loop, so your
@@ -393,32 +390,30 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def elementwise_add[
-    LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
+    LayoutT: TensorLayout,
+    dtype: DType,
+    simd_width: Int,
+    rank: Int,
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
-) raises:
-    @parameter
+) raises where (Engine.element_size == 1):
     @always_inline
-    def add[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -&gt; None:
+    def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))
-        var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))
+        var a_simd = a.load[width=simd_width](Coord(idx))
+        var b_simd = b.load[width=simd_width](Coord(idx))
         var ret = a_simd + b_simd
-        out_lt.store[simd_width](Index(idx), ret)
+        output.store[simd_width](Coord(idx), ret)
 
-    elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
+    elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
 
 
 </code></pre>
@@ -436,7 +431,7 @@ if idx &lt; size:
 </code></pre>
 <p><strong>Mojo functional approach:</strong></p>
 <pre><code class="language-mojo"># Automatic management + SIMD vectorization
-elementwise[add_function, simd_width, target="gpu"](size, ctx)
+elementwise[simd_width=simd_width, target="gpu"](add_function, Coord(size), ctx)
 </code></pre>
 <p><strong>What <code>elementwise</code> abstracts away:</strong></p>
 <ul>
@@ -449,33 +444,29 @@ neighboring threads touch neighboring chunks</li>
 <li><strong>GPU target selection</strong>: Works across different GPU architectures</li>
 </ul>
 <h3 id="2-deep-dive-nested-function-architecture"><a class="header" href="#2-deep-dive-nested-function-architecture">2. <strong>Deep dive: nested function architecture</strong></a></h3>
-<pre><code class="language-mojo">@parameter
-@always_inline
+<pre><code class="language-mojo">@always_inline
 def add[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -&gt; None:
+    simd_width: Int, alignment: Int = 1
+](indices: Coord) {var} -&gt; None:
 </code></pre>
 <p><strong>Parameter Analysis:</strong></p>
 <ul>
-<li><strong><code>@parameter</code></strong>: This decorator provides <strong>compile-time specialization</strong>. The
-function is generated separately for each unique <code>simd_width</code>, allowing
-aggressive optimization.</li>
+<li><strong><code>simd_width: Int</code></strong>: A compile-time parameter, so the function is
+instantiated separately for each unique <code>simd_width</code>, allowing aggressive
+optimization.</li>
 <li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call
 overhead by embedding the code directly into the kernel.</li>
-<li><strong><code>capturing</code></strong>: Enables <strong>lexical scoping</strong> - the inner function can access
-variables from the outer scope without explicit parameter passing.</li>
+<li><strong><code>{var}</code></strong>: The capture list enables <strong>lexical scoping</strong> - the inner function
+can access variables from the outer scope without explicit parameter passing.</li>
 <li><strong><code>Coord</code></strong>: Carries the per-dimension indices for the SIMD chunk being
 processed; <code>indices[0]</code> is the linear start position for 1D operations.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">var idx = Int(indices[0].value())                            # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-var a_lt = a.to_layout_tensor()                              # LayoutTensor views for vectorized access
-var b_lt = b.to_layout_tensor()
-var out_lt = output.to_layout_tensor()
-var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))  # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))  # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-var ret = a_simd + b_simd                                    # SIMD: 4 additions in parallel (GPU-dependent)
-out_lt.store[simd_width](Index(idx), ret)                    # Store: 4 results simultaneously (GPU-dependent)
+<pre><code class="language-mojo">var idx = Int(indices[0].value())                    # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+var a_simd = a.load[width=simd_width](Coord(idx))    # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+var b_simd = b.load[width=simd_width](Coord(idx))    # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+var ret = a_simd + b_simd                            # SIMD: 4 additions in parallel (GPU-dependent)
+output.store[simd_width](Coord(idx), ret)            # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code class="language-text">GPU Architecture:
@@ -501,7 +492,7 @@ body once or several times</li>
 type. Current NVIDIA and AMD GPU targets report a 128-bit vector width, which
 gives <code>SIMD_WIDTH = 4</code> for <code>float32</code>.</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
-<pre><code class="language-mojo">a_lt.aligned_load[width=simd_width](Index(idx))  # Coalesced memory access
+<pre><code class="language-mojo">a.load[width=simd_width](Coord(idx))  # Coalesced memory access
 </code></pre>
 <p><strong>Memory Coalescing Benefits:</strong></p>
 <ul>
@@ -571,7 +562,7 @@ __global__ void add_kernel(float* output, float* a, float* b, int size) {
 }
 </code></pre>
 <pre><code class="language-mojo"># Mojo: safe, concise, automatically vectorized
-elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
+elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
 </code></pre>
 <p><strong>Benefits of Functional Approach:</strong></p>
 <ul>
@@ -654,7 +645,6 @@ computation.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -422,12 +420,15 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
 <h3 id="step-1-understanding-your-tiled-baseline"><a class="header" href="#step-1-understanding-your-tiled-baseline">Step 1: Understanding your tiled baseline</a></h3>
 <p>The puzzle provides a complete idiomatic tiled implementation as your reference:</p>
 <pre><code class="language-mojo">def matmul_idiomatic_tiled[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     # Use block_dim to get actual tile size dynamically
     var tile_size_x = block_dim.x
     var tile_size_y = block_dim.y
@@ -443,13 +444,13 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     var acc: output.ElementType = 0
@@ -498,7 +499,7 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
 
     # Write final result to output tile
     if tiled_row &lt; size and tiled_col &lt; size:
-        out_tile[local_row, local_col] = acc
+        out_tile[local_row, local_col] = rebind[Scalar[dtype]](acc)
 
 
 </code></pre>
@@ -590,13 +591,13 @@ compute</li>
         A.dtype,
         Layout.row_major(BM, BK),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
@@ -604,7 +605,7 @@ compute</li>
         C.dtype,
         Layout.row_major(WM, WN),
         MutAnyOrigin,
-        address_space=AddressSpace.LOCAL,
+        address_space=.LOCAL,
     ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
@@ -794,13 +795,13 @@ Puzzle 33 complete ✅
         A.dtype,
         Layout.row_major(BM, BK),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
@@ -808,7 +809,7 @@ Puzzle 33 complete ✅
         C.dtype,
         Layout.row_major(WM, WN),
         MutAnyOrigin,
-        address_space=AddressSpace.LOCAL,
+        address_space=.LOCAL,
     ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
@@ -937,11 +938,11 @@ the idiomatic tiled approach.</p>
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run mojo build problems/p33/p33.mojo -o problems/p33/p33_profiler
+<pre><code class="language-bash">uv run mojo build -I . problems/p33/p33.mojo -o problems/p33/p33_profiler
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run mojo build problems/p33/p33.mojo -o problems/p33/p33_profiler
+<pre><code class="language-bash">pixi run mojo build -I . problems/p33/p33.mojo -o problems/p33/p33_profiler
 </code></pre>
   </div>
 </div>
@@ -1070,7 +1071,6 @@ the simple tiled version!</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

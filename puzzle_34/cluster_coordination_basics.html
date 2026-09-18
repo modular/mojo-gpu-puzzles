@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -281,12 +279,15 @@ processing completes before any block reads the final results.</p>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def cluster_coordination_basics[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Real cluster coordination using SM90+ cluster APIs."""
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -296,9 +297,9 @@ processing completes before any block reads the final results.</p>
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[tpb]())
+    var shared_data = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[tpb]()
+    )
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -308,7 +309,9 @@ processing completes before any block reads the final results.</p>
 
     # Phase 1: Each block processes its portion
     if global_i &lt; size:
-        shared_data[local_i] = input[global_i] * data_scale
+        shared_data[local_i] = rebind[Scalar[dtype]](
+            input[global_i] * data_scale
+        )
     else:
         shared_data[local_i] = 0.0
 
@@ -409,12 +412,15 @@ Puzzle 34 complete ✅
 <details class="solution-details">
 <summary>Click to reveal solution</summary>
 <pre><code class="language-mojo">def cluster_coordination_basics[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Real cluster coordination using SM90+ cluster APIs."""
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -424,9 +430,9 @@ Puzzle 34 complete ✅
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[tpb]())
+    var shared_data = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[tpb]()
+    )
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -436,7 +442,9 @@ Puzzle 34 complete ✅
 
     # Phase 1: Each block processes its portion
     if global_i &lt; size:
-        shared_data[local_i] = input[global_i] * data_scale
+        shared_data[local_i] = rebind[Scalar[dtype]](
+            input[global_i] * data_scale
+        )
     else:
         shared_data[local_i] = 0.0
 
@@ -623,7 +631,6 @@ to cluster scale, building on
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -246,21 +244,25 @@ comptime layout = row_major[SIZE, SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def shared_memory_race(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def shared_memory_race[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
 
-    var shared_sum = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[1]())
+    var shared_sum = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[1]()
+    )
 
     if row &lt; size and col &lt; size:
-        shared_sum[0] += a[row, col]
+        shared_sum[0] += rebind[Scalar[dtype]](a[row, col])
 
     barrier()
 
@@ -359,8 +361,8 @@ operations, data dependencies</li>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <h3 id="understanding-the-hazard-breakdown"><a class="header" href="#understanding-the-hazard-breakdown">Understanding the hazard breakdown</a></h3>
-<p>The <code>shared_sum[0] += a[row, col]</code> operation creates hazards because it’s
-actually <strong>three separate memory operations</strong>:</p>
+<p>The <code>shared_sum[0] += rebind[Scalar[dtype]](a[row, col])</code> operation creates
+hazards because it’s actually <strong>three separate memory operations</strong>:</p>
 <ol>
 <li><strong>READ</strong> <code>shared_sum[0]</code></li>
 <li><strong>ADD</strong> <code>a[row, col]</code> to the read value</li>
@@ -425,19 +427,23 @@ comptime layout = row_major[SIZE, SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def shared_memory_race(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def shared_memory_race[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Fixed: sequential access with barriers eliminates race conditions."""
     var size = Int(size_dev)
     var row = thread_idx.y
     var col = thread_idx.x
 
-    var shared_sum = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[1]())
+    var shared_sum = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[1]()
+    )
 
     # Only thread 0 does all the accumulation work to prevent races
     if row == 0 and col == 0:
@@ -445,7 +451,7 @@ def shared_memory_race(
         var local_sum = Scalar[dtype](0.0)
         for r in range(size):
             for c in range(size):
-                local_sum += a[r, c]
+                local_sum += rebind[Scalar[dtype]](a[r, c])
 
         shared_sum[0] = local_sum  # Single write operation
 
@@ -461,7 +467,7 @@ def shared_memory_race(
 <h3 id="understanding-what-went-wrong"><a class="header" href="#understanding-what-went-wrong">Understanding what went wrong</a></h3>
 <h4 id="the-race-condition-problem-pattern"><a class="header" href="#the-race-condition-problem-pattern">The race condition problem pattern</a></h4>
 <p>The original failing code had this critical line:</p>
-<pre><code class="language-mojo">shared_sum[0] += a[row, col]  # RACE CONDITION!
+<pre><code class="language-mojo">shared_sum[0] += rebind[Scalar[dtype]](a[row, col])  # RACE CONDITION!
 </code></pre>
 <p>This single line creates multiple hazards among the 4 valid threads:</p>
 <ol>
@@ -533,7 +539,7 @@ races</li>
     var local_sum = Scalar[dtype](0.0)
     for r in range(size):
         for c in range(size):
-            local_sum += a[r, c]
+            local_sum += rebind[Scalar[dtype]](a[r, c])
     shared_sum[0] = local_sum  # Single write operation
 </code></pre>
 <p>Only thread at position (0,0) performs all accumulation work, eliminating race
@@ -626,7 +632,6 @@ Puzzle 10 complete ✅
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -308,15 +306,18 @@ the Mojo file and complete the graph definition in the Python code.</p>
 <h3 id="1-implement-the-gpu-kernel-in-softmaxmojo"><a class="header" href="#1-implement-the-gpu-kernel-in-softmaxmojo">1. Implement the GPU kernel in <code>softmax.mojo</code></a></h3>
 <pre><code class="language-mojo">def softmax_gpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    # FILL IN (roughly 31 lines)
+    # FILL IN (roughly 33 lines)
 
 
 </code></pre>
@@ -340,15 +341,18 @@ input array</li>
 <h3 id="2-implement-the-cpu-kernel-in-softmaxmojo"><a class="header" href="#2-implement-the-cpu-kernel-in-softmaxmojo">2. Implement the CPU kernel in <code>softmax.mojo</code></a></h3>
 <pre><code class="language-mojo">def softmax_cpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    # FILL IN (roughly 10 lines)
+    # FILL IN (roughly 12 lines)
 
 
 </code></pre>
@@ -497,20 +501,23 @@ between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities
 <h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation</a></h3>
 <pre><code class="language-mojo">def softmax_gpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    var shared_max = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[BLOCK_DIM_X]())
-    var shared_sum = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[BLOCK_DIM_X]())
+    var shared_max = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[BLOCK_DIM_X]()
+    )
+    var shared_sum = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[BLOCK_DIM_X]()
+    )
     var global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
@@ -518,7 +525,7 @@ between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities
     # do not influence the result (max(min_finite, x) == x for any x).
     var val: Scalar[dtype] = min_finite[dtype]()
     if global_i &lt; input_size:
-        val = input[global_i]
+        val = rebind[Scalar[dtype]](input[global_i])
     shared_max[global_i] = val
 
     barrier()
@@ -556,7 +563,7 @@ between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities
 
     # Normalize by sum
     if global_i &lt; input_size:
-        output[global_i] = exp_val / block_sum
+        output[Coord(global_i)] = exp_val / block_sum
 
 
 </code></pre>
@@ -701,26 +708,31 @@ the wide range of values common in neural network activations.</p>
 <h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation</a></h3>
 <pre><code class="language-mojo">def softmax_cpu_kernel[
     input_size: Int,
-    dtype: DType = DType.float32,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):
-        max_val = max(max_val, input[i])
+        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
 
     var sum_exp: Scalar[dtype] = 0.0
     for i in range(input_size):
-        var exp_val = exp(input[i] - max_val)
-        output[i] = exp_val
+        var in_val = rebind[Scalar[dtype]](input[i])
+        max_val = max(max_val, in_val)
+        var exp_val = exp(in_val - max_val)
+        output[Coord(i)] = exp_val
         sum_exp += exp_val
 
     for i in range(input_size):
-        output[i] = output[i] / sum_exp
+        output[Coord(i)] = output[i] / sum_exp
 
 
 </code></pre>
@@ -933,7 +945,6 @@ providing both efficiency and ease of use.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

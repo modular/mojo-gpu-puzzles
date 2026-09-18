@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -256,12 +254,17 @@ dimensions</li>
     OutLayout: TensorLayout,
     IndicesLayout: TensorLayout,
     WeightsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    indices: TileTensor[
+        mut=True, .int32, IndicesLayout, MutAnyOrigin, Engine=Engine
+    ],
+    weights: TileTensor[
+        mut=True, dtype, WeightsLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Memory-coalescing focused embedding kernel.
 
@@ -277,10 +280,6 @@ dimensions</li>
 
     if global_idx &gt;= total_elements:
         return
-
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq, embed) coordinates
     # FILL IN roughly 4 lines
@@ -339,12 +338,17 @@ to embedding dimension</li>
     OutLayout: TensorLayout,
     IndicesLayout: TensorLayout,
     WeightsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    indices: TileTensor[
+        mut=True, .int32, IndicesLayout, MutAnyOrigin, Engine=Engine
+    ],
+    weights: TileTensor[
+        mut=True, dtype, WeightsLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     2D grid non-coalesced embedding kernel.
 
@@ -363,10 +367,6 @@ to embedding dimension</li>
     # Bounds check
     if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim:
         return
-
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
 
     # Convert to (batch, seq) coordinates
     # FILL IN 2 lines
@@ -431,23 +431,9 @@ struct EmbeddingCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContext,
     ) raises:
-        comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
-        comptime OutLayout = type_of(out_layout_val)
-        comptime indices_layout_val = row_major[batch_size, seq_len]()
-        comptime IndicesLayout = type_of(indices_layout_val)
-        comptime weights_layout_val = row_major[vocab_size, embed_dim]()
-        comptime WeightsLayout = type_of(weights_layout_val)
-
-        var output_tensor = TileTensor[
-            mut=True, output.dtype, OutLayout, MutAnyOrigin
-        ](output.unsafe_ptr(), out_layout_val)
-        var indices_tensor = TileTensor[
-            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
-        ](indices.unsafe_ptr(), indices_layout_val)
-        var weights_tensor = TileTensor[
-            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
-        ](weights.unsafe_ptr(), weights_layout_val)
-
+        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
+        var indices_tensor = indices.to_tile_tensor().as_unsafe_any_origin()
+        var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
 
@@ -472,11 +458,13 @@ struct EmbeddingCustomOp:
                 seq_len,
                 vocab_size,
                 embed_dim,
-                OutLayout,
-                IndicesLayout,
-                WeightsLayout,
+                output_tensor.LayoutType,
+                indices_tensor.LayoutType,
+                weights_tensor.LayoutType,
+                output_tensor.Engine,
                 output.dtype,
             ]
+
             var compiled_kernel = gpu_ctx.compile_function[kernel]()
 
             gpu_ctx.enqueue_function(
@@ -494,9 +482,9 @@ struct EmbeddingCustomOp:
                     var token_idx_val = Int(indices_tensor[batch, seq])
                     if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
                         for emb in range(embed_dim):
-                            output_tensor[batch, seq, emb] = weights_tensor[
-                                token_idx_val, emb
-                            ]
+                            output_tensor[
+                                Coord(batch, seq, emb)
+                            ] = weights_tensor[token_idx_val, emb]
         else:
             raise Error("Unsupported target: " + target)
 
@@ -535,23 +523,9 @@ struct Embedding2DCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContext,
     ) raises:
-        comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
-        comptime OutLayout = type_of(out_layout_val)
-        comptime indices_layout_val = row_major[batch_size, seq_len]()
-        comptime IndicesLayout = type_of(indices_layout_val)
-        comptime weights_layout_val = row_major[vocab_size, embed_dim]()
-        comptime WeightsLayout = type_of(weights_layout_val)
-
-        var output_tensor = TileTensor[
-            mut=True, output.dtype, OutLayout, MutAnyOrigin
-        ](output.unsafe_ptr(), out_layout_val)
-        var indices_tensor = TileTensor[
-            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
-        ](indices.unsafe_ptr(), indices_layout_val)
-        var weights_tensor = TileTensor[
-            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
-        ](weights.unsafe_ptr(), weights_layout_val)
-
+        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
+        var indices_tensor = indices.to_tile_tensor().as_unsafe_any_origin()
+        var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
         comptime if target == "gpu":
             var gpu_ctx = ctx
 
@@ -579,9 +553,10 @@ struct Embedding2DCustomOp:
                 seq_len,
                 vocab_size,
                 embed_dim,
-                OutLayout,
-                IndicesLayout,
-                WeightsLayout,
+                output_tensor.LayoutType,
+                indices_tensor.LayoutType,
+                weights_tensor.LayoutType,
+                output_tensor.Engine,
                 output.dtype,
             ]
 
@@ -603,9 +578,9 @@ struct Embedding2DCustomOp:
                     var token_idx_val = Int(indices_tensor[batch, seq])
                     if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
                         for emb in range(embed_dim):
-                            output_tensor[batch, seq, emb] = weights_tensor[
-                                token_idx_val, emb
-                            ]
+                            output_tensor[
+                                Coord(batch, seq, emb)
+                            ] = weights_tensor[token_idx_val, emb]
         else:
             raise Error("Unsupported target: " + target)
 
@@ -666,11 +641,15 @@ ops = CustomOpLibrary(mojo_kernels)
 
 # Call the 1D coalesced version. The op writes into `output` and returns
 # nothing, so allocate the destination tensor first.
-embedding_op = ops.embedding[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}]
+embedding_op = ops.embedding[
+    {"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}
+]
 embedding_op(output_1d, indices, weights)
 
 # Call the 2D non-coalesced version
-embedding_2d_op = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}]
+embedding_2d_op = ops.embedding_2d[
+    {"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}
+]
 embedding_2d_op(output_2d, indices, weights)
 </code></pre>
 <p>The power of this approach is that the same kernel implementations can be used
@@ -735,12 +714,17 @@ operations for both kernels:</p>
     OutLayout: TensorLayout,
     IndicesLayout: TensorLayout,
     WeightsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    indices: TileTensor[
+        mut=True, .int32, IndicesLayout, MutAnyOrigin, Engine=Engine
+    ],
+    weights: TileTensor[
+        mut=True, dtype, WeightsLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Memory-coalescing focused embedding kernel.
 
@@ -749,6 +733,7 @@ operations for both kernels:</p>
     - Simple 1D grid for maximum simplicity and correctness
     - Focus on getting memory access right first
     """
+    comptime assert output.flat_rank == 3
 
     # Simple 1D indexing - each thread = one output element
     var global_idx = block_idx.x * block_dim.x + thread_idx.x
@@ -757,10 +742,6 @@ operations for both kernels:</p>
     if global_idx &gt;= total_elements:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
-
     # Convert to (batch, seq, embed) coordinates
     var batch_idx = global_idx // (seq_len * embed_dim)
     var remaining = global_idx % (seq_len * embed_dim)
@@ -768,15 +749,15 @@ operations for both kernels:</p>
     var embed_idx = remaining % embed_dim
 
     # Get token index
-    var token_idx_val = Int(indices_lt[batch_idx, seq_idx])
+    var token_idx_val = Int(indices[batch_idx, seq_idx])
 
     # Simple, correct assignment
     if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
-        output_lt[batch_idx, seq_idx, embed_idx] = weights_lt[
+        output[batch_idx, seq_idx, embed_idx] = weights[
             token_idx_val, embed_idx
         ]
     else:
-        output_lt[batch_idx, seq_idx, embed_idx] = 0
+        output[batch_idx, seq_idx, embed_idx] = 0
 
 
 </code></pre>
@@ -789,12 +770,17 @@ operations for both kernels:</p>
     OutLayout: TensorLayout,
     IndicesLayout: TensorLayout,
     WeightsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
-    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    indices: TileTensor[
+        mut=True, .int32, IndicesLayout, MutAnyOrigin, Engine=Engine
+    ],
+    weights: TileTensor[
+        mut=True, dtype, WeightsLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     2D grid non-coalesced embedding kernel.
 
@@ -803,6 +789,7 @@ operations for both kernels:</p>
     - More complex indexing
     - Potentially worse memory access patterns
     """
+    comptime assert output.flat_rank == 3
 
     # 2D grid indexing
     var batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
@@ -814,24 +801,20 @@ operations for both kernels:</p>
     if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var indices_lt = indices.to_layout_tensor()
-    var weights_lt = weights.to_layout_tensor()
-
     # Convert to (batch, seq) coordinates
     var batch_idx = batch_seq_idx // seq_len
     var seq_idx = batch_seq_idx % seq_len
 
     # Get token index
-    var token_idx_val = Int(indices_lt[batch_idx, seq_idx])
+    var token_idx_val = Int(indices[batch_idx, seq_idx])
 
     # Assignment with 2D grid pattern
     if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
-        output_lt[batch_idx, seq_idx, embed_idx] = weights_lt[
+        output[batch_idx, seq_idx, embed_idx] = weights[
             token_idx_val, embed_idx
         ]
     else:
-        output_lt[batch_idx, seq_idx, embed_idx] = 0
+        output[batch_idx, seq_idx, embed_idx] = 0
 
 
 </code></pre>
@@ -947,7 +930,6 @@ same bytes; only the access pattern differs.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

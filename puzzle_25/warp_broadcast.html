@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -228,7 +226,7 @@ to all other lanes within a warp. This powerful primitive enables efficient
 block-level computations, conditional logic coordination, and one-to-many
 communication patterns without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/">broadcast()</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/">broadcast()</a>
 operation leverages SIMT execution to let lane 0 share its computed value with
 all other lanes in the same warp, enabling efficient coordination patterns and
 collective decision-making.</em></p>
@@ -311,11 +309,16 @@ computation, but all lanes can use the result in their individual operations?</p
 </ul>
 <h3 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h3>
 <pre><code class="language-mojo">def basic_broadcast[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
@@ -405,11 +408,16 @@ Puzzle 25 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def basic_broadcast[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
@@ -520,11 +528,16 @@ conditional transformations across all lanes?</p>
 </ul>
 <h3 id="code-to-complete-1"><a class="header" href="#code-to-complete-1">Code to complete</a></h3>
 <pre><code class="language-mojo">def conditional_broadcast[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
@@ -628,11 +641,16 @@ Puzzle 25 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def conditional_broadcast[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
@@ -778,11 +796,16 @@ data?</p>
 </ul>
 <h3 id="code-to-complete-2"><a class="header" href="#code-to-complete-2">Code to complete</a></h3>
 <pre><code class="language-mojo">def broadcast_shuffle_coordination[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
@@ -880,11 +903,16 @@ Puzzle 25 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def broadcast_shuffle_coordination[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
@@ -1082,7 +1110,6 @@ adaptive algorithms.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

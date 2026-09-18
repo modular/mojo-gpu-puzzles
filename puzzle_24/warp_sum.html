@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -229,7 +227,7 @@ function calls. Each warp lane will process one element and use <code>warp.sum()
 combine results automatically, demonstrating how warp programming transforms GPU
 synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/sum/">warp.sum()</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/sum/">warp.sum()</a>
 operation leverages SIMT execution to replace shared memory + barriers + tree
 reduction with a <code>log2(WARP_SIZE)</code>-step shuffle reduction behind one function
 call.</em></p>
@@ -264,28 +262,30 @@ cross-warp or cross-block reduction here.</p>
 <a href="../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a> that required shared
 memory, barriers, and tree reduction:</p>
 <pre><code class="language-mojo">def traditional_dot_product_p12_style[
-    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, OutLayoutT, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[WARP_SIZE]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[WARP_SIZE]()
+    )
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if global_i &lt; size:
-        shared[local_i] = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        shared[local_i] = rebind[Scalar[dtype]](a[global_i]) * rebind[
             Scalar[dtype]
-        ](b_lt[global_i])
+        ](b[global_i])
     else:
         shared[local_i] = 0.0
 
@@ -299,7 +299,7 @@ memory, barriers, and tree reduction:</p>
         stride //= 2
 
     if local_i == 0:
-        out_lt.store[1](Index(global_i // WARP_SIZE), shared[0])
+        output.store[1](Coord(global_i // WARP_SIZE), shared[0])
 
 
 </code></pre>
@@ -349,15 +349,17 @@ solution line-for-line — that contrast is the point.</p>
 <p>Transform the complex traditional approach into a simple warp kernel using
 <code>warp_sum()</code>:</p>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-):
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
+    output: TileTensor[
+        mut=True, dtype, OutLayoutT, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 
@@ -383,14 +385,12 @@ solution line-for-line — that contrast is the point.</p>
 <h3 id="2-computing-partial-products"><a class="header" href="#2-computing-partial-products">2. <strong>Computing partial products</strong></a></h3>
 <pre><code class="language-mojo">var partial_product: Scalar[dtype] = 0
 if global_i &lt; size:
-    partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+    partial_product = rebind[Scalar[dtype]](a[global_i]) * rebind[
         Scalar[dtype]
-    ](b_lt[global_i])
+    ](b[global_i])
 </code></pre>
-<p><strong>Why <code>rebind</code>?</strong> Indexing a <code>LayoutTensor</code> yields a SIMD value, so each element
-is narrowed to <code>Scalar[dtype]</code> with <code>rebind</code> before the multiply. Note the
-receivers are <code>a_lt</code> and <code>b_lt</code>—the <code>LayoutTensor</code> handles obtained from
-<code>to_layout_tensor()</code> inside the kernel, not the <code>TileTensor</code> parameters.</p>
+<p><strong>Why <code>rebind</code>?</strong> Indexing a <code>TileTensor</code> yields a SIMD value, so each element
+is narrowed to <code>Scalar[dtype]</code> with <code>rebind</code> before the multiply.</p>
 <p><strong>Bounds checking:</strong> Essential because not all threads may have valid data to
 process.</p>
 <h3 id="3-warp-reduction-magic"><a class="header" href="#3-warp-reduction-magic">3. <strong>Warp reduction magic</strong></a></h3>
@@ -405,7 +405,7 @@ process.</p>
 </ul>
 <h3 id="4-writing-the-result"><a class="header" href="#4-writing-the-result">4. <strong>Writing the result</strong></a></h3>
 <pre><code class="language-mojo">if lane_id() == 0:
-    out_lt.store[1](Index(global_i // WARP_SIZE), total)
+    output.store[1](Coord(global_i // WARP_SIZE), total)
 </code></pre>
 <p><strong>Why only lane 0?</strong> All lanes have the same <code>total</code> value after <code>warp_sum()</code>,
 but we only want to write once to avoid race conditions.</p>
@@ -444,30 +444,32 @@ Puzzle 24 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-):
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
+    output: TileTensor[
+        mut=True, dtype, OutLayoutT, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
     if global_i &lt; size:
-        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        partial_product = rebind[Scalar[dtype]](a[global_i]) * rebind[
             Scalar[dtype]
-        ](b_lt[global_i])
+        ](b[global_i])
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
     var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
-        out_lt.store[1](Index(global_i // WARP_SIZE), total)
+        output.store[1](Coord(global_i // WARP_SIZE), total)
 
 
 </code></pre>
@@ -513,31 +515,31 @@ patterns:</p>
 <pre><code class="language-mojo">def functional_warp_dot_product[
     InLayoutT: TensorLayout,
     OutLayoutT: TensorLayout,
+    Engine: TensorEngine,
     //,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, OutLayoutT, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
-) raises:
-    @parameter
+) raises where (Engine.element_size == 1):
     @always_inline
     def compute_dot_product[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -&gt; None:
+        simd_width: Int, alignment: Int = 1
+    ](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
         # FILL IN (10 lines at most)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
-    elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
+    elementwise[simd_width=1, target="gpu"](
+        compute_dot_product, Coord(size), ctx
+    )
 
 
 </code></pre>
@@ -547,11 +549,10 @@ patterns:</p>
 <h3 id="1-understanding-the-functional-approach-structure"><a class="header" href="#1-understanding-the-functional-approach-structure">1. <strong>Understanding the functional approach structure</strong></a></h3>
 <p>You need to complete the <code>compute_dot_product</code> function with
 <strong>10 lines or fewer</strong>:</p>
-<pre><code class="language-mojo">@parameter
-@always_inline
+<pre><code class="language-mojo">@always_inline
 def compute_dot_product[
-    simd_width: Int, alignment: Int = align_of[dtype]()
-](indices: Coord) capturing -&gt; None:
+    simd_width: Int, alignment: Int = 1
+](indices: Coord) {var} -&gt; None:
     var idx = Int(indices[0].value())
     # FILL IN (10 lines at most)
 </code></pre>
@@ -564,30 +565,30 @@ def compute_dot_product[
 <h3 id="2-computing-partial-products-1"><a class="header" href="#2-computing-partial-products-1">2. <strong>Computing partial products</strong></a></h3>
 <pre><code class="language-mojo">var partial_product: Scalar[dtype] = 0.0
 if idx &lt; size:
-    var a_val = a_lt.load[1](Index(idx))
-    var b_val = b_lt.load[1](Index(idx))
+    var a_val = a.load[1](Coord(idx))
+    var b_val = b.load[1](Coord(idx))
     partial_product = a_val * b_val
 else:
     partial_product = 0.0
 </code></pre>
-<p><strong>Loading pattern:</strong> <code>a_lt.load[1](Index(idx))</code> loads exactly 1 element at
-position <code>idx</code> (not SIMD vectorized). The tensor is 1-D, so the index is a
-single <code>Index(idx)</code>.</p>
+<p><strong>Loading pattern:</strong> <code>a.load[1](Coord(idx))</code> loads exactly 1 element at
+position <code>idx</code> (not SIMD vectorized). The tensor is 1-D, so the coordinate is a
+single <code>Coord(idx)</code>.</p>
 <p><strong>Bounds handling:</strong> Set <code>partial_product = 0.0</code> for out-of-bounds threads so
 they don’t contribute to the sum.</p>
 <h3 id="3-warp-operations-and-storing"><a class="header" href="#3-warp-operations-and-storing">3. <strong>Warp operations and storing</strong></a></h3>
 <pre><code class="language-mojo">var total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    out_lt.store[1](Index(idx // WARP_SIZE), total)
+    output.store[1](Coord(idx // WARP_SIZE), total)
 </code></pre>
-<p><strong>Storage pattern:</strong> <code>out_lt.store[1](Index(idx // WARP_SIZE), total)</code> stores
+<p><strong>Storage pattern:</strong> <code>output.store[1](Coord(idx // WARP_SIZE), total)</code> stores
 1 element at position <code>idx // WARP_SIZE</code> in the 1-D output tensor.</p>
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in
 functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
-<pre><code class="language-mojo">from std.gpu import lane_id
-from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+<pre><code class="language-mojo">from max.gpu import lane_id
+from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 var my_lane = lane_id()           # 0 to WARP_SIZE-1
@@ -626,33 +627,31 @@ Puzzle 24 complete ✅
 <pre><code class="language-mojo">def functional_warp_dot_product[
     InLayoutT: TensorLayout,
     OutLayoutT: TensorLayout,
+    Engine: TensorEngine,
     //,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, OutLayoutT, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
-) raises:
-    @parameter
+) raises where (Engine.element_size == 1):
     @always_inline
     def compute_dot_product[
-        simd_width: Int, alignment: Int = align_of[dtype]()
-    ](indices: Coord) capturing -&gt; None:
+        simd_width: Int, alignment: Int = 1
+    ](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
-        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
-        var a_lt = a.to_layout_tensor()
-        var b_lt = b.to_layout_tensor()
-        var out_lt = output.to_layout_tensor()
 
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx &lt; size:
-            var a_val = a_lt.load[1](Index(idx))
-            var b_val = b_lt.load[1](Index(idx))
+            var a_val = a.load[1](Coord(idx))
+            var b_val = b.load[1](Coord(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -662,10 +661,12 @@ Puzzle 24 complete ✅
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            out_lt.store[1](Index(idx // WARP_SIZE), total)
+            output.store[1](Coord(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
-    elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
+    elementwise[simd_width=1, target="gpu"](
+        compute_dot_product, Coord(size), ctx
+    )
 
 
 </code></pre>
@@ -673,7 +674,7 @@ Puzzle 24 complete ✅
 <p>The functional warp approach showcases modern Mojo programming patterns with
 warp operations:</p>
 <p><strong>Functional approach characteristics:</strong></p>
-<pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
+<pre><code class="language-mojo">elementwise[simd_width=1, target="gpu"](compute_dot_product, Coord(size), ctx)
 </code></pre>
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -874,7 +875,6 @@ sacrificing performance.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

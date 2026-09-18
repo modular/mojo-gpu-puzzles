@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -297,12 +295,17 @@ workflow.</p>
 <p>Implement sophisticated vector mean normalization using the full block
 operations toolkit:</p>
 <pre><code class="language-mojo">def block_normalize_vector[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    input_data: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+    output_data: TileTensor[
+        mut=True, dtype, VectorLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
     This demonstrates the complete block operations workflow:
@@ -456,12 +459,17 @@ Puzzle 27 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_normalize_vector[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    input_data: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+    output_data: TileTensor[
+        mut=True, dtype, VectorLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
     This demonstrates the complete block operations workflow:
@@ -482,7 +490,7 @@ Puzzle 27 complete ✅
 
     # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
     var total_sum = block.sum[block_size=tpb, broadcast=False](
-        val=SIMD[DType.float32, 1](my_value)
+        val=Float32(my_value)
     )
 
     # Step 3: Thread 0 computes mean value
@@ -495,7 +503,7 @@ Puzzle 27 complete ✅
     # This completes the block operations trilogy demonstration
     var broadcasted_mean = block.broadcast[
         dtype=DType.float32, width=1, block_size=tpb
-    ](val=SIMD[DType.float32, 1](mean_value), src_thread=0)
+    ](val=Float32(mean_value), src_thread=0)
 
     # Step 5: Each thread normalizes by the mean
     if global_i &lt; size:
@@ -871,7 +879,6 @@ together to solve real computational problems efficiently.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

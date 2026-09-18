@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -259,12 +257,15 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def single_block_matmul[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
     var local_row = thread_idx.y
@@ -319,27 +320,30 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def single_block_matmul[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
     var local_row = thread_idx.y
     var local_col = thread_idx.x
 
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
 
     if row &lt; size and col &lt; size:
-        a_shared[local_row, local_col] = a[row, col]
-        b_shared[local_row, local_col] = b[row, col]
+        a_shared[local_row, local_col] = rebind[Scalar[dtype]](a[row, col])
+        b_shared[local_row, local_col] = rebind[Scalar[dtype]](b[row, col])
 
     barrier()
 
@@ -391,8 +395,8 @@ var local_col = thread_idx.x
 <p><strong>Data Loading</strong>:</p>
 <pre><code class="language-mojo"># Load data into shared memory using TileTensor indexing
 if row &lt; size and col &lt; size:
-    a_shared[local_row, local_col] = a[row, col]
-    b_shared[local_row, local_col] = b[row, col]
+    a_shared[local_row, local_col] = rebind[Scalar[dtype]](a[row, col])
+    b_shared[local_row, local_col] = rebind[Scalar[dtype]](b[row, col])
 
 # Every thread reaches this, including the ones the guard skipped
 barrier()
@@ -586,7 +590,6 @@ memory</li>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

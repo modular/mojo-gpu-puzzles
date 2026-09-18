@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -256,10 +254,10 @@ kernel performance.</p>
 <p>An embedding operation converts discrete token indices into dense vector
 representations:</p>
 <pre><code class="language-python"># Input: token indices
-indices = [[1, 5, 2], [7, 1, 9]]           # Shape: [batch_size, seq_len]
+indices = [[1, 5, 2], [7, 1, 9]]  # Shape: [batch_size, seq_len]
 
 # Embedding table (learned parameters)
-embedding_table = [                        # Shape: [vocab_size, embed_dim]
+embedding_table = [  # Shape: [vocab_size, embed_dim]
     [0.1, 0.2, 0.3, 0.4],  # Token 0
     [0.5, 0.6, 0.7, 0.8],  # Token 1
     [0.9, 1.0, 1.1, 1.2],  # Token 2
@@ -267,9 +265,9 @@ embedding_table = [                        # Shape: [vocab_size, embed_dim]
 ]
 
 # Output: embedded vectors
-output[0,0] = embedding_table[1]  # [0.5, 0.6, 0.7, 0.8]
-output[0,1] = embedding_table[5]  # lookup token 5's embedding
-output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
+output[0, 0] = embedding_table[1]  # [0.5, 0.6, 0.7, 0.8]
+output[0, 1] = embedding_table[5]  # lookup token 5's embedding
+output[0, 2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 # ... and so on
 </code></pre>
 <p>This operation is <strong>memory-bound</strong> - performance depends on how efficiently you
@@ -358,7 +356,6 @@ programming scenarios beyond embeddings.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

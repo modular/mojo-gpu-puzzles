@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -403,11 +401,17 @@ writing</li>
 <li><strong>Completion barrier</strong>: Ensure all writes finish before block termination</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">def double_buffered_stencil_computation(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+<pre><code class="language-mojo">def double_buffered_stencil_computation[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Double-buffered stencil computation with memory barrier coordination.
 
     Iteratively applies 3-point stencil using alternating buffers.
@@ -415,22 +419,22 @@ writing</li>
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
-    var buffer_B = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var buffer_A = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
+    var buffer_B = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     # Memory barriers for coordinating buffer swaps
     var init_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
+        dtype=DType.uint64, address_space=.SHARED
     ](row_major[1]())
     var iter_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
+        dtype=DType.uint64, address_space=.SHARED
     ](row_major[1]())
     var final_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
+        dtype=DType.uint64, address_space=.SHARED
     ](row_major[1]())
 
     var size = Int(size_dev)
@@ -588,11 +592,17 @@ Puzzle 29 complete ✅
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def double_buffered_stencil_computation(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+<pre><code class="language-mojo">def double_buffered_stencil_computation[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Double-buffered stencil computation with memory barrier coordination.
 
     Iteratively applies 3-point stencil using alternating buffers.
@@ -600,22 +610,22 @@ Puzzle 29 complete ✅
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
-    var buffer_B = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var buffer_A = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
+    var buffer_B = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     # Memory barriers for coordinating buffer swaps
     var init_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
+        dtype=DType.uint64, address_space=.SHARED
     ](row_major[1]())
     var iter_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
+        dtype=DType.uint64, address_space=.SHARED
     ](row_major[1]())
     var final_barrier = stack_allocation[
-        dtype=DType.uint64, address_space=AddressSpace.SHARED
+        dtype=DType.uint64, address_space=.SHARED
     ](row_major[1]())
 
     var size = Int(size_dev)
@@ -634,7 +644,7 @@ Puzzle 29 complete ✅
 
     # Initialize buffer_A with input data
     if local_i &lt; TPB and global_i &lt; size:
-        buffer_A[local_i] = input[global_i]
+        buffer_A[local_i] = rebind[Scalar[dtype]](input[global_i])
     else:
         buffer_A[local_i] = 0.0
 
@@ -980,7 +990,6 @@ sophisticated memory management patterns used in production numerical software.<
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

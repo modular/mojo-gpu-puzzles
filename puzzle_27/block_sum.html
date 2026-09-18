@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -263,27 +261,28 @@ on AMD CDNA where <code>WARP_SIZE</code> is 64)</li>
 <p>Recall the complex approach from <a href="../puzzle_12/puzzle_12.html">Puzzle 12</a> that
 required shared memory, barriers, and tree reduction:</p>
 <pre><code class="language-mojo">def traditional_dot_product[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
     var size = Int(size_dev)
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[tpb]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[tpb]()
+    )
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Each thread computes partial product
     if global_i &lt; size:
-        var a_val = a[global_i]
-        var b_val = b[global_i]
+        var a_val = rebind[Scalar[dtype]](a[global_i])
+        var b_val = rebind[Scalar[dtype]](b[global_i])
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -318,30 +317,32 @@ block-level GPU synchronization.</p>
 <a href="../puzzle_24/warp_sum.html">Puzzle 24</a> simplified reduction within a single warp
 using <code>warp.sum()</code>:</p>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
-):
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
+    output: TileTensor[
+        mut=True, dtype, OutLayoutT, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
     if global_i &lt; size:
-        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+        partial_product = rebind[Scalar[dtype]](a[global_i]) * rebind[
             Scalar[dtype]
-        ](b_lt[global_i])
+        ](b[global_i])
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
     var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
-        out_lt.store[1](Index(global_i // WARP_SIZE), total)
+        output.store[1](Coord(global_i // WARP_SIZE), total)
 
 
 </code></pre>
@@ -388,13 +389,14 @@ the complex shared memory + barriers approach to coordinate between warps.</p>
 <p>Transform the complex traditional approach into a simple block kernel using
 <code>block.sum()</code>:</p>
 <pre><code class="language-mojo">def block_sum_dot_product[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
@@ -477,13 +479,14 @@ values. You’ll need to extract the scalar value for arithmetic operations.</p>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_sum_dot_product[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
@@ -500,7 +503,7 @@ values. You’ll need to extract the scalar value for arithmetic operations.</p>
     # The magic: block.sum() replaces 15+ lines of manual reduction!
     # Just like warp.sum() but for the entire block
     var total = block.sum[block_size=tpb, broadcast=False](
-        val=SIMD[DType.float32, 1](partial_product)
+        val=Float32(partial_product)
     )
 
     # Only thread 0 writes the result
@@ -571,7 +574,7 @@ calls</li>
 <h2 id="technical-investigation-what-does-blocksum-actually-compile-to"><a class="header" href="#technical-investigation-what-does-blocksum-actually-compile-to">Technical investigation: What does <code>block.sum()</code> actually compile to?</a></h2>
 <p>To understand what <code>block.sum()</code> actually generates, we compiled the puzzle with
 debug information:</p>
-<pre><code class="language-bash">pixi run mojo build --emit llvm --debug-level=line-tables solutions/p27/p27.mojo -o solutions/p27/p27.ll
+<pre><code class="language-bash">pixi run mojo build --emit llvm --debug-level=line-tables -I . solutions/p27/p27.mojo -o solutions/p27/p27.ll
 </code></pre>
 <p>This generated <strong>LLVM file</strong> <code>solutions/p27/p27.ll</code>. For example, on a
 compatible NVIDIA GPU, the <code>p27.ll</code> file has embedded <strong>PTX assembly</strong> showing
@@ -725,7 +728,6 @@ simplifies block-level reductions without sacrificing performance.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -397,11 +395,12 @@ orchestration that calls it.</p>
     cols: Int,
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     # FILL ME IN (roughly 18 lines)
     ...
 
@@ -704,18 +703,21 @@ from previous puzzles.</p>
     cols: Int,
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """Transpose matrix using shared memory tiling for coalesced access."""
+    comptime assert output.flat_rank == 2
+
     comptime shared_layout = row_major[
         TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
     ]()
-    var shared_tile = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
+    var shared_tile = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -723,12 +725,10 @@ from previous puzzles.</p>
     var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
     var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
-    var inp_lt = inp.to_layout_tensor()
-    var output_lt = output.to_layout_tensor()
-    var shared_tile_lt = shared_tile.to_layout_tensor()
-
     if global_row &lt; rows and global_col &lt; cols:
-        shared_tile_lt[local_row, local_col] = inp_lt[global_row, global_col]
+        shared_tile[local_row, local_col] = rebind[Scalar[dtype]](
+            inp[global_row, global_col]
+        )
 
     barrier()
 
@@ -738,7 +738,7 @@ from previous puzzles.</p>
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
     if out_row &lt; cols and out_col &lt; rows:
-        output_lt[out_row, out_col] = shared_tile_lt[local_col, local_row]
+        output[out_row, out_col] = shared_tile[local_col, local_row]
 
 
 </code></pre>
@@ -747,7 +747,9 @@ from previous puzzles.</p>
 access patterns. Key implementation details:</p>
 <h4 id="critical-transpose-pattern"><a class="header" href="#critical-transpose-pattern">Critical transpose pattern</a></h4>
 <pre><code class="language-mojo"># Load with normal indexing
-shared_tile[local_row, local_col] = inp[global_row, global_col]
+shared_tile[local_row, local_col] = rebind[Scalar[dtype]](
+    inp[global_row, global_col]
+)
 barrier()
 # Store with swapped indexing for transpose
 output[out_row, out_col] = shared_tile[local_col, local_row]
@@ -764,8 +766,9 @@ and writes remain coalesced while achieving the transpose operation.</p>
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
             comptime kernel = transpose_kernel[
-                seq_len, d, KTLayout, KLayout, dtype
+                seq_len, d, KTLayout, k_tensor.LayoutType, k_t.Engine, dtype
             ]
+
             ctx.enqueue_function[kernel](
                 k_t,
                 k_tensor,
@@ -784,8 +787,10 @@ and writes remain coalesced while achieving the transpose operation.</p>
                 Scores2DLayout,
                 Q2DLayout,
                 KTLayout,
+                scores_2d.Engine,
                 dtype,
             ]
+
             ctx.enqueue_function[kernel2](
                 scores_2d,
                 q_2d,
@@ -799,21 +804,27 @@ and writes remain coalesced while achieving the transpose operation.</p>
 
             # Step 5: Apply softmax to get attention weights (in-place)
             comptime ScoresLayout = type_of(layout_scores)
-            comptime kernel3 = softmax_gpu_kernel[seq_len, ScoresLayout, dtype]
             # Create two TileTensor views from the underlying buffer to avoid aliasing error
-            var weights_out = TileTensor[
-                mut=True, dtype, ScoresLayout, MutAnyOrigin
-            ](scores_weights_buf, layout_scores)
-            var weights_in = TileTensor[
-                mut=True, dtype, ScoresLayout, MutAnyOrigin
-            ](scores_weights_buf, layout_scores)
+            var weights_out = TileTensor(scores_weights_buf, layout_scores)
+            var weights_in_tt = TileTensor(scores_weights_buf, layout_scores)
+            var weights_in = rebind[
+                TileTensor[
+                    mut=False,
+                    dtype,
+                    ScoresLayout,
+                    ImmutAnyOrigin,
+                    Engine=weights_in_tt.Engine,
+                ]
+            ](weights_in_tt)
+            comptime kernel3 = softmax_gpu_kernel[
+                seq_len, ScoresLayout, weights_out.Engine, dtype
+            ]
             ctx.enqueue_function[kernel3](
                 weights_out,
                 weights_in,
                 grid_dim=softmax_blocks_per_grid,
                 block_dim=softmax_threads,
             )
-
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
             var weights_2d = weights.reshape(layout_weights_2d)
 
@@ -826,9 +837,11 @@ and writes remain coalesced while achieving the transpose operation.</p>
                 seq_len,
                 Result2DLayout,
                 Weights2DLayout,
-                VLayout,
+                v_tensor.LayoutType,
+                result_2d.Engine,
                 dtype,
             ]
+
             ctx.enqueue_function[kernel4](
                 result_2d,
                 weights_2d,
@@ -976,7 +989,6 @@ writing monolithic implementations.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

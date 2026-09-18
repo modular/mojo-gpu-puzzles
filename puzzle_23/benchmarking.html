@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -319,12 +317,12 @@ var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 <h2 id="benchmarking-implementation-essentials"><a class="header" href="#benchmarking-implementation-essentials">Benchmarking implementation essentials</a></h2>
 <h3 id="core-workflow-pattern"><a class="header" href="#core-workflow-pattern">Core workflow pattern</a></h3>
 <p>Each benchmark follows a streamlined pattern:</p>
-<pre><code class="language-mojo">@parameter
+<pre><code class="language-mojo">@always_inline
 def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     var bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    @parameter
-    def pattern_workflow(ctx: DeviceContext) raises:
+    @always_inline
+    def pattern_workflow(ctx: DeviceContext) raises {imm}:
       # Compute: Execute the algorithm being measured
 
     bencher_iter_custom(b, pattern_workflow, bench_ctx)
@@ -476,19 +474,27 @@ operations</li>
 <h3 id="custom-test-scenarios"><a class="header" href="#custom-test-scenarios">Custom test scenarios</a></h3>
 <p>Modify parameters to test different conditions:</p>
 <pre><code class="language-mojo"># Different problem sizes
-bench.bench_function[benchmark_elementwise_parameterized[1024, 32]](
-    BenchId("elementwise_1024_32")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_elementwise_parameterized[
+        1024, 32
+    ](b),
+    BenchId("elementwise_1024_32"),
 )
-bench.bench_function[benchmark_elementwise_parameterized[64, 8]](
-    BenchId("elementwise_64_8")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_elementwise_parameterized[
+        64, 8
+    ](b),
+    BenchId("elementwise_64_8"),
 )
 
 # Different tile sizes
-bench.bench_function[benchmark_tiled_parameterized[256, 8]](
-    BenchId("tiled_256_8")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_tiled_parameterized[256, 8](b),
+    BenchId("tiled_256_8"),
 )
-bench.bench_function[benchmark_tiled_parameterized[256, 64]](
-    BenchId("tiled_256_64")
+bench.bench_function(
+    lambda (mut b: Bencher) raises: benchmark_tiled_parameterized[256, 64](b),
+    BenchId("tiled_256_64"),
 )
 </code></pre>
 <h3 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h3>
@@ -604,7 +610,6 @@ dramatic reimplementation of Puzzle 14’s prefix sum.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

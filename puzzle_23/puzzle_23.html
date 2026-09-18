@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -282,7 +280,7 @@ manual_vectorized:  0.585ms  ← Uncoalesced access plus complex indexing
 <ul>
 <li><strong>Basic GPU concepts</strong>: Memory hierarchy, thread execution, SIMD operations</li>
 <li><strong>Mojo fundamentals</strong>: Parameter functions, compile-time specialization,
-capturing semantics</li>
+closure capture semantics</li>
 <li><strong>TileTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>GPU memory management</strong>: Buffer allocation, host-device synchronization</li>
 </ul>
@@ -295,10 +293,10 @@ capturing semantics</li>
 <li>Functional GPU programming with <code>elementwise</code></li>
 <li>Automatic SIMD vectorization within GPU threads</li>
 <li>TileTensor operations for safe memory access</li>
-<li>Capturing semantics in nested functions</li>
+<li>Capture semantics in nested closures</li>
 </ul>
 <p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
+<pre><code class="language-mojo">elementwise[simd_width=SIMD_WIDTH, target="gpu"](add_function, Coord(total_size), ctx)
 </code></pre>
 <h3 id="2-tiled-processing"><a class="header" href="#2-tiled-processing"><strong>2. Tiled processing</strong></a></h3>
 <p><strong>→ <a href="./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
@@ -416,7 +414,6 @@ functional GPU programming.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

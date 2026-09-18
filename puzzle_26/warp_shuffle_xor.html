@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -228,7 +226,7 @@ sophisticated tree-based communication patterns within a warp. This powerful
 primitive enables efficient parallel reductions, sorting networks, and advanced
 coordination algorithms without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/">shuffle_xor()</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/">shuffle_xor()</a>
 operation leverages SIMT execution to create XOR-based communication trees,
 enabling efficient butterfly networks and parallel algorithms that scale with
 \(O(\log n)\) complexity relative to warp size.</em></p>
@@ -316,11 +314,16 @@ pattern: \[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
 <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>, where each pair <code>(i, i+1)</code> swaps values through
 XOR communication.</p>
 <pre><code class="language-mojo">def butterfly_pair_swap[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
     Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
@@ -402,11 +405,16 @@ Puzzle 26 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def butterfly_pair_swap[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
     Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
@@ -416,7 +424,7 @@ Puzzle 26 complete ✅
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
-        var current_val = input[global_i]
+        var current_val = rebind[Scalar[dtype]](input[global_i])
 
         # Exchange with XOR-1 neighbor using butterfly pattern
         # Lane 0 exchanges with lane 1, lane 2 with lane 3, etc.
@@ -511,11 +519,16 @@ range)</li>
 <p>After \(\log_2(\text{WARP_SIZE})\) steps, all lanes have the global
 maximum. This works for any <code>WARP_SIZE</code> (32, 64, etc.).</p>
 <pre><code class="language-mojo">def butterfly_parallel_max[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Parallel maximum reduction using butterfly pattern.
     Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
@@ -629,11 +642,16 @@ Puzzle 26 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def butterfly_parallel_max[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Parallel maximum reduction using butterfly pattern.
     Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
@@ -745,11 +763,16 @@ through the butterfly tree, then conditionally output based on lane ID parity.
 This demonstrates how butterfly patterns can be extended for complex multi-value
 reductions.</p>
 <pre><code class="language-mojo">def butterfly_conditional_max[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, Layout2Type, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, Layout2Type, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
@@ -759,7 +782,7 @@ reductions.</p>
     var lane = lane_id()
 
     if global_i &lt; size:
-        var current_val = input[global_i]
+        var current_val = rebind[Scalar[dtype]](input[global_i])
         var min_val = current_val
 
         # FILL ME IN (roughly 11 lines)
@@ -843,11 +866,16 @@ Puzzle 26 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def butterfly_conditional_max[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, Layout2Type, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, Layout2Type, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, Layout2Type, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
@@ -857,7 +885,7 @@ Puzzle 26 complete ✅
     var lane = lane_id()
 
     if global_i &lt; size:
-        var current_val = input[global_i]
+        var current_val = rebind[Scalar[dtype]](input[global_i])
         var min_val = current_val
 
         # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
@@ -1077,7 +1105,6 @@ different GPU architectures.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

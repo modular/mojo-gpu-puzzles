@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -281,13 +279,16 @@ partial results</li>
 <p><strong>Expected Result</strong>: Sum of sequence <code>0, 1, 2, ..., 1023</code> = <strong>523,776</strong></p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def cluster_collective_operations[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    temp_storage: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Cluster-wide collective operations using real cluster APIs."""
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -403,13 +404,16 @@ compute the final result</li>
 <details class="solution-details">
 <summary>Click to reveal solution</summary>
 <pre><code class="language-mojo">def cluster_collective_operations[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    temp_storage: TileTensor[
+        mut=True, dtype, ClusterLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Cluster-wide collective operations using real cluster APIs."""
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -423,9 +427,9 @@ compute the final result</li>
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    var shared_mem = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[tpb]())
+    var shared_mem = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[tpb]()
+    )
     shared_mem[local_i] = my_value
     barrier()
 
@@ -642,7 +646,6 @@ synchronization, building on
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

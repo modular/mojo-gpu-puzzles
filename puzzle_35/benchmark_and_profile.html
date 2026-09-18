@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -230,7 +228,7 @@ below are NVIDIA CUDA concepts. The kernels run and verify on any supported
 GPU, but the codegen evidence is NVIDIA-specific.</p>
 </blockquote>
 <h2 id="step-1-benchmark-the-three-variants"><a class="header" href="#step-1-benchmark-the-three-variants">Step 1: Benchmark the three variants</a></h2>
-<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --benchmark
+<pre><code class="language-bash">pixi run mojo -I . solutions/p35/p35.mojo --benchmark
 </code></pre>
 <p>This times all three kernels on a 1M-element buffer. Representative numbers from
 a B200 (compute capability 10.0, driver 595.71.05, MAX 26.5.0 / Mojo 1.0.0):</p>
@@ -253,7 +251,7 @@ share of it. Measured with <code>ncu</code>, the kernels alone are 8.83 µs (sca
 will bite in a compute-mixed or instruction-issue-bound kernel. The wall-clock
 test is too coarse to see the codegen difference but the profiler is not.</p>
 <h2 id="step-2-build-for-profiling"><a class="header" href="#step-2-build-for-profiling">Step 2: Build for profiling</a></h2>
-<pre><code class="language-bash">mojo build --debug-level=full solutions/p35/p35.mojo -o solutions/p35/p35_profiler
+<pre><code class="language-bash">mojo build --debug-level=full -I . solutions/p35/p35.mojo -o solutions/p35/p35_profiler
 </code></pre>
 <p><code>--debug-level=full</code> keeps source-line mapping so Nsight Compute can attribute
 instructions back to your kernel.</p>
@@ -351,7 +349,6 @@ It costs nothing, and it ensures your kernel takes the vectorized fast path.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

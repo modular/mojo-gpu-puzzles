@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -278,15 +276,22 @@ for element in data:
 <h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
 <p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
 <pre><code class="language-mojo">def block_histogram_bin_extract[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
-    count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
+    input_data: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+    bin_output: TileTensor[
+        mut=True, dtype, BinLayout, MutAnyOrigin, Engine=Engine
+    ],
+    count_output: TileTensor[
+        mut=True, .int32, OutLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
     target_bin_dev: Int32,
     num_bins_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Parallel histogram using block.prefix_sum() for bin extraction.
 
     This demonstrates advanced parallel filtering and extraction:
@@ -461,15 +466,22 @@ Bin 7 extracted elements:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_histogram_bin_extract[
-    tpb: Int
+    tpb: Int,
+    Engine: TensorEngine,
 ](
-    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
-    bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
-    count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
+    input_data: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
+    bin_output: TileTensor[
+        mut=True, dtype, BinLayout, MutAnyOrigin, Engine=Engine
+    ],
+    count_output: TileTensor[
+        mut=True, .int32, OutLayout, MutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
     target_bin_dev: Int32,
     num_bins_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Parallel histogram using block.prefix_sum() for bin extraction.
 
     This demonstrates advanced parallel filtering and extraction:
@@ -508,7 +520,7 @@ Bin 7 extracted elements:
     # This computes where each thread should write within the target bin
     var write_offset = block.prefix_sum[
         dtype=DType.int32, block_size=tpb, exclusive=True
-    ](val=SIMD[DType.int32, 1](belongs_to_target))
+    ](val=Int32(belongs_to_target))
 
     # Step 4: Extract and pack elements belonging to target_bin
     if belongs_to_target == 1:
@@ -729,7 +741,6 @@ reorganization patterns essential for high-performance parallel algorithms.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

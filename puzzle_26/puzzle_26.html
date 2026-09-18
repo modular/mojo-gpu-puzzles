@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -229,9 +227,9 @@ introduces you to sophisticated GPU
 <strong>warp-level butterfly communication and parallel scan operations</strong> -
 shuffle-based primitives that enable efficient tree-based algorithms and
 parallel reductions within warps. You’ll learn about using
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/">shuffle_xor</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/">shuffle_xor</a>
 for butterfly networks and
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/">prefix_sum</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/">prefix_sum</a>
 for shuffle-based parallel scan without complex multi-phase shared memory
 algorithms.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier +
@@ -267,11 +265,11 @@ sequential patterns</li>
 memory and no barriers</li>
 </ul>
 <h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
-<p>Learn the sophisticated communication primitives from <code>std.gpu.primitives.warp</code>:</p>
+<p>Learn the sophisticated communication primitives from <code>max.gpu.primitives.warp</code>:</p>
 <ol>
-<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_xor/"><code>shuffle_xor(value, mask)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_xor/"><code>shuffle_xor(value, mask)</code></a></strong>:
 XOR-based butterfly communication for tree algorithms</li>
-<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/"><code>prefix_sum(value)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/"><code>prefix_sum(value)</code></a></strong>:
 Shuffle-based parallel scan operations</li>
 <li><strong>Advanced coordination patterns</strong>: Combining multiple primitives for complex
 algorithms</li>
@@ -301,7 +299,7 @@ for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
     offset *= 2
 
 # Advanced warp primitives eliminate all this complexity:
-var current_val = input[global_i]
+var current_val = rebind[Scalar[dtype]](input[global_i])
 var scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
 output[global_i] = scan_result
 </code></pre>
@@ -360,7 +358,7 @@ multi-phase algorithms with single function calls.</p>
 <li>Understanding inclusive vs exclusive scan patterns</li>
 </ul>
 <p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">var current_val = input[global_i]
+<pre><code class="language-mojo">var current_val = rebind[Scalar[dtype]](input[global_i])
 var scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result  # Hardware-optimized cumulative sum
 </code></pre>
@@ -470,7 +468,6 @@ parallel scan patterns!</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

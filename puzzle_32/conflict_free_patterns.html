@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -255,11 +253,17 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def no_conflict_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+def no_conflict_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Perfect shared memory access - no bank conflicts.
 
     Each thread accesses a different bank: thread_idx.x maps to bank thread_idx.x % 32.
@@ -268,16 +272,16 @@ def no_conflict_kernel(
     var size = Int(size_dev)
 
     # Shared memory buffer - each thread loads one element
-    var shared_buf = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var shared_buf = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Load from global memory to shared memory - no conflicts
     if global_i &lt; size:
-        shared_buf[local_i] = (
+        shared_buf[local_i] = rebind[SIMD[dtype, 1]](
             input[global_i] + 10.0
         )  # Add 10 as simple operation
 
@@ -291,11 +295,17 @@ def no_conflict_kernel(
 
 
 </code></pre>
-<pre><code class="language-mojo">def two_way_conflict_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def two_way_conflict_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
     Stride-2 means thread i reads index 2i, so threads i and i+16 share bank
@@ -305,9 +315,9 @@ def no_conflict_kernel(
     var size = Int(size_dev)
 
     # Sized to 2*TPB so stride-2 writes don't alias (threads i and i+TPB/2).
-    var shared_buf = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[2 * TPB]())
+    var shared_buf = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[2 * TPB]()
+    )
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -317,7 +327,7 @@ def no_conflict_kernel(
 
     # Load with bank conflicts
     if global_i &lt; size:
-        shared_buf[conflict_index] = (
+        shared_buf[conflict_index] = rebind[SIMD[dtype, 1]](
             input[global_i] + 10.0
         )  # Same operation as no-conflict
 
@@ -741,7 +751,6 @@ guesswork.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

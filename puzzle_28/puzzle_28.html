@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -455,12 +453,17 @@ async copy for efficiency: \[\text{output}[i] =
 <li><strong>Synchronization:</strong> Wait for transfers, then compute using shared memory</li>
 </ol>
 <pre><code class="language-mojo">def async_copy_overlap_convolution[
-    dtype: DType
+    dtype: DType,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
+    ],
     kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
-):
+) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
     This shows how to use copy_dram_to_sram_async and async_copy_wait_all
@@ -472,13 +475,13 @@ async copy for efficiency: \[\text{output}[i] =
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)
@@ -564,12 +567,17 @@ executing other code.</p>
 <p>The async copy overlap solution demonstrates how to hide memory latency by
 overlapping expensive DRAM transfers with useful computation:</p>
 <pre><code class="language-mojo">def async_copy_overlap_convolution[
-    dtype: DType
+    dtype: DType,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
+    ],
     kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
-):
+) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
     This shows how to use copy_dram_to_sram_async and async_copy_wait_all
@@ -581,13 +589,13 @@ overlapping expensive DRAM transfers with useful computation:</p>
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
     var kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
+        address_space=.SHARED,
     ].stack_allocation()
 
     var local_i = thread_idx.x
@@ -832,7 +840,6 @@ fundamental principles of high-performance GPU programming.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

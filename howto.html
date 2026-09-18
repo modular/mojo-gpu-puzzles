@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="theme/css/custom.css">
         <link rel="stylesheet" href="theme/css/highlight.css">
         <link rel="stylesheet" href="theme/css/tabs.css">
-        <link rel="stylesheet" href="theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -503,12 +501,12 @@ pixi run tests           # Test all solutions
 pixi run tests pXX       # Test specific puzzle
 
 # Run manually
-pixi run mojo problems/pXX/pXX.mojo     # Your implementation
-pixi run mojo solutions/pXX/pXX.mojo    # Reference solution
+pixi run mojo -I . problems/pXX/pXX.mojo   # Your implementation
+pixi run mojo -I . solutions/pXX/pXX.mojo  # Reference solution
 
 # Interactive shell
 pixi shell               # Enter environment
-mojo problems/p01/p01.mojo              # Direct execution
+mojo -I . problems/p01/p01.mojo              # Direct execution
 exit                     # Leave shell
 
 # Development
@@ -527,8 +525,8 @@ uv run poe tests        # Test all solutions
 uv run poe tests pXX    # Test specific puzzle
 
 # Run manually
-uv run mojo problems/pXX/pXX.mojo      # Your implementation
-uv run mojo solutions/pXX/pXX.mojo     # Reference solution
+uv run mojo -I . problems/pXX/pXX.mojo   # Your implementation
+uv run mojo -I . solutions/pXX/pXX.mojo  # Reference solution
 </code></pre>
   </div>
 </div>
@@ -776,7 +774,6 @@ help!</p>
         <script src="theme/solution.js"></script>
         <script src="theme/init-amplitude.js"></script>
         <script src="theme/tabs.js"></script>
-        <script src="theme/language-switcher.js"></script>
 
 
     </div>

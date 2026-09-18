@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -229,7 +227,7 @@ powerful operation enables efficient cumulative computations, parallel
 partitioning, and advanced coordination algorithms that would otherwise require
 dozens of lines of shared memory and synchronization code.</p>
 <p><strong>Key insight:</strong> <em>The
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/prefix_sum/">prefix_sum()</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/prefix_sum/">prefix_sum()</a>
 operation computes cumulative results across warp lanes in
 \(O(\log n)\) steps, using the GPU’s shuffle instructions rather than shared
 memory. There is no dedicated scan unit: <code>prefix_sum</code> expands to a
@@ -268,25 +266,29 @@ explicit synchronization.</p>
 <p>Traditional prefix sum requires complex multi-phase shared memory algorithms. In
 <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>, we implemented this the hard way with
 explicit shared memory management:</p>
-<pre><code class="language-mojo">def prefix_sum_simple(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def prefix_sum_simple[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
     if global_i &lt; size:
-        shared[local_i] = a[global_i]
+        shared[local_i] = rebind[Scalar[dtype]](a[global_i])
 
     barrier()
 
     var offset = 1
     for _ in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val: output.ElementType = 0
+        var current_val: Scalar[dtype] = 0
         if local_i &gt;= offset and local_i &lt; size:
             current_val = shared[local_i - offset]  # read
 
@@ -332,11 +334,16 @@ of all elements up to and including its position: \[\Large \text{output}[i] =
 <code>[1, 3, 6, 10, 15, ...]</code>, where each position contains the sum of all previous
 elements plus itself.</p>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 14's complex shared memory + barrier approach.
@@ -428,11 +435,16 @@ Puzzle 26 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 14's complex shared memory + barrier approach.
@@ -455,7 +467,7 @@ Puzzle 26 complete ✅
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
-        var current_val = input[global_i]
+        var current_val = rebind[Scalar[dtype]](input[global_i])
 
         # This one call replaces ~30 lines of complex shared memory logic from Puzzle 14!
         # But it only works within the current warp (WARP_SIZE threads)
@@ -563,12 +575,17 @@ elements)</li>
 <p>This demonstrates the power of combining multiple warp primitives for complex
 parallel algorithms within a single warp.</p>
 <pre><code class="language-mojo">def warp_partition[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
     pivot: Float32,
-):
+) where (Engine.element_size == 1):
     """
     Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
     This implements a warp-level quicksort partition step that places elements &lt; pivot
@@ -588,7 +605,7 @@ parallel algorithms within a single warp.</p>
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
-        var current_val = input[global_i]
+        var current_val = rebind[Scalar[dtype]](input[global_i])
 
         # FILL ME IN (roughly 13 lines)
 
@@ -672,12 +689,17 @@ Puzzle 26 complete ✅
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def warp_partition[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine
+    ],
     pivot: Float32,
-):
+) where (Engine.element_size == 1):
     """
     Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
     This implements a warp-level quicksort partition step that places elements &lt; pivot
@@ -697,7 +719,7 @@ Puzzle 26 complete ✅
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
-        var current_val = input[global_i]
+        var current_val = rebind[Scalar[dtype]](input[global_i])
 
         # Phase 1: Create warp-level predicates
         var predicate_left = Scalar[dtype](
@@ -970,7 +992,6 @@ code complexity and optimal performance characteristics.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

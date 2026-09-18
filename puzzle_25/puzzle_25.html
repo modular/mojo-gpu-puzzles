@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -228,8 +226,8 @@
 <strong>warp-level communication operations</strong> - hardware-accelerated primitives that
 enable efficient data exchange and coordination patterns within warps. You’ll
 learn about using
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/">shuffle_down</a>
-and <a href="https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/">broadcast</a>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/">shuffle_down</a>
+and <a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/">broadcast</a>
 to implement neighbor communication and collective coordination without complex
 shared memory patterns.</p>
 <p><strong>Part VII: GPU Warp Communication</strong> introduces warp-level data movement
@@ -262,22 +260,22 @@ the top <code>offset</code> lanes, so guard those lanes with a lane check</li>
 <li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
-<p>Learn the core communication primitives from <code>std.gpu.primitives.warp</code>:</p>
+<p>Learn the core communication primitives from <code>max.gpu.primitives.warp</code>:</p>
 <ol>
-<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_down/"><code>shuffle_down(value, offset)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_down/"><code>shuffle_down(value, offset)</code></a></strong>:
 Get value from lane at higher index (neighbor access)</li>
-<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/broadcast/"><code>broadcast(value)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/broadcast/"><code>broadcast(value)</code></a></strong>:
 Share lane 0’s value with all other lanes (one-to-many)</li>
-<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_idx/"><code>shuffle_idx(value, lane)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_idx/"><code>shuffle_idx(value, lane)</code></a></strong>:
 Get value from specific lane (random access)</li>
-<li><strong><a href="https://mojolang.org/docs/std/gpu/primitives/warp/shuffle_up/"><code>shuffle_up(value, offset)</code></a></strong>:
+<li><strong><a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/shuffle_up/"><code>shuffle_up(value, offset)</code></a></strong>:
 Get value from lane at lower index (reverse neighbor)</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong> This puzzle focuses on <code>shuffle_down()</code> and <code>broadcast()</code> as the
 most commonly used communication patterns. For complete coverage of all warp
 operations, see the
-<a href="https://mojolang.org/docs/std/gpu/primitives/warp/">Mojo GPU Warp Documentation</a>.</p>
+<a href="https://docs.modular.com/api/mojo/max/gpu/primitives/warp/">Mojo GPU Warp Documentation</a>.</p>
 </blockquote>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
@@ -450,7 +448,6 @@ patterns.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

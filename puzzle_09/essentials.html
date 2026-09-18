@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -534,7 +532,7 @@ Mojo initializes GPU memory and launches kernels.</p>
 <h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the debugger</a></h3>
 <p>Fire up the LLDB debugger directly from source:</p>
 <pre><code class="language-bash"># This compiles and debugs p01.mojo in one step
-pixi run mojo debug solutions/p01/p01.mojo
+pixi run mojo debug -I . solutions/p01/p01.mojo
 </code></pre>
 <p>You’ll see the LLDB prompt: <code>(lldb)</code>. You’re now inside the debugger, ready to
 inspect your program’s execution!</p>
@@ -661,7 +659,7 @@ more control and faster debugging iterations.</p>
 <h3 id="build-your-debug-binary"><a class="header" href="#build-your-debug-binary">Build your debug binary</a></h3>
 <p><strong>Step 1: Compile with debug information</strong></p>
 <pre><code class="language-bash"># Create a debug build (notice the clear naming)
-pixi run mojo build -O0 -g solutions/p01/p01.mojo -o solutions/p01/p01_debug
+pixi run mojo build -O0 -g -I . solutions/p01/p01.mojo -o solutions/p01/p01_debug
 </code></pre>
 <p><strong>What happens here:</strong></p>
 <ul>
@@ -726,7 +724,7 @@ Only CUDA-GDB can show you this parallel reality.</p>
 pixi run setup-cuda-gdb
 
 # We'll use Source + CUDA-GDB (Approach 2 from above)
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
+pixi run mojo debug --cuda-gdb --break-on-launch -I . solutions/p01/p01.mojo
 </code></pre>
 <p>We’ll use the <strong>Source + CUDA-GDB approach</strong> since it’s perfect for learning
 and quick iterations.</p>
@@ -803,7 +801,7 @@ Kernel 0
 (cuda-gdb) next
 </code></pre>
 <p>Output:</p>
-<pre><code class="language-text">13      fn add_10(         # Steps to function signature line after computation
+<pre><code class="language-text">13      def add_10(         # Steps to function signature line after computation
 </code></pre>
 <pre><code class="language-gdb"># Now check the result
 (cuda-gdb) print output[i]
@@ -823,7 +821,7 @@ Kernel 0
 </code></pre>
 <p>Output:</p>
 <pre><code class="language-text">[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
-13      fn add_10(         # Thread 1 is also at function signature
+13      def add_10(         # Thread 1 is also at function signature
 </code></pre>
 <pre><code class="language-gdb"># Check the thread's local variable
 (cuda-gdb) print i
@@ -1257,7 +1255,6 @@ complex GPU issues you’ll encounter in real applications.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

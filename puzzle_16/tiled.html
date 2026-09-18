@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -301,12 +299,19 @@ Synchronization required:
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def matmul_tiled[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutTiledType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+    b: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
@@ -417,23 +422,30 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def matmul_tiled[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutTiledType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+    b: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
     var tiled_col = block_idx.x * TPB + local_col
 
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
 
     var acc: output.ElementType = 0
 
@@ -441,15 +453,15 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
     comptime for tile in range((size + TPB - 1) // TPB):
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
-            a_shared[local_row, local_col] = a[
-                tiled_row, tile * TPB + local_col
-            ]
+            a_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                a[tiled_row, tile * TPB + local_col]
+            )
 
         # Load B tile - row determined by tile, global col stays the same
         if (tile * TPB + local_row) &lt; size and tiled_col &lt; size:
-            b_shared[local_row, local_col] = b[
-                tile * TPB + local_row, tiled_col
-            ]
+            b_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                b[tile * TPB + local_row, tiled_col]
+            )
 
         barrier()
 
@@ -507,15 +519,15 @@ unnecessary but included for defensive programming and consistency with
 other matrix sizes.</p>
 <pre><code class="language-mojo">   # Load A tile - global row stays the same, col determined by tile
    if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
-       a_shared[local_row, local_col] = a[
-           tiled_row, tile * TPB + local_col
-       ]
+       a_shared[local_row, local_col] = rebind[Scalar[dtype]](
+           a[tiled_row, tile * TPB + local_col]
+       )
 
    # Load B tile - row determined by tile, global col stays the same
    if (tile * TPB + local_row) &lt; size and tiled_col &lt; size:
-       b_shared[local_row, local_col] = b[
-           tile * TPB + local_row, tiled_col
-       ]
+       b_shared[local_row, local_col] = rebind[Scalar[dtype]](
+           b[tile * TPB + local_row, tiled_col]
+       )
 </code></pre>
 </li>
 </ul>
@@ -626,12 +638,19 @@ comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
-    size: Int
+    size: Int,
+    Engine: TensorEngine,
 ](
-    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, LayoutTiledType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+    b: TileTensor[
+        mut=False, dtype, LayoutTiledType, ImmutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
@@ -639,12 +658,12 @@ def matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB, TPB]())
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB, TPB]()
+    )
 
     var acc: output.ElementType = 0
 
@@ -688,7 +707,7 @@ def matmul_idiomatic_tiled[
 
     # Write final result to output tile
     if tiled_row &lt; size and tiled_col &lt; size:
-        out_tile[local_row, local_col] = acc
+        out_tile[local_row, local_col] = rebind[Scalar[dtype]](acc)
 
 
 </code></pre>
@@ -828,7 +847,7 @@ exactly full-sized. No boundary checking needed!</p>
 <p><strong>Clean tile processing with defensive bounds checking</strong></p>
 <pre><code class="language-mojo"># Defensive bounds checking included even with perfect tiling
 if tiled_row &lt; size and tiled_col &lt; size:
-    out_tile[local_row, local_col] = acc
+    out_tile[local_row, local_col] = rebind[Scalar[dtype]](acc)
 </code></pre>
 <p>With perfect \((9 \times 9)\) tiling, this bounds check is technically
 unnecessary but included for defensive programming and consistency with other
@@ -987,7 +1006,6 @@ pattern</li>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

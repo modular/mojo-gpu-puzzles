@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -237,11 +235,15 @@ communicated, so the compiler emits a single vectorized load/store per chunk.</l
 </ol>
 <p>All three produce identical output. The point of the puzzle is everything that
 happens <em>after</em> you confirm that.</p>
-<pre><code class="language-mojo">def scalar_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def scalar_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """One element per thread. No vectorization, so alignment is irrelevant.
 
     This is the baseline: each thread issues a scalar load and a scalar store.
@@ -251,11 +253,15 @@ happens <em>after</em> you confirm that.</p>
 
 
 </code></pre>
-<pre><code class="language-mojo">def unaligned_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def unaligned_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
 
     The data is naturally 16-byte aligned, but `load`/`store` are told only the
@@ -264,33 +270,34 @@ happens <em>after</em> you confirm that.</p>
     `ld.global.nc.f32` / `st.global.f32` instructions instead of the vectorized
     `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     # Each thread owns one SIMD_WIDTH-wide chunk.
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH &lt;= size`, then load a SIMD_WIDTH-wide vector with `load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=SCALAR_ALIGN`.
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH &lt;= size`, then load a SIMD_WIDTH-wide vector with `a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))` and store `v * SCALE + BIAS` into `output` with the same `alignment=SCALAR_ALIGN`.
 
 
 </code></pre>
-<pre><code class="language-mojo">def aligned_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def aligned_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Same vectorized kernel, but the access alignment is communicated.
 
     Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
     float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
-    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
-    convenience wrapper that picks this alignment for you. Identical output to
-    the unaligned kernel — only the codegen (and the bandwidth) changes.
+    load and `st.global.v4.f32` store per chunk. `load` and `store` already
+    default to this alignment, so the vectorized form is what you get unless you
+    understate it. Identical output to the unaligned kernel — only the codegen
+    (and the bandwidth) changes.
     """
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
-    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH &lt;= size`, then load with the *correct* alignment via `a_lt.aligned_load[width=SIMD_WIDTH](Index(base))` and store `v * SCALE + BIAS` with `store_alignment=VEC_ALIGN`.
+    # FILL ME IN (~4 lines): guard `base + SIMD_WIDTH &lt;= size`, then load with the *correct* alignment via `a.load[width=SIMD_WIDTH](Coord(base))` (`alignment` defaults to `VEC_ALIGN`) and store `v * SCALE + BIAS` into `output` with `alignment=VEC_ALIGN`.
 
 
 </code></pre>
@@ -300,30 +307,29 @@ happens <em>after</em> you confirm that.</p>
 <pre><code class="language-mojo">comptime VEC_ALIGN = align_of[SIMD[dtype, SIMD_WIDTH]]()   # 16 bytes for float32x4
 comptime SCALAR_ALIGN = align_of[dtype]()                  # 4 bytes
 </code></pre>
-<p>The vectorized kernels take <code>TileTensor</code> arguments, convert them with
-<code>to_layout_tensor()</code>, and then use <code>LayoutTensor</code>’s <code>load</code> and <code>store</code>, whose
-alignment you set explicitly:</p>
+<p>The vectorized kernels take <code>TileTensor</code> arguments and call <code>load</code> and <code>store</code>,
+whose <code>alignment</code> parameter you set explicitly:</p>
 <pre><code class="language-mojo"># Under-stated: compiler can't prove 16-byte alignment -&gt; scalar codegen
-var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](Index(base))
-out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
-    Index(base), v * SCALE + BIAS
+var v = a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))
+output.store[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](
+    Coord(base), v * SCALE + BIAS
 )
 
 # Aligned: 16-byte alignment -&gt; ld.global.nc.v4.f32 / st.global.v4.f32
-# `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`
-var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
-out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
-    Index(base), v * SCALE + BIAS
+# `alignment` defaults to `VEC_ALIGN`, so the load needn't pass it
+var v = a.load[width=SIMD_WIDTH](Coord(base))
+output.store[width=SIMD_WIDTH, alignment=VEC_ALIGN](
+    Coord(base), v * SCALE + BIAS
 )
 </code></pre>
-<p><code>aligned_load[w]</code> is the convenience wrapper: it picks
-<code>align_of[SIMD[dtype, w]]()</code> for you. <code>aligned_store</code> exists too, but only in a
-2D <code>(m, n)</code> form—there is no coordinate-list overload—so this rank-1 kernel
-passes <code>store_alignment=VEC_ALIGN</code> explicitly.</p>
+<p>On GPU, <code>alignment</code> defaults to <code>align_of[SIMD[dtype, width]]()</code>, so a
+<code>SIMD_WIDTH</code>-wide access is already described as 16-byte aligned unless you
+understate it. The aligned kernel passes <code>alignment=VEC_ALIGN</code> on the store to
+keep the pairing visible next to the unaligned one.</p>
 <h2 id="running-it"><a class="header" href="#running-it">Running it</a></h2>
-<pre><code class="language-bash">pixi run mojo solutions/p35/p35.mojo --scalar
-pixi run mojo solutions/p35/p35.mojo --unaligned
-pixi run mojo solutions/p35/p35.mojo --aligned
+<pre><code class="language-bash">pixi run mojo -I . solutions/p35/p35.mojo --scalar
+pixi run mojo -I . solutions/p35/p35.mojo --unaligned
+pixi run mojo -I . solutions/p35/p35.mojo --aligned
 </code></pre>
 <p><code>--scalar</code> runs <code>scalar_kernel</code>. Each command prints <code>&lt;kernel&gt; kernel: passed</code>,
 confirming all three are correct. The performance difference is the subject of
@@ -339,9 +345,9 @@ thing that changes between the unaligned and aligned kernels is the alignment
 <em>value you pass</em> to <code>load</code>/<code>store</code>.</li>
 <li>Guard the tail: each vectorized thread handles <code>SIMD_WIDTH</code> elements, so
 guard with <code>if base + SIMD_WIDTH &lt;= size:</code> to avoid reading past the end.</li>
-<li><code>aligned_load[w]</code> is the same as
-<code>load[w, load_alignment=align_of[SIMD[dtype, w]]()]</code>. Use whichever reads
-more clearly.</li>
+<li><code>load[w]</code> already means <code>load[w, alignment=align_of[SIMD[dtype, w]]()]</code> on
+GPU. Understating the alignment is the deliberate mistake this puzzle asks
+you to make.</li>
 <li>Don’t expect a wall-clock gap on a tiny input or on a non-NVIDIA GPU. The
 codegen difference instead shows up in Nsight Compute’s instruction/sector
 metrics. We’ll cover this in the next section.</li>
@@ -353,11 +359,15 @@ metrics. We’ll cover this in the next section.</li>
 <summary><strong>Complete solution</strong></summary>
 <p>The three kernels are identical in result and differ only in how they touch
 memory.</p>
-<pre><code class="language-mojo">def scalar_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def scalar_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """One element per thread. No vectorization, so alignment is irrelevant.
 
     This is the baseline: each thread issues a scalar load and a scalar store.
@@ -369,11 +379,15 @@ memory.</p>
 
 
 </code></pre>
-<pre><code class="language-mojo">def unaligned_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def unaligned_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Vectorized by SIMD_WIDTH, but the access alignment is *under-stated*.
 
     The data is naturally 16-byte aligned, but `load`/`store` are told only the
@@ -383,44 +397,43 @@ memory.</p>
     `.v4` form. The alignment trap: correct results, but lost bandwidth.
     """
     var size = Int(size_dev)
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     # Each thread owns one SIMD_WIDTH-wide chunk.
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
     if base + SIMD_WIDTH &lt;= size:
-        var v = a_lt.load[width=SIMD_WIDTH, load_alignment=SCALAR_ALIGN](
-            Index(base)
-        )
-        out_lt.store[width=SIMD_WIDTH, store_alignment=SCALAR_ALIGN](
-            Index(base), v * SCALE + BIAS
+        var v = a.load[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](Coord(base))
+        output.store[width=SIMD_WIDTH, alignment=SCALAR_ALIGN](
+            Coord(base), v * SCALE + BIAS
         )
 
 
 </code></pre>
-<pre><code class="language-mojo">def aligned_kernel(
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+<pre><code class="language-mojo">def aligned_kernel[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, LayoutType, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     """Same vectorized kernel, but the access alignment is communicated.
 
     Passing `VEC_ALIGN` (`align_of[SIMD[dtype, SIMD_WIDTH]]()` == 16 bytes for
     float32x4) lets the compiler emit a single vectorized `ld.global.nc.v4.f32`
-    load and `st.global.v4.f32` store per chunk. `aligned_load` is the
-    convenience wrapper that picks this alignment for you. Identical output to
-    the unaligned kernel — only the codegen (and the bandwidth) changes.
+    load and `st.global.v4.f32` store per chunk. `load` and `store` already
+    default to this alignment, so the vectorized form is what you get unless you
+    understate it. Identical output to the unaligned kernel — only the codegen
+    (and the bandwidth) changes.
     """
     var size = Int(size_dev)
-    var a_lt = a.to_layout_tensor()
-    var out_lt = output.to_layout_tensor()
 
     var base = (block_dim.x * block_idx.x + thread_idx.x) * SIMD_WIDTH
     if base + SIMD_WIDTH &lt;= size:
-        # `aligned_load[w]` == `load[w, load_alignment=VEC_ALIGN]`.
-        var v = a_lt.aligned_load[width=SIMD_WIDTH](Index(base))
-        out_lt.store[width=SIMD_WIDTH, store_alignment=VEC_ALIGN](
-            Index(base), v * SCALE + BIAS
+        # `alignment` defaults to `VEC_ALIGN` for a SIMD_WIDTH-wide load.
+        var v = a.load[width=SIMD_WIDTH](Coord(base))
+        output.store[width=SIMD_WIDTH, alignment=VEC_ALIGN](
+            Coord(base), v * SCALE + BIAS
         )
 
 
@@ -496,7 +509,6 @@ in numbers.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -255,11 +253,13 @@ Row 2: [12, 13, 14, 15, 16, 17] → Block(0,2)
 Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">def axis_sum(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def axis_sum[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -274,7 +274,7 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 <div class="solution-tips">
 <ol>
 <li>Use <code>batch = block_idx.y</code> to select row</li>
-<li>Load elements: <code>cache[local_i] = a[batch, local_i]</code></li>
+<li>Load elements: <code>cache[local_i] = rebind[Scalar[dtype]](a[batch, local_i])</code></li>
 <li>Perform parallel reduction with halving stride</li>
 <li>Thread 0 writes final sum to <code>output[batch, 0]</code></li>
 </ol>
@@ -313,18 +313,20 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def axis_sum(
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def axis_sum[
+    Engine: TensorEngine,
+](
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
     size_dev: Int32,
-):
+) where (Engine.element_size == 1):
     var size = Int(size_dev)
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
-    var cache = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB]())
+    var cache = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB]()
+    )
 
     # Visualize:
     # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 0: [0,1,2,3,4,5]
@@ -335,7 +337,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     # each row is handled by each block bc we have grid_dim=(1, BATCH)
 
     if local_i &lt; size:
-        cache[local_i] = a[batch, local_i]
+        cache[local_i] = rebind[Scalar[dtype]](a[batch, local_i])
     else:
         # Add zero-initialize padding elements for later reduction
         cache[local_i] = 0
@@ -346,7 +348,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     var stride = TPB // 2
     while stride &gt; 0:
         # Read phase: all threads read the values they need first to avoid race conditions
-        var temp_val: output.ElementType = 0
+        var temp_val: Scalar[dtype] = 0
         if local_i &lt; stride:
             temp_val = cache[local_i + stride]
 
@@ -534,7 +536,6 @@ avoided by explicit phase separation—each iteration stages its read in
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

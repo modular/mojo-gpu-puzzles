@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -244,11 +242,15 @@ TileTensor <code>output</code>.</p>
 <li><strong>Synchronization</strong>: Proper thread coordination</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">def conv_1d_block_boundary(
-    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
-):
+<pre><code class="language-mojo">def conv_1d_block_boundary[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, Out2Layout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
@@ -263,9 +265,9 @@ TileTensor <code>output</code>.</p>
 <li>Use
 <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())</code>
 for shared memory</li>
-<li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
+<li>Load main data: <code>shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
-<li>Load filter: <code>shared_b[local_i] = b[local_i]</code></li>
+<li>Load filter: <code>shared_b[local_i] = rebind[Scalar[dtype]](b[local_i])</code></li>
 <li>Sum within input bounds: <code>if global_i + j &lt; SIZE_2</code></li>
 </ol>
 </div>
@@ -303,22 +305,26 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def conv_1d_block_boundary(
-    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
-    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
-):
+<pre><code class="language-mojo">def conv_1d_block_boundary[
+    Engine: TensorEngine,
+](
+    output: TileTensor[
+        mut=True, dtype, Out2Layout, MutAnyOrigin, Engine=Engine
+    ],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[TPB + CONV_2 - 1]())
-    var shared_b = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](row_major[CONV_2]())
+    var shared_a = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[TPB + CONV_2 - 1]()
+    )
+    var shared_b = stack_allocation[dtype=dtype, address_space=.SHARED](
+        row_major[CONV_2]()
+    )
     if global_i &lt; SIZE_2:
-        shared_a[local_i] = a[global_i]
+        shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])
     else:
         shared_a[local_i] = 0
 
@@ -327,14 +333,14 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
         # indices from next block
         var next_idx = global_i + TPB
         if next_idx &lt; SIZE_2:
-            shared_a[TPB + local_i] = a[next_idx]
+            shared_a[TPB + local_i] = rebind[Scalar[dtype]](a[next_idx])
         else:
             # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
             # which is an undefined behavior
             shared_a[TPB + local_i] = 0
 
     if local_i &lt; CONV_2:
-        shared_b[local_i] = b[local_i]
+        shared_b[local_i] = rebind[Scalar[dtype]](b[local_i])
 
     barrier()
 
@@ -381,7 +387,7 @@ data and the overlap region.</p>
 <p><strong>Data Loading Strategy</strong>:</p>
 <pre><code class="language-mojo"># Main block data
 if global_i &lt; SIZE_2:
-    shared_a[local_i] = a[global_i]
+    shared_a[local_i] = rebind[Scalar[dtype]](a[global_i])
 else:
     shared_a[local_i] = 0
 
@@ -389,7 +395,7 @@ else:
 if local_i &lt; CONV_2 - 1:
     var next_idx = global_i + TPB
     if next_idx &lt; SIZE_2:
-        shared_a[TPB + local_i] = a[next_idx]
+        shared_a[TPB + local_i] = rebind[Scalar[dtype]](a[next_idx])
     else:
         # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
         # which is an undefined behavior
@@ -405,7 +411,7 @@ if local_i &lt; CONV_2 - 1:
 <li>
 <p><strong>Filter Loading</strong>:</p>
 <pre><code class="language-mojo">if local_i &lt; CONV_2:
-    shared_b[local_i] = b[local_i]
+    shared_b[local_i] = rebind[Scalar[dtype]](b[local_i])
 </code></pre>
 <ul>
 <li>Single load per thread</li>
@@ -563,7 +569,6 @@ maintaining:</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>

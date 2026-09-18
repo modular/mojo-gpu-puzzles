@@ -72,7 +72,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" href="../theme/css/tabs.css">
-        <link rel="stylesheet" href="../theme/css/language-switcher.css">
 
         <!--
             MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
@@ -192,7 +191,6 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
-                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -421,12 +419,13 @@ def matmul_idiomatic_tiled[
     OutLayout: TensorLayout,
     ALayout: TensorLayout,
     BLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin],
-    b: TileTensor[mut=True, dtype, BLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=True, dtype, BLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """Idiomatic tiled matrix multiplication from p19."""
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -440,19 +439,13 @@ def matmul_idiomatic_tiled[
     comptime shared_layout = row_major[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     ]()
-    var a_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
-    var b_shared = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
+    var a_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
+    var b_shared = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
     var acc: output.ElementType = 0
-
-    var a_lt = a.to_layout_tensor()
-    var b_lt = b.to_layout_tensor()
-    var out_tile_lt = out_tile.to_layout_tensor()
-    var a_shared_lt = a_shared.to_layout_tensor()
-    var b_shared_lt = b_shared.to_layout_tensor()
 
     comptime for idx in range(
         (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
@@ -466,16 +459,20 @@ def matmul_idiomatic_tiled[
         var a_global_row = a_tile_row_start + local_row
         var a_global_col = a_tile_col_start + local_col
         if a_global_row &lt; rows and a_global_col &lt; inner:
-            a_shared_lt[local_row, local_col] = a_lt[a_global_row, a_global_col]
+            a_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                a[a_global_row, a_global_col]
+            )
         else:
-            a_shared_lt[local_row, local_col] = 0
+            a_shared[local_row, local_col] = 0
 
         var b_global_row = b_tile_row_start + local_row
         var b_global_col = b_tile_col_start + local_col
         if b_global_row &lt; inner and b_global_col &lt; cols:
-            b_shared_lt[local_row, local_col] = b_lt[b_global_row, b_global_col]
+            b_shared[local_row, local_col] = rebind[Scalar[dtype]](
+                b[b_global_row, b_global_col]
+            )
         else:
-            b_shared_lt[local_row, local_col] = 0
+            b_shared[local_row, local_col] = 0
 
         barrier()
 
@@ -485,15 +482,15 @@ def matmul_idiomatic_tiled[
         )
         comptime for k in range(k_max):
             if tiled_row &lt; rows and tiled_col &lt; cols:
-                acc += rebind[Scalar[dtype]](
-                    a_shared_lt[local_row, k]
-                ) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
+                acc += rebind[Scalar[dtype]](a_shared[local_row, k]) * rebind[
+                    Scalar[dtype]
+                ](b_shared[k, local_col])
 
         barrier()
 
     # Write final result with bounds checking (needed for variable matrix sizes)
     if tiled_row &lt; rows and tiled_col &lt; cols:
-        out_tile_lt[local_row, local_col] = acc
+        out_tile[Coord(local_row, local_col)] = rebind[Scalar[dtype]](acc)
 
 
 </code></pre>
@@ -505,33 +502,34 @@ memory tiling:</p>
     cols: Int,
     OutLayout: TensorLayout,
     InLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
-    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
-):
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
+    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
+    comptime assert output.flat_rank == 2
+
     comptime shared_layout = row_major[
         TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
     ]()
-    var shared_tile = stack_allocation[
-        dtype=dtype, address_space=AddressSpace.SHARED
-    ](shared_layout)
+    var shared_tile = stack_allocation[dtype=dtype, address_space=.SHARED](
+        shared_layout
+    )
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-
-    var inp_lt = inp.to_layout_tensor()
-    var output_lt = output.to_layout_tensor()
-    var shared_tile_lt = shared_tile.to_layout_tensor()
 
     var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
     var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
-        shared_tile_lt[local_row, local_col] = inp_lt[global_row, global_col]
+        shared_tile[local_row, local_col] = rebind[Scalar[dtype]](
+            inp[global_row, global_col]
+        )
 
     barrier()
 
@@ -541,7 +539,7 @@ memory tiling:</p>
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
     if out_row &lt; cols and out_col &lt; rows:
-        output_lt[out_row, out_col] = shared_tile_lt[local_col, local_row]
+        output[out_row, out_col] = shared_tile[local_col, local_row]
 
 
 </code></pre>
@@ -554,13 +552,20 @@ memory tiling:</p>
     OutputLayout: TensorLayout,
     InputLayout: TensorLayout,
     BiasLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
-    bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
     """Simple bias addition."""
+    comptime assert output.flat_rank == 3
+
     var batch_idx = block_idx.x
     var seq_idx = block_idx.y
     var out_idx = thread_idx.x
@@ -568,13 +573,9 @@ memory tiling:</p>
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or out_idx &gt;= output_dim:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var bias_lt = bias.to_layout_tensor()
-
-    output_lt[batch_idx, seq_idx, out_idx] = input_lt[
+    output[Coord(batch_idx, seq_idx, out_idx)] = input[
         batch_idx, seq_idx, out_idx
-    ] + rebind[Scalar[dtype]](bias_lt[out_idx])
+    ] + rebind[Scalar[dtype]](bias[out_idx])
 
 
 </code></pre>
@@ -592,13 +593,22 @@ memory tiling:</p>
     OutputLayout: TensorLayout,
     InputLayout: TensorLayout,
     LnParamsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
-    ln_weight: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-    ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_weight: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_bias: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var batch_idx = block_idx.x
     var seq_idx = block_idx.y
     var hidden_idx = thread_idx.x
@@ -609,11 +619,6 @@ memory tiling:</p>
         or hidden_idx &gt;= hidden_dim
     ):
         return
-
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
 
     # Compute statistics for this sequence position (redundant but simple)
     var sum_val: Scalar[dtype] = 0
@@ -754,13 +759,22 @@ UNFUSED Algorithm Test Completed!
     OutputLayout: TensorLayout,
     InputLayout: TensorLayout,
     LnParamsLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
-    ln_weight: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-    ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_weight: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_bias: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     var batch_idx = block_idx.x
     var seq_idx = block_idx.y
     var hidden_idx = thread_idx.x
@@ -772,17 +786,12 @@ UNFUSED Algorithm Test Completed!
     ):
         return
 
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
-
     # Compute statistics for this sequence position (redundant but simple)
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        var val = input_lt[batch_idx, seq_idx, h]
+        var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
@@ -791,11 +800,11 @@ UNFUSED Algorithm Test Completed!
     var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Apply LayerNorm to this element
-    var input_val = input_lt[batch_idx, seq_idx, hidden_idx]
+    var input_val = input[batch_idx, seq_idx, hidden_idx]
     var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
-        ln_weight_lt[hidden_idx]
-    ) + rebind[Scalar[dtype]](ln_bias_lt[hidden_idx])
-    output_lt[batch_idx, seq_idx, hidden_idx] = normalized
+        ln_weight[hidden_idx]
+    ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
+    output[Coord(batch_idx, seq_idx, hidden_idx)] = normalized
 
 
 </code></pre>
@@ -825,15 +834,6 @@ var hidden_idx = thread_idx.x
     return
 </code></pre>
 </li>
-<li>
-<p>Convert each <code>TileTensor</code> argument with <code>to_layout_tensor()</code> before
-indexing it:</p>
-<pre><code class="language-mojo">var output_lt = output.to_layout_tensor()
-var input_lt = input.to_layout_tensor()
-var ln_weight_lt = ln_weight.to_layout_tensor()
-var ln_bias_lt = ln_bias.to_layout_tensor()
-</code></pre>
-</li>
 </ul>
 </li>
 <li>
@@ -842,7 +842,7 @@ var ln_bias_lt = ln_bias.to_layout_tensor()
 var sq_sum: Scalar[dtype] = 0
 
 comptime for h in range(hidden_dim):
-    var val = input_lt[batch_idx, seq_idx, h]
+    var val = input[batch_idx, seq_idx, h]
     sum_val += rebind[Scalar[dtype]](val)
     sq_sum += rebind[Scalar[dtype]](val * val)
 </code></pre>
@@ -867,11 +867,11 @@ var inv_std = 1.0 / sqrt(var_val + 1e-5)
 </li>
 <li>
 <p><strong>Normalization and Scaling</strong>:</p>
-<pre><code class="language-mojo">var input_val = input_lt[batch_idx, seq_idx, hidden_idx]
+<pre><code class="language-mojo">var input_val = input[batch_idx, seq_idx, hidden_idx]
 var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
-    ln_weight_lt[hidden_idx]
-) + rebind[Scalar[dtype]](ln_bias_lt[hidden_idx])
-output_lt[batch_idx, seq_idx, hidden_idx] = normalized
+    ln_weight[hidden_idx]
+) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
+output[batch_idx, seq_idx, hidden_idx] = normalized
 </code></pre>
 <ul>
 <li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x -
@@ -966,15 +966,28 @@ kernel:</p>
     LnParamsLayout: TensorLayout,
     WeightLayout: TensorLayout,
     BiasLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
-    ln_weight: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-    ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-    linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
-    linear_bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_weight: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_bias: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+    linear_weight: TileTensor[
+        mut=True, dtype, WeightLayout, MutAnyOrigin, Engine=Engine
+    ],
+    linear_bias: TileTensor[
+        mut=True, dtype, BiasLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """Minimal fused kernel: one thread per sequence position."""
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
@@ -983,13 +996,6 @@ kernel:</p>
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
-
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
-    var linear_weight_lt = linear_weight.to_layout_tensor()
-    var linear_bias_lt = linear_bias.to_layout_tensor()
 
     # Step 1: Compute LayerNorm statistics once per sequence position
 
@@ -1132,16 +1138,31 @@ FUSED Algorithm Test Completed!
     LnParamsLayout: TensorLayout,
     WeightLayout: TensorLayout,
     BiasLayout: TensorLayout,
-    dtype: DType = DType.float32,
+    Engine: TensorEngine,
+    dtype: DType = .float32,
 ](
-    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
-    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
-    ln_weight: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-    ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
-    linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
-    linear_bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin],
-):
+    output: TileTensor[
+        mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    input: TileTensor[
+        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_weight: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+    ln_bias: TileTensor[
+        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+    ],
+    linear_weight: TileTensor[
+        mut=True, dtype, WeightLayout, MutAnyOrigin, Engine=Engine
+    ],
+    linear_bias: TileTensor[
+        mut=True, dtype, BiasLayout, MutAnyOrigin, Engine=Engine
+    ],
+) where (Engine.element_size == 1):
     """Minimal fused kernel: one thread per sequence position."""
+    comptime assert output.flat_rank == 3
+
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
     var batch_idx = block_idx.x
@@ -1150,19 +1171,12 @@ FUSED Algorithm Test Completed!
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
 
-    var output_lt = output.to_layout_tensor()
-    var input_lt = input.to_layout_tensor()
-    var ln_weight_lt = ln_weight.to_layout_tensor()
-    var ln_bias_lt = ln_bias.to_layout_tensor()
-    var linear_weight_lt = linear_weight.to_layout_tensor()
-    var linear_bias_lt = linear_bias.to_layout_tensor()
-
     # Step 1: Compute LayerNorm statistics once per sequence position
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        var val = input_lt[batch_idx, seq_idx, h]
+        var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
@@ -1175,17 +1189,15 @@ FUSED Algorithm Test Completed!
         var acc: Scalar[dtype] = 0
 
         comptime for h in range(hidden_dim):
-            var input_val = input_lt[batch_idx, seq_idx, h]
+            var input_val = input[batch_idx, seq_idx, h]
             var normalized = (input_val - mean_val) * inv_std * rebind[
                 Scalar[dtype]
-            ](ln_weight_lt[h]) + rebind[Scalar[dtype]](ln_bias_lt[h])
-            acc += rebind[Scalar[dtype]](
-                normalized * linear_weight_lt[out_idx, h]
-            )
+            ](ln_weight[h]) + rebind[Scalar[dtype]](ln_bias[h])
+            acc += rebind[Scalar[dtype]](normalized * linear_weight[out_idx, h])
 
-        output_lt[batch_idx, seq_idx, out_idx] = acc + rebind[Scalar[dtype]](
-            linear_bias_lt[out_idx]
-        )
+        output[Coord(batch_idx, seq_idx, out_idx)] = acc + rebind[
+            Scalar[dtype]
+        ](linear_bias[out_idx])
 
 
 </code></pre>
@@ -1391,7 +1403,6 @@ larger input sizes and more complex models.</p>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
-        <script src="../theme/language-switcher.js"></script>
 
 
     </div>
