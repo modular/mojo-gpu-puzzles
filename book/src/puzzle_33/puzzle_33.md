@@ -63,12 +63,16 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 
 ```mojo
 # Entire warp cooperates on matrix fragments
-var a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
-var b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
-var c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
-var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
-mma_op.store_d(C_mma_tile, d_reg)           # Store result
+var a_reg = mma_op.load_a(A_mma_tile.to_layout_tensor())  # Load 16×8 fragment
+var b_reg = mma_op.load_b(B_mma_tile.to_layout_tensor())  # Load 8×8 fragment
+var c_reg = mma_op.load_c(C_mma_tile.to_layout_tensor())  # Load 16×8 accum.
+var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)            # D = A×B + C
+mma_op.store_d(C_mma_tile.to_layout_tensor(), d_reg)      # Store result
 ```
+
+`TensorCore` still takes `LayoutTensor` arguments, so each tile is bridged with
+[`to_layout_tensor()`](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#to_layout_tensor)
+at the call.
 
 ## Tensor core API in Mojo
 
@@ -80,7 +84,7 @@ type:
 from layout.tensor_core import TensorCore
 
 # Create a Tensor Core operator for specific tile sizes
-var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+var mma_op = TensorCore[dtype, dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
 # Core operations:
 # - load_a(): Load matrix A fragment from shared memory
@@ -439,7 +443,7 @@ This solution demonstrates the Tensor Core programming model:
      matrix operations
    - **Registers → Global**: Uses `mma_op.store_d` for efficient result storage
 
-3. **Tensor Core operations**
+3. **Tensor Core operations** (each tile bridged with `to_layout_tensor()`)
    - `load_a(A_mma_tile)`: Loads 16×8 matrix A fragment into registers
    - `load_b(B_mma_tile)`: Loads 8×8 matrix B fragment into registers
    - `load_c(C_mma_tile)`: Loads 16×8 accumulator fragment
