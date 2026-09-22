@@ -101,7 +101,7 @@ Building on the async copy operations introduced in
 [Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-tiletensor-tiling),
 you'll now focus specifically on their memory optimization potential:
 
-- **[`copy_dram_to_sram_async()`](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)**:
+- **[`copy_dram_to_sram_async()`](https://max.modular.com/api/mojo/layout/tile_io/copy_dram_to_sram_async/)**:
   Launch background DRAM→SRAM transfers that bypass the register file
 - **[`async_copy_wait_all()`](https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/)**:
   Synchronize transfer completion before accessing shared memory
@@ -387,8 +387,8 @@ overlapping expensive DRAM transfers with useful computation:
 
 ```mojo
 # Phase 1: Launch async copy for input tile
-var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
@@ -399,7 +399,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
   indices results in undefined behavior. The implementation must ensure the tile
   size and offset remain within valid array bounds.
 
-- **Thread Layout**: `Layout.row_major(THREADS_PER_BLOCK_ASYNC)` creates a
+- **Thread Layout**: `row_major[THREADS_PER_BLOCK_ASYNC]()` creates a
   256-element 1-D layout, one entry per thread in the block. This is
   **critical** -
   the layout must match the physical thread arrangement for optimal coalesced
@@ -503,7 +503,7 @@ scenarios with larger overlaps, speedups can be much more significant.
 
 #### **Key technical insights**
 
-1. **Thread Layout Matching**: The 1-D `Layout.row_major(256)` layout supplies
+1. **Thread Layout Matching**: The 1-D `row_major[256]()` layout supplies
    one entry per thread in the block's `(256, 1)` organization, enabling optimal
    memory coalescing.
 

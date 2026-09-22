@@ -363,7 +363,7 @@ B using coalesced loading for both matrices.**
 
 - **Matrix operation**: Standard \\(A \times B\\) multiplication (not \\(A
   \times B^T\\))
-- **Loading pattern**: Both matrices use `Layout.row_major(1, TPB)` for
+- **Loading pattern**: Both matrices use `row_major[1, TPB]()` for
   coalesced access
 - **Computation**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 - **Data layout**: No transposition during loading - both matrices loaded in
@@ -395,15 +395,11 @@ all boundary checks:
 
    ```mojo
    copy_dram_to_sram_async[
-      thread_layout = load_a_layout,
-      num_threads = NUM_THREADS,
-      block_dim_count = BLOCK_DIM_COUNT
-   ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
+      thread_layout=load_a_layout, num_threads=NUM_THREADS
+   ](a_shared, a_tile)
    copy_dram_to_sram_async[
-      thread_layout = load_b_layout,
-      num_threads = NUM_THREADS,
-      block_dim_count = BLOCK_DIM_COUNT
-   ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+      thread_layout=load_b_layout, num_threads=NUM_THREADS
+   ](b_shared, b_tile)
    async_copy_wait_all()
    ```
 
@@ -411,41 +407,39 @@ all boundary checks:
    - Issue the copy through the GPU's asynchronous copy path (`cp.async` on
      NVIDIA), which moves global memory straight into shared memory without
      staging through registers, via
-     [copy_dram_to_sram_async](https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
+     [copy_dram_to_sram_async](https://max.modular.com/api/mojo/layout/tile_io/copy_dram_to_sram_async/)
    - Use specialized thread layouts for optimal memory access patterns
    - Eliminate the need for manual memory initialization
    - **Important**:
      - Standard GPU loads are already asynchronous; these provide better
        resource utilization and register bypass
-     - `copy_dram_to_sram_async` assumes a 1D thread block
-       (`block_dim.y == block_dim.z == 1`) holding exactly `thread_layout.size()`
-       threads. Neither assumption holds here, so both defaults are overridden:
-       - `block_dim_count`: the dimensionality of the thread block (`2` for the
-         2D thread block `THREADS_PER_BLOCK_TILED = (TPB, TPB)`), so the copy
-         derives each thread's index as
-         `thread_idx.y * block_dim.x + thread_idx.x` instead of `thread_idx.x`
-       - `num_threads`: the number of threads in the thread block
-         (`TPB * TPB == 9`). The copy itself is carried out by the
-         `thread_layout.size() == TPB` threads the layout describes; telling the
-         function how large the block really is lets it turn the remaining
-         threads off instead of letting them run off the end of the layout
+     - The copy flattens each thread's position across the whole (up to 3D)
+       thread block itself, so the 2D thread block
+       `THREADS_PER_BLOCK_TILED = (TPB, TPB)` needs no extra parameter: a
+       thread's index is `thread_idx.y * block_dim.x + thread_idx.x`
+     - It does assume the block holds exactly `thread_layout.size()` threads,
+       which is not the case here, so `num_threads` overrides that default with
+       the number of threads in the block (`TPB * TPB == 9`). The copy itself is
+       carried out by the `thread_layout.size() == TPB` threads the layout
+       describes; telling the function how large the block really is lets it
+       turn the remaining threads off instead of letting them run off the end of
+       the layout
 
 3. **Optimized memory access layouts**
 
    ```mojo
-   comptime load_a_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
-   comptime load_b_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
+   comptime load_a_layout = row_major[1, TPB]()  # Coalesced loading
+   comptime load_b_layout = row_major[1, TPB]()  # Coalesced loading
    # Note: Both matrices use the same layout for standard A × B multiplication
    ```
 
-   Thread layouts are IntTuple `Layout` values built with the function form
-   `Layout.row_major(1, TPB)`, which the solution imports as `IntTupleLayout` to
-   keep them distinct from the `row_major[...]()` tensor layouts used for the
-   tensors themselves.
+   A thread layout is built with `row_major[...]()`, the same form as the
+   layouts of the tensors themselves — it describes how threads are arranged
+   over the copy rather than how elements are arranged in memory.
 
    **Memory Access Analysis for Current Implementation:**
 
-   Both matrices use `Layout.row_major(1, TPB)` for coalesced loading from
+   Both matrices use `row_major[1, TPB]()` for coalesced loading from
    global memory:
    - `load_a_layout`: Threads cooperate to load consecutive elements from matrix
      A rows
@@ -471,11 +465,11 @@ all boundary checks:
    - Matrix A tile: threads load A[block_row, k], A[block_row, k+1], A[block_row, k+2]... (consecutive)
    - Matrix B tile: threads load B[k, block_col], B[k, block_col+1], B[k, block_col+2]... (consecutive)
 
-   Both patterns are coalesced with Layout.row_major(1, TPB)
+   Both patterns are coalesced with row_major[1, TPB]()
    ```
 
    **Three separate memory concerns:**
-   1. **Global-to-shared coalescing**: `Layout.row_major(1, TPB)` ensures
+   1. **Global-to-shared coalescing**: `row_major[1, TPB]()` ensures
       coalesced global memory access
    2. **Shared memory computation**:
       `a_shared[local_row, k] * b_shared[k, local_col]` avoids bank conflicts
@@ -545,7 +539,7 @@ purely educational to show what's possible with the layout system.
 
 **Current implementation recap:**
 
-- Uses `Layout.row_major(1, TPB)` for both matrices
+- Uses `row_major[1, TPB]()` for both matrices
 - Performs standard A × B multiplication
 - No data transposition during copy
 
@@ -555,23 +549,18 @@ While this puzzle uses standard coalesced loading for both matrices, the layout
 system's flexibility enables powerful optimizations in other scenarios:
 
 ```mojo
-# Example: reading a pre-transposed B with one thread distribution and writing
-# shared memory with another
+# Example: reading a pre-transposed B with the threads walking a column
 # (This is NOT what the current implementation does)
-comptime load_b_layout = IntTupleLayout.row_major(TPB, 1)   # Threads walk a column
-comptime store_b_layout = IntTupleLayout.row_major(1, TPB)  # Threads walk a row
+comptime load_b_layout = row_major[TPB, 1]()  # Threads walk a column
 copy_dram_to_sram_async[
-    src_thread_layout=load_b_layout,
-    dst_thread_layout=store_b_layout,
-    num_threads=NUM_THREADS,
-    block_dim_count=BLOCK_DIM_COUNT,
-](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+    thread_layout=load_b_layout, num_threads=NUM_THREADS
+](b_shared, b_tile)
 ```
 
-Note that the two thread layouts are IntTuple `Layout` values, the same form as
-`load_a_layout` above, and that `copy_dram_to_sram_async` takes `LayoutTensor`
-arguments. The `src_thread_layout`/`dst_thread_layout` pair must describe the
-same number of threads.
+The one thread layout drives both the read and the write, so it changes which
+thread fetches which element, not the orientation the tile lands in. A copy that
+reads through one thread distribution and writes shared memory through another
+is not something this function offers.
 
 **Use cases for transposed loading (not used in this puzzle):**
 
@@ -586,7 +575,7 @@ same number of threads.
 
 **Key distinction:**
 
-- **Current implementation**: Both matrices use `Layout.row_major(1, TPB)` for
+- **Current implementation**: Both matrices use `row_major[1, TPB]()` for
   standard \\(A \times B\\) multiplication
 - **Transposed loading example**: Would use different layouts to handle
   pre-transposed data or different matrix operations
@@ -601,7 +590,7 @@ while maintaining high-level abstractions for common cases.
 **What the idiomatic tiled implementation actually does:**
 
 1. **Matrix Operation**: Standard A × B multiplication
-2. **Memory Loading**: Both matrices use `Layout.row_major(1, TPB)` for
+2. **Memory Loading**: Both matrices use `row_major[1, TPB]()` for
    coalesced access
 3. **Computation Pattern**:
    `acc += a_shared[local_row, k] * b_shared[k, local_col]`
@@ -609,7 +598,7 @@ while maintaining high-level abstractions for common cases.
 
 **Why this is optimal:**
 
-- **Coalesced global memory access**: `Layout.row_major(1, TPB)` ensures
+- **Coalesced global memory access**: `row_major[1, TPB]()` ensures
   efficient loading
 - **Bank conflict avoidance**: Shared memory access pattern avoids conflicts
 - **Standard algorithm**: Implements the most common matrix multiplication

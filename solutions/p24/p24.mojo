@@ -64,7 +64,7 @@ def traditional_dot_product_p12_style[
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """
-    This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
+    This is the complex approach from p12.mojo - kept for comparison.
     """
     var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
         row_major[WARP_SIZE]()

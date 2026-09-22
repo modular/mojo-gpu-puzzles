@@ -165,11 +165,9 @@ def matmul_tiled[
 
 # ANCHOR: matmul_idiomatic_tiled_solution
 from max.gpu.memory import async_copy_wait_all
-from layout.layout_tensor import copy_dram_to_sram_async
-from layout import Layout as IntTupleLayout
+from layout.tile_io import copy_dram_to_sram_async
 
 comptime NUM_THREADS = TPB * TPB
-comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
@@ -202,12 +200,8 @@ def matmul_idiomatic_tiled[
 
     var acc: output.ElementType = 0
 
-    comptime load_a_layout = IntTupleLayout.row_major(
-        1, TPB
-    )  # Coalesced loading
-    comptime load_b_layout = IntTupleLayout.row_major(
-        1, TPB
-    )  # Coalesced loading
+    comptime load_a_layout = row_major[1, TPB]()  # Coalesced loading
+    comptime load_b_layout = row_major[1, TPB]()  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -220,15 +214,11 @@ def matmul_idiomatic_tiled[
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
-            thread_layout=load_a_layout,
-            num_threads=NUM_THREADS,
-            block_dim_count=BLOCK_DIM_COUNT,
-        ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
+            thread_layout=load_a_layout, num_threads=NUM_THREADS
+        ](a_shared, a_tile)
         copy_dram_to_sram_async[
-            thread_layout=load_b_layout,
-            num_threads=NUM_THREADS,
-            block_dim_count=BLOCK_DIM_COUNT,
-        ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+            thread_layout=load_b_layout, num_threads=NUM_THREADS
+        ](b_shared, b_tile)
 
         # Wait for all async copies to complete
         async_copy_wait_all()
