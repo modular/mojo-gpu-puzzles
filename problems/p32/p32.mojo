@@ -148,7 +148,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     # closure can capture the buffer for `keep()` without aliasing the tensor.
     var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
     var input_tensor = (
-        TileTensor(input_buf, layout).as_unsafe_any_origin().as_immut()
+        TileTensor(input_buf, layout).as_unsafe_any_origin().as_imm()
     )
 
     @inline(.always)
@@ -187,7 +187,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     # closure can capture the buffer for `keep()` without aliasing the tensor.
     var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
     var input_tensor = (
-        TileTensor(input_buf, layout).as_unsafe_any_origin().as_immut()
+        TileTensor(input_buf, layout).as_unsafe_any_origin().as_imm()
     )
 
     @inline(.always)

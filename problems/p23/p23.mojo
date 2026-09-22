@@ -194,9 +194,9 @@ def benchmark_elementwise_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_immut()
+    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_imm()
     var b_tensor = (
-        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_immut()
+        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_imm()
     )
     var out_tensor = TileTensor(out, bench_layout)
 
@@ -235,9 +235,9 @@ def benchmark_tiled_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_immut()
+    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_imm()
     var b_tensor = (
-        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_immut()
+        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_imm()
     )
     var out_tensor = TileTensor(out, bench_layout)
 
@@ -277,9 +277,9 @@ def benchmark_manual_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_immut()
+    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_imm()
     var b_tensor = (
-        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_immut()
+        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_imm()
     )
     var out_tensor = TileTensor(out, bench_layout)
 
@@ -320,9 +320,9 @@ def benchmark_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_immut()
+    var a_tensor = TileTensor(a, bench_layout).as_unsafe_any_origin().as_imm()
     var b_tensor = (
-        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_immut()
+        TileTensor(b_buf, bench_layout).as_unsafe_any_origin().as_imm()
     )
     var out_tensor = TileTensor(out, bench_layout)
 
@@ -361,8 +361,8 @@ def main() raises:
             b_host[i] = Scalar[dtype](2 * i + 1)
             expected[i] = a_host[i] + b_host[i]
 
-    var a_tensor = TileTensor(a, layout).as_unsafe_any_origin().as_immut()
-    var b_tensor = TileTensor(b, layout).as_unsafe_any_origin().as_immut()
+    var a_tensor = TileTensor(a, layout).as_unsafe_any_origin().as_imm()
+    var b_tensor = TileTensor(b, layout).as_unsafe_any_origin().as_imm()
 
     ctx.synchronize()
 

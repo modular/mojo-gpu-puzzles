@@ -267,10 +267,10 @@ def benchmark_functional_warp_parameterized[
     expected_output[dtype, n_warps](expected, a, b)
 
     var a_tensor = (
-        TileTensor(a, bench_in_layout).as_unsafe_any_origin().as_immut()
+        TileTensor(a, bench_in_layout).as_unsafe_any_origin().as_imm()
     )
     var b_tensor = (
-        TileTensor(b, bench_in_layout).as_unsafe_any_origin().as_immut()
+        TileTensor(b, bench_in_layout).as_unsafe_any_origin().as_imm()
     )
     var out_tensor = TileTensor(out, bench_out_layout).as_unsafe_any_origin()
 
@@ -362,10 +362,10 @@ def main() raises:
                 out, main_out_layout
             ).as_unsafe_any_origin()
             var a_tensor = (
-                TileTensor(a, in_layout).as_unsafe_any_origin().as_immut()
+                TileTensor(a, in_layout).as_unsafe_any_origin().as_imm()
             )
             var b_tensor = (
-                TileTensor(b, in_layout).as_unsafe_any_origin().as_immut()
+                TileTensor(b, in_layout).as_unsafe_any_origin().as_imm()
             )
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
