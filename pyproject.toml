@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,7 +15,7 @@ dependencies = [
     "poethepoet>=0.34.0",
     "scipy>=1.15.3",
     # Matches the version `pixi.toml` pins and the suite is tested against.
-    "torch==2.7.1",
+    "torch==2.14.0",
 ]
 
 [project.optional-dependencies]
