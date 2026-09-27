@@ -61,10 +61,8 @@ def embedding_kernel_coalesced[
         return
 
     # Convert to (batch, seq, embed) coordinates
-    var batch_idx = global_idx // (seq_len * embed_dim)
-    var remaining = global_idx % (seq_len * embed_dim)
-    var seq_idx = remaining // embed_dim
-    var embed_idx = remaining % embed_dim
+    var batch_idx, remaining = divmod(global_idx, (seq_len * embed_dim))
+    var seq_idx, embed_idx = divmod(remaining, embed_dim)
 
     # Get token index
     var token_idx_val = Int(indices[batch_idx, seq_idx])
@@ -122,8 +120,7 @@ def embedding_kernel_2d[
         return
 
     # Convert to (batch, seq) coordinates
-    var batch_idx = batch_seq_idx // seq_len
-    var seq_idx = batch_seq_idx % seq_len
+    var batch_idx, seq_idx = divmod(batch_seq_idx, seq_len)
 
     # Get token index
     var token_idx_val = Int(indices[batch_idx, seq_idx])
