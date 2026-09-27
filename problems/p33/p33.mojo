@@ -155,8 +155,7 @@ def tensor_core_matrix_multiplication[
     var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
     var warps_in_m = BM // WM
-    var warp_y = warp_id // warps_in_n
-    var warp_x = warp_id % warps_in_n
+    var warp_y, warp_x = divmod(warp_id, warps_in_n)
 
     var warp_is_active = warp_y < warps_in_m
 
@@ -380,8 +379,7 @@ def main() raises:
                         )
                     except:
                         if error_count < 10:  # Show first 10 failures
-                            var row = i // SIZE
-                            var col = i % SIZE
+                            var row, col = divmod(i, SIZE)
                             var diff = abs(tc_host[i] - expected[i])
                             print(
                                 "FAIL[",
