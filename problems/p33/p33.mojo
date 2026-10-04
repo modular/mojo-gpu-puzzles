@@ -24,6 +24,7 @@ from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
 from harness.canary import PuzzleMemory
+from std.math import ceildiv
 
 comptime dtype = DType.float32
 comptime SIZE = 1024
@@ -32,8 +33,8 @@ comptime LayoutType = type_of(layout)
 
 comptime TILE_SIZE = 32
 comptime BLOCK_PER_GRID_TILED = (
-    (SIZE + TILE_SIZE - 1) // TILE_SIZE,
-    (SIZE + TILE_SIZE - 1) // TILE_SIZE,
+    ceildiv(SIZE, TILE_SIZE),
+    ceildiv(SIZE, TILE_SIZE),
 )
 comptime THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
 
@@ -125,8 +126,8 @@ comptime MMA_K = 8
 comptime THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
 # grid_dim is (x, y). We want x to sweep N (columns) and y to sweep M (rows)
 comptime BLOCKS_PER_GRID_TENSOR_CORE = (
-    (SIZE + BN - 1) // BN,
-    (SIZE + BM - 1) // BM,
+    ceildiv(SIZE, BN),
+    ceildiv(SIZE, BM),
 )
 
 

@@ -134,7 +134,7 @@ def matmul_tiled[
     var acc: output.ElementType = 0
 
     # Iterate over tiles to compute matrix product
-    comptime for tile in range((size + TPB - 1) // TPB):
+    comptime for tile in range(ceildiv(size, TPB)):
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row < size and (tile * TPB + local_col) < size:
             a_shared[local_row, local_col] = rebind[Scalar[dtype]](
@@ -166,6 +166,7 @@ def matmul_tiled[
 # ANCHOR: matmul_idiomatic_tiled_solution
 from max.gpu.memory import async_copy_wait_all
 from layout.tile_io import copy_dram_to_sram_async
+from std.math import ceildiv
 
 comptime NUM_THREADS = TPB * TPB
 

@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
-from std.math import sqrt
+from std.math import ceildiv, sqrt
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.sync import barrier
 from std.atomic import Atomic
@@ -68,9 +68,7 @@ def matmul_idiomatic_tiled[
     )
     var acc: output.ElementType = 0
 
-    comptime for idx in range(
-        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-    ):
+    comptime for idx in range(ceildiv(inner, MATMUL_BLOCK_DIM_XY)):
         # Synchronously load tiles to shared memory - each thread loads one element
         var a_tile_row_start = block_idx.y * MATMUL_BLOCK_DIM_XY
         var a_tile_col_start = idx * MATMUL_BLOCK_DIM_XY

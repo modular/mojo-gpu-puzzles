@@ -21,6 +21,7 @@ from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 from max.benchmark import bencher_iter_custom
 
 from harness.canary import PuzzleMemory
+from std.math import ceildiv
 
 # 1M float32 elements: large enough to be memory-bandwidth bound, so the
 # load/store path is what the benchmark actually measures.
@@ -133,13 +134,13 @@ def aligned_kernel[
 
 
 def scalar_blocks(size: Int) -> Int:
-    return (size + TPB - 1) // TPB
+    return ceildiv(size, TPB)
 
 
 def vector_blocks(size: Int) -> Int:
     # One thread per SIMD_WIDTH-wide chunk.
-    var threads = (size + SIMD_WIDTH - 1) // SIMD_WIDTH
-    return (threads + TPB - 1) // TPB
+    var threads = ceildiv(size, SIMD_WIDTH)
+    return ceildiv(threads, TPB)
 
 
 # ---------------------------------------------------------------------------- #
