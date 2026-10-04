@@ -17,7 +17,7 @@ from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
-from std.math import log2
+from std.math import ceildiv, log2
 from std.testing import assert_equal
 
 from harness.canary import PuzzleMemory
@@ -99,7 +99,7 @@ def main() raises:
         var mem = PuzzleMemory[dtype](ctx)
         var use_simple = argv()[1] == "--simple"
         var size = SIZE if use_simple else SIZE_2
-        var num_blocks = (size + TPB - 1) // TPB
+        var num_blocks = ceildiv(size, TPB)
 
         if not use_simple and num_blocks > EXTENDED_SIZE - SIZE_2:
             raise Error("Extended buffer too small for the number of blocks")

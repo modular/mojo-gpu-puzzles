@@ -18,7 +18,7 @@ from layout import TileTensor, TensorEngine
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.utils.coord import Coord
-from std.math import log2
+from std.math import ceildiv, log2
 from std.algorithm.functional import vectorize
 
 from max.algorithm.functional import elementwise
@@ -92,7 +92,7 @@ def tiled_elementwise_add[
 
         # FILL IN (6 lines at most)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=1, target="gpu"](
         process_tiles, Coord(num_tiles), ctx
     )
@@ -129,7 +129,7 @@ def manual_vectorized_tiled_elementwise_add[
         # FILL IN (7 lines at most)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    var num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = ceildiv(size, chunk_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
@@ -166,7 +166,7 @@ def vectorize_within_tiles_elementwise_add[
 
         # FILL IN (9 lines at most)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )

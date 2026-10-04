@@ -17,7 +17,7 @@ from layout import TileTensor, Coord
 from layout.tensor_engine import TensorEngine
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
-from std.math import exp
+from std.math import ceildiv, exp
 from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
 import extensibility
@@ -76,9 +76,7 @@ def matmul_idiomatic_tiled[
     )
     var acc: output.ElementType = 0
 
-    comptime for idx in range(
-        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-    ):
+    comptime for idx in range(ceildiv(inner, MATMUL_BLOCK_DIM_XY)):
         # Get tiles from A and B matrices
         var a_tile_row_start = block_idx.y * MATMUL_BLOCK_DIM_XY
         var a_tile_col_start = idx * MATMUL_BLOCK_DIM_XY
@@ -323,9 +321,8 @@ struct AttentionCustomOp:
             )
             # Tile over the K (seq_len, d) matrix
             comptime transpose_blocks_per_grid = (
-                (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
-                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
-                // TRANSPOSE_BLOCK_DIM_XY,
+                ceildiv(d, TRANSPOSE_BLOCK_DIM_XY),
+                ceildiv(seq_len, TRANSPOSE_BLOCK_DIM_XY),
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
             comptime matmul_threads_per_block = (
