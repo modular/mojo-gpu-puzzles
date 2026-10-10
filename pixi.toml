@@ -48,11 +48,27 @@ pytorch-triton-rocm = {version = "*", index = "https://download.pytorch.org/whl/
 [feature.apple]
 platforms = ["osx-arm64-macos-15-0", "linux-64", "linux-aarch64"]
 
-# Building the book compiles nothing, so it must not inherit the GPU platform
-# requirements: the publish runner has no CUDA, and a pixi that enforced them
-# would break the deploy with no content change.
+# The book compiles nothing, so it skips the GPU platform requirements (the
+# publish runner has no CUDA).
 [feature.book]
 platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+
+# Toolchain-free environment for the release publish job: mdbook, python for
+# book.toml's `youtube` preprocessor, and bash. `no-default-feature` drops
+# `max`, `mojo` and `manim`. Separate from `feature.book` so the `book`
+# environment keeps its toolchain and puzzle tasks.
+[feature.book-render]
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+
+[feature.book-render.dependencies]
+python = "==3.12"
+mdbook = ">=0.4.48,<0.5"
+bash = ">=5.2.21,<6"
+
+# `[tasks]` belongs to the default feature, which `no-default-feature` drops, so
+# the render environment declares the one task it needs.
+[feature.book-render.tasks]
+build-book = { cmd = "bash scripts/build_book.sh", description = "Build the mdbook with no toolchain installed -- what the release publish job runs" }
 
 [dependencies]
 python = "==3.12"
@@ -68,6 +84,7 @@ nvidia = { features = ["nvidia"], solve-group = "nvidia" }
 amd = { features = ["amd"], solve-group = "amd" }
 apple = { features = ["apple"], solve-group = "apple" }
 book = { features = ["book"] }
+book-render = { features = ["book-render"], no-default-feature = true }
 default = { features = ["nvidia"] }
 
 [tasks]
