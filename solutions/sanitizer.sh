@@ -77,6 +77,9 @@ esac
 # Handle "all" tool option - run all sanitizers on all puzzles or specific puzzle
 if [ "$TOOL" = "all" ]; then
     TOOLS=("memcheck" "racecheck" "synccheck" "initcheck")
+    # Each tool runs in a child invocation, so its exit status is the only
+    # signal that it found errors. Run every tool, then fail if any did.
+    FAILED_TOOLS=()
 
     if [ -z "$SPECIFIC_PUZZLE" ]; then
         # Run all sanitizers on all puzzles
@@ -87,12 +90,16 @@ if [ "$TOOL" = "all" ]; then
             echo ""
             echo "Running $CURRENT_TOOL on all puzzles..."
             echo "-----------------------------------"
-            bash "$0" "$CURRENT_TOOL"
+            bash "$0" "$CURRENT_TOOL" || FAILED_TOOLS+=("$CURRENT_TOOL")
             echo ""
         done
 
         echo "======================================================================="
         echo "All sanitizer tools completed for all puzzles"
+        if [ ${#FAILED_TOOLS[@]} -gt 0 ]; then
+            echo "Tools that reported errors: ${FAILED_TOOLS[*]}"
+            exit 1
+        fi
         exit 0
     fi
 
@@ -114,15 +121,21 @@ if [ "$TOOL" = "all" ]; then
         echo "-----------------------------------"
         # Recursively call this script with individual tool and flag
         if [ -n "$SPECIFIC_FLAG" ]; then
-            bash "$0" "$CURRENT_TOOL" "$SPECIFIC_PUZZLE" "$SPECIFIC_FLAG"
+            bash "$0" "$CURRENT_TOOL" "$SPECIFIC_PUZZLE" "$SPECIFIC_FLAG" \
+                || FAILED_TOOLS+=("$CURRENT_TOOL")
         else
-            bash "$0" "$CURRENT_TOOL" "$SPECIFIC_PUZZLE"
+            bash "$0" "$CURRENT_TOOL" "$SPECIFIC_PUZZLE" \
+                || FAILED_TOOLS+=("$CURRENT_TOOL")
         fi
         echo ""
     done
 
     echo "======================================================================="
     echo "All sanitizer tools completed for $SPECIFIC_PUZZLE"
+    if [ ${#FAILED_TOOLS[@]} -gt 0 ]; then
+        echo "Tools that reported errors: ${FAILED_TOOLS[*]}"
+        exit 1
+    fi
     exit 0
 fi
 
