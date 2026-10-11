@@ -24,7 +24,8 @@ It also excludes p17 to p22, which are driven from Python and keep their
 kernels in ``problems/pNN/op/``, so the glob below does not reach them.
 
 Each puzzle in scope must use the canary in both its problem and solution
-files, and its `pixi` task must pass ``-I .`` so the `harness` import resolves.
+files, and both its `pixi` task and its `poe` task (the `uv` path, in
+``pyproject.toml``) must pass ``-I .`` so the `harness` import resolves.
 """
 
 from __future__ import annotations
@@ -66,8 +67,28 @@ def _pixi_tasks() -> dict[str, str]:
     )
 
 
+def _poe_tasks() -> dict[str, str]:
+    # The [tool.poe.tasks] table, parsed the same way as pixi.toml rather than
+    # with tomllib, which Python 3.10 (allowed by pyproject.toml) lacks. A
+    # task's value can be a string, an inline table or a multi-line list, so
+    # keep everything up to the next task name and search all of it.
+    text = (REPO_ROOT / "pyproject.toml").read_text()
+    table = re.search(
+        r"^\[tool\.poe\.tasks\]$(.*?)(?=^\[|\Z)", text, re.MULTILINE | re.DOTALL
+    )
+    if table is None:
+        return {}
+    return dict(
+        re.findall(
+            r"^([A-Za-z0-9_-]+) = (.*?)(?=^[A-Za-z0-9_-]+ = |\Z)",
+            table.group(1),
+            re.MULTILINE | re.DOTALL,
+        )
+    )
+
+
 def main() -> None:
-    tasks = _pixi_tasks()
+    task_files = {"pixi.toml": _pixi_tasks(), "pyproject.toml": _poe_tasks()}
     problems = sorted((REPO_ROOT / "problems").glob("p*/p*.mojo"))
     failures: list[str] = []
     checked = 0
@@ -93,14 +114,15 @@ def main() -> None:
                     )
 
         task_name = problem.stem
-        task = tasks.get(task_name)
-        if task is None:
-            failures.append(f"{rel}: no `{task_name}` task in pixi.toml")
-        elif "-I ." not in task:
-            failures.append(
-                f"pixi.toml: task `{task_name}` must pass `-I .` so the"
-                " harness import resolves"
-            )
+        for manifest, tasks in task_files.items():
+            task = tasks.get(task_name)
+            if task is None:
+                failures.append(f"{rel}: no `{task_name}` task in {manifest}")
+            elif "-I ." not in task:
+                failures.append(
+                    f"{manifest}: task `{task_name}` must pass `-I .` so the"
+                    " harness import resolves"
+                )
 
     if failures:
         print(f"Checked {checked} learner-authored puzzles.\n")
