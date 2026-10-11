@@ -13,6 +13,10 @@
 ##===----------------------------------------------------------------------===##
 # Source shared configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Puzzles run from their own directory, so `mojo` needs the repo root to
+# find the `harness` package.
+PUZZLES_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
 # Detect GPU platform and compute capability at startup
@@ -176,7 +180,7 @@ run_mojo_files_with_sanitizer() {
         # puzzle written in the third style, including the race-detection one.
         if grep -qE "(argv\(\)\[1\]|test_type|flag)[[:space:]]*==[[:space:]]*\"$specific_flag\"" "$f"; then
           echo "=== Running compute-sanitizer --tool $tool on ${path_prefix}$f with flag: $specific_flag ==="
-          output=$(compute-sanitizer --tool "$tool" mojo "$f" "$specific_flag" 2>&1)
+          output=$(compute-sanitizer --tool "$tool" mojo -I "$PUZZLES_ROOT" "$f" "$specific_flag" 2>&1)
           filtered_output=$(echo "$output" | grep -E "$grep_pattern")
 
           error_count=$(extract_error_count "$output")
@@ -203,7 +207,7 @@ run_mojo_files_with_sanitizer() {
         if [ -z "$flags" ]; then
           echo "No flags detected for ${path_prefix}$f"
           echo "=== Running compute-sanitizer --tool $tool on ${path_prefix}$f ==="
-          output=$(compute-sanitizer --tool "$tool" mojo "$f" 2>&1)
+          output=$(compute-sanitizer --tool "$tool" mojo -I "$PUZZLES_ROOT" "$f" 2>&1)
           filtered_output=$(echo "$output" | grep -E "$grep_pattern")
 
           error_count=$(extract_error_count "$output")
@@ -222,7 +226,7 @@ run_mojo_files_with_sanitizer() {
           echo "Detected flags for ${path_prefix}$f: $flags"
           for flag in $flags; do
             echo "=== Running compute-sanitizer --tool $tool on ${path_prefix}$f with flag: $flag ==="
-            output=$(compute-sanitizer --tool "$tool" mojo "$f" "$flag" 2>&1)
+            output=$(compute-sanitizer --tool "$tool" mojo -I "$PUZZLES_ROOT" "$f" "$flag" 2>&1)
             filtered_output=$(echo "$output" | grep -E "$grep_pattern")
 
             error_count=$(extract_error_count "$output")

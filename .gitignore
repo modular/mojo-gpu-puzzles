@@ -47,5 +47,7 @@ solutions/p16/p16_optimized
 *.ncu-rep
 *.qdrep
 *.sqlite
-*.txt
+# Profiler reports redirected to text, where `clean-profiles` looks for them.
+/*.txt
+/problems/**/*.txt
 **/p*/p*_profiler
