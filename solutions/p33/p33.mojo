@@ -163,8 +163,6 @@ def tensor_core_matrix_multiplication[
     var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
-    # The `TensorCore` API is still `LayoutTensor`-only, so every tile handed
-    # to it below is bridged with `to_layout_tensor()`.
     var mma_op = TensorCore[dtype, dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
@@ -216,11 +214,11 @@ def tensor_core_matrix_multiplication[
                             mma_m, mma_n
                         )
 
-                        var a_reg = mma_op.load_a(A_mma_tile.to_layout_tensor())
-                        var b_reg = mma_op.load_b(B_mma_tile.to_layout_tensor())
-                        var c_reg = mma_op.load_c(C_mma_tile.to_layout_tensor())
+                        var a_reg = mma_op.load_a(A_mma_tile)
+                        var b_reg = mma_op.load_b(B_mma_tile)
+                        var c_reg = mma_op.load_c(C_mma_tile)
                         var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)
-                        mma_op.store_d(C_mma_tile.to_layout_tensor(), d_reg)
+                        mma_op.store_d(C_mma_tile, d_reg)
 
     # Store the final per-warp accumulation to the output warp tile
     if warp_is_active:
@@ -228,8 +226,8 @@ def tensor_core_matrix_multiplication[
             comptime for mma_n in range(WN // MMA_N):
                 var C_mma_tile = C_warp_tile.tile[MMA_M, MMA_N](mma_m, mma_n)
                 var Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)
-                var frag = mma_op.load_c(Acc_mma_tile.to_layout_tensor())
-                mma_op.store_d(C_mma_tile.to_layout_tensor(), frag)
+                var frag = mma_op.load_c(Acc_mma_tile)
+                mma_op.store_d(C_mma_tile, frag)
 
 
 # ANCHOR_END: tensor_core_matrix_multiplication_solution

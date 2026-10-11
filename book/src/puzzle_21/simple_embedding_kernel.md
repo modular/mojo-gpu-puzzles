@@ -163,7 +163,7 @@ Both custom operations provide essential infrastructure:
 
 3. **Parameter passing**:
    - Compile-time tensor dimensions for kernel optimization
-   - Runtime tensor data through layout tensor conversion
+   - Runtime tensor data through tile tensor conversion
    - Type-safe parameter validation
 
 4. **Grid configuration**:

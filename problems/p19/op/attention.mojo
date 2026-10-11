@@ -290,7 +290,7 @@ struct AttentionCustomOp:
         # Define layouts
         comptime layout_scores = row_major[seq_len]()
 
-        # Convert to layout tensors
+        # Convert to tile tensors
         var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
         var q_tensor = q.to_tile_tensor().as_unsafe_any_origin()
         var k_tensor = k.to_tile_tensor().as_unsafe_any_origin()
