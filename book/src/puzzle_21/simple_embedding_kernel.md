@@ -42,10 +42,9 @@ You need to complete the missing parts in both embedding kernels:
 <div class="solution-tips">
 
 - Start with `global_idx = block_idx.x * block_dim.x + thread_idx.x`
-- Convert to 3D coordinates using division and modulo:
-  `batch_idx = global_idx // (seq_len * embed_dim)`
-- Use `remaining = global_idx % (seq_len * embed_dim)` to simplify further
-  calculations
+- Convert to 3D coordinates with `divmod`:
+  `batch_idx, remaining = divmod(global_idx, seq_len * embed_dim)`
+- Split `remaining` the same way to get `seq_idx` and `embed_idx`
 - Always check bounds: `if global_idx >= total_elements: return`
 - Handle invalid token indices by setting output to 0
 - The embedding lookup is:
@@ -94,7 +93,7 @@ You need to complete the missing parts in both embedding kernels:
   `batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x`
 - And: `embed_idx = block_idx.y * block_dim.y + thread_idx.y`
 - Convert `batch_seq_idx` to separate batch and sequence indices:
-  `batch_idx = batch_seq_idx // seq_len`
+  `batch_idx, seq_idx = divmod(batch_seq_idx, seq_len)`
 - Remember to check bounds for both dimensions:
   `if batch_seq_idx >= total_positions or embed_idx >= embed_dim`
 - The token lookup is the same as 1D, but you're only handling one embedding
@@ -175,7 +174,7 @@ Both custom operations provide essential infrastructure:
 ### Integration with PyTorch
 
 These registered operations can be called from Python using the
-[CustomOpLibrary](https://max.modular.com/api/python/torch/):
+[CustomOpLibrary](https://max.modular.com/api/python/experimental.torch/):
 
 ```python
 # Load the custom operations
@@ -248,9 +247,9 @@ Testing Correctness...
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     0.529 ms
-   2D Non-coalesced: 0.669 ms
-   1D is 1.27x faster than 2D
+   1D Coalesced:     0.486 ms
+   2D Non-coalesced: 0.625 ms
+   1D is 1.29x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -259,10 +258,10 @@ Key Learning Points:
 • Grid configuration affects GPU utilization
 ```
 
-> These numbers are from a Tesla T4 (MAX 26.7.0.dev2026091705, driver
+> These numbers are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
 > 570.133.20). Run this on a fast GPU and the two times will look the same:
-> on a B200 they land within run-to-run noise and the winner changes between
-> runs. That is the benchmark, not the kernels. It wall-clocks a Python-level
+> on a B200 they land within a few percent of each other and the
+> non-coalesced kernel often comes out marginally ahead. That is the benchmark, not the kernels. It wall-clocks a Python-level
 > call, and the roughly 0.3ms of per-call dispatch swamps the kernels
 > themselves. Profiled so that only GPU time is counted, the coalesced kernel
 > wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us

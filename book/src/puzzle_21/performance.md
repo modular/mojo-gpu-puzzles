@@ -70,13 +70,14 @@ than computational complexity.
 
 ## Performance results
 
-Typical benchmark results:
+Benchmark results from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+570.133.20):
 
 ```text
 Performance Results:
-   1D Coalesced:     2.145 ms
-   2D Non-coalesced: 3.867 ms
-   1D is 1.80x faster than 2D
+   1D Coalesced:     0.486 ms
+   2D Non-coalesced: 0.625 ms
+   1D is 1.29x faster than 2D
 ```
 
 These are end-to-end wall-clock times per call, measured around the Python

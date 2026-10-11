@@ -159,8 +159,7 @@ differently:
 var warp_id = thread_idx.x // WARP_SIZE
 var warps_in_n = BN // WN  # Number of warps along N dimension
 var warps_in_m = BM // WM  # Number of warps along M dimension
-var warp_y = warp_id // warps_in_n  # Warp's row
-var warp_x = warp_id % warps_in_n   # Warp's column
+var warp_y, warp_x = divmod(warp_id, warps_in_n)  # Warp's row and column
 
 # Each warp handles a WM×WN tile of the output
 var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)

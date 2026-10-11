@@ -53,8 +53,8 @@ uv run poe p23 --benchmark
 </div>
 
 Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.7.0.dev2026091605 / Mojo 1.2.0.dev2026091605, driver
-595.71.05 — read the ranking, not the absolute times):
+is a B200 with MAX 26.6.0 / Mojo 1.1.0, driver 595.71.05 — read the ranking,
+not the absolute times):
 
 ```txt
 SIZE: 1024
@@ -83,18 +83,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0044767             | 10    |
-| tiled_16_4                | 0.0044511             | 10    |
-| manual_vectorized_16_4    | 0.0039583             | 10    |
-| vectorized_16_4           | 0.0049023999999999995 | 10    |
-| elementwise_128_16        | 0.0041183999999999995 | 10    |
-| tiled_128_16              | 0.004233499999999999  | 10    |
-| manual_vectorized_128_16  | 0.0042304000000000005 | 10    |
-| vectorized_128_16         | 0.0040479             | 10    |
-| elementwise_1M_1024       | 0.0054623             | 10    |
-| tiled_1M_1024             | 0.2664864             | 10    |
-| manual_vectorized_1M_1024 | 0.24737589999999998   | 10    |
-| vectorized_1M_1024        | 0.0842719             | 10    |
+| elementwise_16_4          | 0.0046815             | 10    |
+| tiled_16_4                | 0.0040383             | 10    |
+| manual_vectorized_16_4    | 0.0041983             | 10    |
+| vectorized_16_4           | 0.0041183999999999995 | 10    |
+| elementwise_128_16        | 0.004086299999999999  | 10    |
+| tiled_128_16              | 0.0038911             | 10    |
+| manual_vectorized_128_16  | 0.0040447             | 10    |
+| vectorized_128_16         | 0.0047263             | 10    |
+| elementwise_1M_1024       | 0.0054142999999999995 | 10    |
+| tiled_1M_1024             | 0.2654655             | 10    |
+| manual_vectorized_1M_1024 | 0.2462431             | 10    |
+| vectorized_1M_1024        | 0.0834783             | 10    |
 
 Benchmarks completed!
 ```

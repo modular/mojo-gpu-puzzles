@@ -303,9 +303,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 24.40ms (50 iterations)
+   CPU: 24.13ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 28.42ms (50 iterations)
+   GPU unfused: 27.95ms (50 iterations)
 
    GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead > computation benefit)
@@ -326,12 +326,15 @@ Learning outcomes:
 - Memory bandwidth vs compute trade-offs
 ```
 
-> These runs are from a Tesla T4. The verdict tracks how fast the GPU is:
-> on a T4 the CPU wins both modes in every run, on an A10G it wins the
-> unfused comparison and mostly the fused one, and on a B200 the two are
-> close enough that the winner changes from run to run. The tensors are
-> small enough that launch and synchronization dominate, so the faster the
-> GPU, the less there is to separate them.
+> These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+> 570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
+> both modes in every run, and on an A10G it still does: the tensors are
+> small enough that launch and synchronization cost more than the work
+> saved. On a B200 that reverses and the GPU wins, but not steadily —
+> across eight runs of each mode the margin ranged from 1.1x to 2x, and the
+> unfused comparison flipped back to the CPU once. Read the direction
+> rather than the number, and expect your own hardware to land somewhere
+> across that spread.
 
 ## Solution
 

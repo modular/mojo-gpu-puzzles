@@ -63,7 +63,7 @@ hierarchy.
 The tiled approach divides your data into fixed-size chunks:
 
 ```mojo
-var num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
+var num_tiles = ceildiv(size, tile_size)
 ```
 
 For a 1024-element vector with `TILE_SIZE=32`: `1024 ÷ 32 = 32` tiles exactly.
