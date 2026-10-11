@@ -45,7 +45,7 @@ def test_softmax() raises:
             for i in range(SIZE):
                 print(inp_host[i], end=" ")
             print()
-            # Create layout tensor for CPU calculation (must stay inside with block)
+            # Create tile tensor for CPU calculation (must stay inside with block)
             var input_host_tensor = TileTensor(inp_host, layout)
             # Compute expected results using our CPU kernel while inp_host is valid
             softmax_cpu_kernel[
