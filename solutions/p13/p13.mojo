@@ -59,17 +59,6 @@ def conv_1d_simple[
 
     barrier()
 
-    # Note: this variant is wasteful, not unsafe — the `local_i + j < SIZE` guard
-    # keeps every access inside `shared_a`; it just re-tests the bound per tap.
-    # local_sum = Scalar[dtype](0)
-    # for j in range(CONV):
-    #     if local_i + j < SIZE:
-    #         local_sum += shared_a[local_i + j] * shared_b[j]
-
-    # if global_i < SIZE:
-    #     out[global_i] = local_sum
-
-    # Safe and correct:
     if global_i < SIZE:
         # Note: using `var` allows us to include the type in the type inference
         # `out.ElementType` is available in TileTensor
