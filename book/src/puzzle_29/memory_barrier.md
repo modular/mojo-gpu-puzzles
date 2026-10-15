@@ -25,7 +25,7 @@ NVIDIA-only.
 > - **Precise control**: [`mbarrier_init()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init) sets up reusable barrier objects with specific thread counts
 > - **State tracking**: [`mbarrier_arrive()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive) signals individual thread completion and maintains arrival count
 > - **Flexible waiting**: [`mbarrier_test_wait()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait) polls a completion state without blocking, so you decide what a thread does while waiting
-> - **Reusable objects**: Same barrier can be reinitialized and reused across multiple iterations
+> - **Reusable objects**: Once every thread arrives, a barrier advances to its next phase on its own, so the same object serves every iteration without being reinitialized
 > - **Multiple barriers**: Different barrier objects for different synchronization points (initialization, iteration, finalization)
 > - **Hardware primitive**: Maps directly to the NVIDIA `mbarrier` instructions rather than to a single block-wide barrier
 > - **Memory semantics**: Explicit control over memory visibility and ordering guarantees
@@ -38,7 +38,7 @@ NVIDIA-only.
 >
 > - **Buffer role alternation**: An arrival count scoped to the threads that wrote the buffer about to be read
 > - **Iteration boundaries**: Separate barrier objects for initialization, the iteration loop, and finalization
-> - **State management**: `mbarrier_arrive()` returns a state token, so arrival can be tracked and not merely awaited
+> - **State management**: `mbarrier_arrive()` returns a token for the barrier's current phase, so arrival can be tracked and not merely awaited
 > - **Composability**: The same primitive tracks `cp.async` and TMA transfer completion on newer hardware
 >
 > This puzzle demonstrates **synchronization patterns** used in real-world GPU
@@ -194,7 +194,9 @@ when memory operations complete, essential for complex memory access patterns.
   loop
 - **Buffer swap safety**: Prevents reading from buffer while others still
   writing
-- **Barrier reinitialization**: Reset barrier state between iterations
+- **Phase tracking**: Each thread waits on the token its own `mbarrier_arrive()`
+  returned; the barrier moves to its next phase by itself, so it is never
+  reinitialized inside the loop
 
 **Output phase:**
 
@@ -240,19 +242,23 @@ when memory operations complete, essential for complex memory access patterns.
 
 - Call
   [`mbarrier_arrive()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)
-  after each thread completes its write operations
+  after each thread completes its write operations, and keep the token it
+  returns
 - Follow it with a polling loop on
   [`mbarrier_test_wait()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait):
   the API is a **non-blocking** check, so call it inside
-  `while not mbarrier_test_wait(...): pass` to actually wait for every thread
-  to arrive before the buffer swap
-- Reinitialize barriers between iterations for reuse:
-  [`mbarrier_init()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init)
-- Only thread 0 should reinitialize barriers to avoid race conditions
+  `while not mbarrier_test_wait(barrier, token): pass` to actually wait for
+  every thread to arrive before the buffer swap
+- Pass the token from `mbarrier_arrive()`, not a thread count: the token
+  identifies the phase you are waiting on
+- Don't reinitialize a barrier inside the loop. The barrier starts its next
+  phase on its own once every thread arrives, and a reinit can reset it while
+  a slower thread is still polling the phase that just completed, leaving that
+  thread waiting forever
 - Insert a [`barrier()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/)
-  after each `mbarrier_init` call (initial setup and per-iteration reinit) so
-  every thread observes the initialized barrier before any thread calls
-  `mbarrier_arrive`. This matches the
+  after the initial `mbarrier_init` calls so every thread observes the
+  initialized barriers before any thread calls `mbarrier_arrive`. This matches
+  the
   [NVIDIA Async Barriers initialization pattern](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization)
 
 ### **Output selection**
@@ -379,10 +385,13 @@ Understanding the mbarrier coordination pattern:
 - **[mbarrier_init()](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init)**:
   Initialize barrier for specific thread count (TPB)
 - **[mbarrier_arrive()](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)**:
-  Signal individual thread completion of write phase
+  Signal individual thread completion of write phase, returning a token for the
+  barrier's current phase
 - **[mbarrier_test_wait()](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)**:
-  Non-blocking poll of barrier state—call it in a loop until it returns true
-- **Reinitialization**: Reset barrier state between iterations for reuse
+  Non-blocking check of whether the token's phase has completed—call it in a
+  loop until it returns true
+- **Phase advance**: When the last thread arrives, the barrier moves to its next
+  phase by itself, so one barrier object serves every iteration with no reinit
 
 **Critical timing sequence:**
 
@@ -396,8 +405,9 @@ Understanding the mbarrier coordination pattern:
 2. **All threads write**: Each thread updates its assigned buffer element
 3. **Signal completion**: Each thread calls
    [`mbarrier_arrive()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive)
+   and keeps the token it returns
 4. **Poll until all arrived**: Every thread spins in
-   `while not mbarrier_test_wait(...): pass` —
+   `while not mbarrier_test_wait(barrier, token): pass` —
    [`mbarrier_test_wait()`](https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait)
    is a non-blocking check, so a single call is not a wait
 5. **Safe to proceed**: Now safe to swap buffer roles for next iteration
@@ -462,12 +472,12 @@ var stencil_input = buffer_B[10]  # Undefined behavior!
 # All threads write their results
 buffer_B[local_i] = stencil_result
 
-# Signal write completion
-_ = mbarrier_arrive(iter_barrier.ptr)
+# Signal write completion; the token names this phase of the barrier
+var token = mbarrier_arrive(iter_barrier.ptr)
 
 # Poll until ALL threads have completed writes. mbarrier_test_wait is
 # non-blocking, so a single call is NOT a wait — it must run in a loop.
-while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+while not mbarrier_test_wait(iter_barrier.ptr, token):
     pass
 
 # Now safe to read - all writes guaranteed complete
@@ -506,7 +516,8 @@ else:
 **Synchronization overhead:**
 
 - **mbarrier cost**: Higher than basic `barrier()`, and this pattern still needs
-  a `barrier()` after every `mbarrier_init` to publish the barrier state
+  one `barrier()` after the initial `mbarrier_init` calls to publish the
+  barrier state
 - **Iteration scaling**: Overhead increases linearly with iteration count
 - **Thread efficiency**: All threads remain active throughout processing
 

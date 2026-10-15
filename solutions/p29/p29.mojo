@@ -206,8 +206,8 @@ def double_buffered_stencil_computation[
 
     # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
     # poll, so spin until it reports completion.
-    _ = mbarrier_arrive(init_barrier.ptr)
-    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+    var init_token = mbarrier_arrive(init_barrier.ptr)
+    while not mbarrier_test_wait(init_barrier.ptr, init_token):
         pass
 
     # Iterative stencil processing with double-buffering
@@ -253,18 +253,12 @@ def double_buffered_stencil_computation[
                     buffer_A[local_i] = buffer_B[local_i]
 
         # Memory barrier: wait for all writes before buffer swap. test_wait is
-        # non-blocking, so poll until every thread has arrived.
-        _ = mbarrier_arrive(iter_barrier.ptr)
-        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+        # non-blocking, so poll until every thread has arrived. The barrier
+        # advances to its next phase on its own, so it is not re-initialized,
+        # and each thread waits on the token its own arrive returned.
+        var iter_token = mbarrier_arrive(iter_barrier.ptr)
+        while not mbarrier_test_wait(iter_barrier.ptr, iter_token):
             pass
-
-        # Reinitialize barrier for next iteration
-        if local_i == 0:
-            mbarrier_init(iter_barrier.ptr, TPB)
-
-        # Make the reinitialized barrier visible before the next iteration's
-        # mbarrier_arrive.
-        barrier()
 
     # Write final results from active buffer
     if local_i < TPB and global_i < size:
@@ -276,8 +270,8 @@ def double_buffered_stencil_computation[
             output[global_i] = buffer_B[local_i]
 
     # Final barrier — poll until every thread has arrived.
-    _ = mbarrier_arrive(final_barrier.ptr)
-    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+    var final_token = mbarrier_arrive(final_barrier.ptr)
+    while not mbarrier_test_wait(final_barrier.ptr, final_token):
         pass
 
 
