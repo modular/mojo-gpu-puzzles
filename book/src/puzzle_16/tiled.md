@@ -269,25 +269,28 @@ it works:
    - Avoids shared memory bank conflicts:
 
      ```txt
-     Bank Conflict Free (Good):        Bank Conflicts (Bad):
+     Bank Conflict Free (Good):            Bank Conflicts (Bad):
      Thread0: a_shared[0,k] b_shared[k,0]  Thread0: a_shared[k,0] b_shared[0,k]
      Thread1: a_shared[0,k] b_shared[k,1]  Thread1: a_shared[k,0] b_shared[1,k]
      Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
      ↓                                     ↓
      Parallel access to different banks    Serialized access to same bank of b_shared
-     (or broadcast for a_shared)           if shared memory was column-major
+     (or broadcast for a_shared)           if TPB=32
      ```
 
      **Shared memory bank conflicts explained:**
-     - **Left (Good)**: `b_shared[k,threadIdx.x]` accesses different banks,
-       `a_shared[0,k]` broadcasts to all threads
-     - **Right (Bad)**: If b_shared were column-major, threads would access same
-       bank simultaneously
+     - **Left (Good)**: `b_shared[k,threadIdx.x]` accesses different banks;
+       `a_shared[local_row,k]` broadcasts to threads sharing the same row.
+     - **Right (Bad)**: With row-major storage, varying the first index
+       gives a stride of `TPB` words. For `TPB=32`, those addresses map
+       to the same bank; for `TPB=16`, they map to two banks. This is an
+       illustrative case, not a conflict in this puzzle's `TPB=3` tile.
      - **Key insight**: This is about shared memory access patterns, not global
        memory coalescing
      - **Bank structure**: Shared memory has 32 banks; conflicts occur when
-       multiple threads access different addresses in the same bank
-       simultaneously
+       multiple threads in a warp access different addresses in the same bank
+       simultaneously. Multiple threads reading the same address are served
+       by a broadcast, not a bank conflict.
 
 5. **Synchronization points**
 
