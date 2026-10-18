@@ -137,7 +137,7 @@ def functional_warp_dot_product[
     def compute_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var idx = Int(indices[0].value())
+        var idx = Int(indices[0])
         # FILL IN (10 lines at most)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements

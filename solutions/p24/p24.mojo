@@ -150,7 +150,7 @@ def functional_warp_dot_product[
     def compute_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var idx = Int(indices[0].value())
+        var idx = Int(indices[0])
 
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0

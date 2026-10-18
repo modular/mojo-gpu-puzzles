@@ -53,7 +53,7 @@ def elementwise_add[
 ) raises where (Engine.element_size == 1):
     @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -> None:
-        var idx = Int(indices[0].value())
+        var idx = Int(indices[0])
         # FILL IN (2 to 4 lines)
 
     elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
@@ -84,7 +84,7 @@ def tiled_elementwise_add[
     def process_tiles[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var tile_id = Int(indices[0].value())
+        var tile_id = Int(indices[0])
 
         var output_tile = output.tile[tile_size](tile_id)
         var a_tile = a.tile[tile_size](tile_id)
@@ -124,7 +124,7 @@ def manual_vectorized_tiled_elementwise_add[
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var tile_id = Int(indices[0].value())
+        var tile_id = Int(indices[0])
 
         # FILL IN (7 lines at most)
 
@@ -159,7 +159,7 @@ def vectorize_within_tiles_elementwise_add[
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var tile_id = Int(indices[0].value())
+        var tile_id = Int(indices[0])
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
