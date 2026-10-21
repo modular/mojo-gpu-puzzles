@@ -32,7 +32,7 @@ Make sure your system meets our
 ### Compatible GPU
 
 You'll need a
-[compatible GPU](https://max.modular.com/packages/#gpu-compatibility) to run
+[compatible GPU](https://max.modular.com/gpu/hardware-compatibility/) to run
 the puzzles. After setup, you can verify your GPU compatibility using the
 `gpu-specs` command (see
 [Setting up your environment](#setting-up-your-environment)).
