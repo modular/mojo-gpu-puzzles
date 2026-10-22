@@ -66,9 +66,9 @@ Learn to interpret empirical benchmark results:
 ```text
 Benchmark Results (SIZE=1,048,576):
 elementwise:        0.005ms  ← Coalesced access and maximum parallelism win
-vectorized:         0.149ms  ← Automatic vectorization, some bandwidth lost
-tiled:              0.260ms  ← Uncoalesced access with single-element loads
-manual_vectorized:  0.585ms  ← Uncoalesced access plus complex indexing
+vectorized:         0.083ms  ← Automatic vectorization, some bandwidth lost
+manual_vectorized:  0.246ms  ← Uncoalesced access plus complex indexing
+tiled:              0.266ms  ← Uncoalesced access with single-element loads
 ```
 
 ## Prerequisites

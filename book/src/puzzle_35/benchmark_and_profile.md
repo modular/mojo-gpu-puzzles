@@ -13,26 +13,27 @@ pixi run mojo -I . solutions/p35/p35.mojo --benchmark
 ```
 
 This times all three kernels on a 1M-element buffer. Representative numbers from
-a B200 (compute capability 10.0, driver 595.71.05, MAX 26.5.0 / Mojo 1.0.0):
+a B200 (compute capability 10.0, driver 595.71.05, MAX 26.7.0 / Mojo 1.2.0):
 
 ```text
 | name      | met (ms)  | iters |
 | --------- | --------- | ----- |
-| scalar    | 0.01332   |  100  |
-| unaligned | 0.01220   |  100  |
-| aligned   | 0.01137   |  100  |
+| scalar    | 0.01194   |  100  |
+| unaligned | 0.01143   |  100  |
+| aligned   | 0.01060   |  100  |
 ```
 
 Read the ratios rather than the absolute times — those move with the GPU, the
 driver and the toolchain, but the ordering does not.
 
 `aligned` is the fastest and `scalar` the slowest, in the expected order. But
-look how small the gap is (~15% scalar→aligned) even though the aligned kernel
+look how small the gap is (~11% scalar→aligned) even though the aligned kernel
 issues a quarter of the global memory instructions. Buffer allocation and
 initialization sit outside the timed region, so this is the kernel plus its
 launch and synchronization — and at this size that fixed overhead is a large
-share of it. Measured with `ncu`, the kernels alone are 8.83 µs (scalar) versus
-6.05 µs (aligned): a 31% gap, twice what wall-clock reports.
+share of it. Measured with `ncu` on a release build, the kernels alone are
+6.66 µs (scalar) versus 4.90 µs (aligned): a 26% gap, more than twice what
+wall-clock reports.
 
 While the gap is small in this example, a 4× instruction-count inefficiency
 will bite in a compute-mixed or instruction-issue-bound kernel. The wall-clock

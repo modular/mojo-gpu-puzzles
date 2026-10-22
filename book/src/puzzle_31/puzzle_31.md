@@ -145,9 +145,10 @@ mojo build problems/p31/p31.mojo -o problems/p31/p31_profiler
 **No `--debug-level=full` here**, unlike the profiling walkthrough in
 [Puzzle 30](../puzzle_30/nvidia_profiling_basics.md). This puzzle's subject
 *is* resource usage, and debug metadata inflates register counts — enough, on a
-B200, to drag the sophisticated kernel's measured occupancy from 82% down to
-50% and invert the comparison you are about to make. Profile a release build
-whenever the numbers you want are the resource numbers.
+B200, to drag the sophisticated kernel's measured occupancy from about 70% down
+to about 49%, far below the other two, and distort the comparison you are about
+to make. Profile a release build whenever the numbers you want are the resource
+numbers.
 
 ### Step 4: Profile resource usage
 
@@ -255,7 +256,7 @@ questions to solve the occupancy mystery:**
 
 5. Why do all three kernels land in a similar occupancy band (the exact figures
    vary by GPU architecture) despite dramatically different resource usage?
-6. Why does performance vary so little — about 14% between fastest and slowest
+6. Why does performance vary so little — about 6% between fastest and slowest
    on a B200 — when shared memory usage varies from 0KB to 49KB?
 7. What does this reveal about the relationship between theoretical occupancy
    calculations and real-world GPU behavior?
@@ -315,7 +316,7 @@ and actual performance.
 
 > The worked calculations below are for **NVIDIA A10G (Ampere 8.6)**. The
 > measurements are from a **B200 (Blackwell 10.0)**, driver 595.71.05, MAX
-> 26.5.0 / Mojo 1.0.0, release build. Your results will vary based on your GPU
+> 26.7.0 / Mojo 1.2.0, release build. Your results will vary based on your GPU
 > architecture, but the methodology and insights apply universally. Use
 > `pixi run gpu-specs` to get your specific hardware values.
 
@@ -326,24 +327,24 @@ and actual performance.
 **Actual Profiling Results (NVIDIA B200, release build - your results will vary
 by GPU):**
 
-- **Minimal:** 16 registers, 0KB shared → **74.66%** occupancy, **0.1399ms**
-- **Balanced:** 16 registers, 16.38KB shared → **83.51%** occupancy,
-  **0.1497ms**
-- **Sophisticated:** 16 registers, 49.15KB shared → **81.95%** occupancy,
-  **0.1589ms**
+- **Minimal:** 16 registers, 0KB shared → **71.71%** occupancy, **0.1320ms**
+- **Balanced:** 16 registers, 16.38KB shared → **70.16%** occupancy,
+  **0.1331ms**
+- **Sophisticated:** 16 registers, 49.15KB shared → **72.36%** occupancy,
+  **0.1406ms**
 
 **Performance Evidence from Benchmarking:**
 
-- **All kernels perform within about 14% of each other** despite one using no
+- **All kernels perform within about 6% of each other** despite one using no
   shared memory and another using 49KB
-- **All land in a similar occupancy band** (75-84%) despite those resource
+- **All land in a similar occupancy band** (70-73%) despite those resource
   differences
 - **Memory bandwidth becomes the limiting factor** for all kernels
 
 > **Registers are not the interesting variable here, and the build is why.**
 > Profile the same three kernels with `--debug-level=full` and the register
-> counts spread out — 16 minimal, 24 balanced, 40 sophisticated on this B200 —
-> which drags sophisticated's occupancy down to 49.70%, below both others, and
+> counts spread out — 17 minimal, 24 balanced, 39 sophisticated on this B200 —
+> which drags sophisticated's occupancy down to 49.38%, below both others, and
 > breaks the very pattern this puzzle teaches. The
 > release build shows the compiler assigning all three the same 16 registers.
 > Shared memory per block is identical in both builds, which is what makes it
@@ -441,7 +442,7 @@ memory differences.
 
 - **All kernels land in the same occupancy band** despite dramatic resource
   differences
-- **Performance varies by about 14%** across all three, where shared memory
+- **Performance varies by about 6%** across all three, where shared memory
   usage varies by a factor of infinity (0KB) to 49KB
 - **Theory correctly identifies the binding limit** - thread capacity, not
   registers or shared memory
@@ -465,8 +466,8 @@ Single Kernel Pass Analysis:
 - Output array: 32M × 4 bytes × 1 array = 128MB write
 - Total per kernel: 384MB memory traffic
 
-Measured (B200, minimal kernel): 0.1399ms per iteration
-Implied bandwidth: 384MB / 0.1399ms ≈ 2.7 TB/s
+Measured (B200, minimal kernel): 0.1320ms per iteration
+Implied bandwidth: 384MB / 0.1320ms ≈ 2.9 TB/s
 ```
 
 Divide your own card's peak bandwidth (`pixi run gpu-specs`) into that 384MB to
@@ -593,7 +594,7 @@ to all GPU optimization:
    resource is actually deciding
 3. **Memory bandwidth ruled performance** - all three kernels move the same
    384MB, and SAXPY's memory-bound nature explains why performance stayed
-   within about 14% despite the resource differences
+   within about 6% despite the resource differences
 
 **Universal GPU Optimization Principles:**
 

@@ -247,9 +247,9 @@ Testing Correctness...
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     0.486 ms
-   2D Non-coalesced: 0.625 ms
-   1D is 1.29x faster than 2D
+   1D Coalesced:     0.499 ms
+   2D Non-coalesced: 0.636 ms
+   1D is 1.27x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -258,16 +258,17 @@ Key Learning Points:
 • Grid configuration affects GPU utilization
 ```
 
-> These numbers are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+> These numbers are from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 > 570.133.20). Run this on a fast GPU and the two times will look the same:
 > on a B200 they land within a few percent of each other and the
-> non-coalesced kernel often comes out marginally ahead. That is the benchmark, not the kernels. It wall-clocks a Python-level
-> call, and the roughly 0.3ms of per-call dispatch swamps the kernels
-> themselves. Profiled so that only GPU time is counted, the coalesced kernel
-> wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us
-> on a B200. The faster the GPU, the more the fixed cost hides what you came
-> to see — which is worth remembering the next time a wall-clock benchmark
-> reports no difference.
+> non-coalesced kernel often comes out marginally ahead. That is the
+> benchmark, not the kernels. It wall-clocks a Python-level call, and the
+> roughly 0.4ms of per-call dispatch swamps the kernels themselves. Profiled
+> so that only GPU time is counted, the coalesced kernel wins everywhere:
+> 113us against 246us on this T4, and 7.7us against 11.9us on a B200. The
+> faster the GPU, the more the fixed cost hides what you came to see — which
+> is worth remembering the next time a wall-clock benchmark reports no
+> difference.
 
 ## Solution
 

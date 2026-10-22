@@ -252,21 +252,22 @@ Now profile with NSight Compute to see performance differences!
 ```
 
 **Step 2: Performance Baseline**
-Benchmark results show similar execution times (B200, MAX 26.5.0 / Mojo 1.0.0 —
+Benchmark results show similar execution times (B200, MAX 26.7.0 / Mojo 1.2.0 —
 your absolute times will differ, their closeness is the finding):
 
 ```text
 | name             | met (ms)             | iters |
 | ---------------- | -------------------- | ----- |
-| no_conflict      | 0.010562229999999999 | 100   |
-| two_way_conflict | 0.010872310000000001 | 100   |
+| no_conflict      | 0.009432310000000001 | 100   |
+| two_way_conflict | 0.01025792           | 100   |
 ```
 
-**Key insight:** Performance is nearly identical (~0.0106 ms vs ~0.0109 ms)
+**Key insight:** Performance is close (~0.0094 ms vs ~0.0103 ms in this run)
 because this workload is **global memory bound** rather than shared memory
-bound. The 3% between the two kernels is inside run-to-run noise — do not read
-a winner into it, in either direction. Bank conflicts become visible through
-profiling metrics rather than execution time.
+bound. The gap is inside run-to-run noise: across five more runs on the same
+B200 it ranged from conflict-free about 10% faster to about 4% slower. Do not
+read a winner into it, in either direction. Bank conflicts become visible
+through profiling metrics rather than execution time.
 
 ## **Bank conflict profiling evidence**
 

@@ -354,9 +354,9 @@ Nor does the check reach every puzzle. Puzzles 17 to 20 keep their kernels
 behind a Python driver and allocate through the MAX graph rather than a
 device context, so they have no guarded buffer, and neither do puzzles 9, 10
 and 30 to 32, which drive external tools instead of asking you to write a
-kernel. Puzzles 21 and 22 are also driven from Python, but they allocate a
-guarded output buffer, so the check covers them. Those puzzles never print the message above, whatever your kernel
-does.
+kernel. Those puzzles never print the message above, whatever your kernel
+does. Puzzles 21 and 22 are also driven from Python, but they allocate a
+guarded output buffer, so the check covers them.
 
 ### Essential commands
 
