@@ -71,7 +71,7 @@ maintaining systems-level performance:
 ### Prerequisites
 
 You'll need a
-[compatible GPU](https://max.modular.com/packages/#gpu-compatibility) to run
+[compatible GPU](https://max.modular.com/gpu/hardware-compatibility/) to run
 the examples.
 
 1. Visit [puzzles.modular.com](https://puzzles.modular.com)
@@ -168,9 +168,9 @@ workflows.
 > ```
 >
 > The exact path can vary — see the
-> [system requirements](https://mojolang.org/docs/requirements/#nvidia-gpus)
-> for the canonical CUDA toolchain locations on each platform. Add the export
-> to your `~/.bashrc` (or equivalent shell rc) to make it persistent.
+> [system requirements](https://max.modular.com/gpu/hardware-compatibility/#nvidia-software-requirements)
+> for the canonical CUDA toolchain locations on each platform. Add the export to
+> your `~/.bashrc` (or equivalent shell rc) to make it persistent.
 
 ```bash
 # Build and serve the book
