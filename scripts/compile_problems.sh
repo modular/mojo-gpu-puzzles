@@ -18,7 +18,7 @@
 # silently rot: an API migration that updates the solutions but not the
 # skeletons leaves learners with starter code that no longer compiles (see
 # issue #254). This script closes that gap by compiling each skeleton:
-#   - custom-op modules (problems/pNN/op/)  -> `mojo package`  (no main())
+#   - custom-op modules (problems/pNN/op/)  -> `mojo precompile`  (no main())
 #   - standalone single-file puzzles        -> `mojo build`    (have main())
 # An unfilled skeleton is expected to compile (it just produces wrong/zero
 # output until the learner fills the `# FILL ME IN` gaps); it must never fail to
@@ -90,7 +90,7 @@ for sol_dir in solutions/p*/; do
     echo "${puzzle}:"
     if [ -d "${prob_dir}/op" ]; then
         # Custom-op module: compile the package (no main()).
-        compile_target "${prob_dir}/op" package "${prob_dir}/op" -o /tmp/skel.mojoc
+        compile_target "${prob_dir}/op" precompile "${prob_dir}/op" -o /tmp/skel.mojoc
         continue
     fi
     # Standalone puzzle files: compile each .mojo that defines a main().
