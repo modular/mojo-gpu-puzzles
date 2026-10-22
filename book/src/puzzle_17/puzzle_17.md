@@ -206,20 +206,12 @@ Let's break down how this works in the larger context:
 2. **Tensor Conversion**:
 
    ```mojo
-   comptime out_layout_val = row_major[input_size]()
-   comptime OutLayout = type_of(out_layout_val)
-
-   var output_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-       output.unsafe_ptr(), out_layout_val
-   )
-   var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-       input.unsafe_ptr(), out_layout_val
-   )
+   var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
+   var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
+   var kernel_tensor = kernel.to_tile_tensor().as_unsafe_any_origin()
    ```
 
-   The layouts are constructed from the op's compile-time parameters and the
-   tensors are built from raw pointers—they are not extracted from the
-   `OutputTensor`/`InputTensor` arguments.
+   `to_tile_tensor()` wraps each argument as a TileTensor over the same memory.
 
    - MAX Graph tensors are wrapped as Mojo TileTensors over the same memory
    - This allows our kernel to work with them directly
@@ -283,7 +275,7 @@ Key components of the registration:
 Before the custom operation can be used from Python, it needs to be packaged:
 
 ```bash
-mojo package op -o op.mojoc
+mojo precompile op -o op.mojoc
 ```
 
 This command:
@@ -315,6 +307,7 @@ with Graph(
     # Use our custom operation by name
     output = ops.custom(
         name="conv1d",  # Must match the name in @extensibility.register
+        device=DeviceRef.from_device(device),
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={
