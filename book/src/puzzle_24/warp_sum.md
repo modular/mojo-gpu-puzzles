@@ -297,7 +297,7 @@ You need to complete the `compute_dot_product` function with
 def compute_dot_product[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -> None:
-    var idx = Int(indices[0].value())
+    var idx = Int(indices[0])
     # FILL IN (10 lines at most)
 ```
 

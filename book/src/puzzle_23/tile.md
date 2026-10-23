@@ -74,7 +74,7 @@ Check out the
 [TileTensor `.tile` documentation](https://max.modular.com/api/mojo/layout/tile_tensor/TileTensor/#tile).
 
 ```mojo
-var tile_id = Int(indices[0].value())  # Each thread gets one tile to process
+var tile_id = Int(indices[0])  # Each thread gets one tile to process
 var output_tile = output.tile[tile_size](tile_id)
 var a_tile = a.tile[tile_size](tile_id)
 var b_tile = b.tile[tile_size](tile_id)
@@ -216,7 +216,7 @@ Tiling represents a fundamental shift in how we think about parallel processing:
 ### 2. **Tile organization and indexing**
 
 ```mojo
-var tile_id = Int(indices[0].value())
+var tile_id = Int(indices[0])
 var output_tile = output.tile[tile_size](tile_id)
 var a_tile = a.tile[tile_size](tile_id)
 var b_tile = b.tile[tile_size](tile_id)

@@ -81,7 +81,7 @@ def your_function[
 ### 2. **Index extraction and SIMD processing**
 
 ```mojo
-var idx = Int(indices[0].value())  # Extract linear index for 1D operations
+var idx = Int(indices[0])  # Extract linear index for 1D operations
 ```
 
 This `idx` represents the **starting position** for a SIMD vector, not a single
@@ -270,7 +270,7 @@ def add[
 ### 3. **SIMD execution model deep dive**
 
 ```mojo
-var idx = Int(indices[0].value())                    # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+var idx = Int(indices[0])                            # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
 var a_simd = a.load[width=simd_width](Coord(idx))    # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
 var b_simd = b.load[width=simd_width](Coord(idx))    # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
 var ret = a_simd + b_simd                            # SIMD: 4 additions in parallel (GPU-dependent)
