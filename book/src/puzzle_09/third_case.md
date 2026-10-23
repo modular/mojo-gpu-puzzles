@@ -480,7 +480,7 @@ You've learned the systematic approach used by professional GPU developers:
 **Achievement Unlocked**: You can now debug the three most common GPU
 programming issues:
 
-- **Memory crashes** ([First Case](./first_case.md)) - null pointers,
+- **Memory crashes** ([First Case](./first_case.md)) - invalid pointers,
   out-of-bounds access
 - **Logic bugs** ([Second Case](./second_case.md)) - algorithmic errors,
   incorrect results

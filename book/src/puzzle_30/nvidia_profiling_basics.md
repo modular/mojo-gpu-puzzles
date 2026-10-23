@@ -155,7 +155,7 @@ mojo build --debug-level=full -I . solutions/p16/p16.mojo -o solutions/p16/p16_o
 > `--debug-level=full` does not disable optimizations — `--optimization-level`
 > still defaults to 3 — but the debug metadata itself has a cost, and Nsight
 > Compute warns that such a build "can differ greatly from release mode". On a
-> B200 these kernels run 1.7–2.8× slower with the flag than without it, and
+> B200 these kernels run about 2–5× slower with the flag than without it, and
 > register counts inflate enough to change measured occupancy. Passing
 > `--optimization-level=3` explicitly does not recover the difference.
 >
@@ -199,29 +199,30 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 ```
 
 **What you'll see** (actual output from a 2×2 matrix multiplication, captured on
-a B200 with MAX 26.5.0 / Mojo 1.0.0 and `nsys` 2026.2.1, abridged to the rows
-that matter):
+a B200 from a release build with MAX 26.7.0 / Mojo 1.2.0 and `nsys` 2026.5.1,
+abridged to the rows that matter; the debug build from Step 1 reports a kernel
+time about 2.5× longer):
 
 ```txt
 ** CUDA API Summary (cuda_api_sum):
  Time (%)  Total Time (ns)  Num Calls    Avg (ns)       Med (ns)      Min (ns)     Max (ns)    StdDev (ns)              Name
  --------  ---------------  ---------  -------------  -------------  -----------  -----------  -----------  -----------------------------
-     99.8      402,987,325          1  402,987,325.0  402,987,325.0  402,987,325  402,987,325          0.0  cuMemAllocHost_v2
-      0.0          128,497          1      128,497.0      128,497.0      128,497      128,497          0.0  cuStreamCreate
-      0.0           63,032          1       63,032.0       63,032.0       63,032       63,032          0.0  cuModuleLoadDataEx
-      0.0           32,316          1       32,316.0       32,316.0       32,316       32,316          0.0  cuLaunchKernelEx
+     99.9      433,401,961          1  433,401,961.0  433,401,961.0  433,401,961  433,401,961          0.0  cuMemAllocHost_v2
+      0.0          151,857          1      151,857.0      151,857.0      151,857      151,857          0.0  cuStreamCreate
+      0.0           78,604          1       78,604.0       78,604.0       78,604       78,604          0.0  cuModuleLoadDataEx
+      0.0           23,951          1       23,951.0       23,951.0       23,951       23,951          0.0  cuLaunchKernelEx
 
 ** CUDA GPU Kernel Summary (cuda_gpu_kern_sum):
  Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                              Name
  --------  ---------------  ---------  --------  --------  --------  --------  -----------  ------------------------------------------------------------
-    100.0            2,176          1   2,176.0   2,176.0     2,176     2,176          0.0  p16_naive_matmul_SIMD_DType6A6AcB6A6AcB6A6A_91c578bced6e1d94
+    100.0            1,920          1   1,920.0   1,920.0     1,920     1,920          0.0  p16_naive_matmul_SIMD_DType_i6A6AcB6A6AcBuA_00f86674f248c934
 
 ** CUDA GPU MemOps Summary (by Time) (cuda_gpu_mem_time_sum):
  Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation
  --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
-     53.6           12,768      3   4,256.0   3,872.0     3,808     5,088        721.2  [CUDA memcpy Device-to-Host]
-     28.1            6,688      4   1,672.0   1,632.0     1,184     2,240        433.6  [CUDA memset]
-     18.4            4,384      3   1,461.3   1,632.0       864     1,888        532.9  [CUDA memcpy Host-to-Device]
+     51.4           15,072      4   3,768.0   3,728.0     2,720     4,896        889.6  [CUDA memcpy Device-to-Host]
+     26.9            7,872      5   1,574.4   1,600.0     1,056     2,048        351.6  [CUDA memset]
+     21.7            6,368      4   1,592.0   1,584.0     1,504     1,696         80.0  [CUDA memcpy Host-to-Device]
 ```
 
 The kernel name in the summary is a mangled symbol that encodes the kernel's
@@ -232,11 +233,11 @@ the cost either way, but whether it lands on `cuMemAllocHost_v2` or
 
 **Key Performance Insights**:
 
-- **Memory allocation dominates**: 99.8% of total time spent in a single host
+- **Memory allocation dominates**: 99.9% of total time spent in a single host
   allocation
-- **Kernel is lightning fast**: Only 2,176 ns (0.000002176 seconds) execution
+- **Kernel is lightning fast**: Only 1,920 ns (0.00000192 seconds) execution
   time
-- **Memory transfer breakdown**: 53.6% Device→Host, 28.1% memset, 18.4%
+- **Memory transfer breakdown**: 51.4% Device→Host, 26.9% memset, 21.7%
   Host→Device
 - **Tiny data sizes**: All memory operations are < 0.001 MB (4 float32 values =
   16 bytes)
@@ -281,23 +282,23 @@ nsys stats --force-export=true matmul_tiled.nsys-rep > tiled_stats.txt
 nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled_stats.txt
 ```
 
-**Fair Comparison Results** (actual output from profiling, same B200 run as
-above). Allocation dominates every variant, so only the kernel column
-discriminates:
+**Fair Comparison Results** (release build, same B200 session as above, three
+runs of each variant). Allocation dominates every variant, so only the kernel
+column discriminates:
 
 ### Comparison 1: 2 x 2 matrices
 
-| Implementation                | Kernel Execution | Performance      |
-|-------------------------------|------------------|------------------|
-| **Naive**                     | ✅ 2,176 ns      | Baseline         |
-| **Shared** (`--single-block`) | ✅ 2,368 ns      | **+8.8% slower** |
+| Implementation                | Kernel Execution  | Performance             |
+|-------------------------------|-------------------|-------------------------|
+| **Naive**                     | ✅ 1,888–2,208 ns | Baseline                |
+| **Shared** (`--single-block`) | ✅ 1,920–2,336 ns | Within run-to-run noise |
 
 ### Comparison 2: 9 x 9 matrices
 
-| Implementation      | Kernel Execution | Performance |
-|---------------------|------------------|-------------|
-| **Tiled** (manual)  | ✅ 2,880 ns      | Baseline    |
-| **Idiomatic Tiled** | ✅ 2,880 ns      | Identical   |
+| Implementation      | Kernel Execution  | Performance             |
+|---------------------|-------------------|-------------------------|
+| **Tiled** (manual)  | ✅ 2,496–2,784 ns | Baseline                |
+| **Idiomatic Tiled** | ✅ 2,752–2,880 ns | About 200 ns slower     |
 
 **Key Insights from Fair Comparisons**:
 
@@ -311,8 +312,10 @@ discriminates:
 
 - **All variants dominated by memory allocation** (>99% of time)
 - **Kernel execution is irrelevant** compared to setup costs
-- **"Optimizations" can hurt**: shared memory adds 8.8% overhead here, and the
-  async-copy variant buys nothing back — the two tiled kernels time the same
+- **"Optimizations" buy nothing here**: shared memory lands inside naive's
+  run-to-run spread, and the async-copy idiomatic variant runs about 200
+  nanoseconds *slower* than the manual tiled one on average. Differences that
+  small are launch overhead, not algorithm
 - **The real lesson**: For tiny workloads, algorithm choice doesn't matter -
   overhead dominates everything
 
@@ -621,7 +624,9 @@ nsys profile \
 - `--trace=cuda,osrt,nvtx`: Comprehensive API tracing
 - `--cuda-memory-usage=true`: Track memory allocation/deallocation
 - `--cuda-um-cpu/gpu-page-faults=true`: Monitor Unified Memory page faults
-- `--delay=2`: Wait 2 seconds before profiling (avoid cold start)
+- `--delay=2`: Wait 2 seconds before profiling (avoid cold start). Leave it out
+  for short programs: the puzzles finish inside the delay, so `nsys` would
+  record nothing
 - `--duration=30`: Profile for 30 seconds max
 - `--sample=cpu`: Include CPU sampling for hotspot analysis
 - `--cpuctxsw=process-tree`: Track CPU context switches

@@ -303,9 +303,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 24.13ms (50 iterations)
+   CPU: 24.56ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 27.95ms (50 iterations)
+   GPU unfused: 28.57ms (50 iterations)
 
    GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead > computation benefit)
@@ -326,7 +326,7 @@ Learning outcomes:
 - Memory bandwidth vs compute trade-offs
 ```
 
-> These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+> These runs are from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 > 570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
 > both modes in every run, and on an A10G it still does: the tensors are
 > small enough that launch and synchronization cost more than the work
@@ -576,9 +576,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU FUSED
 ----------------------------------------
    Testing CPU performance...
-   CPU: 25.00ms (50 iterations)
+   CPU: 25.04ms (50 iterations)
    Testing GPU fused performance...
-   GPU fused: 28.32ms (50 iterations)
+   GPU fused: 28.59ms (50 iterations)
 
    GPU fused vs CPU: 0.88x slower
    CPU wins (GPU overhead > computation benefit)
@@ -642,8 +642,8 @@ The fused implementation combines operations efficiently:
    - Statistics held in registers rather than written back to memory
 
 Fusing the two operations removes the intermediate tensors and three of the four
-kernel launches the unfused path needs. At this puzzle's size that shows up as a
-small margin - see the benchmark note below.
+kernel launches the unfused path needs. At this puzzle's size the difference is
+too small to measure reliably - see the benchmark note below.
 </div>
 </details>
 
@@ -657,18 +657,17 @@ operations:
    - Simpler implementation but less efficient
    - Higher memory bandwidth usage
    - Multiple kernel launches
-   - Benchmark results: 3183.57ms (GPU)
 
 2. **Fused implementation**:
    - Single kernel combining both operations
-   - More complex, and modestly faster at this size
+   - More complex to write
    - Reduced memory bandwidth usage
    - Single kernel launch
-   - Benchmark results: 3116.11ms (GPU)
 
-At `[4, 4, 8] -> [4, 4, 16]` the two are about 2% apart, which is inside the
-noise of a run dominated by Python and dispatch overhead. Fusion is the right
-structural choice, but this configuration is far too small to show it.
+At `[4, 4, 8] -> [4, 4, 16]` the two land within run-to-run noise of each
+other, because Python and dispatch overhead dominate both runs. In the T4
+transcripts above, both lose to the CPU. Fusion is the right structural choice,
+but this configuration is far too small to show it.
 
 ### Memory bandwidth optimization
 

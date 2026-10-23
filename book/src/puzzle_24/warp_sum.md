@@ -458,8 +458,8 @@ pixi run p24 --benchmark
   </div>
 </div>
 
-Here's example output from a complete benchmark run (a B200 with MAX 26.6.0 /
-Mojo 1.1.0 — read the ranking, not the absolute times; the iteration count is
+Here's example output from a complete benchmark run (a B200 with MAX 26.7.0 /
+Mojo 1.2.0 — read the ranking, not the absolute times; the iteration count is
 chosen by the framework, bounded by `max_iters`):
 
 ```text
@@ -500,27 +500,27 @@ Running simple_warp_65536x
 Running functional_warp_65536x
 | name                   | met (ms)              | iters |
 | ---------------------- | --------------------- | ----- |
-| traditional_1x         | 0.0044927000000000005 | 10    |
-| simple_warp_1x         | 0.0046112             | 10    |
+| traditional_1x         | 0.004608              | 10    |
+| simple_warp_1x         | 0.0044128             | 10    |
 | functional_warp_1x     | 0.00416               | 10    |
-| traditional_4x         | 0.0043935             | 10    |
-| simple_warp_4x         | 0.004163200000000001  | 10    |
-| functional_warp_4x     | 0.004086299999999999  | 10    |
-| traditional_32x        | 0.004326399999999999  | 10    |
-| simple_warp_32x        | 0.0049695             | 10    |
-| functional_warp_32x    | 0.003936              | 10    |
-| traditional_256x       | 0.0041728             | 10    |
-| simple_warp_256x       | 0.0041728             | 10    |
-| functional_warp_256x   | 0.0038495             | 10    |
-| traditional_2048x      | 0.004377600000000001  | 10    |
-| simple_warp_2048x      | 0.004022400000000001  | 10    |
-| functional_warp_2048x  | 0.0037344             | 10    |
-| traditional_16384x     | 0.012451199999999999  | 10    |
-| simple_warp_16384x     | 0.0125279             | 10    |
-| functional_warp_16384x | 0.007955199999999999  | 10    |
-| traditional_65536x     | 0.0396447             | 10    |
-| simple_warp_65536x     | 0.0395007             | 10    |
-| functional_warp_65536x | 0.0210879             | 10    |
+| traditional_4x         | 0.0043168             | 10    |
+| simple_warp_4x         | 0.0043327             | 10    |
+| functional_warp_4x     | 0.0038975000000000004 | 10    |
+| traditional_32x        | 0.0044511             | 10    |
+| simple_warp_32x        | 0.0043039             | 10    |
+| functional_warp_32x    | 0.0040447             | 10    |
+| traditional_256x       | 0.0041535             | 10    |
+| simple_warp_256x       | 0.004086299999999999  | 10    |
+| functional_warp_256x   | 0.0038462999999999995 | 10    |
+| traditional_2048x      | 0.0041696             | 10    |
+| simple_warp_2048x      | 0.0041087             | 10    |
+| functional_warp_2048x  | 0.0038176             | 10    |
+| traditional_16384x     | 0.011590399999999999  | 10    |
+| simple_warp_16384x     | 0.0110303             | 10    |
+| functional_warp_16384x | 0.00688               | 10    |
+| traditional_65536x     | 0.035712              | 10    |
+| simple_warp_65536x     | 0.034966399999999995  | 10    |
+| functional_warp_65536x | 0.018928              | 10    |
 
 Benchmarks completed!
 
@@ -543,10 +543,10 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 - **Small scales (1x-256x)**: All three land within a few microseconds of each
   other and the ordering flips between runs - the grid is too small for the
   measurement to separate them, which is why the analysis text says so
-- **Medium scale (2048x)**: The warp approaches start to pull ahead of the
-  traditional tree reduction
+- **Medium scale (2048x)**: Still close to the launch-overhead floor, so any
+  lead here is within run-to-run noise
 - **Large scales (16K-65K)**: The gap widens rather than closing - in this run
-  the functional warp approach finishes about 1.6x faster than the traditional
+  the functional warp approach finishes about 1.7x faster than the traditional
   one at 16384x and about 1.9x faster at 65536x
 - **Variability**: Performance depends heavily on specific GPU architecture and
   memory subsystem

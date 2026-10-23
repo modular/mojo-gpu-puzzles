@@ -70,15 +70,15 @@ You'll see dramatic timing differences between kernels! One kernel is
 **much slower** than the others. Your job is to figure out why using profiling
 tools **without** looking at the code.
 
-**Example output** (B200, MAX 26.5.0 / Mojo 1.0.0 — your absolute times will
+**Example output** (B200, MAX 26.7.0 / Mojo 1.2.0 — your absolute times will
 differ, the ratio between them is the point):
 
 ```text
 | name    | met (ms)  | iters |
 | ------- | --------- | ----- |
-| kernel1 | 0.0735    | 100   |
-| kernel2 | 371.16    | 100   |  <- This one is much slower!
-| kernel3 | 0.0809    | 100   |
+| kernel1 | 0.0698    | 100   |
+| kernel2 | 347.63    | 100   |  <- This one is much slower!
+| kernel3 | 0.0772    | 100   |
 ```
 
 ### Step 2: Prepare your code for profiling
@@ -106,10 +106,10 @@ several-thousand-fold gap between kernels built the same way.
 Profile each kernel to see the big picture:
 
 ```bash
-# Profile each kernel individually using the optimized build (with warmup to avoid cold start effects)
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
+# Profile each kernel individually using the optimized build
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
 
 # Analyze the results
 nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep > ./problems/p30/kernel1_profile.txt
@@ -139,13 +139,17 @@ ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
 ```
 
-**When you run these commands, you'll see output like this** (B200; the
-absolute figures depend on your GPU, the gap between them does not):
+**When you run these commands, you'll see output like this** (B200, release
+build. The debug build from Step 2 reports roughly a quarter of these
+throughputs; see
+[the debug-build trade-off](./nvidia_profiling_basics.md#step-1-prepare-your-code-for-profiling).
+The absolute figures depend on your GPU and build, the gap between the kernels
+does not):
 
 ```text
-Kernel1: Memory Throughput: ~2.06 Tbyte/s, Max Bandwidth: ~31%
-Kernel2: Memory Throughput: ~8.7 Gbyte/s,  Max Bandwidth: ~27%
-Kernel3: Memory Throughput: ~1.78 Tbyte/s, Max Bandwidth: ~27%
+Kernel1: Memory Throughput: ~2.41 Tbyte/s, Max Bandwidth: ~31%
+Kernel2: Memory Throughput: ~11.0 Gbyte/s, Max Bandwidth: ~34%
+Kernel3: Memory Throughput: ~2.07 Tbyte/s, Max Bandwidth: ~27%
 ```
 
 **Key metrics to investigate:**
@@ -232,9 +236,10 @@ perform identical mathematical operations.
 **Nsight Compute Memory Analysis (Hardware-Agnostic Patterns):**
 
 - **Efficient kernels (1 & 3)**: High memory throughput, good bandwidth
-  utilization, moderate cache hit rates
-- **Inefficient kernel (2)**: Very low memory throughput, poor bandwidth
-  utilization, **extremely high cache hit rates**
+  utilization, near-zero cache hit rates (each element is read once)
+- **Inefficient kernel (2)**: Very low memory throughput, a Max Bandwidth
+  percentage that does not stand out from the others, **extremely high cache
+  hit rates**
 
 ## **The cache paradox revealed**
 
@@ -340,7 +345,7 @@ Warp threads 0-31:             Warp threads 0-31, iteration 0:
                                  iter 2: Memory[1024]
 
 Result: 1 cache line fetch       Result: 1 cache line fetch, ×16,384 passes
-Status: ~2.06 TB/s throughput    Status: ~8.7 GB/s throughput
+Status: ~2.41 TB/s throughput    Status: ~11 GB/s throughput
 Cache: Efficient utilization     Cache: Same lines hit repeatedly!
 ```
 
@@ -355,7 +360,7 @@ Warp threads 0-31 (first iteration):
   Thread 31: Memory[SIZE-32]   (reverse_i = SIZE-1-31)
 
 Result: Adjacent addresses (just backwards)
-Status: ~1.78 TB/s throughput (same order as Kernel 1)
+Status: ~2.07 TB/s throughput (same order as Kernel 1)
 Cache: Efficient utilization despite reverse order
 ```
 
@@ -421,9 +426,9 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 PROFILING EVIDENCE → CODE ANALYSIS:
 
 Nsight Compute Results:           Actual Code Pattern:
-- Kernel1: ~2.06 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
-- Kernel2: ~8.7 GB/s, 99% L2 hits → i += 512 (redundant re-traversal)
-- Kernel3: ~1.78 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
+- Kernel1: ~2.41 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
+- Kernel2: ~11 GB/s, 97% L2 hits → i += 512 (redundant re-traversal)
+- Kernel3: ~2.07 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
 
 The profiler data directly reveals how much work each kernel issues!
 ```

@@ -53,7 +53,7 @@ uv run poe p23 --benchmark
 </div>
 
 Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.6.0 / Mojo 1.1.0, driver 595.71.05 — read the ranking,
+is a B200 with MAX 26.7.0 / Mojo 1.2.0, driver 595.71.05 — read the ranking,
 not the absolute times):
 
 ```txt
@@ -83,18 +83,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0046815             | 10    |
-| tiled_16_4                | 0.0040383             | 10    |
-| manual_vectorized_16_4    | 0.0041983             | 10    |
-| vectorized_16_4           | 0.0041183999999999995 | 10    |
-| elementwise_128_16        | 0.004086299999999999  | 10    |
-| tiled_128_16              | 0.0038911             | 10    |
-| manual_vectorized_128_16  | 0.0040447             | 10    |
-| vectorized_128_16         | 0.0047263             | 10    |
-| elementwise_1M_1024       | 0.0054142999999999995 | 10    |
-| tiled_1M_1024             | 0.2654655             | 10    |
-| manual_vectorized_1M_1024 | 0.2462431             | 10    |
-| vectorized_1M_1024        | 0.0834783             | 10    |
+| elementwise_16_4          | 0.0039296             | 10    |
+| tiled_16_4                | 0.0055551             | 10    |
+| manual_vectorized_16_4    | 0.0040288             | 10    |
+| vectorized_16_4           | 0.0038816000000000002 | 10    |
+| elementwise_128_16        | 0.0042112             | 10    |
+| tiled_128_16              | 0.0043391             | 10    |
+| manual_vectorized_128_16  | 0.0043806999999999995 | 10    |
+| vectorized_128_16         | 0.0042784             | 10    |
+| elementwise_1M_1024       | 0.0051359000000000005 | 10    |
+| tiled_1M_1024             | 0.26570879999999997   | 10    |
+| manual_vectorized_1M_1024 | 0.2458656             | 10    |
+| vectorized_1M_1024        | 0.0827455             | 10    |
 
 Benchmarks completed!
 ```
@@ -190,11 +190,11 @@ issues `SIMD_WIDTH` times as many memory operations for the same data.
 
 - Launch overhead dominates (~0.004ms baseline)
 - Thread count differences don't matter
-- Tiled/vectorize show slightly lower overhead
+- The ordering between patterns changes from run to run
 
 **Medium problems (SIZE=128):**
 
-- Still overhead-dominated (~0.004ms for all)
+- Still overhead-dominated (~0.004–0.005ms for all)
 - Performance differences nearly disappear
 - Transitional behavior between overhead and computation
 
@@ -213,7 +213,7 @@ Based on empirical benchmark results across different hardware:
 | Rank | Pattern               | Typical time | Key insight                                                                                   |
 |------|-----------------------|--------------|-----------------------------------------------------------------------------------------------|
 | 🥇   | **Elementwise**       | ~0.005ms     | Coalesced memory access wins for memory-bound ops                                             |
-| 🥈   | **Mojo vectorize**    | ~0.084ms     | Uncoalesced memory access hurts performance                                                   |
+| 🥈   | **Mojo vectorize**    | ~0.083ms     | Uncoalesced memory access hurts performance                                                   |
 | 🥉   | **Manual vectorized** | ~0.25ms      | Uncoalesced memory access, and complex manual indexing on only 256 threads                    |
 | 4th  | **Tiled**             | ~0.27ms      | Uncoalesced memory access, and width-1 loads issue four times as many memory operations       |
 
