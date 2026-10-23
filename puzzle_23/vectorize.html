@@ -282,7 +282,7 @@ The focus is SIMD control inside a tile, not coordination across them.</p>
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
 
-    @always_inline
+    @inline(.always)
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -291,7 +291,7 @@ The focus is SIMD control inside a tile, not coordination across them.</p>
         # FILL IN (7 lines at most)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    var num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = ceildiv(size, chunk_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
@@ -375,7 +375,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
 
-    @always_inline
+    @inline(.always)
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -390,7 +390,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
             output.store[simd_width](Coord(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    var num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = ceildiv(size, chunk_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
@@ -467,7 +467,7 @@ assumes there isn’t one</li>
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size elements (not SIMD groups)
-    @always_inline
+    @inline(.always)
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -478,7 +478,7 @@ assumes there isn’t one</li>
 
         # FILL IN (9 lines at most)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )
@@ -580,7 +580,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size elements (not SIMD groups)
-    @always_inline
+    @inline(.always)
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -602,7 +602,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )

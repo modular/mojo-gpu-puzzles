@@ -498,9 +498,10 @@ numbers to the resources each kernel consumes.</p>
 <p><strong>No <code>--debug-level=full</code> here</strong>, unlike the profiling walkthrough in
 <a href="../puzzle_30/nvidia_profiling_basics.html">Puzzle 30</a>. This puzzle’s subject
 <em>is</em> resource usage, and debug metadata inflates register counts — enough, on a
-B200, to drag the sophisticated kernel’s measured occupancy from 82% down to
-50% and invert the comparison you are about to make. Profile a release build
-whenever the numbers you want are the resource numbers.</p>
+B200, to drag the sophisticated kernel’s measured occupancy from about 70% down
+to about 49%, far below the other two, and distort the comparison you are about
+to make. Profile a release build whenever the numbers you want are the resource
+numbers.</p>
 <h3 id="step-4-profile-resource-usage"><a class="header" href="#step-4-profile-resource-usage">Step 4: Profile resource usage</a></h3>
 <pre><code class="language-bash"># Profile each kernel's resource usage
 ncu --set basic --section=LaunchStats problems/p31/p31_profiler --minimal
@@ -584,7 +585,7 @@ occupancy formula. Which should be highest/lowest?</li>
 <ol start="5">
 <li>Why do all three kernels land in a similar occupancy band (the exact figures
 vary by GPU architecture) despite dramatically different resource usage?</li>
-<li>Why does performance vary so little — about 14% between fastest and slowest
+<li>Why does performance vary so little — about 6% between fastest and slowest
 on a B200 — when shared memory usage varies from 0KB to 49KB?</li>
 <li>What does this reveal about the relationship between theoretical occupancy
 calculations and real-world GPU behavior?</li>
@@ -639,7 +640,7 @@ and actual performance.</p>
 <blockquote>
 <p>The worked calculations below are for <strong>NVIDIA A10G (Ampere 8.6)</strong>. The
 measurements are from a <strong>B200 (Blackwell 10.0)</strong>, driver 595.71.05, MAX
-26.5.0 / Mojo 1.0.0, release build. Your results will vary based on your GPU
+26.7.0 / Mojo 1.2.0, release build. Your results will vary based on your GPU
 architecture, but the methodology and insights apply universally. Use
 <code>pixi run gpu-specs</code> to get your specific hardware values.</p>
 </blockquote>
@@ -648,25 +649,25 @@ architecture, but the methodology and insights apply universally. Use
 <p><strong>Actual Profiling Results (NVIDIA B200, release build - your results will vary
 by GPU):</strong></p>
 <ul>
-<li><strong>Minimal:</strong> 16 registers, 0KB shared → <strong>74.66%</strong> occupancy, <strong>0.1399ms</strong></li>
-<li><strong>Balanced:</strong> 16 registers, 16.38KB shared → <strong>83.51%</strong> occupancy,
-<strong>0.1497ms</strong></li>
-<li><strong>Sophisticated:</strong> 16 registers, 49.15KB shared → <strong>81.95%</strong> occupancy,
-<strong>0.1589ms</strong></li>
+<li><strong>Minimal:</strong> 16 registers, 0KB shared → <strong>71.71%</strong> occupancy, <strong>0.1320ms</strong></li>
+<li><strong>Balanced:</strong> 16 registers, 16.38KB shared → <strong>70.16%</strong> occupancy,
+<strong>0.1331ms</strong></li>
+<li><strong>Sophisticated:</strong> 16 registers, 49.15KB shared → <strong>72.36%</strong> occupancy,
+<strong>0.1406ms</strong></li>
 </ul>
 <p><strong>Performance Evidence from Benchmarking:</strong></p>
 <ul>
-<li><strong>All kernels perform within about 14% of each other</strong> despite one using no
+<li><strong>All kernels perform within about 6% of each other</strong> despite one using no
 shared memory and another using 49KB</li>
-<li><strong>All land in a similar occupancy band</strong> (75-84%) despite those resource
+<li><strong>All land in a similar occupancy band</strong> (70-73%) despite those resource
 differences</li>
 <li><strong>Memory bandwidth becomes the limiting factor</strong> for all kernels</li>
 </ul>
 <blockquote>
 <p><strong>Registers are not the interesting variable here, and the build is why.</strong>
 Profile the same three kernels with <code>--debug-level=full</code> and the register
-counts spread out — 16 minimal, 24 balanced, 40 sophisticated on this B200 —
-which drags sophisticated’s occupancy down to 49.70%, below both others, and
+counts spread out — 17 minimal, 24 balanced, 39 sophisticated on this B200 —
+which drags sophisticated’s occupancy down to 49.38%, below both others, and
 breaks the very pattern this puzzle teaches. The
 release build shows the compiler assigning all three the same 16 registers.
 Shared memory per block is identical in both builds, which is what makes it
@@ -748,7 +749,7 @@ memory differences.</p>
 <ul>
 <li><strong>All kernels land in the same occupancy band</strong> despite dramatic resource
 differences</li>
-<li><strong>Performance varies by about 14%</strong> across all three, where shared memory
+<li><strong>Performance varies by about 6%</strong> across all three, where shared memory
 usage varies by a factor of infinity (0KB) to 49KB</li>
 <li><strong>Theory correctly identifies the binding limit</strong> - thread capacity, not
 registers or shared memory</li>
@@ -769,8 +770,8 @@ near-identical performance despite huge resource differences!</li>
 - Output array: 32M × 4 bytes × 1 array = 128MB write
 - Total per kernel: 384MB memory traffic
 
-Measured (B200, minimal kernel): 0.1399ms per iteration
-Implied bandwidth: 384MB / 0.1399ms ≈ 2.7 TB/s
+Measured (B200, minimal kernel): 0.1320ms per iteration
+Implied bandwidth: 384MB / 0.1320ms ≈ 2.9 TB/s
 </code></pre>
 <p>Divide your own card’s peak bandwidth (<code>pixi run gpu-specs</code>) into that 384MB to
 get the floor this kernel could ever reach, then compare it with what you
@@ -875,7 +876,7 @@ because it predicts occupancy to the decimal, but because it tells you which
 resource is actually deciding</li>
 <li><strong>Memory bandwidth ruled performance</strong> - all three kernels move the same
 384MB, and SAXPY’s memory-bound nature explains why performance stayed
-within about 14% despite the resource differences</li>
+within about 6% despite the resource differences</li>
 </ol>
 <p><strong>Universal GPU Optimization Principles:</strong></p>
 <p><strong>Identify the Real Bottleneck:</strong></p>

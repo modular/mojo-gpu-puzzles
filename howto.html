@@ -246,7 +246,7 @@ and solution verification procedures.</p>
 <a href="https://max.modular.com/packages/#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a
-<a href="https://max.modular.com/packages/#gpu-compatibility">compatible GPU</a> to run
+<a href="https://max.modular.com/gpu/hardware-compatibility/">compatible GPU</a> to run
 the puzzles. After setup, you can verify your GPU compatibility using the
 <code>gpu-specs</code> command (see
 <a href="#setting-up-your-environment">Setting up your environment</a>).</p>
@@ -494,12 +494,13 @@ the last block, where the thread count exceeds the size of the data.</p>
 <p>The margins extend a fixed number of elements past each end, so a write far
 enough beyond them lands outside the guarded region and goes unreported. A
 clean check is good evidence, not proof.</p>
-<p>Nor does the check reach every puzzle. Puzzles 17 to 22 keep their kernels
+<p>Nor does the check reach every puzzle. Puzzles 17 to 20 keep their kernels
 behind a Python driver and allocate through the MAX graph rather than a
 device context, so they have no guarded buffer, and neither do puzzles 9, 10
 and 30 to 32, which drive external tools instead of asking you to write a
 kernel. Those puzzles never print the message above, whatever your kernel
-does.</p>
+does. Puzzles 21 and 22 are also driven from Python, but they allocate a
+guarded output buffer, so the check covers them.</p>
 <h3 id="essential-commands"><a class="header" href="#essential-commands">Essential commands</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">

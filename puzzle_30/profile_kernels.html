@@ -276,13 +276,13 @@ mojo problems/p30/p30.mojo --benchmark
 <p>You’ll see dramatic timing differences between kernels! One kernel is
 <strong>much slower</strong> than the others. Your job is to figure out why using profiling
 tools <strong>without</strong> looking at the code.</p>
-<p><strong>Example output</strong> (B200, MAX 26.5.0 / Mojo 1.0.0 — your absolute times will
+<p><strong>Example output</strong> (B200, MAX 26.7.0 / Mojo 1.2.0 — your absolute times will
 differ, the ratio between them is the point):</p>
 <pre><code class="language-text">| name    | met (ms)  | iters |
 | ------- | --------- | ----- |
-| kernel1 | 0.0735    | 100   |
-| kernel2 | 371.16    | 100   |  &lt;- This one is much slower!
-| kernel3 | 0.0809    | 100   |
+| kernel1 | 0.0698    | 100   |
+| kernel2 | 347.63    | 100   |  &lt;- This one is much slower!
+| kernel3 | 0.0772    | 100   |
 </code></pre>
 <h3 id="step-2-prepare-your-code-for-profiling"><a class="header" href="#step-2-prepare-your-code-for-profiling">Step 2: Prepare your code for profiling</a></h3>
 <p><strong>Critical</strong>: For source-level attribution, build with full debug information:</p>
@@ -301,10 +301,10 @@ It does not distort this investigation, because the effect you are hunting is a
 several-thousand-fold gap between kernels built the same way.</p>
 <h3 id="step-3-system-wide-investigation-nsight-systems"><a class="header" href="#step-3-system-wide-investigation-nsight-systems">Step 3: System-wide investigation (Nsight Systems)</a></h3>
 <p>Profile each kernel to see the big picture:</p>
-<pre><code class="language-bash"># Profile each kernel individually using the optimized build (with warmup to avoid cold start effects)
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
+<pre><code class="language-bash"># Profile each kernel individually using the optimized build
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
 
 # Analyze the results
 nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep &gt; ./problems/p30/kernel1_profile.txt
@@ -329,11 +329,15 @@ ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
 </code></pre>
-<p><strong>When you run these commands, you’ll see output like this</strong> (B200; the
-absolute figures depend on your GPU, the gap between them does not):</p>
-<pre><code class="language-text">Kernel1: Memory Throughput: ~2.06 Tbyte/s, Max Bandwidth: ~31%
-Kernel2: Memory Throughput: ~8.7 Gbyte/s,  Max Bandwidth: ~27%
-Kernel3: Memory Throughput: ~1.78 Tbyte/s, Max Bandwidth: ~27%
+<p><strong>When you run these commands, you’ll see output like this</strong> (B200, release
+build. The debug build from Step 2 reports roughly a quarter of these
+throughputs; see
+<a href="./nvidia_profiling_basics.html#step-1-prepare-your-code-for-profiling">the debug-build trade-off</a>.
+The absolute figures depend on your GPU and build, the gap between the kernels
+does not):</p>
+<pre><code class="language-text">Kernel1: Memory Throughput: ~2.41 Tbyte/s, Max Bandwidth: ~31%
+Kernel2: Memory Throughput: ~11.0 Gbyte/s, Max Bandwidth: ~34%
+Kernel3: Memory Throughput: ~2.07 Tbyte/s, Max Bandwidth: ~27%
 </code></pre>
 <p><strong>Key metrics to investigate:</strong></p>
 <ul>
@@ -410,9 +414,10 @@ perform identical mathematical operations.</p>
 <p><strong>Nsight Compute Memory Analysis (Hardware-Agnostic Patterns):</strong></p>
 <ul>
 <li><strong>Efficient kernels (1 &amp; 3)</strong>: High memory throughput, good bandwidth
-utilization, moderate cache hit rates</li>
-<li><strong>Inefficient kernel (2)</strong>: Very low memory throughput, poor bandwidth
-utilization, <strong>extremely high cache hit rates</strong></li>
+utilization, near-zero cache hit rates (each element is read once)</li>
+<li><strong>Inefficient kernel (2)</strong>: Very low memory throughput, a Max Bandwidth
+percentage that does not stand out from the others, <strong>extremely high cache
+hit rates</strong></li>
 </ul>
 <h2 id="the-cache-paradox-revealed"><a class="header" href="#the-cache-paradox-revealed"><strong>The cache paradox revealed</strong></a></h2>
 <p><strong>🤯 The Counterintuitive Discovery:</strong></p>
@@ -550,7 +555,7 @@ Warp threads 0-31:             Warp threads 0-31, iteration 0:
                                  iter 2: Memory[1024]
 
 Result: 1 cache line fetch       Result: 1 cache line fetch, ×16,384 passes
-Status: ~2.06 TB/s throughput    Status: ~8.7 GB/s throughput
+Status: ~2.41 TB/s throughput    Status: ~11 GB/s throughput
 Cache: Efficient utilization     Cache: Same lines hit repeatedly!
 </code></pre>
 <p><strong>KERNEL 3 (Reverse but Coalesced):</strong></p>
@@ -562,7 +567,7 @@ Cache: Efficient utilization     Cache: Same lines hit repeatedly!
   Thread 31: Memory[SIZE-32]   (reverse_i = SIZE-1-31)
 
 Result: Adjacent addresses (just backwards)
-Status: ~1.78 TB/s throughput (same order as Kernel 1)
+Status: ~2.07 TB/s throughput (same order as Kernel 1)
 Cache: Efficient utilization despite reverse order
 </code></pre>
 <h2 id="the-cache-paradox-explained"><a class="header" href="#the-cache-paradox-explained"><strong>The cache paradox explained</strong></a></h2>
@@ -617,9 +622,9 @@ revisits those lines, not in how many lines a warp touches</li>
 <pre><code class="language-text">PROFILING EVIDENCE → CODE ANALYSIS:
 
 Nsight Compute Results:           Actual Code Pattern:
-- Kernel1: ~2.06 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
-- Kernel2: ~8.7 GB/s, 99% L2 hits → i += 512 (redundant re-traversal)
-- Kernel3: ~1.78 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
+- Kernel1: ~2.41 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
+- Kernel2: ~11 GB/s, 97% L2 hits → i += 512 (redundant re-traversal)
+- Kernel3: ~2.07 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
 
 The profiler data directly reveals how much work each kernel issues!
 </code></pre>

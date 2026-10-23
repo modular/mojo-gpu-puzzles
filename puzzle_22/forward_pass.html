@@ -447,9 +447,7 @@ def matmul_idiomatic_tiled[
     )
     var acc: output.ElementType = 0
 
-    comptime for idx in range(
-        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-    ):
+    comptime for idx in range(ceildiv(inner, MATMUL_BLOCK_DIM_XY)):
         # Synchronously load tiles to shared memory - each thread loads one element
         var a_tile_row_start = block_idx.y * MATMUL_BLOCK_DIM_XY
         var a_tile_col_start = idx * MATMUL_BLOCK_DIM_XY
@@ -740,9 +738,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 24.13ms (50 iterations)
+   CPU: 24.56ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 27.95ms (50 iterations)
+   GPU unfused: 28.57ms (50 iterations)
 
    GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead &gt; computation benefit)
@@ -763,7 +761,7 @@ Learning outcomes:
 - Memory bandwidth vs compute trade-offs
 </code></pre>
 <blockquote>
-<p>These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+<p>These runs are from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
 both modes in every run, and on an A10G it still does: the tensors are
 small enough that launch and synchronization cost more than the work
@@ -1140,9 +1138,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU FUSED
 ----------------------------------------
    Testing CPU performance...
-   CPU: 25.00ms (50 iterations)
+   CPU: 25.04ms (50 iterations)
    Testing GPU fused performance...
-   GPU fused: 28.32ms (50 iterations)
+   GPU fused: 28.59ms (50 iterations)
 
    GPU fused vs CPU: 0.88x slower
    CPU wins (GPU overhead &gt; computation benefit)
@@ -1287,8 +1285,8 @@ Learning outcomes:
 </li>
 </ol>
 <p>Fusing the two operations removes the intermediate tensors and three of the four
-kernel launches the unfused path needs. At this puzzle’s size that shows up as a
-small margin - see the benchmark note below.</p>
+kernel launches the unfused path needs. At this puzzle’s size the difference is
+too small to measure reliably - see the benchmark note below.</p>
 </div>
 </details>
 <h2 id="advantages-of-kernel-fusion"><a class="header" href="#advantages-of-kernel-fusion">Advantages of kernel fusion</a></h2>
@@ -1302,23 +1300,22 @@ operations:</p>
 <li>Simpler implementation but less efficient</li>
 <li>Higher memory bandwidth usage</li>
 <li>Multiple kernel launches</li>
-<li>Benchmark results: 3183.57ms (GPU)</li>
 </ul>
 </li>
 <li>
 <p><strong>Fused implementation</strong>:</p>
 <ul>
 <li>Single kernel combining both operations</li>
-<li>More complex, and modestly faster at this size</li>
+<li>More complex to write</li>
 <li>Reduced memory bandwidth usage</li>
 <li>Single kernel launch</li>
-<li>Benchmark results: 3116.11ms (GPU)</li>
 </ul>
 </li>
 </ol>
-<p>At <code>[4, 4, 8] -&gt; [4, 4, 16]</code> the two are about 2% apart, which is inside the
-noise of a run dominated by Python and dispatch overhead. Fusion is the right
-structural choice, but this configuration is far too small to show it.</p>
+<p>At <code>[4, 4, 8] -&gt; [4, 4, 16]</code> the two land within run-to-run noise of each
+other, because Python and dispatch overhead dominate both runs. In the T4
+transcripts above, both lose to the CPU. Fusion is the right structural choice,
+but this configuration is far too small to show it.</p>
 <h3 id="memory-bandwidth-optimization"><a class="header" href="#memory-bandwidth-optimization">Memory bandwidth optimization</a></h3>
 <ol>
 <li>

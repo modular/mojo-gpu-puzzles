@@ -298,10 +298,9 @@ dimensions</li>
 <div class="solution-tips">
 <ul>
 <li>Start with <code>global_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
-<li>Convert to 3D coordinates using division and modulo:
-<code>batch_idx = global_idx // (seq_len * embed_dim)</code></li>
-<li>Use <code>remaining = global_idx % (seq_len * embed_dim)</code> to simplify further
-calculations</li>
+<li>Convert to 3D coordinates with <code>divmod</code>:
+<code>batch_idx, remaining = divmod(global_idx, seq_len * embed_dim)</code></li>
+<li>Split <code>remaining</code> the same way to get <code>seq_idx</code> and <code>embed_idx</code></li>
 <li>Always check bounds: <code>if global_idx &gt;= total_elements: return</code></li>
 <li>Handle invalid token indices by setting output to 0</li>
 <li>The embedding lookup is:
@@ -388,7 +387,7 @@ to embedding dimension</li>
 <code>batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
 <li>And: <code>embed_idx = block_idx.y * block_dim.y + thread_idx.y</code></li>
 <li>Convert <code>batch_seq_idx</code> to separate batch and sequence indices:
-<code>batch_idx = batch_seq_idx // seq_len</code></li>
+<code>batch_idx, seq_idx = divmod(batch_seq_idx, seq_len)</code></li>
 <li>Remember to check bounds for both dimensions:
 <code>if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim</code></li>
 <li>The token lookup is the same as 1D, but you’re only handling one embedding
@@ -597,7 +596,7 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 <p><strong>Parameter passing</strong>:</p>
 <ul>
 <li>Compile-time tensor dimensions for kernel optimization</li>
-<li>Runtime tensor data through layout tensor conversion</li>
+<li>Runtime tensor data through tile tensor conversion</li>
 <li>Type-safe parameter validation</li>
 </ul>
 </li>
@@ -667,9 +666,9 @@ Testing Correctness...
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     0.486 ms
-   2D Non-coalesced: 0.625 ms
-   1D is 1.29x faster than 2D
+   1D Coalesced:     0.499 ms
+   2D Non-coalesced: 0.636 ms
+   1D is 1.27x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -678,16 +677,17 @@ Key Learning Points:
 • Grid configuration affects GPU utilization
 </code></pre>
 <blockquote>
-<p>These numbers are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+<p>These numbers are from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 570.133.20). Run this on a fast GPU and the two times will look the same:
 on a B200 they land within a few percent of each other and the
-non-coalesced kernel often comes out marginally ahead. That is the benchmark, not the kernels. It wall-clocks a Python-level
-call, and the roughly 0.3ms of per-call dispatch swamps the kernels
-themselves. Profiled so that only GPU time is counted, the coalesced kernel
-wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us
-on a B200. The faster the GPU, the more the fixed cost hides what you came
-to see — which is worth remembering the next time a wall-clock benchmark
-reports no difference.</p>
+non-coalesced kernel often comes out marginally ahead. That is the
+benchmark, not the kernels. It wall-clocks a Python-level call, and the
+roughly 0.4ms of per-call dispatch swamps the kernels themselves. Profiled
+so that only GPU time is counted, the coalesced kernel wins everywhere:
+113us against 246us on this T4, and 7.7us against 11.9us on a B200. The
+faster the GPU, the more the fixed cost hides what you came to see — which
+is worth remembering the next time a wall-clock benchmark reports no
+difference.</p>
 </blockquote>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
@@ -732,10 +732,8 @@ operations for both kernels:</p>
         return
 
     # Convert to (batch, seq, embed) coordinates
-    var batch_idx = global_idx // (seq_len * embed_dim)
-    var remaining = global_idx % (seq_len * embed_dim)
-    var seq_idx = remaining // embed_dim
-    var embed_idx = remaining % embed_dim
+    var batch_idx, remaining = divmod(global_idx, (seq_len * embed_dim))
+    var seq_idx, embed_idx = divmod(remaining, embed_dim)
 
     # Get token index
     var token_idx_val = Int(indices[batch_idx, seq_idx])
@@ -791,8 +789,7 @@ operations for both kernels:</p>
         return
 
     # Convert to (batch, seq) coordinates
-    var batch_idx = batch_seq_idx // seq_len
-    var seq_idx = batch_seq_idx % seq_len
+    var batch_idx, seq_idx = divmod(batch_seq_idx, seq_len)
 
     # Get token index
     var token_idx_val = Int(indices[batch_idx, seq_idx])

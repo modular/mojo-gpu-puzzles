@@ -525,7 +525,7 @@ and solution verification procedures.</p>
 <a href="https://max.modular.com/packages/#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a
-<a href="https://max.modular.com/packages/#gpu-compatibility">compatible GPU</a> to run
+<a href="https://max.modular.com/gpu/hardware-compatibility/">compatible GPU</a> to run
 the puzzles. After setup, you can verify your GPU compatibility using the
 <code>gpu-specs</code> command (see
 <a href="howto.html#setting-up-your-environment">Setting up your environment</a>).</p>
@@ -773,12 +773,13 @@ the last block, where the thread count exceeds the size of the data.</p>
 <p>The margins extend a fixed number of elements past each end, so a write far
 enough beyond them lands outside the guarded region and goes unreported. A
 clean check is good evidence, not proof.</p>
-<p>Nor does the check reach every puzzle. Puzzles 17 to 22 keep their kernels
+<p>Nor does the check reach every puzzle. Puzzles 17 to 20 keep their kernels
 behind a Python driver and allocate through the MAX graph rather than a
 device context, so they have no guarded buffer, and neither do puzzles 9, 10
 and 30 to 32, which drive external tools instead of asking you to write a
 kernel. Those puzzles never print the message above, whatever your kernel
-does.</p>
+does. Puzzles 21 and 22 are also driven from Python, but they allocate a
+guarded output buffer, so the check covers them.</p>
 <h3 id="essential-commands"><a class="header" href="#essential-commands">Essential commands</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -2802,9 +2803,9 @@ debugging concepts to advanced parallel coordination failures:</p>
 <h3 id="-step-2-detective-work-first-case"><a class="header" href="#-step-2-detective-work-first-case">🧐 <strong>Step 2: <a href="puzzle_09/./first_case.html">Detective Work: First Case</a></strong></a></h3>
 <p><strong>Memory crash investigation</strong> - Debug a GPU program that crashes</p>
 <ul>
-<li>Investigate <code>CUDA_ERROR_MISALIGNED_ADDRESS</code> crashes</li>
+<li>Investigate crashes from bad memory addresses</li>
 <li>Learn systematic pointer inspection techniques</li>
-<li>Learn null pointer detection and validation</li>
+<li>Learn to spot invalid pointer arguments</li>
 <li>Practice professional crash analysis workflow</li>
 <li>Understand GPU memory access failures</li>
 </ul>
@@ -3913,7 +3914,11 @@ debugging.</p>
 
 CUDA call failed: CUDA_ERROR_MISALIGNED_ADDRESS (misaligned address)
 To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
-mojo: error: execution crashed
+ #0 0x00007cc268dc4d1e (.../.pixi/envs/nvidia/lib/libKGENCompilerRTShared.so+0x112d1e)
+...
+#12 0x00007cc26a4fc328 AsyncRT_DeviceContext_release (.../.pixi/envs/nvidia/lib/libAsyncRTMojoBindings.so+0x45328)
+#13 0x00007cc21280df9d
+.../.pixi/envs/nvidia/bin/mojo: error: execution crashed
 To get a symbolicated stack trace, compile your program using `mojo build` with debug info enabled (e.g., `-debug-level=line-tables`) and execute it separately.
 </code></pre>
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
@@ -3926,16 +3931,16 @@ strategy to investigate this crash?</p>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_MISALIGNED_ADDRESS</code> means
-the GPU tried to access memory it cannot address</li>
+<li><strong>Read the crash message carefully</strong> - a <code>CUDA_ERROR_*_ADDRESS</code> error means
+the GPU tried to read or write through an address it can’t use</li>
 <li><strong>Check the breakpoint information</strong> - Look at the function parameters shown
 when CUDA-GDB stops</li>
 <li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer
 parameter</li>
-<li><strong>Look for suspicious addresses</strong> - Valid GPU addresses are typically large
-hex numbers (what does <code>0x0</code> mean?)</li>
-<li><strong>Test memory access</strong> - Try accessing the data through each pointer to see
-which one fails</li>
+<li><strong>Compare the addresses</strong> - Do <code>output</code> and <code>a</code> look like they point into
+the same kind of memory?</li>
+<li><strong>Let the kernel run</strong> - A value the debugger prints through a pointer
+doesn’t prove the GPU can read it. Continue and see where the kernel stops</li>
 <li><strong>Apply the systematic approach</strong> - Like a detective, follow the evidence
 from symptom to root cause</li>
 <li><strong>Compare valid vs invalid patterns</strong> - If one pointer works and another
@@ -3953,58 +3958,81 @@ doesn’t, focus on the broken one</li>
 <h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the breakpoint information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
 <pre><code class="language-text">(cuda-gdb) run
-CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:37
-37          var i = thread_idx.x
+CUDA thread hit application kernel entry function breakpoint, p09_add_10_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=0x302000000, a=0x7ffff68575f0)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:38
+38          var i = thread_idx.x
 </code></pre>
-<p><strong>🔍 First Clue</strong>: The function signature shows <code>(output=0x302000000, a=0x0)</code></p>
+<p><strong>🔍 First Clue</strong>: The function signature shows
+<code>(output=0x302000000, a=0x7ffff68575f0)</code></p>
 <ul>
-<li><code>output</code> has a valid GPU memory address</li>
-<li><code>a</code> is <code>0x0</code> - this is a null pointer!</li>
+<li><code>output</code> points into the region where this program’s GPU buffers live</li>
+<li><code>a</code> points somewhere else entirely. On Linux, <code>0x7fff...</code> is the top of a
+process’s CPU address space, where its stack and shared libraries live, not
+where GPU allocations come from</li>
 </ul>
+<p>The exact value of <code>a</code> changes from run to run. What stays the same is that it
+doesn’t look like <code>output</code>.</p>
 <h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
 <pre><code class="language-text">(cuda-gdb) next
-38          output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
+39          output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 (cuda-gdb) print i
-$1 = 0
+$1 = {0}
 (cuda-gdb) print output
 $2 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000000
 (cuda-gdb) print a
-$3 = (!kgen.scalar&lt;f32&gt; * @register) 0x0
+$3 = (!kgen.scalar&lt;f32&gt; * @register) 0x7ffff68575f0
 </code></pre>
 <p><strong>Evidence Gathering</strong>:</p>
 <ul>
 <li>✅ Thread index <code>i=0</code> is valid</li>
-<li>✅ Result pointer <code>0x302000000</code> is a proper GPU address</li>
-<li>❌ Input pointer <code>0x0</code> is null</li>
+<li>✅ Result pointer <code>0x302000000</code> is a GPU buffer address</li>
+<li>❌ Input pointer <code>0x7ffff68575f0</code> isn’t</li>
 </ul>
-<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the problem</a></h3>
-<pre><code class="language-text">(cuda-gdb) print a[i]
-Cannot access memory at address 0x0
+<h3 id="a-trap-the-debugger-can-read-what-the-gpu-cant"><a class="header" href="#a-trap-the-debugger-can-read-what-the-gpu-cant">A trap: the debugger can read what the GPU can’t</a></h3>
+<pre><code class="language-text">(cuda-gdb) print output[0]
+$4 = {0}
+(cuda-gdb) print a[0]
+$5 = {-1.34493767e+33}
 </code></pre>
-<p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash
-cause!</p>
+<p>The debugger happily prints a value through <code>a</code>, because it reads memory from
+the host side. That value is garbage, and it doesn’t mean the GPU can read the
+same address. Don’t treat a printed value as proof that a pointer is good.</p>
+<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the problem</a></h3>
+<p>Let the kernel run:</p>
+<pre><code class="language-text">(cuda-gdb) continue
+Continuing.
+
+CUDA Exception: Warp Illegal Address
+The exception was triggered at PC 0x7fffc127d5f0  p09_add_10_...  (p09.mojo:39)
+
+Thread 1 "mojo" received signal CUDA_EXCEPTION_14, Warp Illegal Address.
+</code></pre>
+<p><strong>Smoking Gun</strong>: The GPU faults on line 39, the line that reads through <code>a</code>.
+<code>output</code> was never the problem.</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="puzzle_09/../../../problems/p09/p09.mojo">code</a>
-for <code>--first-case</code>, we see that the host code creates a null pointer instead of
-allocating proper GPU memory:</p>
-<pre><code class="language-mojo"># A `DeviceBuffer` with 0 elements. Nothing is allocated, so the buffer hands
-# the kernel a NULL pointer.
+for <code>--first-case</code>, we see that the host code never allocates any GPU memory
+for the input:</p>
+<pre><code class="language-mojo"># A `DeviceBuffer` with 0 elements. Nothing is allocated, so there's no
+# GPU address to give the kernel.
 var input_buf = ctx.enqueue_create_buffer[dtype](0)
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
 <li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0)
 elements.</li>
-<li>Since there are no elements for which to allocate memory, this returns a
-null pointer.</li>
-<li>This null pointer gets passed to the GPU kernel.</li>
-<li>When the kernel evaluates <code>a[unsafe_offset=i]</code>, it dereferences null →
-<code>CUDA_ERROR_MISALIGNED_ADDRESS</code>.</li>
+<li>Since there are no elements for which to allocate memory, the buffer has no
+GPU address.</li>
+<li>The kernel still receives something for <code>a</code>, but it isn’t a GPU address. In
+this release it’s a leftover CPU-side value like <code>0x7ffff68575f0</code>.</li>
+<li>When the kernel evaluates <code>a[unsafe_offset=i]</code>, the GPU faults. Which CUDA
+error you see at the top depends on the bad address, which is why it can
+differ between Mojo versions.</li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
-<p>Replace null pointer creation with proper buffer allocation:</p>
-<pre><code class="language-mojo"># Wrong: creates a null pointer
+<p>Replace the empty buffer with a proper allocation:</p>
+<pre><code class="language-mojo"># Wrong: allocates nothing, so the kernel gets no usable address
 var input_buf = ctx.enqueue_create_buffer[dtype](0)
 
 # Correct: allocate and initialize actual GPU memory for safe processing
@@ -4014,28 +4042,31 @@ input_buf.enqueue_fill(0)
 <h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
 <p><strong>Pattern Recognition</strong>:</p>
 <ul>
-<li><code>0x0</code> addresses are always null pointers</li>
-<li>Valid GPU addresses are large hex numbers (e.g., <code>0x302000000</code>)</li>
+<li>Pointers into the same kind of memory look alike. Here the GPU buffer is
+<code>0x302000000</code>, and an address that looks nothing like it deserves suspicion</li>
+<li><code>0x0</code> is a null pointer, and <code>0x7fff...</code> on Linux is CPU-side memory.
+Neither belongs in a kernel argument</li>
 </ul>
 <p><strong>Debugging Strategy</strong>:</p>
 <ol>
 <li><strong>Read crash messages</strong> - They often hint at the problem type</li>
 <li><strong>Check function parameters</strong> - CUDA-GDB shows them at breakpoint entry</li>
-<li><strong>Inspect all pointers</strong> - Compare addresses to identify null/invalid ones</li>
-<li><strong>Test memory access</strong> - Try dereferencing suspicious pointers</li>
+<li><strong>Inspect all pointers</strong> - Compare addresses to identify invalid ones</li>
+<li><strong>Let the kernel fault</strong> - The line where it stops names the bad access;
+a value the debugger prints proves nothing about the GPU</li>
 <li><strong>Trace back to allocation</strong> - Find where the problematic pointer was created</li>
 </ol>
-<p><strong>💡 Key Insight</strong>: This type of null pointer bug is extremely common in GPU
-programming. The systematic CUDA-GDB investigation approach you learned here
-applies to debugging many other GPU memory issues, race conditions, and kernel
-crashes.</p>
+<p><strong>💡 Key Insight</strong>: This type of invalid pointer bug is extremely common in
+GPU programming. The systematic CUDA-GDB investigation approach you learned
+here applies to debugging many other GPU memory issues, race conditions, and
+kernel crashes.</p>
 </div>
 </details>
 <h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next steps: from crashes to silent bugs</a></h2>
 <p><strong>You’ve learned crash debugging!</strong> You can now:</p>
 <ul>
 <li><strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
-<li><strong>Identify null pointer bugs</strong> through pointer address inspection</li>
+<li><strong>Identify invalid pointer bugs</strong> through pointer address inspection</li>
 <li><strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
 </ul>
 <h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your next challenge: <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a></a></h3>
@@ -4066,8 +4097,8 @@ you’ll now face a completely different challenge: a <strong>logic bug</strong>
 incorrect results without crashing.</p>
 <p><strong>The debugging shift:</strong></p>
 <ul>
-<li><strong><a href="puzzle_09/./first_case.html">First Case</a></strong>: Clear crash signals
-(<code>CUDA_ERROR_MISALIGNED_ADDRESS</code>) guided your investigation</li>
+<li><strong><a href="puzzle_09/./first_case.html">First Case</a></strong>: Clear crash signals (a CUDA address
+error) guided your investigation</li>
 <li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results
 that require detective work</li>
 </ul>
@@ -4151,7 +4182,7 @@ investigate this logic bug?</p>
 <tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
 <tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
 <tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
-<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 56</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 63</code></td></tr>
 <tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
 <tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
 </tbody></table>
@@ -4206,101 +4237,108 @@ correctly.</p>
 <h4 id="step-3-observe-the-breakpoint-entry"><a class="header" href="#step-3-observe-the-breakpoint-entry">Step 3: Observe the breakpoint entry</a></h4>
 <p>Based on the real debugging session, here’s what happens:</p>
 <pre><code class="language-bash">(cuda-gdb) r
-Starting program: .../mojo run problems/p09/p09.mojo --second-case
-
+Starting program: .../mojo run -O0 --debug-level=full problems/p09/p09.mojo --second-case
 This program computes sliding window sums for each position...
+
 Input array: [0, 1, 2, 3]
 Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
-
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:47
-47          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; ()
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:52
+52          a: TileTensor[
 </code></pre>
 <h4 id="step-4-navigate-to-the-main-logic"><a class="header" href="#step-4-navigate-to-the-main-logic">Step 4: Navigate to the main logic</a></h4>
-<pre><code class="language-bash">(cuda-gdb) n
-46          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-(cuda-gdb) n
-49          var thread_id = thread_idx.x
-(cuda-gdb) n
-55          for offset in range(ITER):
+<p>The entry breakpoint stops in the kernel’s signature, and stepping with <code>n</code>
+from there leaves the kernel without stopping in its body. Set a breakpoint on
+the first line of the loop body instead, and continue to it:</p>
+<pre><code class="language-bash">(cuda-gdb) b 63
+Breakpoint 1 at 0x7fffc127eb50: file problems/p09/p09.mojo, line 63.
+(cuda-gdb) c
+Continuing.
+
+CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:63
+63              var idx = Int(thread_id) + offset - 1
 </code></pre>
 <h4 id="step-5-test-variable-accessibility---crucial-discovery"><a class="header" href="#step-5-test-variable-accessibility---crucial-discovery">Step 5: Test variable accessibility - crucial discovery</a></h4>
 <pre><code class="language-bash">(cuda-gdb) p thread_id
-$1 = 0
+$1 = &lt;unavailable&gt;
 </code></pre>
-<p><strong>✅ Good</strong>: Thread ID is accessible.</p>
+<p><strong>❌ Problem</strong>: <code>thread_id</code> is not accessible.</p>
 <pre><code class="language-bash">(cuda-gdb) p window_sum
-Cannot access memory at address 0x0
+$2 = &lt;optimized out&gt;
 </code></pre>
 <p><strong>❌ Problem</strong>: <code>window_sum</code> is not accessible.</p>
 <pre><code class="language-bash">(cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 </code></pre>
 <p><strong>❌ Problem</strong>: Direct TileTensor indexing doesn’t work.</p>
-<pre><code class="language-bash">(cuda-gdb) p a.ptr[0]
-$2 = {0}
-(cuda-gdb) p a.ptr[0]@4
-$3 = {{0}, {1}, {2}, {3}}
+<pre><code class="language-bash">(cuda-gdb) p a
+$3 = {_storage = 0x302000000, layout = {_shape = {m0 = {&lt;No data fields&gt;}},
+    _stride = {m0 = {&lt;No data fields&gt;}}}}
+(cuda-gdb) p a._storage[0]@4
+Cannot perform pointer math on incomplete type "!kgen.none", try casting to a known type, or void *.
+(cuda-gdb) p ((float*)a._storage)[0]@4
+$4 = {0, 1, 2, 3}
 </code></pre>
-<p><strong>🎯 BREAKTHROUGH</strong>: <code>a.ptr[0]@4</code> shows the full input array! This is how we can
+<p><strong>🎯 BREAKTHROUGH</strong>: <code>p a</code> shows that a TileTensor keeps its data behind a
+<code>_storage</code> pointer. The debugger doesn’t know the pointer’s element type, so
+cast it to <code>float*</code> (the puzzle’s <code>dtype</code> is <code>float32</code>). Then
+<code>((float*)a._storage)[0]@4</code> shows the full input array! This is how we can
 inspect TileTensor data.</p>
 <h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
 <h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
-<pre><code class="language-bash">(cuda-gdb) b 56
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 56.
-(cuda-gdb) c
-Continuing.
-
-CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
-56              var idx = Int(thread_id) + offset - 1
+<p>The breakpoint on line 63 fires once at the start of every loop iteration, so
+counting its hits counts the iterations. The loop variable is still readable:</p>
+<pre><code class="language-bash">(cuda-gdb) p offset
+$5 = {0}
 </code></pre>
-<p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
+<p><strong>🔍 We’re now inside the loop body, on its first iteration. Let’s count
+iterations manually.</strong></p>
 <h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-57              if 0 &lt;= idx &lt; SIZE:
+64              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-55          for offset in range(ITER):
+62          for offset in range(ITER):
 </code></pre>
-<p><strong>First iteration complete</strong>: Loop went from line 56 → 57 → back to 55. The
-loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 63 → 64 → back to 62. For
+thread 0, <code>idx</code> is -1, so it skipped the sum. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-56              var idx = Int(thread_id) + offset - 1
+63              var idx = Int(thread_id) + offset - 1
+(cuda-gdb) p offset
+$6 = {1}
 (cuda-gdb) n
-57              if 0 &lt;= idx &lt; SIZE:
+64              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-58                  var value = a[idx]
+65                  window_sum += rebind[Scalar[dtype]](a[idx])
 (cuda-gdb) n
-59                  window_sum += value
+64              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-57              if 0 &lt;= idx &lt; SIZE:
-(cuda-gdb) n
-55          for offset in range(ITER):
+62          for offset in range(ITER):
 </code></pre>
-<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines
-58-59).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (line
+65).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-61          output[thread_id] = window_sum
+67          output[thread_id] = window_sum
 </code></pre>
 <p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went
-directly to line 61 instead of hitting our breakpoint at line 56 again.</p>
+directly to line 67 instead of hitting our breakpoint at line 63 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-45      def process_sliding_window(
+46      def process_sliding_window[
 (cuda-gdb) n
-[Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
-0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
-(cuda-gdb) p output.ptr[0]@4
+[Switching to Thread 0x7ffff7bc8a40 (LWP 13617)]
+0x00007fffefc2be19 in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
+(cuda-gdb) p output
 No symbol "output" in current context.
 (cuda-gdb) p offset
 No symbol "offset" in current context.
@@ -4351,8 +4389,7 @@ variables. This is normal behavior.</p>
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
     var idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
     if 0 &lt;= idx &lt; SIZE:
-        var value = a[idx]
-        window_sum += value
+        window_sum += rebind[Scalar[dtype]](a[idx])
 </code></pre>
 <p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding
 window of size 3.</p>
@@ -4847,7 +4884,7 @@ investigation</li>
 <p><strong>Achievement Unlocked</strong>: You can now debug the three most common GPU
 programming issues:</p>
 <ul>
-<li><strong>Memory crashes</strong> (<a href="puzzle_09/./first_case.html">First Case</a>) - null pointers,
+<li><strong>Memory crashes</strong> (<a href="puzzle_09/./first_case.html">First Case</a>) - invalid pointers,
 out-of-bounds access</li>
 <li><strong>Logic bugs</strong> (<a href="puzzle_09/./second_case.html">Second Case</a>) - algorithmic errors,
 incorrect results</li>
@@ -4991,7 +5028,7 @@ simultaneously</li>
 <ul>
 <li>GPU programming concepts from Puzzles 1-8 (memory management, thread
 coordination, barriers)</li>
-<li><strong><a href="https://max.modular.com/packages/#gpu-compatibility">Compatible NVIDIA GPU hardware</a></strong></li>
+<li><strong><a href="https://max.modular.com/gpu/hardware-compatibility/#nvidia-gpus">Compatible NVIDIA GPU hardware</a></strong></li>
 <li>Environment setup with <code>pixi</code> package manager for accessing
 <code>compute-sanitizer</code></li>
 <li><strong>Prior puzzles</strong>: Familiarity with
@@ -6331,17 +6368,6 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
     barrier()
 
-    # Note: this variant is wasteful, not unsafe — the `local_i + j &lt; SIZE` guard
-    # keeps every access inside `shared_a`; it just re-tests the bound per tap.
-    # local_sum = Scalar[dtype](0)
-    # for j in range(CONV):
-    #     if local_i + j &lt; SIZE:
-    #         local_sum += shared_a[local_i + j] * shared_b[j]
-
-    # if global_i &lt; SIZE:
-    #     out[global_i] = local_sum
-
-    # Safe and correct:
     if global_i &lt; SIZE:
         # Note: using `var` allows us to include the type in the type inference
         # `out.ElementType` is available in TileTensor
@@ -8222,7 +8248,7 @@ arithmetic intensity).</p>
 <p><strong>Note on asynchronous operations</strong>: Standard GPU memory loads (<code>ld.global</code>) are
 already asynchronous - warps continue executing until they need the loaded data.
 Specialized async copy instructions like <code>cp.async</code> (CUDA) or
-<a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
+<a href="https://max.modular.com/api/mojo/layout/tile_io/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
 (Mojo) provide additional benefits by using dedicated copy engines, bypassing
 registers, and enabling better resource utilization rather than simply making
 synchronous operations asynchronous.</p>
@@ -8809,7 +8835,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
     var acc: output.ElementType = 0
 
     # Iterate over tiles to compute matrix product
-    comptime for tile in range((size + TPB - 1) // TPB):
+    comptime for tile in range(ceildiv(size, TPB)):
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
             a_shared[local_row, local_col] = rebind[Scalar[dtype]](
@@ -8989,11 +9015,10 @@ conflicts</li>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">from max.gpu.memory import async_copy_wait_all
-from layout.layout_tensor import copy_dram_to_sram_async
-from layout import Layout as IntTupleLayout
+from layout.tile_io import copy_dram_to_sram_async
+from std.math import ceildiv
 
 comptime NUM_THREADS = TPB * TPB
-comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
@@ -9026,12 +9051,8 @@ def matmul_idiomatic_tiled[
 
     var acc: output.ElementType = 0
 
-    comptime load_a_layout = IntTupleLayout.row_major(
-        1, TPB
-    )  # Coalesced loading
-    comptime load_b_layout = IntTupleLayout.row_major(
-        1, TPB
-    )  # Coalesced loading
+    comptime load_a_layout = row_major[1, TPB]()  # Coalesced loading
+    comptime load_b_layout = row_major[1, TPB]()  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -9044,15 +9065,11 @@ def matmul_idiomatic_tiled[
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
-            thread_layout=load_a_layout,
-            num_threads=NUM_THREADS,
-            block_dim_count=BLOCK_DIM_COUNT,
-        ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
+            thread_layout=load_a_layout, num_threads=NUM_THREADS
+        ](a_shared, a_tile)
         copy_dram_to_sram_async[
-            thread_layout=load_b_layout,
-            num_threads=NUM_THREADS,
-            block_dim_count=BLOCK_DIM_COUNT,
-        ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+            thread_layout=load_b_layout, num_threads=NUM_THREADS
+        ](b_shared, b_tile)
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -9079,7 +9096,7 @@ B using coalesced loading for both matrices.</strong></p>
 <ul>
 <li><strong>Matrix operation</strong>: Standard \(A \times B\) multiplication (not \(A
 \times B^T\))</li>
-<li><strong>Loading pattern</strong>: Both matrices use <code>Layout.row_major(1, TPB)</code> for
+<li><strong>Loading pattern</strong>: Both matrices use <code>row_major[1, TPB]()</code> for
 coalesced access</li>
 <li><strong>Computation</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
 <li><strong>Data layout</strong>: No transposition during loading - both matrices loaded in
@@ -9108,15 +9125,11 @@ for more details.</p>
 <li>
 <p><strong>Asynchronous memory operations</strong></p>
 <pre><code class="language-mojo">copy_dram_to_sram_async[
-   thread_layout = load_a_layout,
-   num_threads = NUM_THREADS,
-   block_dim_count = BLOCK_DIM_COUNT
-](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
+   thread_layout=load_a_layout, num_threads=NUM_THREADS
+](a_shared, a_tile)
 copy_dram_to_sram_async[
-   thread_layout = load_b_layout,
-   num_threads = NUM_THREADS,
-   block_dim_count = BLOCK_DIM_COUNT
-](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+   thread_layout=load_b_layout, num_threads=NUM_THREADS
+](b_shared, b_tile)
 async_copy_wait_all()
 </code></pre>
 <p>These operations:</p>
@@ -9124,44 +9137,39 @@ async_copy_wait_all()
 <li>Issue the copy through the GPU’s asynchronous copy path (<code>cp.async</code> on
 NVIDIA), which moves global memory straight into shared memory without
 staging through registers, via
-<a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
+<a href="https://max.modular.com/api/mojo/layout/tile_io/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
 <li>Use specialized thread layouts for optimal memory access patterns</li>
 <li>Eliminate the need for manual memory initialization</li>
 <li><strong>Important</strong>:
 <ul>
 <li>Standard GPU loads are already asynchronous; these provide better
 resource utilization and register bypass</li>
-<li><code>copy_dram_to_sram_async</code> assumes a 1D thread block
-(<code>block_dim.y == block_dim.z == 1</code>) holding exactly <code>thread_layout.size()</code>
-threads. Neither assumption holds here, so both defaults are overridden:
-<ul>
-<li><code>block_dim_count</code>: the dimensionality of the thread block (<code>2</code> for the
-2D thread block <code>THREADS_PER_BLOCK_TILED = (TPB, TPB)</code>), so the copy
-derives each thread’s index as
-<code>thread_idx.y * block_dim.x + thread_idx.x</code> instead of <code>thread_idx.x</code></li>
-<li><code>num_threads</code>: the number of threads in the thread block
-(<code>TPB * TPB == 9</code>). The copy itself is carried out by the
-<code>thread_layout.size() == TPB</code> threads the layout describes; telling the
-function how large the block really is lets it turn the remaining
-threads off instead of letting them run off the end of the layout</li>
-</ul>
-</li>
+<li>The copy flattens each thread’s position across the whole (up to 3D)
+thread block itself, so the 2D thread block
+<code>THREADS_PER_BLOCK_TILED = (TPB, TPB)</code> needs no extra parameter: a
+thread’s index is <code>thread_idx.y * block_dim.x + thread_idx.x</code></li>
+<li>It does assume the block holds exactly <code>thread_layout.size()</code> threads,
+which is not the case here, so <code>num_threads</code> overrides that default with
+the number of threads in the block (<code>TPB * TPB == 9</code>). The copy itself is
+carried out by the <code>thread_layout.size() == TPB</code> threads the layout
+describes; telling the function how large the block really is lets it
+turn the remaining threads off instead of letting them run off the end of
+the layout</li>
 </ul>
 </li>
 </ul>
 </li>
 <li>
 <p><strong>Optimized memory access layouts</strong></p>
-<pre><code class="language-mojo">comptime load_a_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
-comptime load_b_layout = IntTupleLayout.row_major(1, TPB)  # Coalesced loading
+<pre><code class="language-mojo">comptime load_a_layout = row_major[1, TPB]()  # Coalesced loading
+comptime load_b_layout = row_major[1, TPB]()  # Coalesced loading
 # Note: Both matrices use the same layout for standard A × B multiplication
 </code></pre>
-<p>Thread layouts are IntTuple <code>Layout</code> values built with the function form
-<code>Layout.row_major(1, TPB)</code>, which the solution imports as <code>IntTupleLayout</code> to
-keep them distinct from the <code>row_major[...]()</code> tensor layouts used for the
-tensors themselves.</p>
+<p>A thread layout is built with <code>row_major[...]()</code>, the same form as the
+layouts of the tensors themselves — it describes how threads are arranged
+over the copy rather than how elements are arranged in memory.</p>
 <p><strong>Memory Access Analysis for Current Implementation:</strong></p>
-<p>Both matrices use <code>Layout.row_major(1, TPB)</code> for coalesced loading from
+<p>Both matrices use <code>row_major[1, TPB]()</code> for coalesced loading from
 global memory:</p>
 <ul>
 <li><code>load_a_layout</code>: Threads cooperate to load consecutive elements from matrix
@@ -9183,11 +9191,11 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 - Matrix A tile: threads load A[block_row, k], A[block_row, k+1], A[block_row, k+2]... (consecutive)
 - Matrix B tile: threads load B[k, block_col], B[k, block_col+1], B[k, block_col+2]... (consecutive)
 
-Both patterns are coalesced with Layout.row_major(1, TPB)
+Both patterns are coalesced with row_major[1, TPB]()
 </code></pre>
 <p><strong>Three separate memory concerns:</strong></p>
 <ol>
-<li><strong>Global-to-shared coalescing</strong>: <code>Layout.row_major(1, TPB)</code> ensures
+<li><strong>Global-to-shared coalescing</strong>: <code>row_major[1, TPB]()</code> ensures
 coalesced global memory access</li>
 <li><strong>Shared memory computation</strong>:
 <code>a_shared[local_row, k] * b_shared[k, local_col]</code> avoids bank conflicts</li>
@@ -9249,29 +9257,24 @@ due to the use of specialized memory layouts and asynchronous operations.</p>
 purely educational to show what’s possible with the layout system.</p>
 <p><strong>Current implementation recap:</strong></p>
 <ul>
-<li>Uses <code>Layout.row_major(1, TPB)</code> for both matrices</li>
+<li>Uses <code>row_major[1, TPB]()</code> for both matrices</li>
 <li>Performs standard A × B multiplication</li>
 <li>No data transposition during copy</li>
 </ul>
 <p><strong>Educational scenarios where you WOULD use transposed loading:</strong></p>
 <p>While this puzzle uses standard coalesced loading for both matrices, the layout
 system’s flexibility enables powerful optimizations in other scenarios:</p>
-<pre><code class="language-mojo"># Example: reading a pre-transposed B with one thread distribution and writing
-# shared memory with another
+<pre><code class="language-mojo"># Example: reading a pre-transposed B with the threads walking a column
 # (This is NOT what the current implementation does)
-comptime load_b_layout = IntTupleLayout.row_major(TPB, 1)   # Threads walk a column
-comptime store_b_layout = IntTupleLayout.row_major(1, TPB)  # Threads walk a row
+comptime load_b_layout = row_major[TPB, 1]()  # Threads walk a column
 copy_dram_to_sram_async[
-    src_thread_layout=load_b_layout,
-    dst_thread_layout=store_b_layout,
-    num_threads=NUM_THREADS,
-    block_dim_count=BLOCK_DIM_COUNT,
-](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
+    thread_layout=load_b_layout, num_threads=NUM_THREADS
+](b_shared, b_tile)
 </code></pre>
-<p>Note that the two thread layouts are IntTuple <code>Layout</code> values, the same form as
-<code>load_a_layout</code> above, and that <code>copy_dram_to_sram_async</code> takes <code>LayoutTensor</code>
-arguments. The <code>src_thread_layout</code>/<code>dst_thread_layout</code> pair must describe the
-same number of threads.</p>
+<p>The one thread layout drives both the read and the write, so it changes which
+thread fetches which element, not the orientation the tile lands in. A copy that
+reads through one thread distribution and writes shared memory through another
+is not something this function offers.</p>
 <p><strong>Use cases for transposed loading (not used in this puzzle):</strong></p>
 <ol>
 <li><strong>Pre-transposed input matrices</strong>: When \(B\) is already stored transposed
@@ -9285,7 +9288,7 @@ orientation</li>
 </ol>
 <p><strong>Key distinction:</strong></p>
 <ul>
-<li><strong>Current implementation</strong>: Both matrices use <code>Layout.row_major(1, TPB)</code> for
+<li><strong>Current implementation</strong>: Both matrices use <code>row_major[1, TPB]()</code> for
 standard \(A \times B\) multiplication</li>
 <li><strong>Transposed loading example</strong>: Would use different layouts to handle
 pre-transposed data or different matrix operations</li>
@@ -9297,7 +9300,7 @@ while maintaining high-level abstractions for common cases.</p>
 <p><strong>What the idiomatic tiled implementation actually does:</strong></p>
 <ol>
 <li><strong>Matrix Operation</strong>: Standard A × B multiplication</li>
-<li><strong>Memory Loading</strong>: Both matrices use <code>Layout.row_major(1, TPB)</code> for
+<li><strong>Memory Loading</strong>: Both matrices use <code>row_major[1, TPB]()</code> for
 coalesced access</li>
 <li><strong>Computation Pattern</strong>:
 <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
@@ -9305,7 +9308,7 @@ coalesced access</li>
 </ol>
 <p><strong>Why this is optimal:</strong></p>
 <ul>
-<li><strong>Coalesced global memory access</strong>: <code>Layout.row_major(1, TPB)</code> ensures
+<li><strong>Coalesced global memory access</strong>: <code>row_major[1, TPB]()</code> ensures
 efficient loading</li>
 <li><strong>Bank conflict avoidance</strong>: Shared memory access pattern avoids conflicts</li>
 <li><strong>Standard algorithm</strong>: Implements the most common matrix multiplication
@@ -10675,9 +10678,8 @@ in the right order.</p>
             )
             # Tile over the K (seq_len, d) matrix
             comptime transpose_blocks_per_grid = (
-                (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
-                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
-                // TRANSPOSE_BLOCK_DIM_XY,
+                ceildiv(d, TRANSPOSE_BLOCK_DIM_XY),
+                ceildiv(seq_len, TRANSPOSE_BLOCK_DIM_XY),
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
             comptime matmul_threads_per_block = (
@@ -11540,10 +11542,9 @@ dimensions</li>
 <div class="solution-tips">
 <ul>
 <li>Start with <code>global_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
-<li>Convert to 3D coordinates using division and modulo:
-<code>batch_idx = global_idx // (seq_len * embed_dim)</code></li>
-<li>Use <code>remaining = global_idx % (seq_len * embed_dim)</code> to simplify further
-calculations</li>
+<li>Convert to 3D coordinates with <code>divmod</code>:
+<code>batch_idx, remaining = divmod(global_idx, seq_len * embed_dim)</code></li>
+<li>Split <code>remaining</code> the same way to get <code>seq_idx</code> and <code>embed_idx</code></li>
 <li>Always check bounds: <code>if global_idx &gt;= total_elements: return</code></li>
 <li>Handle invalid token indices by setting output to 0</li>
 <li>The embedding lookup is:
@@ -11630,7 +11631,7 @@ to embedding dimension</li>
 <code>batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
 <li>And: <code>embed_idx = block_idx.y * block_dim.y + thread_idx.y</code></li>
 <li>Convert <code>batch_seq_idx</code> to separate batch and sequence indices:
-<code>batch_idx = batch_seq_idx // seq_len</code></li>
+<code>batch_idx, seq_idx = divmod(batch_seq_idx, seq_len)</code></li>
 <li>Remember to check bounds for both dimensions:
 <code>if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim</code></li>
 <li>The token lookup is the same as 1D, but you’re only handling one embedding
@@ -11839,7 +11840,7 @@ and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
 <p><strong>Parameter passing</strong>:</p>
 <ul>
 <li>Compile-time tensor dimensions for kernel optimization</li>
-<li>Runtime tensor data through layout tensor conversion</li>
+<li>Runtime tensor data through tile tensor conversion</li>
 <li>Type-safe parameter validation</li>
 </ul>
 </li>
@@ -11909,9 +11910,9 @@ Testing Correctness...
 Benchmarking Mojo Kernels...
 
 Performance Results:
-   1D Coalesced:     0.486 ms
-   2D Non-coalesced: 0.625 ms
-   1D is 1.29x faster than 2D
+   1D Coalesced:     0.499 ms
+   2D Non-coalesced: 0.636 ms
+   1D is 1.27x faster than 2D
 
 Key Learning Points:
 • Compare different GPU kernel implementations
@@ -11920,16 +11921,17 @@ Key Learning Points:
 • Grid configuration affects GPU utilization
 </code></pre>
 <blockquote>
-<p>These numbers are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+<p>These numbers are from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 570.133.20). Run this on a fast GPU and the two times will look the same:
 on a B200 they land within a few percent of each other and the
-non-coalesced kernel often comes out marginally ahead. That is the benchmark, not the kernels. It wall-clocks a Python-level
-call, and the roughly 0.3ms of per-call dispatch swamps the kernels
-themselves. Profiled so that only GPU time is counted, the coalesced kernel
-wins everywhere: 113us against 244us on this T4, and 7.7us against 11.9us
-on a B200. The faster the GPU, the more the fixed cost hides what you came
-to see — which is worth remembering the next time a wall-clock benchmark
-reports no difference.</p>
+non-coalesced kernel often comes out marginally ahead. That is the
+benchmark, not the kernels. It wall-clocks a Python-level call, and the
+roughly 0.4ms of per-call dispatch swamps the kernels themselves. Profiled
+so that only GPU time is counted, the coalesced kernel wins everywhere:
+113us against 246us on this T4, and 7.7us against 11.9us on a B200. The
+faster the GPU, the more the fixed cost hides what you came to see — which
+is worth remembering the next time a wall-clock benchmark reports no
+difference.</p>
 </blockquote>
 <h2 id="solution-23"><a class="header" href="#solution-23">Solution</a></h2>
 <details class="solution-details">
@@ -11974,10 +11976,8 @@ operations for both kernels:</p>
         return
 
     # Convert to (batch, seq, embed) coordinates
-    var batch_idx = global_idx // (seq_len * embed_dim)
-    var remaining = global_idx % (seq_len * embed_dim)
-    var seq_idx = remaining // embed_dim
-    var embed_idx = remaining % embed_dim
+    var batch_idx, remaining = divmod(global_idx, (seq_len * embed_dim))
+    var seq_idx, embed_idx = divmod(remaining, embed_dim)
 
     # Get token index
     var token_idx_val = Int(indices[batch_idx, seq_idx])
@@ -12033,8 +12033,7 @@ operations for both kernels:</p>
         return
 
     # Convert to (batch, seq) coordinates
-    var batch_idx = batch_seq_idx // seq_len
-    var seq_idx = batch_seq_idx % seq_len
+    var batch_idx, seq_idx = divmod(batch_seq_idx, seq_len)
 
     # Get token index
     var token_idx_val = Int(indices[batch_idx, seq_idx])
@@ -12164,12 +12163,12 @@ consecutive addresses</li>
 memory</li>
 </ul>
 <h2 id="performance-results"><a class="header" href="#performance-results">Performance results</a></h2>
-<p>Benchmark results from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+<p>Benchmark results from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 570.133.20):</p>
 <pre><code class="language-text">Performance Results:
-   1D Coalesced:     0.486 ms
-   2D Non-coalesced: 0.625 ms
-   1D is 1.29x faster than 2D
+   1D Coalesced:     0.499 ms
+   2D Non-coalesced: 0.636 ms
+   1D is 1.27x faster than 2D
 </code></pre>
 <p>These are end-to-end wall-clock times per call, measured around the Python
 wrapper. Each trial also allocates a fresh output tensor and re-enters the
@@ -12567,9 +12566,7 @@ def matmul_idiomatic_tiled[
     )
     var acc: output.ElementType = 0
 
-    comptime for idx in range(
-        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-    ):
+    comptime for idx in range(ceildiv(inner, MATMUL_BLOCK_DIM_XY)):
         # Synchronously load tiles to shared memory - each thread loads one element
         var a_tile_row_start = block_idx.y * MATMUL_BLOCK_DIM_XY
         var a_tile_col_start = idx * MATMUL_BLOCK_DIM_XY
@@ -12860,9 +12857,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU UNFUSED
 ------------------------------------------
    Testing CPU performance...
-   CPU: 24.13ms (50 iterations)
+   CPU: 24.56ms (50 iterations)
    Testing GPU unfused performance...
-   GPU unfused: 27.95ms (50 iterations)
+   GPU unfused: 28.57ms (50 iterations)
 
    GPU unfused vs CPU: 0.86x slower
    CPU wins (GPU overhead &gt; computation benefit)
@@ -12883,7 +12880,7 @@ Learning outcomes:
 - Memory bandwidth vs compute trade-offs
 </code></pre>
 <blockquote>
-<p>These runs are from a Tesla T4 (MAX 26.6.0 / Mojo 1.1.0, driver
+<p>These runs are from a Tesla T4 (MAX 26.7.0 / Mojo 1.2.0, driver
 570.133.20). The verdict tracks how fast the GPU is. On a T4 the CPU wins
 both modes in every run, and on an A10G it still does: the tensors are
 small enough that launch and synchronization cost more than the work
@@ -13260,9 +13257,9 @@ Correctness Summary:
 ⚡ Benchmarking CPU vs GPU FUSED
 ----------------------------------------
    Testing CPU performance...
-   CPU: 25.00ms (50 iterations)
+   CPU: 25.04ms (50 iterations)
    Testing GPU fused performance...
-   GPU fused: 28.32ms (50 iterations)
+   GPU fused: 28.59ms (50 iterations)
 
    GPU fused vs CPU: 0.88x slower
    CPU wins (GPU overhead &gt; computation benefit)
@@ -13407,8 +13404,8 @@ Learning outcomes:
 </li>
 </ol>
 <p>Fusing the two operations removes the intermediate tensors and three of the four
-kernel launches the unfused path needs. At this puzzle’s size that shows up as a
-small margin - see the benchmark note below.</p>
+kernel launches the unfused path needs. At this puzzle’s size the difference is
+too small to measure reliably - see the benchmark note below.</p>
 </div>
 </details>
 <h2 id="advantages-of-kernel-fusion"><a class="header" href="#advantages-of-kernel-fusion">Advantages of kernel fusion</a></h2>
@@ -13422,23 +13419,22 @@ operations:</p>
 <li>Simpler implementation but less efficient</li>
 <li>Higher memory bandwidth usage</li>
 <li>Multiple kernel launches</li>
-<li>Benchmark results: 3183.57ms (GPU)</li>
 </ul>
 </li>
 <li>
 <p><strong>Fused implementation</strong>:</p>
 <ul>
 <li>Single kernel combining both operations</li>
-<li>More complex, and modestly faster at this size</li>
+<li>More complex to write</li>
 <li>Reduced memory bandwidth usage</li>
 <li>Single kernel launch</li>
-<li>Benchmark results: 3116.11ms (GPU)</li>
 </ul>
 </li>
 </ol>
-<p>At <code>[4, 4, 8] -&gt; [4, 4, 16]</code> the two are about 2% apart, which is inside the
-noise of a run dominated by Python and dispatch overhead. Fusion is the right
-structural choice, but this configuration is far too small to show it.</p>
+<p>At <code>[4, 4, 8] -&gt; [4, 4, 16]</code> the two land within run-to-run noise of each
+other, because Python and dispatch overhead dominate both runs. In the T4
+transcripts above, both lose to the CPU. Fusion is the right structural choice,
+but this configuration is far too small to show it.</p>
 <h3 id="memory-bandwidth-optimization"><a class="header" href="#memory-bandwidth-optimization">Memory bandwidth optimization</a></h3>
 <ol>
 <li>
@@ -14308,9 +14304,9 @@ Mojo vectorize:  32 threads  × 8 SIMD ops    = Automatic safety
 <p>Learn to interpret empirical benchmark results:</p>
 <pre><code class="language-text">Benchmark Results (SIZE=1,048,576):
 elementwise:        0.005ms  ← Coalesced access and maximum parallelism win
-vectorized:         0.149ms  ← Automatic vectorization, some bandwidth lost
-tiled:              0.260ms  ← Uncoalesced access with single-element loads
-manual_vectorized:  0.585ms  ← Uncoalesced access plus complex indexing
+vectorized:         0.083ms  ← Automatic vectorization, some bandwidth lost
+manual_vectorized:  0.246ms  ← Uncoalesced access plus complex indexing
+tiled:              0.266ms  ← Uncoalesced access with single-element loads
 </code></pre>
 <h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
 <p>Before diving into functional patterns, ensure you’re comfortable with:</p>
@@ -14453,7 +14449,7 @@ cross-thread or cross-block communication to reason about here.</p>
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
         # FILL IN (2 to 4 lines)
@@ -14468,7 +14464,7 @@ cross-thread or cross-block communication to reason about here.</p>
 <div class="solution-tips">
 <h3 id="1-understanding-the-function-structure"><a class="header" href="#1-understanding-the-function-structure">1. <strong>Understanding the function structure</strong></a></h3>
 <p>The <code>elementwise</code> function expects a nested function with this exact signature:</p>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def your_function[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -&gt; None:
@@ -14476,7 +14472,7 @@ def your_function[
 </code></pre>
 <p><strong>Why each part matters:</strong></p>
 <ul>
-<li><code>@always_inline</code>: Forces inlining to eliminate function call overhead in GPU
+<li><code>@inline(.always)</code>: Forces inlining to eliminate function call overhead in GPU
 kernels</li>
 <li><code>{var}</code>: The capture list - allows access to variables from the outer scope
 (the input/output tensors)</li>
@@ -14581,7 +14577,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
         # Note: This is thread-local SIMD - each thread processes its own vector of data
@@ -14623,7 +14619,7 @@ neighboring threads touch neighboring chunks</li>
 <li><strong>GPU target selection</strong>: Works across different GPU architectures</li>
 </ul>
 <h3 id="2-deep-dive-nested-function-architecture"><a class="header" href="#2-deep-dive-nested-function-architecture">2. <strong>Deep dive: nested function architecture</strong></a></h3>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def add[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -&gt; None:
@@ -14633,7 +14629,7 @@ def add[
 <li><strong><code>simd_width: Int</code></strong>: A compile-time parameter, so the function is
 instantiated separately for each unique <code>simd_width</code>, allowing aggressive
 optimization.</li>
-<li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call
+<li><strong><code>@inline(.always)</code></strong>: Critical for GPU performance - eliminates function call
 overhead by embedding the code directly into the kernel.</li>
 <li><strong><code>{var}</code></strong>: The capture list enables <strong>lexical scoping</strong> - the inner function
 can access variables from the outer scope without explicit parameter passing.</li>
@@ -14828,7 +14824,7 @@ def tiled_elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def process_tiles[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -14840,7 +14836,7 @@ def tiled_elementwise_add[
 
         # FILL IN (6 lines at most)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=1, target="gpu"](
         process_tiles, Coord(num_tiles), ctx
     )
@@ -14853,7 +14849,7 @@ def tiled_elementwise_add[
 <div class="solution-tips">
 <h3 id="1-understanding-tile-organization"><a class="header" href="#1-understanding-tile-organization">1. <strong>Understanding tile organization</strong></a></h3>
 <p>The tiled approach divides your data into fixed-size chunks:</p>
-<pre><code class="language-mojo">var num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
+<pre><code class="language-mojo">var num_tiles = ceildiv(size, tile_size)
 </code></pre>
 <p>For a 1024-element vector with <code>TILE_SIZE=32</code>: <code>1024 ÷ 32 = 32</code> tiles exactly.</p>
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
@@ -14950,7 +14946,7 @@ def tiled_elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def process_tiles[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -14966,7 +14962,7 @@ def tiled_elementwise_add[
             var ret = a_vec + b_vec
             output_tile.store[simd_width](Coord(i), ret)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=1, target="gpu"](
         process_tiles, Coord(num_tiles), ctx
     )
@@ -15214,7 +15210,7 @@ The focus is SIMD control inside a tile, not coordination across them.</p>
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
 
-    @always_inline
+    @inline(.always)
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -15223,7 +15219,7 @@ The focus is SIMD control inside a tile, not coordination across them.</p>
         # FILL IN (7 lines at most)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    var num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = ceildiv(size, chunk_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
@@ -15307,7 +15303,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
 
-    @always_inline
+    @inline(.always)
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -15322,7 +15318,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
             output.store[simd_width](Coord(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    var num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = ceildiv(size, chunk_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
@@ -15399,7 +15395,7 @@ assumes there isn’t one</li>
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size elements (not SIMD groups)
-    @always_inline
+    @inline(.always)
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -15410,7 +15406,7 @@ assumes there isn’t one</li>
 
         # FILL IN (9 lines at most)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )
@@ -15512,7 +15508,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size elements (not SIMD groups)
-    @always_inline
+    @inline(.always)
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -15534,7 +15530,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=num_threads_per_tile, target="gpu"](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )
@@ -15857,7 +15853,7 @@ reveals the true performance story on your specific hardware.</em></p>
   </div>
 </div>
 <p>Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.6.0 / Mojo 1.1.0, driver 595.71.05 — read the ranking,
+is a B200 with MAX 26.7.0 / Mojo 1.2.0, driver 595.71.05 — read the ranking,
 not the absolute times):</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
@@ -15885,18 +15881,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0046815             | 10    |
-| tiled_16_4                | 0.0040383             | 10    |
-| manual_vectorized_16_4    | 0.0041983             | 10    |
-| vectorized_16_4           | 0.0041183999999999995 | 10    |
-| elementwise_128_16        | 0.004086299999999999  | 10    |
-| tiled_128_16              | 0.0038911             | 10    |
-| manual_vectorized_128_16  | 0.0040447             | 10    |
-| vectorized_128_16         | 0.0047263             | 10    |
-| elementwise_1M_1024       | 0.0054142999999999995 | 10    |
-| tiled_1M_1024             | 0.2654655             | 10    |
-| manual_vectorized_1M_1024 | 0.2462431             | 10    |
-| vectorized_1M_1024        | 0.0834783             | 10    |
+| elementwise_16_4          | 0.0039296             | 10    |
+| tiled_16_4                | 0.0055551             | 10    |
+| manual_vectorized_16_4    | 0.0040288             | 10    |
+| vectorized_16_4           | 0.0038816000000000002 | 10    |
+| elementwise_128_16        | 0.0042112             | 10    |
+| tiled_128_16              | 0.0043391             | 10    |
+| manual_vectorized_128_16  | 0.0043806999999999995 | 10    |
+| vectorized_128_16         | 0.0042784             | 10    |
+| elementwise_1M_1024       | 0.0051359000000000005 | 10    |
+| tiled_1M_1024             | 0.26570879999999997   | 10    |
+| manual_vectorized_1M_1024 | 0.2458656             | 10    |
+| vectorized_1M_1024        | 0.0827455             | 10    |
 
 Benchmarks completed!
 </code></pre>
@@ -15916,11 +15912,11 @@ var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 <h2 id="benchmarking-implementation-essentials"><a class="header" href="#benchmarking-implementation-essentials">Benchmarking implementation essentials</a></h2>
 <h3 id="core-workflow-pattern"><a class="header" href="#core-workflow-pattern">Core workflow pattern</a></h3>
 <p>Each benchmark follows a streamlined pattern:</p>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     var bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    @always_inline
+    @inline(.always)
     def pattern_workflow(ctx: DeviceContext) raises {imm}:
       # Compute: Execute the algorithm being measured
 
@@ -15978,11 +15974,11 @@ issues <code>SIMD_WIDTH</code> times as many memory operations for the same data
 <ul>
 <li>Launch overhead dominates (~0.004ms baseline)</li>
 <li>Thread count differences don’t matter</li>
-<li>Tiled/vectorize show slightly lower overhead</li>
+<li>The ordering between patterns changes from run to run</li>
 </ul>
 <p><strong>Medium problems (SIZE=128):</strong></p>
 <ul>
-<li>Still overhead-dominated (~0.004ms for all)</li>
+<li>Still overhead-dominated (~0.004–0.005ms for all)</li>
 <li>Performance differences nearly disappear</li>
 <li>Transitional behavior between overhead and computation</li>
 </ul>
@@ -15997,7 +15993,7 @@ issues <code>SIMD_WIDTH</code> times as many memory operations for the same data
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
 <tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.005ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.084ms</td><td>Uncoalesced memory access hurts performance</td></tr>
+<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.083ms</td><td>Uncoalesced memory access hurts performance</td></tr>
 <tr><td>🥉</td><td><strong>Manual vectorized</strong></td><td>~0.25ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads</td></tr>
 <tr><td>4th</td><td><strong>Tiled</strong></td><td>~0.27ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
 </tbody></table>
@@ -16717,7 +16713,7 @@ memory, barriers, and tree reduction:</p>
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """
-    This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
+    This is the complex approach from p12.mojo - kept for comparison.
     """
     var shared = stack_allocation[dtype=dtype, address_space=.SHARED](
         row_major[WARP_SIZE]()
@@ -16972,7 +16968,7 @@ patterns:</p>
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def compute_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -16992,7 +16988,7 @@ patterns:</p>
 <h3 id="1-understanding-the-functional-approach-structure"><a class="header" href="#1-understanding-the-functional-approach-structure">1. <strong>Understanding the functional approach structure</strong></a></h3>
 <p>You need to complete the <code>compute_dot_product</code> function with
 <strong>10 lines or fewer</strong>:</p>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def compute_dot_product[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -&gt; None:
@@ -17084,7 +17080,7 @@ Puzzle 24 complete ✅
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def compute_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -17157,8 +17153,8 @@ approaches; only the launch mechanism differs</li>
 </code></pre>
   </div>
 </div>
-<p>Here’s example output from a complete benchmark run (a B200 with MAX 26.6.0 /
-Mojo 1.1.0 — read the ranking, not the absolute times; the iteration count is
+<p>Here’s example output from a complete benchmark run (a B200 with MAX 26.7.0 /
+Mojo 1.2.0 — read the ranking, not the absolute times; the iteration count is
 chosen by the framework, bounded by <code>max_iters</code>):</p>
 <pre><code class="language-text">--------------------------------------------------------------------------------
 Testing SIZE=1 x WARP_SIZE, BLOCKS=1
@@ -17197,27 +17193,27 @@ Running simple_warp_65536x
 Running functional_warp_65536x
 | name                   | met (ms)              | iters |
 | ---------------------- | --------------------- | ----- |
-| traditional_1x         | 0.0044927000000000005 | 10    |
-| simple_warp_1x         | 0.0046112             | 10    |
+| traditional_1x         | 0.004608              | 10    |
+| simple_warp_1x         | 0.0044128             | 10    |
 | functional_warp_1x     | 0.00416               | 10    |
-| traditional_4x         | 0.0043935             | 10    |
-| simple_warp_4x         | 0.004163200000000001  | 10    |
-| functional_warp_4x     | 0.004086299999999999  | 10    |
-| traditional_32x        | 0.004326399999999999  | 10    |
-| simple_warp_32x        | 0.0049695             | 10    |
-| functional_warp_32x    | 0.003936              | 10    |
-| traditional_256x       | 0.0041728             | 10    |
-| simple_warp_256x       | 0.0041728             | 10    |
-| functional_warp_256x   | 0.0038495             | 10    |
-| traditional_2048x      | 0.004377600000000001  | 10    |
-| simple_warp_2048x      | 0.004022400000000001  | 10    |
-| functional_warp_2048x  | 0.0037344             | 10    |
-| traditional_16384x     | 0.012451199999999999  | 10    |
-| simple_warp_16384x     | 0.0125279             | 10    |
-| functional_warp_16384x | 0.007955199999999999  | 10    |
-| traditional_65536x     | 0.0396447             | 10    |
-| simple_warp_65536x     | 0.0395007             | 10    |
-| functional_warp_65536x | 0.0210879             | 10    |
+| traditional_4x         | 0.0043168             | 10    |
+| simple_warp_4x         | 0.0043327             | 10    |
+| functional_warp_4x     | 0.0038975000000000004 | 10    |
+| traditional_32x        | 0.0044511             | 10    |
+| simple_warp_32x        | 0.0043039             | 10    |
+| functional_warp_32x    | 0.0040447             | 10    |
+| traditional_256x       | 0.0041535             | 10    |
+| simple_warp_256x       | 0.004086299999999999  | 10    |
+| functional_warp_256x   | 0.0038462999999999995 | 10    |
+| traditional_2048x      | 0.0041696             | 10    |
+| simple_warp_2048x      | 0.0041087             | 10    |
+| functional_warp_2048x  | 0.0038176             | 10    |
+| traditional_16384x     | 0.011590399999999999  | 10    |
+| simple_warp_16384x     | 0.0110303             | 10    |
+| functional_warp_16384x | 0.00688               | 10    |
+| traditional_65536x     | 0.035712              | 10    |
+| simple_warp_65536x     | 0.034966399999999995  | 10    |
+| functional_warp_65536x | 0.018928              | 10    |
 
 Benchmarks completed!
 
@@ -17239,10 +17235,10 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 <li><strong>Small scales (1x-256x)</strong>: All three land within a few microseconds of each
 other and the ordering flips between runs - the grid is too small for the
 measurement to separate them, which is why the analysis text says so</li>
-<li><strong>Medium scale (2048x)</strong>: The warp approaches start to pull ahead of the
-traditional tree reduction</li>
+<li><strong>Medium scale (2048x)</strong>: Still close to the launch-overhead floor, so any
+lead here is within run-to-run noise</li>
 <li><strong>Large scales (16K-65K)</strong>: The gap widens rather than closing - in this run
-the functional warp approach finishes about 1.6x faster than the traditional
+the functional warp approach finishes about 1.7x faster than the traditional
 one at 16384x and about 1.9x faster at 65536x</li>
 <li><strong>Variability</strong>: Performance depends heavily on specific GPU architecture and
 memory subsystem</li>
@@ -22547,7 +22543,7 @@ computation</li>
 <a href="puzzle_28/../puzzle_16/tiled.html#solution-idiomatic-tiletensor-tiling">Puzzle 16’s idiomatic matmul</a>,
 you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
-<li><strong><a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/layout/tile_io/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
 Launch background DRAM→SRAM transfers that bypass the register file</li>
 <li><strong><a href="https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 Synchronize transfer completion before accessing shared memory</li>
@@ -22703,7 +22699,7 @@ async copy for efficiency: \[\text{output}[i] =
     input: TileTensor[
         mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
     ],
-    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
+    kernel: TileTensor[dtype, type_of(kernel_layout), ImmutAnyOrigin],
 ) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -22712,18 +22708,12 @@ async copy for efficiency: \[\text{output}[i] =
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_TILE_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var kernel_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(KERNEL_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[dtype, .SHARED](
+        row_major[CONV_TILE_SIZE]()
+    )
+    var kernel_shared = stack_allocation[dtype, .SHARED](
+        row_major[KERNEL_SIZE]()
+    )
 
     # FILL IN HERE (roughly 19 lines)
 
@@ -22817,7 +22807,7 @@ overlapping expensive DRAM transfers with useful computation:</p>
     input: TileTensor[
         mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
     ],
-    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
+    kernel: TileTensor[dtype, type_of(kernel_layout), ImmutAnyOrigin],
 ) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -22826,27 +22816,21 @@ overlapping expensive DRAM transfers with useful computation:</p>
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_TILE_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var kernel_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(KERNEL_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[dtype, .SHARED](
+        row_major[CONV_TILE_SIZE]()
+    )
+    var kernel_shared = stack_allocation[dtype, .SHARED](
+        row_major[KERNEL_SIZE]()
+    )
 
     var local_i = thread_idx.x
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
-    comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+    comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
     copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 
     # Phase 2: Load kernel synchronously (small data)
@@ -22882,8 +22866,8 @@ overlapping expensive DRAM transfers with useful computation:</p>
 <h4 id="phase-by-phase-breakdown"><a class="header" href="#phase-by-phase-breakdown"><strong>Phase-by-phase breakdown</strong></a></h4>
 <p><strong>Phase 1: Async Copy Launch</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
-var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
@@ -22896,7 +22880,7 @@ indices results in undefined behavior. The implementation must ensure the tile
 size and offset remain within valid array bounds.</p>
 </li>
 <li>
-<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC)</code> creates a
+<p><strong>Thread Layout</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC]()</code> creates a
 256-element 1-D layout, one entry per thread in the block. This is
 <strong>critical</strong> -
 the layout must match the physical thread arrangement for optimal coalesced
@@ -22999,7 +22983,7 @@ scenarios with larger overlaps, speedups can be much more significant.</p>
 <h4 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h4>
 <ol>
 <li>
-<p><strong>Thread Layout Matching</strong>: The 1-D <code>Layout.row_major(256)</code> layout supplies
+<p><strong>Thread Layout Matching</strong>: The 1-D <code>row_major[256]()</code> layout supplies
 one entry per thread in the block’s <code>(256, 1)</code> organization, enabling optimal
 memory coalescing.</p>
 </li>
@@ -23687,7 +23671,7 @@ capabilities:</strong></p>
 <li><strong>Precise control</strong>: <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a> sets up reusable barrier objects with specific thread counts</li>
 <li><strong>State tracking</strong>: <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> signals individual thread completion and maintains arrival count</li>
 <li><strong>Flexible waiting</strong>: <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> polls a completion state without blocking, so you decide what a thread does while waiting</li>
-<li><strong>Reusable objects</strong>: Same barrier can be reinitialized and reused across multiple iterations</li>
+<li><strong>Reusable objects</strong>: Once every thread arrives, a barrier advances to its next phase on its own, so the same object serves every iteration without being reinitialized</li>
 <li><strong>Multiple barriers</strong>: Different barrier objects for different synchronization points (initialization, iteration, finalization)</li>
 <li><strong>Hardware primitive</strong>: Maps directly to the NVIDIA <code>mbarrier</code> instructions rather than to a single block-wide barrier</li>
 <li><strong>Memory semantics</strong>: Explicit control over memory visibility and ordering guarantees</li>
@@ -23700,7 +23684,7 @@ inspect, and reuse:</p>
 <ul>
 <li><strong>Buffer role alternation</strong>: An arrival count scoped to the threads that wrote the buffer about to be read</li>
 <li><strong>Iteration boundaries</strong>: Separate barrier objects for initialization, the iteration loop, and finalization</li>
-<li><strong>State management</strong>: <code>mbarrier_arrive()</code> returns a state token, so arrival can be tracked and not merely awaited</li>
+<li><strong>State management</strong>: <code>mbarrier_arrive()</code> returns a token for the barrier’s current phase, so arrival can be tracked and not merely awaited</li>
 <li><strong>Composability</strong>: The same primitive tracks <code>cp.async</code> and TMA transfer completion on newer hardware</li>
 </ul>
 <p>This puzzle demonstrates <strong>synchronization patterns</strong> used in real-world GPU
@@ -23835,7 +23819,9 @@ Poll until everyone has arrived; the call is non-blocking, so it belongs in a
 loop</li>
 <li><strong>Buffer swap safety</strong>: Prevents reading from buffer while others still
 writing</li>
-<li><strong>Barrier reinitialization</strong>: Reset barrier state between iterations</li>
+<li><strong>Phase tracking</strong>: Each thread waits on the token its own <code>mbarrier_arrive()</code>
+returned; the barrier moves to its next phase by itself, so it is never
+reinitialized inside the loop</li>
 </ul>
 <p><strong>Output phase:</strong></p>
 <ul>
@@ -23900,8 +23886,8 @@ writing</li>
 
     # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
     # poll, so spin until it reports completion.
-    _ = mbarrier_arrive(init_barrier.ptr)
-    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+    var init_token = mbarrier_arrive(init_barrier.ptr)
+    while not mbarrier_test_wait(init_barrier.ptr, init_token):
         pass
 
     # Iterative stencil processing with double-buffering
@@ -23919,18 +23905,12 @@ writing</li>
             ...
 
         # Memory barrier: wait for all writes before buffer swap. test_wait is
-        # non-blocking, so poll until every thread has arrived.
-        _ = mbarrier_arrive(iter_barrier.ptr)
-        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+        # non-blocking, so poll until every thread has arrived. The barrier
+        # advances to its next phase on its own, so it is not re-initialized,
+        # and each thread waits on the token its own arrive returned.
+        var iter_token = mbarrier_arrive(iter_barrier.ptr)
+        while not mbarrier_test_wait(iter_barrier.ptr, iter_token):
             pass
-
-        # Reinitialize barrier for next iteration
-        if local_i == 0:
-            mbarrier_init(iter_barrier.ptr, TPB)
-
-        # Make the reinitialized barrier visible before the next iteration's
-        # mbarrier_arrive.
-        barrier()
 
     # Write final results from active buffer
     if local_i &lt; TPB and global_i &lt; size:
@@ -23942,8 +23922,8 @@ writing</li>
             output[global_i] = buffer_B[local_i]
 
     # Final barrier — poll until every thread has arrived.
-    _ = mbarrier_arrive(final_barrier.ptr)
-    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+    var final_token = mbarrier_arrive(final_barrier.ptr)
+    while not mbarrier_test_wait(final_barrier.ptr, final_token):
         pass
 
 
@@ -23977,19 +23957,23 @@ assignments</li>
 <ul>
 <li>Call
 <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
-after each thread completes its write operations</li>
+after each thread completes its write operations, and keep the token it
+returns</li>
 <li>Follow it with a polling loop on
 <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>:
 the API is a <strong>non-blocking</strong> check, so call it inside
-<code>while not mbarrier_test_wait(...): pass</code> to actually wait for every thread
-to arrive before the buffer swap</li>
-<li>Reinitialize barriers between iterations for reuse:
-<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
-<li>Only thread 0 should reinitialize barriers to avoid race conditions</li>
+<code>while not mbarrier_test_wait(barrier, token): pass</code> to actually wait for
+every thread to arrive before the buffer swap</li>
+<li>Pass the token from <code>mbarrier_arrive()</code>, not a thread count: the token
+identifies the phase you are waiting on</li>
+<li>Don’t reinitialize a barrier inside the loop. The barrier starts its next
+phase on its own once every thread arrives, and a reinit can reset it while
+a slower thread is still polling the phase that just completed, leaving that
+thread waiting forever</li>
 <li>Insert a <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/barrier/"><code>barrier()</code></a>
-after each <code>mbarrier_init</code> call (initial setup and per-iteration reinit) so
-every thread observes the initialized barrier before any thread calls
-<code>mbarrier_arrive</code>. This matches the
+after the initial <code>mbarrier_init</code> calls so every thread observes the
+initialized barriers before any thread calls <code>mbarrier_arrive</code>. This matches
+the
 <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers initialization pattern</a></li>
 </ul>
 <h3 id="output-selection"><a class="header" href="#output-selection"><strong>Output selection</strong></a></h3>
@@ -24093,8 +24077,8 @@ Puzzle 29 complete ✅
 
     # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
     # poll, so spin until it reports completion.
-    _ = mbarrier_arrive(init_barrier.ptr)
-    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+    var init_token = mbarrier_arrive(init_barrier.ptr)
+    while not mbarrier_test_wait(init_barrier.ptr, init_token):
         pass
 
     # Iterative stencil processing with double-buffering
@@ -24140,18 +24124,12 @@ Puzzle 29 complete ✅
                     buffer_A[local_i] = buffer_B[local_i]
 
         # Memory barrier: wait for all writes before buffer swap. test_wait is
-        # non-blocking, so poll until every thread has arrived.
-        _ = mbarrier_arrive(iter_barrier.ptr)
-        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+        # non-blocking, so poll until every thread has arrived. The barrier
+        # advances to its next phase on its own, so it is not re-initialized,
+        # and each thread waits on the token its own arrive returned.
+        var iter_token = mbarrier_arrive(iter_barrier.ptr)
+        while not mbarrier_test_wait(iter_barrier.ptr, iter_token):
             pass
-
-        # Reinitialize barrier for next iteration
-        if local_i == 0:
-            mbarrier_init(iter_barrier.ptr, TPB)
-
-        # Make the reinitialized barrier visible before the next iteration's
-        # mbarrier_arrive.
-        barrier()
 
     # Write final results from active buffer
     if local_i &lt; TPB and global_i &lt; size:
@@ -24163,8 +24141,8 @@ Puzzle 29 complete ✅
             output[global_i] = buffer_B[local_i]
 
     # Final barrier — poll until every thread has arrived.
-    _ = mbarrier_arrive(final_barrier.ptr)
-    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+    var final_token = mbarrier_arrive(final_barrier.ptr)
+    while not mbarrier_test_wait(final_barrier.ptr, final_token):
         pass
 
 
@@ -24224,10 +24202,13 @@ iteration</li>
 <li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>:
 Initialize barrier for specific thread count (TPB)</li>
 <li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>:
-Signal individual thread completion of write phase</li>
+Signal individual thread completion of write phase, returning a token for the
+barrier’s current phase</li>
 <li><strong><a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>:
-Non-blocking poll of barrier state—call it in a loop until it returns true</li>
-<li><strong>Reinitialization</strong>: Reset barrier state between iterations for reuse</li>
+Non-blocking check of whether the token’s phase has completed—call it in a
+loop until it returns true</li>
+<li><strong>Phase advance</strong>: When the last thread arrives, the barrier moves to its next
+phase by itself, so one barrier object serves every iteration with no reinit</li>
 </ul>
 <p><strong>Critical timing sequence:</strong></p>
 <ol>
@@ -24240,9 +24221,10 @@ the initialized state is visible block-wide before any
 <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#initialization">NVIDIA Async Barriers docs</a>)</li>
 <li><strong>All threads write</strong>: Each thread updates its assigned buffer element</li>
 <li><strong>Signal completion</strong>: Each thread calls
-<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
+<a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>
+and keeps the token it returns</li>
 <li><strong>Poll until all arrived</strong>: Every thread spins in
-<code>while not mbarrier_test_wait(...): pass</code> —
+<code>while not mbarrier_test_wait(barrier, token): pass</code> —
 <a href="https://max.modular.com/api/mojo/max/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>
 is a non-blocking check, so a single call is not a wait</li>
 <li><strong>Safe to proceed</strong>: Now safe to swap buffer roles for next iteration</li>
@@ -24290,12 +24272,12 @@ var stencil_input = buffer_B[10]  # Undefined behavior!
 <pre><code class="language-mojo"># All threads write their results
 buffer_B[local_i] = stencil_result
 
-# Signal write completion
-_ = mbarrier_arrive(iter_barrier.ptr)
+# Signal write completion; the token names this phase of the barrier
+var token = mbarrier_arrive(iter_barrier.ptr)
 
 # Poll until ALL threads have completed writes. mbarrier_test_wait is
 # non-blocking, so a single call is NOT a wait — it must run in a loop.
-while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+while not mbarrier_test_wait(iter_barrier.ptr, token):
     pass
 
 # Now safe to read - all writes guaranteed complete
@@ -24327,7 +24309,8 @@ else:
 <p><strong>Synchronization overhead:</strong></p>
 <ul>
 <li><strong>mbarrier cost</strong>: Higher than basic <code>barrier()</code>, and this pattern still needs
-a <code>barrier()</code> after every <code>mbarrier_init</code> to publish the barrier state</li>
+one <code>barrier()</code> after the initial <code>mbarrier_init</code> calls to publish the
+barrier state</li>
 <li><strong>Iteration scaling</strong>: Overhead increases linearly with iteration count</li>
 <li><strong>Thread efficiency</strong>: All threads remain active throughout processing</li>
 </ul>
@@ -24635,7 +24618,7 @@ with specific code locations</li>
 <code>--debug-level=full</code> does not disable optimizations — <code>--optimization-level</code>
 still defaults to 3 — but the debug metadata itself has a cost, and Nsight
 Compute warns that such a build “can differ greatly from release mode”. On a
-B200 these kernels run 1.7–2.8× slower with the flag than without it, and
+B200 these kernels run about 2–5× slower with the flag than without it, and
 register counts inflate enough to change measured occupancy. Passing
 <code>--optimization-level=3</code> explicitly does not recover the difference.</p>
 <p>So choose the build by what you are measuring:</p>
@@ -24673,27 +24656,28 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 # - CPU-GPU synchronization gaps
 </code></pre>
 <p><strong>What you’ll see</strong> (actual output from a 2×2 matrix multiplication, captured on
-a B200 with MAX 26.5.0 / Mojo 1.0.0 and <code>nsys</code> 2026.2.1, abridged to the rows
-that matter):</p>
+a B200 from a release build with MAX 26.7.0 / Mojo 1.2.0 and <code>nsys</code> 2026.5.1,
+abridged to the rows that matter; the debug build from Step 1 reports a kernel
+time about 2.5× longer):</p>
 <pre><code class="language-txt">** CUDA API Summary (cuda_api_sum):
  Time (%)  Total Time (ns)  Num Calls    Avg (ns)       Med (ns)      Min (ns)     Max (ns)    StdDev (ns)              Name
  --------  ---------------  ---------  -------------  -------------  -----------  -----------  -----------  -----------------------------
-     99.8      402,987,325          1  402,987,325.0  402,987,325.0  402,987,325  402,987,325          0.0  cuMemAllocHost_v2
-      0.0          128,497          1      128,497.0      128,497.0      128,497      128,497          0.0  cuStreamCreate
-      0.0           63,032          1       63,032.0       63,032.0       63,032       63,032          0.0  cuModuleLoadDataEx
-      0.0           32,316          1       32,316.0       32,316.0       32,316       32,316          0.0  cuLaunchKernelEx
+     99.9      433,401,961          1  433,401,961.0  433,401,961.0  433,401,961  433,401,961          0.0  cuMemAllocHost_v2
+      0.0          151,857          1      151,857.0      151,857.0      151,857      151,857          0.0  cuStreamCreate
+      0.0           78,604          1       78,604.0       78,604.0       78,604       78,604          0.0  cuModuleLoadDataEx
+      0.0           23,951          1       23,951.0       23,951.0       23,951       23,951          0.0  cuLaunchKernelEx
 
 ** CUDA GPU Kernel Summary (cuda_gpu_kern_sum):
  Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                              Name
  --------  ---------------  ---------  --------  --------  --------  --------  -----------  ------------------------------------------------------------
-    100.0            2,176          1   2,176.0   2,176.0     2,176     2,176          0.0  p16_naive_matmul_SIMD_DType6A6AcB6A6AcB6A6A_91c578bced6e1d94
+    100.0            1,920          1   1,920.0   1,920.0     1,920     1,920          0.0  p16_naive_matmul_SIMD_DType_i6A6AcB6A6AcBuA_00f86674f248c934
 
 ** CUDA GPU MemOps Summary (by Time) (cuda_gpu_mem_time_sum):
  Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation
  --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
-     53.6           12,768      3   4,256.0   3,872.0     3,808     5,088        721.2  [CUDA memcpy Device-to-Host]
-     28.1            6,688      4   1,672.0   1,632.0     1,184     2,240        433.6  [CUDA memset]
-     18.4            4,384      3   1,461.3   1,632.0       864     1,888        532.9  [CUDA memcpy Host-to-Device]
+     51.4           15,072      4   3,768.0   3,728.0     2,720     4,896        889.6  [CUDA memcpy Device-to-Host]
+     26.9            7,872      5   1,574.4   1,600.0     1,056     2,048        351.6  [CUDA memset]
+     21.7            6,368      4   1,592.0   1,584.0     1,504     1,696         80.0  [CUDA memcpy Host-to-Device]
 </code></pre>
 <p>The kernel name in the summary is a mangled symbol that encodes the kernel’s
 full signature and ends in a content hash, so the exact string you see will
@@ -24702,11 +24686,11 @@ the cost either way, but whether it lands on <code>cuMemAllocHost_v2</code> or
 <code>cuMemAllocAsync</code> depends on the driver and the allocation path.</p>
 <p><strong>Key Performance Insights</strong>:</p>
 <ul>
-<li><strong>Memory allocation dominates</strong>: 99.8% of total time spent in a single host
+<li><strong>Memory allocation dominates</strong>: 99.9% of total time spent in a single host
 allocation</li>
-<li><strong>Kernel is lightning fast</strong>: Only 2,176 ns (0.000002176 seconds) execution
+<li><strong>Kernel is lightning fast</strong>: Only 1,920 ns (0.00000192 seconds) execution
 time</li>
-<li><strong>Memory transfer breakdown</strong>: 53.6% Device→Host, 28.1% memset, 18.4%
+<li><strong>Memory transfer breakdown</strong>: 51.4% Device→Host, 26.9% memset, 21.7%
 Host→Device</li>
 <li><strong>Tiny data sizes</strong>: All memory operations are &lt; 0.001 MB (4 float32 values =
 16 bytes)</li>
@@ -24744,19 +24728,19 @@ nsys stats --force-export=true matmul_shared.nsys-rep &gt; shared_stats.txt
 nsys stats --force-export=true matmul_tiled.nsys-rep &gt; tiled_stats.txt
 nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep &gt; idiomatic_tiled_stats.txt
 </code></pre>
-<p><strong>Fair Comparison Results</strong> (actual output from profiling, same B200 run as
-above). Allocation dominates every variant, so only the kernel column
-discriminates:</p>
+<p><strong>Fair Comparison Results</strong> (release build, same B200 session as above, three
+runs of each variant). Allocation dominates every variant, so only the kernel
+column discriminates:</p>
 <h3 id="comparison-1-2-x-2-matrices"><a class="header" href="#comparison-1-2-x-2-matrices">Comparison 1: 2 x 2 matrices</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Implementation</th><th>Kernel Execution</th><th>Performance</th></tr></thead><tbody>
-<tr><td><strong>Naive</strong></td><td>✅ 2,176 ns</td><td>Baseline</td></tr>
-<tr><td><strong>Shared</strong> (<code>--single-block</code>)</td><td>✅ 2,368 ns</td><td><strong>+8.8% slower</strong></td></tr>
+<tr><td><strong>Naive</strong></td><td>✅ 1,888–2,208 ns</td><td>Baseline</td></tr>
+<tr><td><strong>Shared</strong> (<code>--single-block</code>)</td><td>✅ 1,920–2,336 ns</td><td>Within run-to-run noise</td></tr>
 </tbody></table>
 </div>
 <h3 id="comparison-2-9-x-9-matrices"><a class="header" href="#comparison-2-9-x-9-matrices">Comparison 2: 9 x 9 matrices</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Implementation</th><th>Kernel Execution</th><th>Performance</th></tr></thead><tbody>
-<tr><td><strong>Tiled</strong> (manual)</td><td>✅ 2,880 ns</td><td>Baseline</td></tr>
-<tr><td><strong>Idiomatic Tiled</strong></td><td>✅ 2,880 ns</td><td>Identical</td></tr>
+<tr><td><strong>Tiled</strong> (manual)</td><td>✅ 2,496–2,784 ns</td><td>Baseline</td></tr>
+<tr><td><strong>Idiomatic Tiled</strong></td><td>✅ 2,752–2,880 ns</td><td>About 200 ns slower</td></tr>
 </tbody></table>
 </div>
 <p><strong>Key Insights from Fair Comparisons</strong>:</p>
@@ -24770,8 +24754,10 @@ discriminates:</p>
 <ul>
 <li><strong>All variants dominated by memory allocation</strong> (&gt;99% of time)</li>
 <li><strong>Kernel execution is irrelevant</strong> compared to setup costs</li>
-<li><strong>“Optimizations” can hurt</strong>: shared memory adds 8.8% overhead here, and the
-async-copy variant buys nothing back — the two tiled kernels time the same</li>
+<li><strong>“Optimizations” buy nothing here</strong>: shared memory lands inside naive’s
+run-to-run spread, and the async-copy idiomatic variant runs about 200
+nanoseconds <em>slower</em> than the manual tiled one on average. Differences that
+small are launch overhead, not algorithm</li>
 <li><strong>The real lesson</strong>: For tiny workloads, algorithm choice doesn’t matter -
 overhead dominates everything</li>
 </ul>
@@ -25035,7 +25021,9 @@ nsys profile \
 <li><code>--trace=cuda,osrt,nvtx</code>: Comprehensive API tracing</li>
 <li><code>--cuda-memory-usage=true</code>: Track memory allocation/deallocation</li>
 <li><code>--cuda-um-cpu/gpu-page-faults=true</code>: Monitor Unified Memory page faults</li>
-<li><code>--delay=2</code>: Wait 2 seconds before profiling (avoid cold start)</li>
+<li><code>--delay=2</code>: Wait 2 seconds before profiling (avoid cold start). Leave it out
+for short programs: the puzzles finish inside the delay, so <code>nsys</code> would
+record nothing</li>
 <li><code>--duration=30</code>: Profile for 30 seconds max</li>
 <li><code>--sample=cpu</code>: Include CPU sampling for hotspot analysis</li>
 <li><code>--cpuctxsw=process-tree</code>: Track CPU context switches</li>
@@ -25245,13 +25233,13 @@ mojo problems/p30/p30.mojo --benchmark
 <p>You’ll see dramatic timing differences between kernels! One kernel is
 <strong>much slower</strong> than the others. Your job is to figure out why using profiling
 tools <strong>without</strong> looking at the code.</p>
-<p><strong>Example output</strong> (B200, MAX 26.5.0 / Mojo 1.0.0 — your absolute times will
+<p><strong>Example output</strong> (B200, MAX 26.7.0 / Mojo 1.2.0 — your absolute times will
 differ, the ratio between them is the point):</p>
 <pre><code class="language-text">| name    | met (ms)  | iters |
 | ------- | --------- | ----- |
-| kernel1 | 0.0735    | 100   |
-| kernel2 | 371.16    | 100   |  &lt;- This one is much slower!
-| kernel3 | 0.0809    | 100   |
+| kernel1 | 0.0698    | 100   |
+| kernel2 | 347.63    | 100   |  &lt;- This one is much slower!
+| kernel3 | 0.0772    | 100   |
 </code></pre>
 <h3 id="step-2-prepare-your-code-for-profiling"><a class="header" href="#step-2-prepare-your-code-for-profiling">Step 2: Prepare your code for profiling</a></h3>
 <p><strong>Critical</strong>: For source-level attribution, build with full debug information:</p>
@@ -25270,10 +25258,10 @@ It does not distort this investigation, because the effect you are hunting is a
 several-thousand-fold gap between kernels built the same way.</p>
 <h3 id="step-3-system-wide-investigation-nsight-systems"><a class="header" href="#step-3-system-wide-investigation-nsight-systems">Step 3: System-wide investigation (Nsight Systems)</a></h3>
 <p>Profile each kernel to see the big picture:</p>
-<pre><code class="language-bash"># Profile each kernel individually using the optimized build (with warmup to avoid cold start effects)
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
-nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
+<pre><code class="language-bash"># Profile each kernel individually using the optimized build
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
+nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
 
 # Analyze the results
 nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep &gt; ./problems/p30/kernel1_profile.txt
@@ -25298,11 +25286,15 @@ ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
 </code></pre>
-<p><strong>When you run these commands, you’ll see output like this</strong> (B200; the
-absolute figures depend on your GPU, the gap between them does not):</p>
-<pre><code class="language-text">Kernel1: Memory Throughput: ~2.06 Tbyte/s, Max Bandwidth: ~31%
-Kernel2: Memory Throughput: ~8.7 Gbyte/s,  Max Bandwidth: ~27%
-Kernel3: Memory Throughput: ~1.78 Tbyte/s, Max Bandwidth: ~27%
+<p><strong>When you run these commands, you’ll see output like this</strong> (B200, release
+build. The debug build from Step 2 reports roughly a quarter of these
+throughputs; see
+<a href="puzzle_30/./nvidia_profiling_basics.html#step-1-prepare-your-code-for-profiling">the debug-build trade-off</a>.
+The absolute figures depend on your GPU and build, the gap between the kernels
+does not):</p>
+<pre><code class="language-text">Kernel1: Memory Throughput: ~2.41 Tbyte/s, Max Bandwidth: ~31%
+Kernel2: Memory Throughput: ~11.0 Gbyte/s, Max Bandwidth: ~34%
+Kernel3: Memory Throughput: ~2.07 Tbyte/s, Max Bandwidth: ~27%
 </code></pre>
 <p><strong>Key metrics to investigate:</strong></p>
 <ul>
@@ -25379,9 +25371,10 @@ perform identical mathematical operations.</p>
 <p><strong>Nsight Compute Memory Analysis (Hardware-Agnostic Patterns):</strong></p>
 <ul>
 <li><strong>Efficient kernels (1 &amp; 3)</strong>: High memory throughput, good bandwidth
-utilization, moderate cache hit rates</li>
-<li><strong>Inefficient kernel (2)</strong>: Very low memory throughput, poor bandwidth
-utilization, <strong>extremely high cache hit rates</strong></li>
+utilization, near-zero cache hit rates (each element is read once)</li>
+<li><strong>Inefficient kernel (2)</strong>: Very low memory throughput, a Max Bandwidth
+percentage that does not stand out from the others, <strong>extremely high cache
+hit rates</strong></li>
 </ul>
 <h2 id="the-cache-paradox-revealed"><a class="header" href="#the-cache-paradox-revealed"><strong>The cache paradox revealed</strong></a></h2>
 <p><strong>🤯 The Counterintuitive Discovery:</strong></p>
@@ -25519,7 +25512,7 @@ Warp threads 0-31:             Warp threads 0-31, iteration 0:
                                  iter 2: Memory[1024]
 
 Result: 1 cache line fetch       Result: 1 cache line fetch, ×16,384 passes
-Status: ~2.06 TB/s throughput    Status: ~8.7 GB/s throughput
+Status: ~2.41 TB/s throughput    Status: ~11 GB/s throughput
 Cache: Efficient utilization     Cache: Same lines hit repeatedly!
 </code></pre>
 <p><strong>KERNEL 3 (Reverse but Coalesced):</strong></p>
@@ -25531,7 +25524,7 @@ Cache: Efficient utilization     Cache: Same lines hit repeatedly!
   Thread 31: Memory[SIZE-32]   (reverse_i = SIZE-1-31)
 
 Result: Adjacent addresses (just backwards)
-Status: ~1.78 TB/s throughput (same order as Kernel 1)
+Status: ~2.07 TB/s throughput (same order as Kernel 1)
 Cache: Efficient utilization despite reverse order
 </code></pre>
 <h2 id="the-cache-paradox-explained"><a class="header" href="#the-cache-paradox-explained"><strong>The cache paradox explained</strong></a></h2>
@@ -25586,9 +25579,9 @@ revisits those lines, not in how many lines a warp touches</li>
 <pre><code class="language-text">PROFILING EVIDENCE → CODE ANALYSIS:
 
 Nsight Compute Results:           Actual Code Pattern:
-- Kernel1: ~2.06 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
-- Kernel2: ~8.7 GB/s, 99% L2 hits → i += 512 (redundant re-traversal)
-- Kernel3: ~1.78 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
+- Kernel1: ~2.41 TB/s            → i = block_idx*block_dim + thread_idx (coalesced)
+- Kernel2: ~11 GB/s, 97% L2 hits → i += 512 (redundant re-traversal)
+- Kernel3: ~2.07 TB/s            → reverse_i = size-1-forward_i (reverse coalesced)
 
 The profiler data directly reveals how much work each kernel issues!
 </code></pre>
@@ -25938,9 +25931,10 @@ numbers to the resources each kernel consumes.</p>
 <p><strong>No <code>--debug-level=full</code> here</strong>, unlike the profiling walkthrough in
 <a href="puzzle_31/../puzzle_30/nvidia_profiling_basics.html">Puzzle 30</a>. This puzzle’s subject
 <em>is</em> resource usage, and debug metadata inflates register counts — enough, on a
-B200, to drag the sophisticated kernel’s measured occupancy from 82% down to
-50% and invert the comparison you are about to make. Profile a release build
-whenever the numbers you want are the resource numbers.</p>
+B200, to drag the sophisticated kernel’s measured occupancy from about 70% down
+to about 49%, far below the other two, and distort the comparison you are about
+to make. Profile a release build whenever the numbers you want are the resource
+numbers.</p>
 <h3 id="step-4-profile-resource-usage"><a class="header" href="#step-4-profile-resource-usage">Step 4: Profile resource usage</a></h3>
 <pre><code class="language-bash"># Profile each kernel's resource usage
 ncu --set basic --section=LaunchStats problems/p31/p31_profiler --minimal
@@ -26024,7 +26018,7 @@ occupancy formula. Which should be highest/lowest?</li>
 <ol start="5">
 <li>Why do all three kernels land in a similar occupancy band (the exact figures
 vary by GPU architecture) despite dramatically different resource usage?</li>
-<li>Why does performance vary so little — about 14% between fastest and slowest
+<li>Why does performance vary so little — about 6% between fastest and slowest
 on a B200 — when shared memory usage varies from 0KB to 49KB?</li>
 <li>What does this reveal about the relationship between theoretical occupancy
 calculations and real-world GPU behavior?</li>
@@ -26079,7 +26073,7 @@ and actual performance.</p>
 <blockquote>
 <p>The worked calculations below are for <strong>NVIDIA A10G (Ampere 8.6)</strong>. The
 measurements are from a <strong>B200 (Blackwell 10.0)</strong>, driver 595.71.05, MAX
-26.5.0 / Mojo 1.0.0, release build. Your results will vary based on your GPU
+26.7.0 / Mojo 1.2.0, release build. Your results will vary based on your GPU
 architecture, but the methodology and insights apply universally. Use
 <code>pixi run gpu-specs</code> to get your specific hardware values.</p>
 </blockquote>
@@ -26088,25 +26082,25 @@ architecture, but the methodology and insights apply universally. Use
 <p><strong>Actual Profiling Results (NVIDIA B200, release build - your results will vary
 by GPU):</strong></p>
 <ul>
-<li><strong>Minimal:</strong> 16 registers, 0KB shared → <strong>74.66%</strong> occupancy, <strong>0.1399ms</strong></li>
-<li><strong>Balanced:</strong> 16 registers, 16.38KB shared → <strong>83.51%</strong> occupancy,
-<strong>0.1497ms</strong></li>
-<li><strong>Sophisticated:</strong> 16 registers, 49.15KB shared → <strong>81.95%</strong> occupancy,
-<strong>0.1589ms</strong></li>
+<li><strong>Minimal:</strong> 16 registers, 0KB shared → <strong>71.71%</strong> occupancy, <strong>0.1320ms</strong></li>
+<li><strong>Balanced:</strong> 16 registers, 16.38KB shared → <strong>70.16%</strong> occupancy,
+<strong>0.1331ms</strong></li>
+<li><strong>Sophisticated:</strong> 16 registers, 49.15KB shared → <strong>72.36%</strong> occupancy,
+<strong>0.1406ms</strong></li>
 </ul>
 <p><strong>Performance Evidence from Benchmarking:</strong></p>
 <ul>
-<li><strong>All kernels perform within about 14% of each other</strong> despite one using no
+<li><strong>All kernels perform within about 6% of each other</strong> despite one using no
 shared memory and another using 49KB</li>
-<li><strong>All land in a similar occupancy band</strong> (75-84%) despite those resource
+<li><strong>All land in a similar occupancy band</strong> (70-73%) despite those resource
 differences</li>
 <li><strong>Memory bandwidth becomes the limiting factor</strong> for all kernels</li>
 </ul>
 <blockquote>
 <p><strong>Registers are not the interesting variable here, and the build is why.</strong>
 Profile the same three kernels with <code>--debug-level=full</code> and the register
-counts spread out — 16 minimal, 24 balanced, 40 sophisticated on this B200 —
-which drags sophisticated’s occupancy down to 49.70%, below both others, and
+counts spread out — 17 minimal, 24 balanced, 39 sophisticated on this B200 —
+which drags sophisticated’s occupancy down to 49.38%, below both others, and
 breaks the very pattern this puzzle teaches. The
 release build shows the compiler assigning all three the same 16 registers.
 Shared memory per block is identical in both builds, which is what makes it
@@ -26188,7 +26182,7 @@ memory differences.</p>
 <ul>
 <li><strong>All kernels land in the same occupancy band</strong> despite dramatic resource
 differences</li>
-<li><strong>Performance varies by about 14%</strong> across all three, where shared memory
+<li><strong>Performance varies by about 6%</strong> across all three, where shared memory
 usage varies by a factor of infinity (0KB) to 49KB</li>
 <li><strong>Theory correctly identifies the binding limit</strong> - thread capacity, not
 registers or shared memory</li>
@@ -26209,8 +26203,8 @@ near-identical performance despite huge resource differences!</li>
 - Output array: 32M × 4 bytes × 1 array = 128MB write
 - Total per kernel: 384MB memory traffic
 
-Measured (B200, minimal kernel): 0.1399ms per iteration
-Implied bandwidth: 384MB / 0.1399ms ≈ 2.7 TB/s
+Measured (B200, minimal kernel): 0.1320ms per iteration
+Implied bandwidth: 384MB / 0.1320ms ≈ 2.9 TB/s
 </code></pre>
 <p>Divide your own card’s peak bandwidth (<code>pixi run gpu-specs</code>) into that 384MB to
 get the floor this kernel could ever reach, then compare it with what you
@@ -26315,7 +26309,7 @@ because it predicts occupancy to the decimal, but because it tells you which
 resource is actually deciding</li>
 <li><strong>Memory bandwidth ruled performance</strong> - all three kernels move the same
 384MB, and SAXPY’s memory-bound nature explains why performance stayed
-within about 14% despite the resource differences</li>
+within about 6% despite the resource differences</li>
 </ol>
 <p><strong>Universal GPU Optimization Principles:</strong></p>
 <p><strong>Identify the Real Bottleneck:</strong></p>
@@ -26467,7 +26461,7 @@ skills to real optimization</li>
 <li>NVIDIA GPU with CUDA toolkit</li>
 <li>Nsight Compute profiling tools</li>
 <li>The dependencies such as profiling are managed by <code>pixi</code></li>
-<li><a href="https://max.modular.com/packages/#gpu-compatibility">Compatible GPU architecture</a></li>
+<li><a href="https://max.modular.com/gpu/hardware-compatibility/">Compatible GPU architecture</a></li>
 </ul>
 <h2 id="the-optimization-impact"><a class="header" href="#the-optimization-impact">The optimization impact</a></h2>
 <p><strong>When bank conflicts matter most:</strong></p>
@@ -26955,18 +26949,19 @@ Puzzle 32 complete ✅
 Now profile with NSight Compute to see performance differences!
 </code></pre>
 <p><strong>Step 2: Performance Baseline</strong>
-Benchmark results show similar execution times (B200, MAX 26.5.0 / Mojo 1.0.0 —
+Benchmark results show similar execution times (B200, MAX 26.7.0 / Mojo 1.2.0 —
 your absolute times will differ, their closeness is the finding):</p>
 <pre><code class="language-text">| name             | met (ms)             | iters |
 | ---------------- | -------------------- | ----- |
-| no_conflict      | 0.010562229999999999 | 100   |
-| two_way_conflict | 0.010872310000000001 | 100   |
+| no_conflict      | 0.009432310000000001 | 100   |
+| two_way_conflict | 0.01025792           | 100   |
 </code></pre>
-<p><strong>Key insight:</strong> Performance is nearly identical (~0.0106 ms vs ~0.0109 ms)
+<p><strong>Key insight:</strong> Performance is close (~0.0094 ms vs ~0.0103 ms in this run)
 because this workload is <strong>global memory bound</strong> rather than shared memory
-bound. The 3% between the two kernels is inside run-to-run noise — do not read
-a winner into it, in either direction. Bank conflicts become visible through
-profiling metrics rather than execution time.</p>
+bound. The gap is inside run-to-run noise: across five more runs on the same
+B200 it ranged from conflict-free about 10% faster to about 4% slower. Do not
+read a winner into it, in either direction. Bank conflicts become visible
+through profiling metrics rather than execution time.</p>
 <h2 id="bank-conflict-profiling-evidence"><a class="header" href="#bank-conflict-profiling-evidence"><strong>Bank conflict profiling evidence</strong></a></h2>
 <p><strong>No-Conflict Kernel (Optimal Access Pattern):</strong></p>
 <pre><code class="language-text">l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0
@@ -27197,9 +27192,9 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 <pre><code class="language-mojo"># Entire warp cooperates on matrix fragments
 var a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
 var b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
-var c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
+var c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accum.
 var d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
-mma_op.store_d(C_mma_tile, d_reg)           # Store result
+mma_op.store_d(C_mma_tile, d_reg)               # Store result
 </code></pre>
 <h2 id="tensor-core-api-in-mojo"><a class="header" href="#tensor-core-api-in-mojo">Tensor core API in Mojo</a></h2>
 <p>Mojo provides a clean interface to Tensor Cores through the
@@ -27208,7 +27203,7 @@ type:</p>
 <pre><code class="language-mojo">from layout.tensor_core import TensorCore
 
 # Create a Tensor Core operator for specific tile sizes
-var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+var mma_op = TensorCore[dtype, dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
 # Core operations:
 # - load_a(): Load matrix A fragment from shared memory
@@ -27269,8 +27264,7 @@ differently:</p>
 var warp_id = thread_idx.x // WARP_SIZE
 var warps_in_n = BN // WN  # Number of warps along N dimension
 var warps_in_m = BM // WM  # Number of warps along M dimension
-var warp_y = warp_id // warps_in_n  # Warp's row
-var warp_x = warp_id % warps_in_n   # Warp's column
+var warp_y, warp_x = divmod(warp_id, warps_in_n)  # Warp's row and column
 
 # Each warp handles a WM×WN tile of the output
 var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
@@ -27364,45 +27358,31 @@ Puzzle 16 into a Tensor Core implementation. Let’s break this down step by ste
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
-    var a_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TILE_SIZE, TILE_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var b_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TILE_SIZE, TILE_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var a_shared = stack_allocation[dtype, .SHARED](
+        row_major[TILE_SIZE, TILE_SIZE]()
+    )
+    var b_shared = stack_allocation[dtype, .SHARED](
+        row_major[TILE_SIZE, TILE_SIZE]()
+    )
 
     var acc: output.ElementType = 0
 
-    comptime load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
-    comptime load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_a_layout = row_major[1, TILE_SIZE]()  # Coalesced loading
+    comptime load_b_layout = row_major[1, TILE_SIZE]()  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](
-            block_idx.y, idx
-        ).to_layout_tensor()
-        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](
-            idx, block_idx.x
-        ).to_layout_tensor()
+        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx)
+        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x)
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
-            thread_layout=load_a_layout,
-            num_threads=TILE_SIZE * TILE_SIZE,
-            block_dim_count=BLOCK_DIM_COUNT,
+            thread_layout=load_a_layout, num_threads=TILE_SIZE * TILE_SIZE
         ](a_shared, a_tile)
         copy_dram_to_sram_async[
-            thread_layout=load_b_layout,
-            num_threads=TILE_SIZE * TILE_SIZE,
-            block_dim_count=BLOCK_DIM_COUNT,
+            thread_layout=load_b_layout, num_threads=TILE_SIZE * TILE_SIZE
         ](b_shared, b_tile)
 
         async_copy_wait_all()
@@ -27477,9 +27457,10 @@ compute</li>
 <h3 id="step-4-code-to-complete"><a class="header" href="#step-4-code-to-complete">Step 4: Code to complete</a></h3>
 <pre><code class="language-mojo">def tensor_core_matrix_multiplication[
     dtype: DType,
-    layout_a: Layout,
-    layout_b: Layout,
-    layout_c: Layout,
+    LayoutA: TensorLayout,
+    LayoutB: TensorLayout,
+    LayoutC: TensorLayout,
+    Engine: TensorEngine,
     BM: Int,
     BN: Int,
     BK: Int,
@@ -27489,48 +27470,30 @@ compute</li>
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
-    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
-    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
-):
-    comptime M = C.shape[0]()
-    comptime N = C.shape[1]()
-    comptime K = A.shape[1]()
+    A: TileTensor[mut=False, dtype, LayoutA, MutAnyOrigin, Engine=Engine],
+    B: TileTensor[mut=False, dtype, LayoutB, MutAnyOrigin, Engine=Engine],
+    C: TileTensor[mut=True, dtype, LayoutC, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
+    comptime K = LayoutA.static_shape[1]
 
     var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
     var warps_in_m = BM // WM
-    var warp_y = warp_id // warps_in_n
-    var warp_x = warp_id % warps_in_n
+    var warp_y, warp_x = divmod(warp_id, warps_in_n)
 
     var warp_is_active = warp_y &lt; warps_in_m
 
     var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
-    var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+    var mma_op = TensorCore[dtype, dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    var A_sram_tile = LayoutTensor[
-        A.dtype,
-        Layout.row_major(BM, BK),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var B_sram_tile = LayoutTensor[
-        B.dtype,
-        Layout.row_major(BK, BN),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var A_sram_tile = stack_allocation[dtype, .SHARED](row_major[BM, BK]())
+    var B_sram_tile = stack_allocation[dtype, .SHARED](row_major[BK, BN]())
 
     # One per-warp accumulator tile of shape [WM, WN]
-    var C_warp_accum = LayoutTensor[
-        C.dtype,
-        Layout.row_major(WM, WN),
-        MutAnyOrigin,
-        address_space=.LOCAL,
-    ].stack_allocation()
+    var C_warp_accum = stack_allocation[dtype, .LOCAL](row_major[WM, WN]())
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
@@ -27548,14 +27511,10 @@ compute</li>
         var B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
 
         copy_dram_to_sram_async[
-            thread_layout=Layout.row_major(4, 8),
-            num_threads=256,
-            block_dim_count=BLOCK_DIM_COUNT,
+            thread_layout=row_major[4, 8](), num_threads=256
         ](A_sram_tile.vectorize[1, 4](), A_dram_tile.vectorize[1, 4]())
         copy_dram_to_sram_async[
-            thread_layout=Layout.row_major(4, 8),
-            num_threads=256,
-            block_dim_count=BLOCK_DIM_COUNT,
+            thread_layout=row_major[4, 8](), num_threads=256
         ](B_sram_tile.vectorize[1, 4](), B_dram_tile.vectorize[1, 4]())
 
         async_copy_wait_all()
@@ -27681,9 +27640,10 @@ Puzzle 33 complete ✅
 <summary></summary>
 <pre><code class="language-mojo">def tensor_core_matrix_multiplication[
     dtype: DType,
-    layout_a: Layout,
-    layout_b: Layout,
-    layout_c: Layout,
+    LayoutA: TensorLayout,
+    LayoutB: TensorLayout,
+    LayoutC: TensorLayout,
+    Engine: TensorEngine,
     BM: Int,
     BN: Int,
     BK: Int,
@@ -27693,48 +27653,30 @@ Puzzle 33 complete ✅
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
-    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
-    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
-):
-    comptime M = C.shape[0]()
-    comptime N = C.shape[1]()
-    comptime K = A.shape[1]()
+    A: TileTensor[mut=False, dtype, LayoutA, MutAnyOrigin, Engine=Engine],
+    B: TileTensor[mut=False, dtype, LayoutB, MutAnyOrigin, Engine=Engine],
+    C: TileTensor[mut=True, dtype, LayoutC, MutAnyOrigin, Engine=Engine],
+) where (Engine.element_size == 1):
+    comptime K = LayoutA.static_shape[1]
 
     var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
     var warps_in_m = BM // WM
-    var warp_y = warp_id // warps_in_n
-    var warp_x = warp_id % warps_in_n
+    var warp_y, warp_x = divmod(warp_id, warps_in_n)
 
     var warp_is_active = warp_y &lt; warps_in_m
 
     var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
-    var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+    var mma_op = TensorCore[dtype, dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    var A_sram_tile = LayoutTensor[
-        A.dtype,
-        Layout.row_major(BM, BK),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var B_sram_tile = LayoutTensor[
-        B.dtype,
-        Layout.row_major(BK, BN),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var A_sram_tile = stack_allocation[dtype, .SHARED](row_major[BM, BK]())
+    var B_sram_tile = stack_allocation[dtype, .SHARED](row_major[BK, BN]())
 
     # One per-warp accumulator tile of shape [WM, WN]
-    var C_warp_accum = LayoutTensor[
-        C.dtype,
-        Layout.row_major(WM, WN),
-        MutAnyOrigin,
-        address_space=.LOCAL,
-    ].stack_allocation()
+    var C_warp_accum = stack_allocation[dtype, .LOCAL](row_major[WM, WN]())
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
@@ -27752,14 +27694,10 @@ Puzzle 33 complete ✅
         var B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
 
         copy_dram_to_sram_async[
-            thread_layout=Layout.row_major(4, 8),
-            num_threads=256,
-            block_dim_count=BLOCK_DIM_COUNT,
+            thread_layout=row_major[4, 8](), num_threads=256
         ](A_sram_tile.vectorize[1, 4](), A_dram_tile.vectorize[1, 4]())
         copy_dram_to_sram_async[
-            thread_layout=Layout.row_major(4, 8),
-            num_threads=256,
-            block_dim_count=BLOCK_DIM_COUNT,
+            thread_layout=row_major[4, 8](), num_threads=256
         ](B_sram_tile.vectorize[1, 4](), B_dram_tile.vectorize[1, 4]())
 
         async_copy_wait_all()
@@ -29792,22 +29730,23 @@ GPU, but the codegen evidence is NVIDIA-specific.</p>
 <pre><code class="language-bash">pixi run mojo -I . solutions/p35/p35.mojo --benchmark
 </code></pre>
 <p>This times all three kernels on a 1M-element buffer. Representative numbers from
-a B200 (compute capability 10.0, driver 595.71.05, MAX 26.5.0 / Mojo 1.0.0):</p>
+a B200 (compute capability 10.0, driver 595.71.05, MAX 26.7.0 / Mojo 1.2.0):</p>
 <pre><code class="language-text">| name      | met (ms)  | iters |
 | --------- | --------- | ----- |
-| scalar    | 0.01332   |  100  |
-| unaligned | 0.01220   |  100  |
-| aligned   | 0.01137   |  100  |
+| scalar    | 0.01194   |  100  |
+| unaligned | 0.01143   |  100  |
+| aligned   | 0.01060   |  100  |
 </code></pre>
 <p>Read the ratios rather than the absolute times — those move with the GPU, the
 driver and the toolchain, but the ordering does not.</p>
 <p><code>aligned</code> is the fastest and <code>scalar</code> the slowest, in the expected order. But
-look how small the gap is (~15% scalar→aligned) even though the aligned kernel
+look how small the gap is (~11% scalar→aligned) even though the aligned kernel
 issues a quarter of the global memory instructions. Buffer allocation and
 initialization sit outside the timed region, so this is the kernel plus its
 launch and synchronization — and at this size that fixed overhead is a large
-share of it. Measured with <code>ncu</code>, the kernels alone are 8.83 µs (scalar) versus
-6.05 µs (aligned): a 31% gap, twice what wall-clock reports.</p>
+share of it. Measured with <code>ncu</code> on a release build, the kernels alone are
+6.66 µs (scalar) versus 4.90 µs (aligned): a 26% gap, more than twice what
+wall-clock reports.</p>
 <p>While the gap is small in this example, a 4× instruction-count inefficiency
 will bite in a compute-mixed or instruction-issue-bound kernel. The wall-clock
 test is too coarse to see the codegen difference but the profiler is not.</p>

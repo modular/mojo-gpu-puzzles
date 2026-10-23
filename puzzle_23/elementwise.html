@@ -274,7 +274,7 @@ cross-thread or cross-block communication to reason about here.</p>
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
         # FILL IN (2 to 4 lines)
@@ -289,7 +289,7 @@ cross-thread or cross-block communication to reason about here.</p>
 <div class="solution-tips">
 <h3 id="1-understanding-the-function-structure"><a class="header" href="#1-understanding-the-function-structure">1. <strong>Understanding the function structure</strong></a></h3>
 <p>The <code>elementwise</code> function expects a nested function with this exact signature:</p>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def your_function[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -&gt; None:
@@ -297,7 +297,7 @@ def your_function[
 </code></pre>
 <p><strong>Why each part matters:</strong></p>
 <ul>
-<li><code>@always_inline</code>: Forces inlining to eliminate function call overhead in GPU
+<li><code>@inline(.always)</code>: Forces inlining to eliminate function call overhead in GPU
 kernels</li>
 <li><code>{var}</code>: The capture list - allows access to variables from the outer scope
 (the input/output tensors)</li>
@@ -402,7 +402,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -&gt; None:
         var idx = Int(indices[0].value())
         # Note: This is thread-local SIMD - each thread processes its own vector of data
@@ -444,7 +444,7 @@ neighboring threads touch neighboring chunks</li>
 <li><strong>GPU target selection</strong>: Works across different GPU architectures</li>
 </ul>
 <h3 id="2-deep-dive-nested-function-architecture"><a class="header" href="#2-deep-dive-nested-function-architecture">2. <strong>Deep dive: nested function architecture</strong></a></h3>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def add[
     simd_width: Int, alignment: Int = 1
 ](indices: Coord) {var} -&gt; None:
@@ -454,7 +454,7 @@ def add[
 <li><strong><code>simd_width: Int</code></strong>: A compile-time parameter, so the function is
 instantiated separately for each unique <code>simd_width</code>, allowing aggressive
 optimization.</li>
-<li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call
+<li><strong><code>@inline(.always)</code></strong>: Critical for GPU performance - eliminates function call
 overhead by embedding the code directly into the kernel.</li>
 <li><strong><code>{var}</code></strong>: The capture list enables <strong>lexical scoping</strong> - the inner function
 can access variables from the outer scope without explicit parameter passing.</li>

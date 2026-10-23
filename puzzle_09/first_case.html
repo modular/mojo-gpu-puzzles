@@ -259,7 +259,11 @@ debugging.</p>
 
 CUDA call failed: CUDA_ERROR_MISALIGNED_ADDRESS (misaligned address)
 To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
-mojo: error: execution crashed
+ #0 0x00007cc268dc4d1e (.../.pixi/envs/nvidia/lib/libKGENCompilerRTShared.so+0x112d1e)
+...
+#12 0x00007cc26a4fc328 AsyncRT_DeviceContext_release (.../.pixi/envs/nvidia/lib/libAsyncRTMojoBindings.so+0x45328)
+#13 0x00007cc21280df9d
+.../.pixi/envs/nvidia/bin/mojo: error: execution crashed
 To get a symbolicated stack trace, compile your program using `mojo build` with debug info enabled (e.g., `-debug-level=line-tables`) and execute it separately.
 </code></pre>
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
@@ -272,16 +276,16 @@ strategy to investigate this crash?</p>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_MISALIGNED_ADDRESS</code> means
-the GPU tried to access memory it cannot address</li>
+<li><strong>Read the crash message carefully</strong> - a <code>CUDA_ERROR_*_ADDRESS</code> error means
+the GPU tried to read or write through an address it can’t use</li>
 <li><strong>Check the breakpoint information</strong> - Look at the function parameters shown
 when CUDA-GDB stops</li>
 <li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer
 parameter</li>
-<li><strong>Look for suspicious addresses</strong> - Valid GPU addresses are typically large
-hex numbers (what does <code>0x0</code> mean?)</li>
-<li><strong>Test memory access</strong> - Try accessing the data through each pointer to see
-which one fails</li>
+<li><strong>Compare the addresses</strong> - Do <code>output</code> and <code>a</code> look like they point into
+the same kind of memory?</li>
+<li><strong>Let the kernel run</strong> - A value the debugger prints through a pointer
+doesn’t prove the GPU can read it. Continue and see where the kernel stops</li>
 <li><strong>Apply the systematic approach</strong> - Like a detective, follow the evidence
 from symptom to root cause</li>
 <li><strong>Compare valid vs invalid patterns</strong> - If one pointer works and another
@@ -299,58 +303,81 @@ doesn’t, focus on the broken one</li>
 <h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the breakpoint information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
 <pre><code class="language-text">(cuda-gdb) run
-CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:37
-37          var i = thread_idx.x
+CUDA thread hit application kernel entry function breakpoint, p09_add_10_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=0x302000000, a=0x7ffff68575f0)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:38
+38          var i = thread_idx.x
 </code></pre>
-<p><strong>🔍 First Clue</strong>: The function signature shows <code>(output=0x302000000, a=0x0)</code></p>
+<p><strong>🔍 First Clue</strong>: The function signature shows
+<code>(output=0x302000000, a=0x7ffff68575f0)</code></p>
 <ul>
-<li><code>output</code> has a valid GPU memory address</li>
-<li><code>a</code> is <code>0x0</code> - this is a null pointer!</li>
+<li><code>output</code> points into the region where this program’s GPU buffers live</li>
+<li><code>a</code> points somewhere else entirely. On Linux, <code>0x7fff...</code> is the top of a
+process’s CPU address space, where its stack and shared libraries live, not
+where GPU allocations come from</li>
 </ul>
+<p>The exact value of <code>a</code> changes from run to run. What stays the same is that it
+doesn’t look like <code>output</code>.</p>
 <h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
 <pre><code class="language-text">(cuda-gdb) next
-38          output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
+39          output[unsafe_offset=i] = a[unsafe_offset=i] + 10.0
 (cuda-gdb) print i
-$1 = 0
+$1 = {0}
 (cuda-gdb) print output
 $2 = (!kgen.scalar&lt;f32&gt; * @register) 0x302000000
 (cuda-gdb) print a
-$3 = (!kgen.scalar&lt;f32&gt; * @register) 0x0
+$3 = (!kgen.scalar&lt;f32&gt; * @register) 0x7ffff68575f0
 </code></pre>
 <p><strong>Evidence Gathering</strong>:</p>
 <ul>
 <li>✅ Thread index <code>i=0</code> is valid</li>
-<li>✅ Result pointer <code>0x302000000</code> is a proper GPU address</li>
-<li>❌ Input pointer <code>0x0</code> is null</li>
+<li>✅ Result pointer <code>0x302000000</code> is a GPU buffer address</li>
+<li>❌ Input pointer <code>0x7ffff68575f0</code> isn’t</li>
 </ul>
-<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the problem</a></h3>
-<pre><code class="language-text">(cuda-gdb) print a[i]
-Cannot access memory at address 0x0
+<h3 id="a-trap-the-debugger-can-read-what-the-gpu-cant"><a class="header" href="#a-trap-the-debugger-can-read-what-the-gpu-cant">A trap: the debugger can read what the GPU can’t</a></h3>
+<pre><code class="language-text">(cuda-gdb) print output[0]
+$4 = {0}
+(cuda-gdb) print a[0]
+$5 = {-1.34493767e+33}
 </code></pre>
-<p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash
-cause!</p>
+<p>The debugger happily prints a value through <code>a</code>, because it reads memory from
+the host side. That value is garbage, and it doesn’t mean the GPU can read the
+same address. Don’t treat a printed value as proof that a pointer is good.</p>
+<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the problem</a></h3>
+<p>Let the kernel run:</p>
+<pre><code class="language-text">(cuda-gdb) continue
+Continuing.
+
+CUDA Exception: Warp Illegal Address
+The exception was triggered at PC 0x7fffc127d5f0  p09_add_10_...  (p09.mojo:39)
+
+Thread 1 "mojo" received signal CUDA_EXCEPTION_14, Warp Illegal Address.
+</code></pre>
+<p><strong>Smoking Gun</strong>: The GPU faults on line 39, the line that reads through <code>a</code>.
+<code>output</code> was never the problem.</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a>
-for <code>--first-case</code>, we see that the host code creates a null pointer instead of
-allocating proper GPU memory:</p>
-<pre><code class="language-mojo"># A `DeviceBuffer` with 0 elements. Nothing is allocated, so the buffer hands
-# the kernel a NULL pointer.
+for <code>--first-case</code>, we see that the host code never allocates any GPU memory
+for the input:</p>
+<pre><code class="language-mojo"># A `DeviceBuffer` with 0 elements. Nothing is allocated, so there's no
+# GPU address to give the kernel.
 var input_buf = ctx.enqueue_create_buffer[dtype](0)
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
 <li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0)
 elements.</li>
-<li>Since there are no elements for which to allocate memory, this returns a
-null pointer.</li>
-<li>This null pointer gets passed to the GPU kernel.</li>
-<li>When the kernel evaluates <code>a[unsafe_offset=i]</code>, it dereferences null →
-<code>CUDA_ERROR_MISALIGNED_ADDRESS</code>.</li>
+<li>Since there are no elements for which to allocate memory, the buffer has no
+GPU address.</li>
+<li>The kernel still receives something for <code>a</code>, but it isn’t a GPU address. In
+this release it’s a leftover CPU-side value like <code>0x7ffff68575f0</code>.</li>
+<li>When the kernel evaluates <code>a[unsafe_offset=i]</code>, the GPU faults. Which CUDA
+error you see at the top depends on the bad address, which is why it can
+differ between Mojo versions.</li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
-<p>Replace null pointer creation with proper buffer allocation:</p>
-<pre><code class="language-mojo"># Wrong: creates a null pointer
+<p>Replace the empty buffer with a proper allocation:</p>
+<pre><code class="language-mojo"># Wrong: allocates nothing, so the kernel gets no usable address
 var input_buf = ctx.enqueue_create_buffer[dtype](0)
 
 # Correct: allocate and initialize actual GPU memory for safe processing
@@ -360,28 +387,31 @@ input_buf.enqueue_fill(0)
 <h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
 <p><strong>Pattern Recognition</strong>:</p>
 <ul>
-<li><code>0x0</code> addresses are always null pointers</li>
-<li>Valid GPU addresses are large hex numbers (e.g., <code>0x302000000</code>)</li>
+<li>Pointers into the same kind of memory look alike. Here the GPU buffer is
+<code>0x302000000</code>, and an address that looks nothing like it deserves suspicion</li>
+<li><code>0x0</code> is a null pointer, and <code>0x7fff...</code> on Linux is CPU-side memory.
+Neither belongs in a kernel argument</li>
 </ul>
 <p><strong>Debugging Strategy</strong>:</p>
 <ol>
 <li><strong>Read crash messages</strong> - They often hint at the problem type</li>
 <li><strong>Check function parameters</strong> - CUDA-GDB shows them at breakpoint entry</li>
-<li><strong>Inspect all pointers</strong> - Compare addresses to identify null/invalid ones</li>
-<li><strong>Test memory access</strong> - Try dereferencing suspicious pointers</li>
+<li><strong>Inspect all pointers</strong> - Compare addresses to identify invalid ones</li>
+<li><strong>Let the kernel fault</strong> - The line where it stops names the bad access;
+a value the debugger prints proves nothing about the GPU</li>
 <li><strong>Trace back to allocation</strong> - Find where the problematic pointer was created</li>
 </ol>
-<p><strong>💡 Key Insight</strong>: This type of null pointer bug is extremely common in GPU
-programming. The systematic CUDA-GDB investigation approach you learned here
-applies to debugging many other GPU memory issues, race conditions, and kernel
-crashes.</p>
+<p><strong>💡 Key Insight</strong>: This type of invalid pointer bug is extremely common in
+GPU programming. The systematic CUDA-GDB investigation approach you learned
+here applies to debugging many other GPU memory issues, race conditions, and
+kernel crashes.</p>
 </div>
 </details>
 <h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next steps: from crashes to silent bugs</a></h2>
 <p><strong>You’ve learned crash debugging!</strong> You can now:</p>
 <ul>
 <li><strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
-<li><strong>Identify null pointer bugs</strong> through pointer address inspection</li>
+<li><strong>Identify invalid pointer bugs</strong> through pointer address inspection</li>
 <li><strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
 </ul>
 <h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your next challenge: <a href="./second_case.html">Detective Work: Second Case</a></a></h3>

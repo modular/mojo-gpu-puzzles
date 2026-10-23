@@ -258,7 +258,7 @@ reveals the true performance story on your specific hardware.</em></p>
   </div>
 </div>
 <p>Your output will show performance measurements for each pattern (the run below
-is a B200 with MAX 26.6.0 / Mojo 1.1.0, driver 595.71.05 — read the ranking,
+is a B200 with MAX 26.7.0 / Mojo 1.2.0, driver 595.71.05 — read the ranking,
 not the absolute times):</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
@@ -286,18 +286,18 @@ Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
 | name                      | met (ms)              | iters |
 | ------------------------- | --------------------- | ----- |
-| elementwise_16_4          | 0.0046815             | 10    |
-| tiled_16_4                | 0.0040383             | 10    |
-| manual_vectorized_16_4    | 0.0041983             | 10    |
-| vectorized_16_4           | 0.0041183999999999995 | 10    |
-| elementwise_128_16        | 0.004086299999999999  | 10    |
-| tiled_128_16              | 0.0038911             | 10    |
-| manual_vectorized_128_16  | 0.0040447             | 10    |
-| vectorized_128_16         | 0.0047263             | 10    |
-| elementwise_1M_1024       | 0.0054142999999999995 | 10    |
-| tiled_1M_1024             | 0.2654655             | 10    |
-| manual_vectorized_1M_1024 | 0.2462431             | 10    |
-| vectorized_1M_1024        | 0.0834783             | 10    |
+| elementwise_16_4          | 0.0039296             | 10    |
+| tiled_16_4                | 0.0055551             | 10    |
+| manual_vectorized_16_4    | 0.0040288             | 10    |
+| vectorized_16_4           | 0.0038816000000000002 | 10    |
+| elementwise_128_16        | 0.0042112             | 10    |
+| tiled_128_16              | 0.0043391             | 10    |
+| manual_vectorized_128_16  | 0.0043806999999999995 | 10    |
+| vectorized_128_16         | 0.0042784             | 10    |
+| elementwise_1M_1024       | 0.0051359000000000005 | 10    |
+| tiled_1M_1024             | 0.26570879999999997   | 10    |
+| manual_vectorized_1M_1024 | 0.2458656             | 10    |
+| vectorized_1M_1024        | 0.0827455             | 10    |
 
 Benchmarks completed!
 </code></pre>
@@ -317,11 +317,11 @@ var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 <h2 id="benchmarking-implementation-essentials"><a class="header" href="#benchmarking-implementation-essentials">Benchmarking implementation essentials</a></h2>
 <h3 id="core-workflow-pattern"><a class="header" href="#core-workflow-pattern">Core workflow pattern</a></h3>
 <p>Each benchmark follows a streamlined pattern:</p>
-<pre><code class="language-mojo">@always_inline
+<pre><code class="language-mojo">@inline(.always)
 def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     var bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    @always_inline
+    @inline(.always)
     def pattern_workflow(ctx: DeviceContext) raises {imm}:
       # Compute: Execute the algorithm being measured
 
@@ -379,11 +379,11 @@ issues <code>SIMD_WIDTH</code> times as many memory operations for the same data
 <ul>
 <li>Launch overhead dominates (~0.004ms baseline)</li>
 <li>Thread count differences don’t matter</li>
-<li>Tiled/vectorize show slightly lower overhead</li>
+<li>The ordering between patterns changes from run to run</li>
 </ul>
 <p><strong>Medium problems (SIZE=128):</strong></p>
 <ul>
-<li>Still overhead-dominated (~0.004ms for all)</li>
+<li>Still overhead-dominated (~0.004–0.005ms for all)</li>
 <li>Performance differences nearly disappear</li>
 <li>Transitional behavior between overhead and computation</li>
 </ul>
@@ -398,7 +398,7 @@ issues <code>SIMD_WIDTH</code> times as many memory operations for the same data
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
 <tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.005ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.084ms</td><td>Uncoalesced memory access hurts performance</td></tr>
+<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.083ms</td><td>Uncoalesced memory access hurts performance</td></tr>
 <tr><td>🥉</td><td><strong>Manual vectorized</strong></td><td>~0.25ms</td><td>Uncoalesced memory access, and complex manual indexing on only 256 threads</td></tr>
 <tr><td>4th</td><td><strong>Tiled</strong></td><td>~0.27ms</td><td>Uncoalesced memory access, and width-1 loads issue four times as many memory operations</td></tr>
 </tbody></table>

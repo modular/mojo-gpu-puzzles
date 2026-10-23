@@ -512,18 +512,19 @@ Puzzle 32 complete ✅
 Now profile with NSight Compute to see performance differences!
 </code></pre>
 <p><strong>Step 2: Performance Baseline</strong>
-Benchmark results show similar execution times (B200, MAX 26.5.0 / Mojo 1.0.0 —
+Benchmark results show similar execution times (B200, MAX 26.7.0 / Mojo 1.2.0 —
 your absolute times will differ, their closeness is the finding):</p>
 <pre><code class="language-text">| name             | met (ms)             | iters |
 | ---------------- | -------------------- | ----- |
-| no_conflict      | 0.010562229999999999 | 100   |
-| two_way_conflict | 0.010872310000000001 | 100   |
+| no_conflict      | 0.009432310000000001 | 100   |
+| two_way_conflict | 0.01025792           | 100   |
 </code></pre>
-<p><strong>Key insight:</strong> Performance is nearly identical (~0.0106 ms vs ~0.0109 ms)
+<p><strong>Key insight:</strong> Performance is close (~0.0094 ms vs ~0.0103 ms in this run)
 because this workload is <strong>global memory bound</strong> rather than shared memory
-bound. The 3% between the two kernels is inside run-to-run noise — do not read
-a winner into it, in either direction. Bank conflicts become visible through
-profiling metrics rather than execution time.</p>
+bound. The gap is inside run-to-run noise: across five more runs on the same
+B200 it ranged from conflict-free about 10% faster to about 4% slower. Do not
+read a winner into it, in either direction. Bank conflicts become visible
+through profiling metrics rather than execution time.</p>
 <h2 id="bank-conflict-profiling-evidence"><a class="header" href="#bank-conflict-profiling-evidence"><strong>Bank conflict profiling evidence</strong></a></h2>
 <p><strong>No-Conflict Kernel (Optimal Access Pattern):</strong></p>
 <pre><code class="language-text">l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0

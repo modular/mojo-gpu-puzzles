@@ -306,7 +306,7 @@ computation</li>
 <a href="../puzzle_16/tiled.html#solution-idiomatic-tiletensor-tiling">Puzzle 16’s idiomatic matmul</a>,
 you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
-<li><strong><a href="https://max.modular.com/api/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+<li><strong><a href="https://max.modular.com/api/mojo/layout/tile_io/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
 Launch background DRAM→SRAM transfers that bypass the register file</li>
 <li><strong><a href="https://max.modular.com/api/mojo/max/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
 Synchronize transfer completion before accessing shared memory</li>
@@ -462,7 +462,7 @@ async copy for efficiency: \[\text{output}[i] =
     input: TileTensor[
         mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
     ],
-    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
+    kernel: TileTensor[dtype, type_of(kernel_layout), ImmutAnyOrigin],
 ) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -471,18 +471,12 @@ async copy for efficiency: \[\text{output}[i] =
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_TILE_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var kernel_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(KERNEL_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[dtype, .SHARED](
+        row_major[CONV_TILE_SIZE]()
+    )
+    var kernel_shared = stack_allocation[dtype, .SHARED](
+        row_major[KERNEL_SIZE]()
+    )
 
     # FILL IN HERE (roughly 19 lines)
 
@@ -576,7 +570,7 @@ overlapping expensive DRAM transfers with useful computation:</p>
     input: TileTensor[
         mut=False, dtype, AsyncLayoutType, MutAnyOrigin, Engine=Engine
     ],
-    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
+    kernel: TileTensor[dtype, type_of(kernel_layout), ImmutAnyOrigin],
 ) where (Engine.element_size == 1):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -585,27 +579,21 @@ overlapping expensive DRAM transfers with useful computation:</p>
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_TILE_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
-    var kernel_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(KERNEL_SIZE),
-        MutAnyOrigin,
-        address_space=.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[dtype, .SHARED](
+        row_major[CONV_TILE_SIZE]()
+    )
+    var kernel_shared = stack_allocation[dtype, .SHARED](
+        row_major[KERNEL_SIZE]()
+    )
 
     var local_i = thread_idx.x
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
-    comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+    comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
     copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 
     # Phase 2: Load kernel synchronously (small data)
@@ -641,8 +629,8 @@ overlapping expensive DRAM transfers with useful computation:</p>
 <h4 id="phase-by-phase-breakdown"><a class="header" href="#phase-by-phase-breakdown"><strong>Phase-by-phase breakdown</strong></a></h4>
 <p><strong>Phase 1: Async Copy Launch</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
-var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
@@ -655,7 +643,7 @@ indices results in undefined behavior. The implementation must ensure the tile
 size and offset remain within valid array bounds.</p>
 </li>
 <li>
-<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC)</code> creates a
+<p><strong>Thread Layout</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC]()</code> creates a
 256-element 1-D layout, one entry per thread in the block. This is
 <strong>critical</strong> -
 the layout must match the physical thread arrangement for optimal coalesced
@@ -758,7 +746,7 @@ scenarios with larger overlaps, speedups can be much more significant.</p>
 <h4 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h4>
 <ol>
 <li>
-<p><strong>Thread Layout Matching</strong>: The 1-D <code>Layout.row_major(256)</code> layout supplies
+<p><strong>Thread Layout Matching</strong>: The 1-D <code>row_major[256]()</code> layout supplies
 one entry per thread in the block’s <code>(256, 1)</code> organization, enabling optimal
 memory coalescing.</p>
 </li>

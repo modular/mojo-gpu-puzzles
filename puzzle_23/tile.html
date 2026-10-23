@@ -276,7 +276,7 @@ def tiled_elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def process_tiles[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -288,7 +288,7 @@ def tiled_elementwise_add[
 
         # FILL IN (6 lines at most)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=1, target="gpu"](
         process_tiles, Coord(num_tiles), ctx
     )
@@ -301,7 +301,7 @@ def tiled_elementwise_add[
 <div class="solution-tips">
 <h3 id="1-understanding-tile-organization"><a class="header" href="#1-understanding-tile-organization">1. <strong>Understanding tile organization</strong></a></h3>
 <p>The tiled approach divides your data into fixed-size chunks:</p>
-<pre><code class="language-mojo">var num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
+<pre><code class="language-mojo">var num_tiles = ceildiv(size, tile_size)
 </code></pre>
 <p>For a 1024-element vector with <code>TILE_SIZE=32</code>: <code>1024 ÷ 32 = 32</code> tiles exactly.</p>
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
@@ -398,7 +398,7 @@ def tiled_elementwise_add[
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     ctx: DeviceContext,
 ) raises where (Engine.element_size == 1):
-    @always_inline
+    @inline(.always)
     def process_tiles[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -&gt; None:
@@ -414,7 +414,7 @@ def tiled_elementwise_add[
             var ret = a_vec + b_vec
             output_tile.store[simd_width](Coord(i), ret)
 
-    var num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = ceildiv(size, tile_size)
     elementwise[simd_width=1, target="gpu"](
         process_tiles, Coord(num_tiles), ctx
     )

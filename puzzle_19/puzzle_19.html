@@ -494,9 +494,8 @@ in the right order.</p>
             )
             # Tile over the K (seq_len, d) matrix
             comptime transpose_blocks_per_grid = (
-                (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
-                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
-                // TRANSPOSE_BLOCK_DIM_XY,
+                ceildiv(d, TRANSPOSE_BLOCK_DIM_XY),
+                ceildiv(seq_len, TRANSPOSE_BLOCK_DIM_XY),
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
             comptime matmul_threads_per_block = (

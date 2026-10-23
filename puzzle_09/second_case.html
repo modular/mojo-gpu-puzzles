@@ -227,8 +227,8 @@ you’ll now face a completely different challenge: a <strong>logic bug</strong>
 incorrect results without crashing.</p>
 <p><strong>The debugging shift:</strong></p>
 <ul>
-<li><strong><a href="./first_case.html">First Case</a></strong>: Clear crash signals
-(<code>CUDA_ERROR_MISALIGNED_ADDRESS</code>) guided your investigation</li>
+<li><strong><a href="./first_case.html">First Case</a></strong>: Clear crash signals (a CUDA address
+error) guided your investigation</li>
 <li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results
 that require detective work</li>
 </ul>
@@ -312,7 +312,7 @@ investigate this logic bug?</p>
 <tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
 <tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
 <tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
-<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 56</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 63</code></td></tr>
 <tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
 <tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
 </tbody></table>
@@ -367,101 +367,108 @@ correctly.</p>
 <h4 id="step-3-observe-the-breakpoint-entry"><a class="header" href="#step-3-observe-the-breakpoint-entry">Step 3: Observe the breakpoint entry</a></h4>
 <p>Based on the real debugging session, here’s what happens:</p>
 <pre><code class="language-bash">(cuda-gdb) r
-Starting program: .../mojo run problems/p09/p09.mojo --second-case
-
+Starting program: .../mojo run -O0 --debug-level=full problems/p09/p09.mojo --second-case
 This program computes sliding window sums for each position...
+
 Input array: [0, 1, 2, 3]
 Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
-
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:47
-47          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; ()
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:52
+52          a: TileTensor[
 </code></pre>
 <h4 id="step-4-navigate-to-the-main-logic"><a class="header" href="#step-4-navigate-to-the-main-logic">Step 4: Navigate to the main logic</a></h4>
-<pre><code class="language-bash">(cuda-gdb) n
-46          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
-(cuda-gdb) n
-49          var thread_id = thread_idx.x
-(cuda-gdb) n
-55          for offset in range(ITER):
+<p>The entry breakpoint stops in the kernel’s signature, and stepping with <code>n</code>
+from there leaves the kernel without stopping in its body. Set a breakpoint on
+the first line of the loop body instead, and continue to it:</p>
+<pre><code class="language-bash">(cuda-gdb) b 63
+Breakpoint 1 at 0x7fffc127eb50: file problems/p09/p09.mojo, line 63.
+(cuda-gdb) c
+Continuing.
+
+CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:63
+63              var idx = Int(thread_id) + offset - 1
 </code></pre>
 <h4 id="step-5-test-variable-accessibility---crucial-discovery"><a class="header" href="#step-5-test-variable-accessibility---crucial-discovery">Step 5: Test variable accessibility - crucial discovery</a></h4>
 <pre><code class="language-bash">(cuda-gdb) p thread_id
-$1 = 0
+$1 = &lt;unavailable&gt;
 </code></pre>
-<p><strong>✅ Good</strong>: Thread ID is accessible.</p>
+<p><strong>❌ Problem</strong>: <code>thread_id</code> is not accessible.</p>
 <pre><code class="language-bash">(cuda-gdb) p window_sum
-Cannot access memory at address 0x0
+$2 = &lt;optimized out&gt;
 </code></pre>
 <p><strong>❌ Problem</strong>: <code>window_sum</code> is not accessible.</p>
 <pre><code class="language-bash">(cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 </code></pre>
 <p><strong>❌ Problem</strong>: Direct TileTensor indexing doesn’t work.</p>
-<pre><code class="language-bash">(cuda-gdb) p a.ptr[0]
-$2 = {0}
-(cuda-gdb) p a.ptr[0]@4
-$3 = {{0}, {1}, {2}, {3}}
+<pre><code class="language-bash">(cuda-gdb) p a
+$3 = {_storage = 0x302000000, layout = {_shape = {m0 = {&lt;No data fields&gt;}},
+    _stride = {m0 = {&lt;No data fields&gt;}}}}
+(cuda-gdb) p a._storage[0]@4
+Cannot perform pointer math on incomplete type "!kgen.none", try casting to a known type, or void *.
+(cuda-gdb) p ((float*)a._storage)[0]@4
+$4 = {0, 1, 2, 3}
 </code></pre>
-<p><strong>🎯 BREAKTHROUGH</strong>: <code>a.ptr[0]@4</code> shows the full input array! This is how we can
+<p><strong>🎯 BREAKTHROUGH</strong>: <code>p a</code> shows that a TileTensor keeps its data behind a
+<code>_storage</code> pointer. The debugger doesn’t know the pointer’s element type, so
+cast it to <code>float*</code> (the puzzle’s <code>dtype</code> is <code>float32</code>). Then
+<code>((float*)a._storage)[0]@4</code> shows the full input array! This is how we can
 inspect TileTensor data.</p>
 <h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
 <h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
-<pre><code class="language-bash">(cuda-gdb) b 56
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 56.
-(cuda-gdb) c
-Continuing.
-
-CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
-56              var idx = Int(thread_id) + offset - 1
+<p>The breakpoint on line 63 fires once at the start of every loop iteration, so
+counting its hits counts the iterations. The loop variable is still readable:</p>
+<pre><code class="language-bash">(cuda-gdb) p offset
+$5 = {0}
 </code></pre>
-<p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
+<p><strong>🔍 We’re now inside the loop body, on its first iteration. Let’s count
+iterations manually.</strong></p>
 <h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-57              if 0 &lt;= idx &lt; SIZE:
+64              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-55          for offset in range(ITER):
+62          for offset in range(ITER):
 </code></pre>
-<p><strong>First iteration complete</strong>: Loop went from line 56 → 57 → back to 55. The
-loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 63 → 64 → back to 62. For
+thread 0, <code>idx</code> is -1, so it skipped the sum. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-56              var idx = Int(thread_id) + offset - 1
+63              var idx = Int(thread_id) + offset - 1
+(cuda-gdb) p offset
+$6 = {1}
 (cuda-gdb) n
-57              if 0 &lt;= idx &lt; SIZE:
+64              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-58                  var value = a[idx]
+65                  window_sum += rebind[Scalar[dtype]](a[idx])
 (cuda-gdb) n
-59                  window_sum += value
+64              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-57              if 0 &lt;= idx &lt; SIZE:
-(cuda-gdb) n
-55          for offset in range(ITER):
+62          for offset in range(ITER):
 </code></pre>
-<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines
-58-59).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (line
+65).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-61          output[thread_id] = window_sum
+67          output[thread_id] = window_sum
 </code></pre>
 <p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went
-directly to line 61 instead of hitting our breakpoint at line 56 again.</p>
+directly to line 67 instead of hitting our breakpoint at line 63 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-45      def process_sliding_window(
+46      def process_sliding_window[
 (cuda-gdb) n
-[Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
-0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
-(cuda-gdb) p output.ptr[0]@4
+[Switching to Thread 0x7ffff7bc8a40 (LWP 13617)]
+0x00007fffefc2be19 in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
+(cuda-gdb) p output
 No symbol "output" in current context.
 (cuda-gdb) p offset
 No symbol "offset" in current context.
@@ -512,8 +519,7 @@ variables. This is normal behavior.</p>
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
     var idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
     if 0 &lt;= idx &lt; SIZE:
-        var value = a[idx]
-        window_sum += value
+        window_sum += rebind[Scalar[dtype]](a[idx])
 </code></pre>
 <p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding
 window of size 3.</p>
