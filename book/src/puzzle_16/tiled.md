@@ -119,15 +119,15 @@ Synchronization required:
        **Example with TPB=3:**
 
      ```txt
-     Block Layout:        Global Matrix (9×9):
-     [B00][B01][B02]      [0 1 2 | 3 4 5 | 6 7 8]
-     [B10][B11][B12]  →   [9 A B | C D E | F G H]
-     [B20][B21][B22]      [I J K | L M N | O P Q]
-                         ——————————————————————
+     Block Layout:       Global Matrix (9×9):
+     [B00][B01][B02]     [0 1 2 | 3 4 5 | 6 7 8]
+     [B10][B11][B12]  →  [9 A B | C D E | F G H]
+     [B20][B21][B22]     [I J K | L M N | O P Q]
+                         ———————————————————————
                          [R S T | U V W | X Y Z]
                          [a b c | d e f | g h i]
                          [j k l | m n o | p q r]
-                         ——————————————————————
+                         ———————————————————————
                          [s t u | v w x | y z α]
                          [β γ δ | ε ζ η | θ ι κ]
                          [λ μ ν | ξ ο π | ρ σ τ]
@@ -214,12 +214,12 @@ it works:
 
    ```txt
    Input matrices (9×9) - Perfect fit for (3×3) tiling:
-   A = [0  1  2  3  4  5  6  7  8 ]    B = [0  2  4  6  8  10 12 14 16]
-       [9  10 11 12 13 14 15 16 17]        [18 20 22 24 26 28 30 32 34]
-       [18 19 20 21 22 23 24 25 26]        [36 38 40 42 44 46 48 50 52]
-       [27 28 29 30 31 32 33 34 35]        [54 56 58 60 62 64 66 68 70]
-       [36 37 38 39 40 41 42 43 44]        [72 74 76 78 80 82 84 86 88]
-       [45 46 47 48 49 50 51 52 53]        [90 92 94 96 98 100 102 104 106]
+   A = [0  1  2  3  4  5  6  7  8 ]    B = [0   2   4   6   8   10  12  14  16 ]
+       [9  10 11 12 13 14 15 16 17]        [18  20  22  24  26  28  30  32  34 ]
+       [18 19 20 21 22 23 24 25 26]        [36  38  40  42  44  46  48  50  52 ]
+       [27 28 29 30 31 32 33 34 35]        [54  56  58  60  62  64  66  68  70 ]
+       [36 37 38 39 40 41 42 43 44]        [72  74  76  78  80  82  84  86  88 ]
+       [45 46 47 48 49 50 51 52 53]        [90  92  94  96  98  100 102 104 106]
        [54 55 56 57 58 59 60 61 62]        [108 110 112 114 116 118 120 122 124]
        [63 64 65 66 67 68 69 70 71]        [126 128 130 132 134 136 138 140 142]
        [72 73 74 75 76 77 78 79 80]        [144 146 148 150 152 154 156 158 160]
@@ -269,25 +269,28 @@ it works:
    - Avoids shared memory bank conflicts:
 
      ```txt
-     Bank Conflict Free (Good):        Bank Conflicts (Bad):
+     Bank Conflict Free (Good):            Bank Conflicts (Bad):
      Thread0: a_shared[0,k] b_shared[k,0]  Thread0: a_shared[k,0] b_shared[0,k]
      Thread1: a_shared[0,k] b_shared[k,1]  Thread1: a_shared[k,0] b_shared[1,k]
      Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
      ↓                                     ↓
      Parallel access to different banks    Serialized access to same bank of b_shared
-     (or broadcast for a_shared)           if shared memory was column-major
+     (or broadcast for a_shared)           if TPB=32
      ```
 
      **Shared memory bank conflicts explained:**
-     - **Left (Good)**: `b_shared[k,threadIdx.x]` accesses different banks,
-       `a_shared[0,k]` broadcasts to all threads
-     - **Right (Bad)**: If b_shared were column-major, threads would access same
-       bank simultaneously
+     - **Left (Good)**: `b_shared[k,threadIdx.x]` accesses different banks;
+       `a_shared[local_row,k]` broadcasts to threads sharing the same row.
+     - **Right (Bad)**: With row-major storage, varying the first index
+       gives a stride of `TPB` words. For `TPB=32`, those addresses map
+       to the same bank; for `TPB=16`, they map to two banks. This is an
+       illustrative case, not a conflict in this puzzle's `TPB=3` tile.
      - **Key insight**: This is about shared memory access patterns, not global
        memory coalescing
      - **Bank structure**: Shared memory has 32 banks; conflicts occur when
-       multiple threads access different addresses in the same bank
-       simultaneously
+       multiple threads in a warp access different addresses in the same bank
+       simultaneously. Multiple threads reading the same address are served
+       by a broadcast, not a bank conflict.
 
 5. **Synchronization points**
 
