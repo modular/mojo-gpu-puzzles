@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim, WARP_SIZE
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
-from layout import TileTensor, TensorEngine
+from layout import TensorEngine, TileTensor, coord
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from layout.tensor_core import TensorCore
@@ -163,7 +163,7 @@ def tensor_core_matrix_multiplication[
     var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
-    var mma_op = TensorCore[dtype, dtype, Index(MMA_M, MMA_N, MMA_K)]()
+    var mma_op = TensorCore[dtype, dtype, coord[MMA_M, MMA_N, MMA_K]]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
     var A_sram_tile = stack_allocation[dtype, .SHARED](row_major[BM, BK]())
@@ -468,7 +468,7 @@ def main() raises:
         mem.verify()
 
     print("\nACTUAL TensorCore API Implementation:")
-    print("  - TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()")
+    print("  - TensorCore[A.dtype, C.dtype, coord[MMA_M, MMA_N, MMA_K]]()")
     print("  - mma_op.load_a() - Load matrix A fragments from shared memory")
     print("  - mma_op.load_b() - Load matrix B fragments from shared memory")
     print("  - mma_op.load_c() - Load matrix C fragments from global memory")
