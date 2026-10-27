@@ -27,7 +27,7 @@ and solution verification procedures.
 ### System requirements
 
 Make sure your system meets our
-[system requirements](https://max.modular.com/packages/#system-requirements).
+[system requirements](https://max.modular.com/system-requirements/).
 
 ### Compatible GPU
 
