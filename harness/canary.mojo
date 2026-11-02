@@ -39,10 +39,10 @@ struct PuzzleMemory[dtype: DType]:
     comptime MARGIN = 256 // size_of[Scalar[Self.dtype]]()
     """Number of elements held on each side of an output buffer."""
 
-    var _ctx: DeviceContext
+    var _ctx: DeviceContext[]
     var _allocations: List[DeviceBuffer[Self.dtype]]
 
-    def __init__(out self, ctx: DeviceContext):
+    def __init__(out self, ctx: DeviceContext[]):
         """Initializes the harness against a device context.
 
         Args:

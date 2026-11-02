@@ -229,7 +229,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
     @inline(.always)
     def minimal_workflow(
-        ctx: DeviceContext,
+        ctx: DeviceContext[],
     ) raises {imm}:
         comptime kernel = minimal_kernel
         ctx.enqueue_function[kernel[y_tensor.Engine]](
@@ -274,7 +274,7 @@ def benchmark_sophisticated_parameterized[
 
     @inline(.always)
     def sophisticated_workflow(
-        ctx: DeviceContext,
+        ctx: DeviceContext[],
     ) raises {imm}:
         comptime kernel = sophisticated_kernel
         ctx.enqueue_function[kernel[y_tensor.Engine]](
@@ -317,7 +317,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
 
     @inline(.always)
     def balanced_workflow(
-        ctx: DeviceContext,
+        ctx: DeviceContext[],
     ) raises {imm}:
         comptime kernel = balanced_kernel
         ctx.enqueue_function[kernel[y_tensor.Engine]](

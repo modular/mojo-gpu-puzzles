@@ -129,7 +129,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
 
     @inline(.always)
     def kernel1_workflow(
-        ctx: DeviceContext,
+        ctx: DeviceContext[],
     ) raises {imm}:
         ctx.enqueue_function[kernel1[out_tensor.Engine]](
             out_tensor,
@@ -174,7 +174,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
 
     @inline(.always)
     def kernel2_workflow(
-        ctx: DeviceContext,
+        ctx: DeviceContext[],
     ) raises {imm}:
         ctx.enqueue_function[kernel2[out_tensor.Engine]](
             out_tensor,
@@ -219,7 +219,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
 
     @inline(.always)
     def kernel3_workflow(
-        ctx: DeviceContext,
+        ctx: DeviceContext[],
     ) raises {imm}:
         ctx.enqueue_function[kernel3[out_tensor.Engine]](
             out_tensor,

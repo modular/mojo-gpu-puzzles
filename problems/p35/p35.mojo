@@ -238,7 +238,7 @@ def benchmark_scalar(mut b: Bencher) raises:
     var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
 
     @inline(.always)
-    def workflow(ctx: DeviceContext) raises {imm}:
+    def workflow(ctx: DeviceContext[]) raises {imm}:
         ctx.enqueue_function[scalar_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
@@ -266,7 +266,7 @@ def benchmark_unaligned(mut b: Bencher) raises:
     var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
 
     @inline(.always)
-    def workflow(ctx: DeviceContext) raises {imm}:
+    def workflow(ctx: DeviceContext[]) raises {imm}:
         ctx.enqueue_function[unaligned_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,
@@ -294,7 +294,7 @@ def benchmark_aligned(mut b: Bencher) raises:
     var out_tensor = TileTensor(out, layout).as_unsafe_any_origin()
 
     @inline(.always)
-    def workflow(ctx: DeviceContext) raises {imm}:
+    def workflow(ctx: DeviceContext[]) raises {imm}:
         ctx.enqueue_function[aligned_kernel[out_tensor.Engine]](
             out_tensor,
             a_tensor,

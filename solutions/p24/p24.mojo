@@ -144,7 +144,7 @@ def functional_warp_dot_product[
     ],
     a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
     b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin, Engine=Engine],
-    ctx: DeviceContext,
+    ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     @inline(.always)
     def compute_dot_product[
@@ -249,7 +249,7 @@ def benchmark_simple_warp_parameterized[
     var out_tensor = TileTensor(out, bench_out_layout)
 
     @inline(.always)
-    def traditional_workflow(ctx: DeviceContext) raises {imm}:
+    def traditional_workflow(ctx: DeviceContext[]) raises {imm}:
         comptime kernel = simple_warp_dot_product[
             BenchInLayout, BenchOutLayout, test_size, out_tensor.Engine
         ]
@@ -303,7 +303,7 @@ def benchmark_functional_warp_parameterized[
     var out_tensor = TileTensor(out, bench_out_layout).as_unsafe_any_origin()
 
     @inline(.always)
-    def functional_warp_workflow(ctx: DeviceContext) raises {imm}:
+    def functional_warp_workflow(ctx: DeviceContext[]) raises {imm}:
         functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
             out_tensor, a_tensor, b_tensor, ctx
         )
@@ -347,7 +347,7 @@ def benchmark_traditional_parameterized[
     var out_tensor = TileTensor(out, bench_out_layout)
 
     @inline(.always)
-    def traditional_workflow(ctx: DeviceContext) raises {imm}:
+    def traditional_workflow(ctx: DeviceContext[]) raises {imm}:
         ctx.enqueue_function[
             traditional_dot_product_p12_style[
                 BenchInLayout, BenchOutLayout, test_size, out_tensor.Engine

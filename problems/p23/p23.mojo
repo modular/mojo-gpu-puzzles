@@ -49,7 +49,7 @@ def elementwise_add[
     output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
     a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
-    ctx: DeviceContext,
+    ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     @inline(.always)
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -> None:
@@ -78,7 +78,7 @@ def tiled_elementwise_add[
     output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
     a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
-    ctx: DeviceContext,
+    ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     @inline(.always)
     def process_tiles[
@@ -115,7 +115,7 @@ def manual_vectorized_tiled_elementwise_add[
     output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
     a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
-    ctx: DeviceContext,
+    ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size groups of simd_width elements
     comptime chunk_size = tile_size * simd_width
@@ -152,7 +152,7 @@ def vectorize_within_tiles_elementwise_add[
     output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin, Engine=Engine],
     a: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
     b: TileTensor[mut=False, dtype, LayoutT, ImmutAnyOrigin, Engine=Engine],
-    ctx: DeviceContext,
+    ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size elements (not SIMD groups)
     @inline(.always)
@@ -201,7 +201,7 @@ def benchmark_elementwise_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
-    def elementwise_workflow(ctx: DeviceContext) raises {imm}:
+    def elementwise_workflow(ctx: DeviceContext[]) raises {imm}:
         elementwise_add[
             BenchLayoutType,
             dtype,
@@ -242,7 +242,7 @@ def benchmark_tiled_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
-    def tiled_workflow(ctx: DeviceContext) raises {imm}:
+    def tiled_workflow(ctx: DeviceContext[]) raises {imm}:
         tiled_elementwise_add[
             BenchLayoutType,
             dtype,
@@ -284,7 +284,7 @@ def benchmark_manual_vectorized_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
-    def manual_vectorized_workflow(ctx: DeviceContext) raises {imm}:
+    def manual_vectorized_workflow(ctx: DeviceContext[]) raises {imm}:
         manual_vectorized_tiled_elementwise_add[
             BenchLayoutType,
             dtype,
@@ -327,7 +327,7 @@ def benchmark_vectorized_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
-    def vectorized_workflow(ctx: DeviceContext) raises {imm}:
+    def vectorized_workflow(ctx: DeviceContext[]) raises {imm}:
         vectorize_within_tiles_elementwise_add[
             BenchLayoutType,
             dtype,
