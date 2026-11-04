@@ -62,7 +62,7 @@ def elementwise_add[
         var ret = a_simd + b_simd
         output.store[simd_width](Coord(idx), ret)
 
-    elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
+    elementwise[simd_width=SIMD_WIDTH](add, Coord(size), ctx)
 
 
 # ANCHOR_END: elementwise_add_solution
@@ -103,9 +103,7 @@ def tiled_elementwise_add[
             output_tile.store[simd_width](Coord(i), ret)
 
     var num_tiles = ceildiv(size, tile_size)
-    elementwise[simd_width=1, target="gpu"](
-        process_tiles, Coord(num_tiles), ctx
-    )
+    elementwise[simd_width=1](process_tiles, Coord(num_tiles), ctx)
 
 
 # ANCHOR_END: tiled_elementwise_add_solution
@@ -146,7 +144,7 @@ def manual_vectorized_tiled_elementwise_add[
 
     # Number of tiles needed: each tile processes chunk_size elements
     var num_tiles = ceildiv(size, chunk_size)
-    elementwise[simd_width=num_threads_per_tile, target="gpu"](
+    elementwise[simd_width=num_threads_per_tile](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
 
@@ -194,7 +192,7 @@ def vectorize_within_tiles_elementwise_add[
         vectorize[simd_width](actual_tile_size, vectorized_add)
 
     var num_tiles = ceildiv(size, tile_size)
-    elementwise[simd_width=num_threads_per_tile, target="gpu"](
+    elementwise[simd_width=num_threads_per_tile](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )
 

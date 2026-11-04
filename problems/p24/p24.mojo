@@ -141,9 +141,7 @@ def functional_warp_dot_product[
         # FILL IN (10 lines at most)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
-    elementwise[simd_width=1, target="gpu"](
-        compute_dot_product, Coord(size), ctx
-    )
+    elementwise[simd_width=1](compute_dot_product, Coord(size), ctx)
 
 
 # ANCHOR_END: functional_warp_approach
