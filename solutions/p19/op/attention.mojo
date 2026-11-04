@@ -16,7 +16,7 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import TileTensor, Coord
 from layout.tensor_engine import TensorEngine
-from layout.tile_layout import row_major, TensorLayout
+from layout.layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.math import ceildiv, exp
 from std.bit import log2_ceil

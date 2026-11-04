@@ -15,7 +15,7 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from max.gpu.memory import async_copy_wait_all
 from layout import TileTensor, TensorEngine
-from layout.tile_layout import row_major
+from layout.layout import row_major
 from layout.tile_tensor import stack_allocation
 from layout.tile_io import copy_dram_to_sram_async
 from std.sys import argv, info

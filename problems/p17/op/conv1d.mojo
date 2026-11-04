@@ -15,7 +15,7 @@ from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from layout import Coord, TileTensor
 from layout.tensor_engine import TensorEngine
-from layout.tile_layout import row_major, TensorLayout
+from layout.layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal
