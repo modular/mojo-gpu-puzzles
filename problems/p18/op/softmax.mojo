@@ -76,7 +76,6 @@ from extensibility import InputTensor, OutputTensor
 struct SoftmaxCustomOp:
     @staticmethod
     def execute[
-        target: StaticString,  # "cpu" or "gpu"
         input_size: Int,
         dtype: DType = .float32,
     ](
@@ -86,7 +85,7 @@ struct SoftmaxCustomOp:
     ) raises:
         var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
         var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
@@ -113,7 +112,7 @@ struct SoftmaxCustomOp:
                 block_dim=BLOCK_DIM_X,
             )
 
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             softmax_cpu_kernel[
                 input_size,
                 output_tensor.LayoutType,
@@ -122,4 +121,4 @@ struct SoftmaxCustomOp:
                 dtype,
             ](output_tensor, input_tensor)
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())

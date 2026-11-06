@@ -91,8 +91,6 @@ from max.gpu.host import DeviceBuffer
 struct Conv1DCustomOp:
     @staticmethod
     def execute[
-        # The kind of device this will be run on: "cpu" or "gpu"
-        target: StaticString,
         input_size: Int,
         conv_size: Int,
         dtype: DType = .float32,
@@ -106,7 +104,7 @@ struct Conv1DCustomOp:
         var out_tensor = output.to_tile_tensor().as_unsafe_any_origin()
         var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
         var kernel_tensor = kernel.to_tile_tensor().as_unsafe_any_origin()
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
@@ -134,8 +132,8 @@ struct Conv1DCustomOp:
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=(TPB, 1),
             )
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             # we can fallback to CPU
             pass
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())

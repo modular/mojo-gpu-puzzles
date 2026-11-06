@@ -57,7 +57,6 @@ def softmax(
                 )
             ],
             parameters={
-                "target": "gpu" if device == Accelerator() else "cpu",
                 "input_size": input_tensor.shape[0],
                 "dtype": dtype,
             },

@@ -532,7 +532,6 @@ def minimal_fused_kernel_backward[
 struct LayerNormLinearCustomOp:
     @staticmethod
     def execute[
-        target: StaticString,
         algorithm: StaticString,
         batch_size: Int,
         seq_len: Int,
@@ -592,7 +591,7 @@ struct LayerNormLinearCustomOp:
             .reshape(bias_layout_val)
         )
 
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
 
             # ANCHOR: layernorm_linear_custom_op
@@ -758,7 +757,7 @@ struct LayerNormLinearCustomOp:
                 )
             # ANCHOR_END: layernorm_linear_custom_op
 
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             # CPU implementation - always fused (no separate kernels for CPU)
             # Note: CPU doesn't have separate fused vs unfused - both use the same implementation
             for batch in range(batch_size):
@@ -792,7 +791,7 @@ struct LayerNormLinearCustomOp:
                         )
 
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())
 
 
 # ANCHOR: layernorm_linear_backward_custom_op
@@ -800,7 +799,6 @@ struct LayerNormLinearCustomOp:
 struct LayerNormLinearBackwardCustomOp:
     @staticmethod
     def execute[
-        target: StaticString,
         batch_size: Int,
         seq_len: Int,
         hidden_dim: Int,
@@ -893,7 +891,7 @@ struct LayerNormLinearBackwardCustomOp:
             .reshape(weight_layout_val)
         )
 
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
 
             # Launch backward kernel
@@ -931,7 +929,7 @@ struct LayerNormLinearBackwardCustomOp:
             # Note: Parameter gradients (ln_weight, ln_bias, linear_weight, bias) are not computed in this kernel
             # This is a simplified version that only computes input gradients to avoid race conditions
 
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             # CPU implementation - same logic as GPU but in CPU loops
             # Initialize gradients to zero
             for batch in range(batch_size):
@@ -1050,7 +1048,7 @@ struct LayerNormLinearBackwardCustomOp:
                         )
 
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())
 
 
 # ANCHOR_END: layernorm_linear_backward_custom_op

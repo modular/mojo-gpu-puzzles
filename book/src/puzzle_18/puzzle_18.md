@@ -62,8 +62,7 @@ Layout configuration:
 
 - Input tensor: `row_major[SIZE]()`
 - Output tensor: `row_major[SIZE]()`
-- Custom op parameters: `{"target": ..., "input_size": input_tensor.shape[0],
-  "dtype": dtype}`
+- Custom op parameters: `{"input_size": input_tensor.shape[0], "dtype": dtype}`
 
 Key aspects of this puzzle include:
 
@@ -558,7 +557,6 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
            )
        ],
        parameters={
-           "target": "gpu" if device == Accelerator() else "cpu",
            "input_size": input_tensor.shape[0],
            "dtype": dtype,
        },

@@ -270,7 +270,6 @@ def attention_cpu_kernel[
 struct AttentionCustomOp:
     @staticmethod
     def execute[
-        target: StaticString,  # "cpu" or "gpu"
         seq_len: Int,
         d: Int,
         dtype: DType = .float32,
@@ -295,7 +294,7 @@ struct AttentionCustomOp:
         var q_tensor = q.to_tile_tensor().as_unsafe_any_origin()
         var k_tensor = k.to_tile_tensor().as_unsafe_any_origin()
         var v_tensor = v.to_tile_tensor().as_unsafe_any_origin()
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             # ANCHOR: attention_orchestration
             # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
@@ -376,7 +375,7 @@ struct AttentionCustomOp:
 
             # ANCHOR_END: attention_orchestration
 
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             attention_cpu_kernel[
                 seq_len,
                 d,
@@ -389,4 +388,4 @@ struct AttentionCustomOp:
             ](output_tensor, q_tensor, k_tensor, v_tensor)
 
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())

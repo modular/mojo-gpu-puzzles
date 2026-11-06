@@ -132,7 +132,6 @@ from extensibility import InputTensor, OutputTensor
 struct EmbeddingCustomOp:
     @staticmethod
     def execute[
-        target: StaticString,
         batch_size: Int,
         seq_len: Int,
         vocab_size: Int,
@@ -152,7 +151,7 @@ struct EmbeddingCustomOp:
         var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
         var indices_tensor = indices.to_tile_tensor().as_unsafe_any_origin()
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
 
             # Calculate 1D grid dimensions (matching kernel's flat indexing)
@@ -183,7 +182,7 @@ struct EmbeddingCustomOp:
                 block_dim=(THREADS_PER_BLOCK,),
             )
 
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             for batch in range(batch_size):
                 for seq in range(seq_len):
                     var token_idx_val = Int(indices_tensor[batch, seq])
@@ -193,14 +192,13 @@ struct EmbeddingCustomOp:
                                 Coord(batch, seq, emb)
                             ] = weights_tensor[token_idx_val, emb]
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())
 
 
 @extensibility.register("embedding_2d")
 struct Embedding2DCustomOp:
     @staticmethod
     def execute[
-        target: StaticString,
         batch_size: Int,
         seq_len: Int,
         vocab_size: Int,
@@ -220,7 +218,7 @@ struct Embedding2DCustomOp:
         var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
         var indices_tensor = indices.to_tile_tensor().as_unsafe_any_origin()
         var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
-        comptime if target == "gpu":
+        comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
 
             # Calculate 2D grid dimensions for non-coalesced access
@@ -254,7 +252,7 @@ struct Embedding2DCustomOp:
                 block_dim=(BLOCK_X, BLOCK_Y),
             )
 
-        elif target == "cpu":
+        elif ctx.target.is_cpu():
             # Same CPU fallback as 1D version
             for batch in range(batch_size):
                 for seq in range(seq_len):
@@ -265,4 +263,4 @@ struct Embedding2DCustomOp:
                                 Coord(batch, seq, emb)
                             ] = weights_tensor[token_idx_val, emb]
         else:
-            raise Error("Unsupported target: " + target)
+            raise Error("Unsupported target: " + ctx.target.device_kind_label())
