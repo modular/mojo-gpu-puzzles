@@ -293,7 +293,9 @@ def softmax_gpu_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
 ) where (Engine.element_size == 1)
 ```
 
@@ -305,7 +307,7 @@ The kernel is parameterized with:
 - An `Engine` parameter, constrained to a single-element engine by the
   `where` clause, that both tensors share
 - Configurable data type with float32 as default
-- Both tensors mutable (`mut=True`)
+- A mutable output (`mut=True`) and a read-only input (`mut=False`)
 
 #### Shared memory allocation
 

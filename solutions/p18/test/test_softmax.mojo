@@ -54,7 +54,7 @@ def test_softmax() raises:
                 input_host_tensor.LayoutType,
                 expected_tensor.Engine,
                 dtype,
-            ](expected_tensor, input_host_tensor)
+            ](expected_tensor, input_host_tensor.as_imm())
 
         # for GPU testing
         var output_tensor = TileTensor(out, layout)
@@ -70,7 +70,7 @@ def test_softmax() raises:
         ]
         ctx.enqueue_function[kernel](
             output_tensor,
-            input_tensor,
+            input_tensor.as_imm(),
             grid_dim=GRID_DIM_X,
             block_dim=BLOCK_DIM_X,
         )

@@ -37,7 +37,9 @@ def softmax_gpu_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
 ) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
@@ -57,7 +59,9 @@ def softmax_cpu_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
 ) where (Engine.element_size == 1):
     comptime assert (
         dtype.is_floating_point()
@@ -69,7 +73,7 @@ def softmax_cpu_kernel[
 
 import extensibility
 
-from extensibility import InputTensor, OutputTensor
+from extensibility import Input, Output, Tensor, TileTensorable
 
 
 @extensibility.register("softmax")
@@ -79,19 +83,30 @@ struct SoftmaxCustomOp:
         input_size: Int,
         dtype: DType = .float32,
     ](
-        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        output: Some[Output & Tensor],
+        input: Some[Input & Tensor],
         ctx: DeviceContext,
     ) raises:
-        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
-        var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(output), TileTensorable)
+        comptime assert conforms_to(type_of(input), TileTensorable)
+        comptime assert type_of(output).rank == 1, "output must be a 1D tensor"
+        comptime assert type_of(input).rank == 1, "input must be a 1D tensor"
+        var output_tensor = TileTensor(
+            ptr=output.to_tile_tensor[dtype]().ptr,
+            layout=row_major[input_size](),
+        ).as_unsafe_any_origin()
+        var input_tensor = TileTensor(
+            ptr=input.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=row_major[input_size](),
+        ).as_unsafe_any_origin()
         comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[dtype](
                     gpu_ctx,
-                    output.unsafe_ptr(),
+                    output_tensor.ptr,
                     input_size,
                     owning=False,
                 ),

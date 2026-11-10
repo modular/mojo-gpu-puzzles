@@ -189,41 +189,48 @@ Let's break down how this works in the larger context:
    struct Conv1DCustomOp:
        @staticmethod
        def execute[input_size: Int, conv_size: Int, dtype: DType = .float32](
-           output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-           input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
-           kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+           output: Some[Output & Tensor],
+           input: Some[Input & Tensor],
+           kernel: Some[Input & Tensor],
            ctx: DeviceContext,
        ) raises:
            # Implementation
    ```
 
-   - `input_size` and `conv_size` are parameters passed from Python
-   - Tensor types ensure correct shape and type checking
+   - `input_size`, `conv_size`, and `dtype` are parameters passed from Python
+   - `Some[Output & Tensor]` and `Some[Input & Tensor]` accept whatever tensor
+     argument MAX Graph passes in: `Output` and `Input` mark which way the data
+     flows, and `Tensor` gives access to the dtype, rank, and shape
    - `raises` is the effect annotation, marking that `execute` can propagate
      errors
 
 2. **Tensor Conversion**:
 
    ```mojo
-   comptime out_layout_val = row_major[input_size]()
-   comptime OutLayout = type_of(out_layout_val)
-
-   var output_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-       output.unsafe_ptr(), out_layout_val
-   )
-   var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
-       input.unsafe_ptr(), out_layout_val
-   )
+   comptime assert conforms_to(type_of(output), TileTensorable)
+   var output_tensor = TileTensor(
+       ptr=output.to_tile_tensor[dtype]().ptr,
+       layout=row_major[input_size](),
+   ).as_unsafe_any_origin()
+   var input_tensor = TileTensor(
+       ptr=input.to_tile_tensor[dtype]().as_imm().ptr,
+       layout=row_major[input_size](),
+   ).as_unsafe_any_origin()
    ```
 
-   The layouts are constructed from the op's compile-time parameters and the
-   tensors are built from raw pointers—they are not extracted from the
-   `OutputTensor`/`InputTensor` arguments.
-
-   - MAX Graph tensors are wrapped as Mojo TileTensors over the same memory
-   - This allows our kernel to work with them directly
-   - Because the layouts are compile-time values, the kernel's indexing
-     arithmetic is resolved statically
+   - The `comptime assert conforms_to(..., TileTensorable)` line checks that
+     the argument is a dense tensor, which can be viewed as a `TileTensor`
+   - `to_tile_tensor[dtype]()` returns that view over the MAX Graph memory.
+     The `dtype` parameter restates the argument's element type and fails to
+     compile if they differ
+   - `.as_imm()` makes the input views read-only, matching the kernel's
+     `mut=False` parameters
+   - We take the view's pointer and wrap it in a `TileTensor` whose layout
+     comes from the op's compile-time parameters, so every tensor passed to
+     the kernel shares the same `Engine` and the kernel's indexing arithmetic
+     is resolved statically
+   - `.as_unsafe_any_origin()` matches the `MutAnyOrigin` and `ImmutAnyOrigin`
+     origins in the kernel signature
 
 3. **Device Context Usage**:
 
@@ -260,9 +267,9 @@ and the associated structure:
 struct Conv1DCustomOp:
     @staticmethod
     def execute[...](
-        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
-        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        output: Some[Output & Tensor],
+        input: Some[Input & Tensor],
+        kernel: Some[Input & Tensor],
         ctx: DeviceContext,
     ) raises:
         # Implementation here
@@ -273,8 +280,8 @@ Key components of the registration:
 - The **name** passed to the decorator (`"conv1d"`) is what Python code will use
   to call this operation
 - The **struct** must have an `execute` method with the correct signature
-- **OutputTensor** and **InputTensor** types define the interface for Python
-  data
+- The **Output** and **Input** traits mark which arguments the operation
+  writes and reads, and **Tensor** gives access to their dtype, rank, and shape
 - **DeviceContext** provides access to the execution environment
 
 ### Packaging custom ops
