@@ -35,9 +35,11 @@ def conv1d_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    input: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    input: TileTensor[
+        mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine
+    ],
     kernel: TileTensor[
-        mut=True, dtype, ConvLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, ConvLayout, ImmutAnyOrigin, Engine=Engine
     ],
 ) where (Engine.element_size == 1):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -80,7 +82,7 @@ def conv1d_kernel[
 
 import extensibility
 
-from extensibility import InputTensor, OutputTensor
+from extensibility import Input, Output, Tensor, TileTensorable
 from max.gpu.host import DeviceBuffer
 
 
@@ -92,22 +94,38 @@ struct Conv1DCustomOp:
         conv_size: Int,
         dtype: DType = .float32,
     ](
-        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
-        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        output: Some[Output & Tensor],
+        input: Some[Input & Tensor],
+        kernel: Some[Input & Tensor],
         # the context is needed for some GPU calls
         ctx: DeviceContext,
     ) raises:
-        var out_tensor = output.to_tile_tensor().as_unsafe_any_origin()
-        var input_tensor = input.to_tile_tensor().as_unsafe_any_origin()
-        var kernel_tensor = kernel.to_tile_tensor().as_unsafe_any_origin()
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(output), TileTensorable)
+        comptime assert conforms_to(type_of(input), TileTensorable)
+        comptime assert conforms_to(type_of(kernel), TileTensorable)
+        comptime assert type_of(output).rank == 1, "output must be a 1D tensor"
+        comptime assert type_of(input).rank == 1, "input must be a 1D tensor"
+        comptime assert type_of(kernel).rank == 1, "kernel must be a 1D tensor"
+        var out_tensor = TileTensor(
+            ptr=output.to_tile_tensor[dtype]().ptr,
+            layout=row_major[input_size](),
+        ).as_unsafe_any_origin()
+        var input_tensor = TileTensor(
+            ptr=input.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=row_major[input_size](),
+        ).as_unsafe_any_origin()
+        var kernel_tensor = TileTensor(
+            ptr=kernel.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=row_major[conv_size](),
+        ).as_unsafe_any_origin()
         comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
+                DeviceBuffer[dtype](
                     gpu_ctx,
-                    output.unsafe_ptr(),
+                    out_tensor.ptr,
                     input_size,
                     owning=False,
                 ),
