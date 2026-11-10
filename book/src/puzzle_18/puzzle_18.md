@@ -567,8 +567,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    - Name matching the `@extensibility.register("softmax")` in our Mojo code
    - Input values passed as a list
    - Output type definition matching the input shape and type
-   - Parameters required by our kernel, including the target device, vector size
-     and data type
+   - Parameters required by our kernel: the input size and the data type
    - We extract the tensor from the first returned element with `[0].tensor`
 
 3. **Graph Output Definition**:

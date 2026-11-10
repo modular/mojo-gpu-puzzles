@@ -123,7 +123,7 @@ Writes the entire SIMD vector back to memory in one operation.
 ### 6. **Calling the elementwise function**
 
 ```mojo
-elementwise[simd_width=SIMD_WIDTH, target="gpu"](your_function, Coord(total_size), ctx)
+elementwise[simd_width=SIMD_WIDTH](your_function, Coord(total_size), ctx)
 ```
 
 - Your nested function is passed as a runtime argument, and the problem shape
@@ -233,7 +233,7 @@ if idx < size:
 
 ```mojo
 # Automatic management + SIMD vectorization
-elementwise[simd_width=simd_width, target="gpu"](add_function, Coord(size), ctx)
+elementwise[simd_width=simd_width](add_function, Coord(size), ctx)
 ```
 
 **What `elementwise` abstracts away:**
@@ -393,7 +393,7 @@ __global__ void add_kernel(float* output, float* a, float* b, int size) {
 
 ```mojo
 # Mojo: safe, concise, automatically vectorized
-elementwise[simd_width=SIMD_WIDTH, target="gpu"](add, Coord(size), ctx)
+elementwise[simd_width=SIMD_WIDTH](add, Coord(size), ctx)
 ```
 
 **Benefits of Functional Approach:**
