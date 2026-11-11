@@ -23,7 +23,7 @@ from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
 import extensibility
 
-from extensibility import InputTensor, OutputTensor
+from extensibility import Input, Output, Tensor, TileTensorable
 
 comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 comptime D = 16  # This must be equal to D in p19.py
@@ -53,8 +53,8 @@ def matmul_idiomatic_tiled[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=True, dtype, BLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """Updated idiomatic tiled matrix multiplication from p16."""
     var local_row = thread_idx.y
@@ -132,7 +132,7 @@ def transpose_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    inp: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """Transpose matrix using shared memory tiling for coalesced access."""
     comptime assert output.flat_rank == 2
@@ -253,9 +253,9 @@ def attention_cpu_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    q: TileTensor[mut=True, dtype, QLayout, MutAnyOrigin, Engine=Engine],
-    k: TileTensor[mut=True, dtype, KLayout, MutAnyOrigin, Engine=Engine],
-    v: TileTensor[mut=True, dtype, VLayout, MutAnyOrigin, Engine=Engine],
+    q: TileTensor[mut=False, dtype, QLayout, ImmutAnyOrigin, Engine=Engine],
+    k: TileTensor[mut=False, dtype, KLayout, ImmutAnyOrigin, Engine=Engine],
+    v: TileTensor[mut=False, dtype, VLayout, ImmutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """CPU implementation of vector attention."""
     comptime assert output.flat_rank == 1
@@ -303,26 +303,40 @@ struct AttentionCustomOp:
         d: Int,
         dtype: DType = .float32,
     ](
-        output: OutputTensor[
-            dtype=dtype, rank=1, static_spec=_
-        ],  # Output vector (d,)
-        q: InputTensor[dtype=dtype, rank=1, static_spec=_],  # Query vector (d,)
-        k: InputTensor[
-            dtype=dtype, rank=2, static_spec=_
-        ],  # Key matrix (seq_len, d)
-        v: InputTensor[
-            dtype=dtype, rank=2, static_spec=_
-        ],  # Value matrix (seq_len, d)
+        output: Some[Output & Tensor],  # Output vector (d,)
+        q: Some[Input & Tensor],  # Query vector (d,)
+        k: Some[Input & Tensor],  # Key matrix (seq_len, d)
+        v: Some[Input & Tensor],  # Value matrix (seq_len, d)
         ctx: DeviceContext,
     ) raises:
         # Define layouts
         comptime layout_scores = row_major[seq_len]()
 
-        # Convert to tile tensors
-        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
-        var q_tensor = q.to_tile_tensor().as_unsafe_any_origin()
-        var k_tensor = k.to_tile_tensor().as_unsafe_any_origin()
-        var v_tensor = v.to_tile_tensor().as_unsafe_any_origin()
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(output), TileTensorable)
+        comptime assert conforms_to(type_of(q), TileTensorable)
+        comptime assert conforms_to(type_of(k), TileTensorable)
+        comptime assert conforms_to(type_of(v), TileTensorable)
+        comptime assert type_of(output).rank == 1, "output must be a 1D tensor"
+        comptime assert type_of(q).rank == 1, "q must be a 1D tensor"
+        comptime assert type_of(k).rank == 2, "k must be a 2D tensor"
+        comptime assert type_of(v).rank == 2, "v must be a 2D tensor"
+        var output_tensor = TileTensor(
+            ptr=output.to_tile_tensor[dtype]().ptr,
+            layout=row_major[d](),
+        ).as_unsafe_any_origin()
+        var q_tensor = TileTensor(
+            ptr=q.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=row_major[d](),
+        ).as_unsafe_any_origin()
+        var k_tensor = TileTensor(
+            ptr=k.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=row_major[seq_len, d](),
+        ).as_unsafe_any_origin()
+        var v_tensor = TileTensor(
+            ptr=v.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=row_major[seq_len, d](),
+        ).as_unsafe_any_origin()
         comptime if ctx.target.is_gpu():
             # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
@@ -397,6 +411,7 @@ struct AttentionCustomOp:
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len)
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
+            # The kernel's inputs are read-only: pass mutable views such as k_t as k_t.as_imm()
             var scores_2d = TileTensor(scores_weights_buf, layout_scores_2d)
             comptime kernel2 = matmul_idiomatic_tiled[
                 1,
@@ -412,7 +427,7 @@ struct AttentionCustomOp:
             ctx.enqueue_function[kernel2](
                 scores_2d,
                 q_2d,
-                k_t,
+                k_t.as_imm(),
                 grid_dim=scores_blocks_per_grid,
                 block_dim=matmul_threads_per_block,
             )
@@ -448,6 +463,7 @@ struct AttentionCustomOp:
 
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
+            # As in step 3, pass mutable views such as weights_2d with .as_imm()
             var result_2d = output_tensor.reshape(layout_result_2d)
             comptime kernel4 = matmul_idiomatic_tiled[
                 1,
@@ -462,7 +478,7 @@ struct AttentionCustomOp:
 
             ctx.enqueue_function[kernel4](
                 result_2d,
-                weights_2d,
+                weights_2d.as_imm(),
                 v_tensor,
                 grid_dim=result_blocks_per_grid,
                 block_dim=matmul_threads_per_block,

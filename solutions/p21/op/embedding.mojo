@@ -37,10 +37,10 @@ def embedding_kernel_coalesced[
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
     indices: TileTensor[
-        mut=True, .int32, IndicesLayout, MutAnyOrigin, Engine=Engine
+        mut=False, .int32, IndicesLayout, ImmutAnyOrigin, Engine=Engine
     ],
     weights: TileTensor[
-        mut=True, dtype, WeightsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, WeightsLayout, ImmutAnyOrigin, Engine=Engine
     ],
 ) where (Engine.element_size == 1):
     """
@@ -93,10 +93,10 @@ def embedding_kernel_2d[
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
     indices: TileTensor[
-        mut=True, .int32, IndicesLayout, MutAnyOrigin, Engine=Engine
+        mut=False, .int32, IndicesLayout, ImmutAnyOrigin, Engine=Engine
     ],
     weights: TileTensor[
-        mut=True, dtype, WeightsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, WeightsLayout, ImmutAnyOrigin, Engine=Engine
     ],
 ) where (Engine.element_size == 1):
     """
@@ -139,7 +139,7 @@ def embedding_kernel_2d[
 # ANCHOR: embedding_custom_op_solution
 import extensibility
 
-from extensibility import InputTensor, OutputTensor
+from extensibility import Input, Output, Tensor, TileTensorable
 
 
 @extensibility.register("embedding")
@@ -151,20 +151,34 @@ struct EmbeddingCustomOp:
         vocab_size: Int,
         embed_dim: Int,
     ](
-        output: OutputTensor[
-            dtype=DType.float32, rank=3, static_spec=_
-        ],  # [batch_size, seq_len, embed_dim]
-        indices: InputTensor[
-            dtype=DType.int32, rank=2, static_spec=_
-        ],  # [batch_size, seq_len]
-        weights: InputTensor[
-            dtype=output.dtype, rank=2, static_spec=_
-        ],  # [vocab_size, embed_dim]
+        output: Some[Output & Tensor],  # [batch_size, seq_len, embed_dim]
+        indices: Some[Input & Tensor],  # [batch_size, seq_len]
+        weights: Some[Input & Tensor],  # [vocab_size, embed_dim]
         ctx: DeviceContext,
     ) raises:
-        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
-        var indices_tensor = indices.to_tile_tensor().as_unsafe_any_origin()
-        var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(output), TileTensorable)
+        comptime assert conforms_to(type_of(indices), TileTensorable)
+        comptime assert conforms_to(type_of(weights), TileTensorable)
+        comptime assert type_of(output).rank == 3, "output must be a 3D tensor"
+        comptime assert (
+            type_of(indices).rank == 2
+        ), "indices must be a 2D tensor"
+        comptime assert (
+            type_of(weights).rank == 2
+        ), "weights must be a 2D tensor"
+        var output_tensor = TileTensor(
+            ptr=output.to_tile_tensor[.float32]().ptr,
+            layout=row_major[batch_size, seq_len, embed_dim](),
+        ).as_unsafe_any_origin()
+        var indices_tensor = TileTensor(
+            ptr=indices.to_tile_tensor[.int32]().as_imm().ptr,
+            layout=row_major[batch_size, seq_len](),
+        ).as_unsafe_any_origin()
+        var weights_tensor = TileTensor(
+            ptr=weights.to_tile_tensor[.float32]().as_imm().ptr,
+            layout=row_major[vocab_size, embed_dim](),
+        ).as_unsafe_any_origin()
         comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
 
@@ -182,7 +196,7 @@ struct EmbeddingCustomOp:
                 indices_tensor.LayoutType,
                 weights_tensor.LayoutType,
                 output_tensor.Engine,
-                output.dtype,
+                .float32,
             ]
 
             var compiled_kernel = gpu_ctx.compile_function[kernel]()
@@ -222,20 +236,34 @@ struct Embedding2DCustomOp:
         vocab_size: Int,
         embed_dim: Int,
     ](
-        output: OutputTensor[
-            dtype=DType.float32, rank=3, static_spec=_
-        ],  # [batch_size, seq_len, embed_dim]
-        indices: InputTensor[
-            dtype=DType.int32, rank=2, static_spec=_
-        ],  # [batch_size, seq_len]
-        weights: InputTensor[
-            dtype=output.dtype, rank=2, static_spec=_
-        ],  # [vocab_size, embed_dim]
+        output: Some[Output & Tensor],  # [batch_size, seq_len, embed_dim]
+        indices: Some[Input & Tensor],  # [batch_size, seq_len]
+        weights: Some[Input & Tensor],  # [vocab_size, embed_dim]
         ctx: DeviceContext,
     ) raises:
-        var output_tensor = output.to_tile_tensor().as_unsafe_any_origin()
-        var indices_tensor = indices.to_tile_tensor().as_unsafe_any_origin()
-        var weights_tensor = weights.to_tile_tensor().as_unsafe_any_origin()
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(output), TileTensorable)
+        comptime assert conforms_to(type_of(indices), TileTensorable)
+        comptime assert conforms_to(type_of(weights), TileTensorable)
+        comptime assert type_of(output).rank == 3, "output must be a 3D tensor"
+        comptime assert (
+            type_of(indices).rank == 2
+        ), "indices must be a 2D tensor"
+        comptime assert (
+            type_of(weights).rank == 2
+        ), "weights must be a 2D tensor"
+        var output_tensor = TileTensor(
+            ptr=output.to_tile_tensor[.float32]().ptr,
+            layout=row_major[batch_size, seq_len, embed_dim](),
+        ).as_unsafe_any_origin()
+        var indices_tensor = TileTensor(
+            ptr=indices.to_tile_tensor[.int32]().as_imm().ptr,
+            layout=row_major[batch_size, seq_len](),
+        ).as_unsafe_any_origin()
+        var weights_tensor = TileTensor(
+            ptr=weights.to_tile_tensor[.float32]().as_imm().ptr,
+            layout=row_major[vocab_size, embed_dim](),
+        ).as_unsafe_any_origin()
         comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
 
@@ -256,7 +284,7 @@ struct Embedding2DCustomOp:
                 indices_tensor.LayoutType,
                 weights_tensor.LayoutType,
                 output_tensor.Engine,
-                output.dtype,
+                .float32,
             ]
 
             var compiled_kernel = gpu_ctx.compile_function[kernel]()

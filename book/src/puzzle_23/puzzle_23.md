@@ -99,7 +99,7 @@ Start with the foundation: automatic thread management and SIMD vectorization.
 **Key pattern:**
 
 ```mojo
-elementwise[simd_width=SIMD_WIDTH, target="gpu"](add_function, Coord(total_size), ctx)
+elementwise[simd_width=SIMD_WIDTH](add_function, Coord(total_size), ctx)
 ```
 
 ### **2. Tiled processing**

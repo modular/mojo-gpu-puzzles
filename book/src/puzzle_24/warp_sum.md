@@ -407,7 +407,7 @@ warp operations:
 **Functional approach characteristics:**
 
 ```mojo
-elementwise[simd_width=1, target="gpu"](compute_dot_product, Coord(size), ctx)
+elementwise[simd_width=1](compute_dot_product, Coord(size), ctx)
 ```
 
 **Benefits:**

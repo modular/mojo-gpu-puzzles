@@ -22,7 +22,7 @@ import extensibility
 
 from max.gpu.host import DeviceContext
 
-from extensibility import InputTensor, OutputTensor
+from extensibility import Input, Output, Tensor, TileTensorable
 from std.utils import StaticTuple
 
 comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
@@ -44,8 +44,8 @@ def matmul_idiomatic_tiled[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    a: TileTensor[mut=True, dtype, ALayout, MutAnyOrigin, Engine=Engine],
-    b: TileTensor[mut=True, dtype, BLayout, MutAnyOrigin, Engine=Engine],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin, Engine=Engine],
+    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """Idiomatic tiled matrix multiplication from p19."""
     var local_row = thread_idx.y
@@ -130,13 +130,13 @@ def layernorm_kernel[
         mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
     ],
     input: TileTensor[
-        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, InputLayout, ImmutAnyOrigin, Engine=Engine
     ],
     ln_weight: TileTensor[
-        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, LnParamsLayout, ImmutAnyOrigin, Engine=Engine
     ],
     ln_bias: TileTensor[
-        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, LnParamsLayout, ImmutAnyOrigin, Engine=Engine
     ],
 ) where (Engine.element_size == 1):
     var batch_idx = block_idx.x
@@ -170,7 +170,7 @@ def transpose_kernel[
     dtype: DType = .float32,
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin, Engine=Engine],
-    inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin, Engine=Engine],
+    inp: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin, Engine=Engine],
 ) where (Engine.element_size == 1):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
@@ -224,9 +224,11 @@ def add_bias_kernel[
         mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
     ],
     input: TileTensor[
-        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, InputLayout, ImmutAnyOrigin, Engine=Engine
     ],
-    bias: TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin, Engine=Engine],
+    bias: TileTensor[
+        mut=False, dtype, BiasLayout, ImmutAnyOrigin, Engine=Engine
+    ],
 ) where (Engine.element_size == 1):
     """Simple bias addition."""
     comptime assert output.flat_rank == 3
@@ -264,19 +266,19 @@ def minimal_fused_kernel[
         mut=True, dtype, OutputLayout, MutAnyOrigin, Engine=Engine
     ],
     input: TileTensor[
-        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, InputLayout, ImmutAnyOrigin, Engine=Engine
     ],
     ln_weight: TileTensor[
-        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, LnParamsLayout, ImmutAnyOrigin, Engine=Engine
     ],
     ln_bias: TileTensor[
-        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, LnParamsLayout, ImmutAnyOrigin, Engine=Engine
     ],
     linear_weight: TileTensor[
-        mut=True, dtype, WeightLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, WeightLayout, ImmutAnyOrigin, Engine=Engine
     ],
     linear_bias: TileTensor[
-        mut=True, dtype, BiasLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, BiasLayout, ImmutAnyOrigin, Engine=Engine
     ],
 ) where (Engine.element_size == 1):
     """Minimal fused kernel: one thread per sequence position."""
@@ -334,19 +336,19 @@ def minimal_fused_kernel_backward[
         mut=True, dtype, GradBiasLayout, MutAnyOrigin, Engine=Engine
     ],
     grad_output: TileTensor[
-        mut=True, dtype, GradOutputLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, GradOutputLayout, ImmutAnyOrigin, Engine=Engine
     ],
     input: TileTensor[
-        mut=True, dtype, InputLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, InputLayout, ImmutAnyOrigin, Engine=Engine
     ],
     ln_weight: TileTensor[
-        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, LnParamsLayout, ImmutAnyOrigin, Engine=Engine
     ],
     ln_bias: TileTensor[
-        mut=True, dtype, LnParamsLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, LnParamsLayout, ImmutAnyOrigin, Engine=Engine
     ],
     linear_weight: TileTensor[
-        mut=True, dtype, WeightLayout, MutAnyOrigin, Engine=Engine
+        mut=False, dtype, WeightLayout, ImmutAnyOrigin, Engine=Engine
     ],
 ) where (Engine.element_size == 1):
     """Fused backward kernel: atomics for safe gradient accumulation."""
@@ -417,12 +419,12 @@ struct LayerNormLinearCustomOp:
         output_dim: Int,
         dtype: DType = .float32,
     ](
-        output: OutputTensor[dtype=dtype, rank=3, static_spec=_],
-        input: InputTensor[dtype=dtype, rank=3, static_spec=_],
-        ln_weight: InputTensor[dtype=dtype, rank=1, static_spec=_],
-        ln_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
-        linear_weight: InputTensor[dtype=dtype, rank=2, static_spec=_],
-        linear_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
+        output: Some[Output & Tensor],
+        input: Some[Input & Tensor],
+        ln_weight: Some[Input & Tensor],
+        ln_bias: Some[Input & Tensor],
+        linear_weight: Some[Input & Tensor],
+        linear_bias: Some[Input & Tensor],
         ctx: DeviceContext,
     ) raises:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
@@ -438,36 +440,51 @@ struct LayerNormLinearCustomOp:
         comptime BiasLayout = type_of(bias_layout_val)
         comptime OutputLayout = type_of(output_layout_val)
 
-        var output_tensor = (
-            output.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(output_layout_val)
-        )
-        var input_tensor = (
-            input.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(input_layout_val)
-        )
-        var ln_weight_tensor = (
-            ln_weight.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(ln_params_layout_val)
-        )
-        var ln_bias_tensor = (
-            ln_bias.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(ln_params_layout_val)
-        )
-        var linear_weight_tensor = (
-            linear_weight.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(weight_layout_val)
-        )
-        var linear_bias_tensor = (
-            linear_bias.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(bias_layout_val)
-        )
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(output), TileTensorable)
+        comptime assert conforms_to(type_of(input), TileTensorable)
+        comptime assert conforms_to(type_of(ln_weight), TileTensorable)
+        comptime assert conforms_to(type_of(ln_bias), TileTensorable)
+        comptime assert conforms_to(type_of(linear_weight), TileTensorable)
+        comptime assert conforms_to(type_of(linear_bias), TileTensorable)
+        comptime assert type_of(output).rank == 3, "output must be a 3D tensor"
+        comptime assert type_of(input).rank == 3, "input must be a 3D tensor"
+        comptime assert (
+            type_of(ln_weight).rank == 1
+        ), "ln_weight must be a 1D tensor"
+        comptime assert (
+            type_of(ln_bias).rank == 1
+        ), "ln_bias must be a 1D tensor"
+        comptime assert (
+            type_of(linear_weight).rank == 2
+        ), "linear_weight must be a 2D tensor"
+        comptime assert (
+            type_of(linear_bias).rank == 1
+        ), "linear_bias must be a 1D tensor"
+        var output_tensor = TileTensor(
+            ptr=output.to_tile_tensor[dtype]().ptr,
+            layout=output_layout_val,
+        ).as_unsafe_any_origin()
+        var input_tensor = TileTensor(
+            ptr=input.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=input_layout_val,
+        ).as_unsafe_any_origin()
+        var ln_weight_tensor = TileTensor(
+            ptr=ln_weight.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=ln_params_layout_val,
+        ).as_unsafe_any_origin()
+        var ln_bias_tensor = TileTensor(
+            ptr=ln_bias.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=ln_params_layout_val,
+        ).as_unsafe_any_origin()
+        var linear_weight_tensor = TileTensor(
+            ptr=linear_weight.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=weight_layout_val,
+        ).as_unsafe_any_origin()
+        var linear_bias_tensor = TileTensor(
+            ptr=linear_bias.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=bias_layout_val,
+        ).as_unsafe_any_origin()
 
         comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx
@@ -602,8 +619,8 @@ struct LayerNormLinearCustomOp:
                 ]
                 gpu_ctx.enqueue_function[kernel3](
                     flat_matmul,
-                    flat_normalized,
-                    transposed_weight_tensor,
+                    flat_normalized.as_imm(),
+                    transposed_weight_tensor.as_imm(),
                     grid_dim=(blocks_x, blocks_y),
                     block_dim=(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
                 )
@@ -628,7 +645,7 @@ struct LayerNormLinearCustomOp:
                 ]
                 gpu_ctx.enqueue_function[kernel4](
                     output_tensor,
-                    reshaped_matmul,
+                    reshaped_matmul.as_imm(),
                     linear_bias_tensor,
                     grid_dim=(batch_size, seq_len),
                     block_dim=output_dim,
@@ -683,16 +700,16 @@ struct LayerNormLinearBackwardCustomOp:
         output_dim: Int,
         dtype: DType = .float32,
     ](
-        grad_input: OutputTensor[dtype=dtype, rank=3, static_spec=_],
-        grad_ln_weight: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        grad_ln_bias: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        grad_weight: OutputTensor[dtype=dtype, rank=2, static_spec=_],
-        grad_bias: OutputTensor[dtype=dtype, rank=1, static_spec=_],
-        grad_output: InputTensor[dtype=dtype, rank=3, static_spec=_],
-        input: InputTensor[dtype=dtype, rank=3, static_spec=_],
-        ln_weight: InputTensor[dtype=dtype, rank=1, static_spec=_],
-        ln_bias: InputTensor[dtype=dtype, rank=1, static_spec=_],
-        linear_weight: InputTensor[dtype=dtype, rank=2, static_spec=_],
+        grad_input: Some[Output & Tensor],
+        grad_ln_weight: Some[Output & Tensor],
+        grad_ln_bias: Some[Output & Tensor],
+        grad_weight: Some[Output & Tensor],
+        grad_bias: Some[Output & Tensor],
+        grad_output: Some[Input & Tensor],
+        input: Some[Input & Tensor],
+        ln_weight: Some[Input & Tensor],
+        ln_bias: Some[Input & Tensor],
+        linear_weight: Some[Input & Tensor],
         ctx: DeviceContext,
     ) raises:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
@@ -718,56 +735,85 @@ struct LayerNormLinearBackwardCustomOp:
         comptime GradWeightLayout = type_of(grad_weight_layout_val)
         comptime GradBiasLayout = type_of(grad_bias_layout_val)
 
-        var grad_input_tensor = (
-            grad_input.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(grad_input_layout_val)
-        )
-        var grad_ln_weight_tensor = (
-            grad_ln_weight.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(grad_ln_weight_layout_val)
-        )
-        var grad_ln_bias_tensor = (
-            grad_ln_bias.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(grad_ln_bias_layout_val)
-        )
-        var grad_weight_tensor = (
-            grad_weight.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(grad_weight_layout_val)
-        )
-        var grad_bias_tensor = (
-            grad_bias.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(grad_bias_layout_val)
-        )
-        var grad_output_tensor = (
-            grad_output.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(grad_output_layout_val)
-        )
-        var input_tensor = (
-            input.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(input_layout_val)
-        )
-        var ln_weight_tensor = (
-            ln_weight.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(ln_params_layout_val)
-        )
-        var ln_bias_tensor = (
-            ln_bias.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(ln_params_layout_val)
-        )
-        var linear_weight_tensor = (
-            linear_weight.to_tile_tensor()
-            .as_unsafe_any_origin()
-            .reshape(weight_layout_val)
-        )
+        # Dense arguments can be viewed as TileTensors over their storage.
+        comptime assert conforms_to(type_of(grad_input), TileTensorable)
+        comptime assert conforms_to(type_of(grad_ln_weight), TileTensorable)
+        comptime assert conforms_to(type_of(grad_ln_bias), TileTensorable)
+        comptime assert conforms_to(type_of(grad_weight), TileTensorable)
+        comptime assert conforms_to(type_of(grad_bias), TileTensorable)
+        comptime assert conforms_to(type_of(grad_output), TileTensorable)
+        comptime assert conforms_to(type_of(input), TileTensorable)
+        comptime assert conforms_to(type_of(ln_weight), TileTensorable)
+        comptime assert conforms_to(type_of(ln_bias), TileTensorable)
+        comptime assert conforms_to(type_of(linear_weight), TileTensorable)
+        comptime assert (
+            type_of(grad_input).rank == 3
+        ), "grad_input must be a 3D tensor"
+        comptime assert (
+            type_of(grad_ln_weight).rank == 1
+        ), "grad_ln_weight must be a 1D tensor"
+        comptime assert (
+            type_of(grad_ln_bias).rank == 1
+        ), "grad_ln_bias must be a 1D tensor"
+        comptime assert (
+            type_of(grad_weight).rank == 2
+        ), "grad_weight must be a 2D tensor"
+        comptime assert (
+            type_of(grad_bias).rank == 1
+        ), "grad_bias must be a 1D tensor"
+        comptime assert (
+            type_of(grad_output).rank == 3
+        ), "grad_output must be a 3D tensor"
+        comptime assert type_of(input).rank == 3, "input must be a 3D tensor"
+        comptime assert (
+            type_of(ln_weight).rank == 1
+        ), "ln_weight must be a 1D tensor"
+        comptime assert (
+            type_of(ln_bias).rank == 1
+        ), "ln_bias must be a 1D tensor"
+        comptime assert (
+            type_of(linear_weight).rank == 2
+        ), "linear_weight must be a 2D tensor"
+        var grad_input_tensor = TileTensor(
+            ptr=grad_input.to_tile_tensor[dtype]().ptr,
+            layout=grad_input_layout_val,
+        ).as_unsafe_any_origin()
+        var grad_ln_weight_tensor = TileTensor(
+            ptr=grad_ln_weight.to_tile_tensor[dtype]().ptr,
+            layout=grad_ln_weight_layout_val,
+        ).as_unsafe_any_origin()
+        var grad_ln_bias_tensor = TileTensor(
+            ptr=grad_ln_bias.to_tile_tensor[dtype]().ptr,
+            layout=grad_ln_bias_layout_val,
+        ).as_unsafe_any_origin()
+        var grad_weight_tensor = TileTensor(
+            ptr=grad_weight.to_tile_tensor[dtype]().ptr,
+            layout=grad_weight_layout_val,
+        ).as_unsafe_any_origin()
+        var grad_bias_tensor = TileTensor(
+            ptr=grad_bias.to_tile_tensor[dtype]().ptr,
+            layout=grad_bias_layout_val,
+        ).as_unsafe_any_origin()
+        var grad_output_tensor = TileTensor(
+            ptr=grad_output.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=grad_output_layout_val,
+        ).as_unsafe_any_origin()
+        var input_tensor = TileTensor(
+            ptr=input.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=input_layout_val,
+        ).as_unsafe_any_origin()
+        var ln_weight_tensor = TileTensor(
+            ptr=ln_weight.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=ln_params_layout_val,
+        ).as_unsafe_any_origin()
+        var ln_bias_tensor = TileTensor(
+            ptr=ln_bias.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=ln_params_layout_val,
+        ).as_unsafe_any_origin()
+        var linear_weight_tensor = TileTensor(
+            ptr=linear_weight.to_tile_tensor[dtype]().as_imm().ptr,
+            layout=weight_layout_val,
+        ).as_unsafe_any_origin()
 
         comptime if ctx.target.is_gpu():
             var gpu_ctx = ctx

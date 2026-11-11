@@ -109,7 +109,7 @@ binds to 1—see the solution for why.
 ### 5. **Thread configuration difference**
 
 ```mojo
-elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)
+elementwise[simd_width=1](process_tiles, Coord(num_tiles), ctx)
 ```
 
 Note the `simd_width=1` instead of `SIMD_WIDTH` - each thread processes one
@@ -274,7 +274,7 @@ Total: 32 scalar operations per thread (comptime for i in range(tile_size))
 
 The width here is 1, not `SIMD_WIDTH`. The inner `process_tiles` declares its
 own `simd_width` parameter, which shadows the enclosing function's, and
-`elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)`
+`elementwise[simd_width=1](process_tiles, Coord(num_tiles), ctx)`
 instantiates it with 1. So `load[width=simd_width]` loads a single element and the loop
 walks the tile one element at a time. The two vectorized kernels later in this
 puzzle avoid the shadowing by naming their inner parameter
@@ -317,7 +317,7 @@ Result: Perfect spatial locality within each thread
 ### 5. **Thread configuration strategy**
 
 ```mojo
-elementwise[simd_width=1, target="gpu"](process_tiles, Coord(num_tiles), ctx)
+elementwise[simd_width=1](process_tiles, Coord(num_tiles), ctx)
 ```
 
 **Why `simd_width=1` instead of `SIMD_WIDTH`?**

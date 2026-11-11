@@ -243,6 +243,12 @@ in the right order.
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a>
 
+> **Read-only kernel inputs:** The kernels take their input tensors as
+> read-only (`mut=False`) views, as in Puzzle 17. Tensors built from a buffer,
+> such as `k_t`, and their reshapes, such as `weights_2d`, are mutable, so pass
+> them as `k_t.as_imm()` when they feed a kernel input. Output arguments stay
+> mutable.
+
 ### Test the kernels
 
 <div class="code-tabs" data-tab-group="package-manager">
