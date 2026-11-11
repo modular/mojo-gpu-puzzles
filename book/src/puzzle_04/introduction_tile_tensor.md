@@ -54,7 +54,7 @@ upcoming puzzles.
 
 ```mojo
 from layout import TileTensor
-from layout.layout import row_major
+from layout import row_major
 
 # Define layout
 comptime HEIGHT = 2

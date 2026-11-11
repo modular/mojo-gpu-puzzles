@@ -12,7 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu.host import DeviceContext
 from layout import TileTensor
-from layout.layout import row_major
+from layout import row_major
 
 comptime HEIGHT = 2
 comptime WIDTH = 3

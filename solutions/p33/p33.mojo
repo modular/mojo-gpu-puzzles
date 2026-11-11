@@ -14,7 +14,7 @@ from max.gpu import thread_idx, block_idx, block_dim, WARP_SIZE
 from max.gpu.sync import barrier
 from max.gpu.host import DeviceContext
 from layout import TensorEngine, TileTensor, coord
-from layout.layout import row_major, TensorLayout
+from layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from layout.tensor_core import TensorCore
 from layout.tile_io import copy_dram_to_sram_async

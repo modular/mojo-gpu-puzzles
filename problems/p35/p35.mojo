@@ -14,7 +14,7 @@ from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.host import DeviceContext
 from max.gpu.host.compile import get_gpu_target
 from layout import Coord, TileTensor, TensorEngine
-from layout.layout import row_major
+from layout import row_major
 from std.sys import argv, align_of, simd_width_of
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep

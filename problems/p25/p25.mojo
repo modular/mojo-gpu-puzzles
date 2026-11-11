@@ -14,7 +14,7 @@ from max.gpu import thread_idx, block_idx, block_dim, lane_id
 from max.gpu.host import DeviceContext
 from max.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import TileTensor, TensorEngine
-from layout.layout import row_major, TensorLayout
+from layout import row_major, TensorLayout
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
