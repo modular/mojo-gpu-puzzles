@@ -17,7 +17,7 @@ from max.gpu.primitives.warp import WARP_SIZE
 from max.gpu.primitives import block
 from max.gpu.host import DeviceContext
 from layout import TileTensor, TensorEngine
-from layout import row_major
+from layout.layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal

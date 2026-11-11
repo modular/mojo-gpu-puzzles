@@ -13,7 +13,7 @@
 from max.gpu import thread_idx, block_idx, block_dim
 from max.gpu.host import DeviceContext
 from layout import TileTensor, TensorEngine
-from layout import row_major
+from layout.layout import row_major
 from std.testing import assert_equal
 
 from harness.canary import PuzzleMemory

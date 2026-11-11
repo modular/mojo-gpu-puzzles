@@ -19,7 +19,7 @@ from max.gpu.sync import (
 )
 from max.gpu.host import DeviceContext
 from layout import TileTensor, TensorEngine
-from layout import row_major
+from layout.layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.sys import argv, info
 from std.testing import assert_true, assert_almost_equal

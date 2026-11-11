@@ -12,7 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu.host import DeviceContext
 from layout import TileTensor
-from layout import row_major
+from layout.layout import row_major
 from std.testing import assert_almost_equal
 from std.bit import log2_ceil
 

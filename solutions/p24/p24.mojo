@@ -18,7 +18,7 @@ from max.gpu.host.compile import get_gpu_target
 from max.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from max.algorithm.functional import elementwise
 from layout import TileTensor, TensorEngine
-from layout import row_major, TensorLayout
+from layout.layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.utils.coord import Coord
 from std.sys import argv, simd_width_of, align_of
