@@ -177,7 +177,7 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    There is no race condition here, as the locations within the `cache`
    that are read from and written to are distinct from one another.
 
-5. **Output Writing**:
+4. **Output Writing**:
 
    ```mojo
    if local_i == 0:
