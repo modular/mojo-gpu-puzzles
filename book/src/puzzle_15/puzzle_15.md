@@ -174,8 +174,10 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
        barrier()
        stride //= 2
    ```
+   There is no race condition here, as the locations within the `cache`
+   that are read from and written to are distinct from one another.
 
-4. **Output Writing**:
+5. **Output Writing**:
 
    ```mojo
    if local_i == 0:
