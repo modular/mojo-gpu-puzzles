@@ -169,29 +169,13 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    ```mojo
    var stride = TPB // 2
    while stride > 0:
-       var temp_val: Scalar[dtype] = 0
-       if local_i < stride:
-           temp_val = cache[local_i + stride]  # Read phase
-       barrier()
-       if local_i < stride:
-           cache[local_i] += temp_val  # Write phase
-       barrier()
-       stride //= 2
-   ```
-
-   **Note**: The read and write phases are deliberately separated by a
-   `barrier()`. The simpler form below reads and writes shared memory in the
-   same iteration, which races:
-
-   ```mojo
-   # Racy - do not use
-   var stride = TPB // 2
-   while stride > 0:
        if local_i < stride:
            cache[local_i] += cache[local_i + stride]
        barrier()
        stride //= 2
    ```
+   There is no race condition here, as the locations within the `cache`
+   that are read from and written to are distinct from one another.
 
 4. **Output Writing**:
 
@@ -213,12 +197,11 @@ Input Matrix (4×6) with TileTensor:                Block Assignment:
    - Efficient parallel reduction pattern
 
 3. **Synchronization**:
-   - One barrier after the load, then two per reduction step
+   - One barrier after the load, then one after each reduction step
+   - The reduction barrier publishes the current stride's writes before the
+     next stride reads them
    - Independent processing between rows
    - No inter-block communication needed
-   - **Race condition handling**: read-write hazards during the reduction are
-     avoided by explicit phase separation—each iteration stages its read in
-     `temp_val`, barriers, then writes
 
 ### Complexity analysis
 

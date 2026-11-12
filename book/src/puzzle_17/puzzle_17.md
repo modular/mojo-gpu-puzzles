@@ -158,12 +158,12 @@ Let's break down how this works in the larger context:
 
 2. **Graph building**:
    - Defines input and output tensor types with
-     [TensorType](https://max.modular.com/api/python/graph/type/#max.graph.type.TensorType)
+     [TensorType](https://max.modular.com/api/python/generated/max.graph.TensorType/#max.graph.TensorType)
    - Specifies parameters for our operation via `parameters={...}`
    - Creates a computation graph with
-     [`Graph("conv_1d_graph", ...)`](https://max.modular.com/api/python/graph/Graph)
+     [`Graph("conv_1d_graph", ...)`](https://max.modular.com/api/python/generated/max.graph.Graph/#max.graph.Graph)
    - Calls our operation using
-     [`ops.custom(name="conv1d", ...)`](https://max.modular.com/api/python/graph/ops#custom)
+     [`ops.custom(name="conv1d", ...)`](https://max.modular.com/api/python/graph.ops/#max.graph.ops.custom)
 
 3. **Custom op registration**:
    - The `@extensibility.register("conv1d")` decorator exposes our operation to MAX
@@ -252,10 +252,10 @@ functions to create efficient, type-safe, accelerated operations.
 
 ## Understanding MAX Graph custom ops
 
-> Check out the follow tutorials for more details:
+> Check out these for more details:
 >
-> - [Get started with MAX Graph in Python](https://max.modular.com/tutorials/get-started-with-max-graph-in-python/)
-> - [MAX Graph custom op for GPUs](https://max.modular.com/tutorials/build-custom-ops/)
+> - [Graph overview](https://max.modular.com/develop/graph/)
+> - [Intro to custom ops](https://max.modular.com/develop/custom-ops/)
 
 ### Custom op registration
 
@@ -289,7 +289,7 @@ Key components of the registration:
 Before the custom operation can be used from Python, it needs to be packaged:
 
 ```bash
-mojo package op -o op.mojoc
+mojo precompile op -o op.mojoc
 ```
 
 This command:
@@ -321,6 +321,7 @@ with Graph(
     # Use our custom operation by name
     output = ops.custom(
         name="conv1d",  # Must match the name in @extensibility.register
+        device=DeviceRef.from_device(device),
         values=[input_value, kernel_value],
         out_types=[...],
         parameters={
