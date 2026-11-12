@@ -133,7 +133,7 @@ The solution is:
 These two statements do several important things:
 
 1. Calls
-   [enqueue_function](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContextBase/#enqueue_function)
+   [enqueue_function](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
    on the GPU context (`gpu_ctx` is of type
    [DeviceContext](https://max.modular.com/api/mojo/max/gpu/host/device_context/#devicecontext))
    to schedule our kernel execution
