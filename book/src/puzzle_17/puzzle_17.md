@@ -135,7 +135,7 @@ These two statements do several important things:
 1. Calls
    [enqueue_function](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/#enqueue_function)
    on the GPU context (`gpu_ctx` is of type
-   [DeviceContext](https://max.modular.com/api/mojo/max/gpu/host/device_context/#devicecontext))
+   [DeviceContext](https://max.modular.com/api/mojo/max/gpu/host/device_context/DeviceContext/))
    to schedule our kernel execution
 2. Binds the layout and size information as **compile-time** parameters through
    the `comptime kernel = conv1d_kernel[...]` binding
