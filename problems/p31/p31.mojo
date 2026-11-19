@@ -228,6 +228,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     var x_tensor = TileTensor(x, layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def minimal_workflow(
         ctx: DeviceContext[],
     ) raises {imm}:
@@ -273,6 +274,7 @@ def benchmark_sophisticated_parameterized[
     var x_tensor = TileTensor(x, layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def sophisticated_workflow(
         ctx: DeviceContext[],
     ) raises {imm}:
@@ -316,6 +318,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     var x_tensor = TileTensor(x, layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def balanced_workflow(
         ctx: DeviceContext[],
     ) raises {imm}:

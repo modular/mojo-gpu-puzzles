@@ -52,6 +52,7 @@ def elementwise_add[
     ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def add[simd_width: Int, alignment: Int = 1](indices: Coord) {var} -> None:
         var idx = Int(indices[0])
         # Note: This is thread-local SIMD - each thread processes its own vector of data
@@ -87,6 +88,7 @@ def tiled_elementwise_add[
     ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def process_tiles[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
@@ -129,6 +131,7 @@ def manual_vectorized_tiled_elementwise_add[
     comptime chunk_size = tile_size * simd_width
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
@@ -170,6 +173,7 @@ def vectorize_within_tiles_elementwise_add[
 ) raises where (Engine.element_size == 1):
     # Each tile contains tile_size elements (not SIMD groups)
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
@@ -226,6 +230,7 @@ def benchmark_elementwise_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def elementwise_workflow(ctx: DeviceContext[]) raises {imm}:
         elementwise_add[
             BenchLayoutType,
@@ -267,6 +272,7 @@ def benchmark_tiled_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def tiled_workflow(ctx: DeviceContext[]) raises {imm}:
         tiled_elementwise_add[
             BenchLayoutType,
@@ -309,6 +315,7 @@ def benchmark_manual_vectorized_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def manual_vectorized_workflow(ctx: DeviceContext[]) raises {imm}:
         manual_vectorized_tiled_elementwise_add[
             BenchLayoutType,
@@ -352,6 +359,7 @@ def benchmark_vectorized_parameterized[
     var out_tensor = TileTensor(out, bench_layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def vectorized_workflow(ctx: DeviceContext[]) raises {imm}:
         vectorize_within_tiles_elementwise_add[
             BenchLayoutType,

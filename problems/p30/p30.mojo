@@ -128,6 +128,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     var b_tensor = TileTensor(b_buf, layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def kernel1_workflow(
         ctx: DeviceContext[],
     ) raises {imm}:
@@ -173,6 +174,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     var b_tensor = TileTensor(b_buf, layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def kernel2_workflow(
         ctx: DeviceContext[],
     ) raises {imm}:
@@ -218,6 +220,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     var b_tensor = TileTensor(b_buf, layout)
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def kernel3_workflow(
         ctx: DeviceContext[],
     ) raises {imm}:

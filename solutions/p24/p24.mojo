@@ -147,6 +147,7 @@ def functional_warp_dot_product[
     ctx: DeviceContext[],
 ) raises where (Engine.element_size == 1):
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def compute_dot_product[
         simd_width: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
@@ -301,6 +302,7 @@ def benchmark_functional_warp_parameterized[
     var out_tensor = TileTensor(out, bench_out_layout).as_unsafe_any_origin()
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def functional_warp_workflow(ctx: DeviceContext[]) raises {imm}:
         functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
             out_tensor, a_tensor, b_tensor, ctx

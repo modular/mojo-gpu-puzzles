@@ -152,6 +152,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     )
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def kernel_workflow(ctx: DeviceContext[]) raises {imm}:
         ctx.enqueue_function[no_conflict_kernel[out_tensor.Engine]](
             out_tensor,
@@ -191,6 +192,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     )
 
     @inline(.always)
+    @__allow_legacy_any_origin_fields
     def kernel_workflow(ctx: DeviceContext[]) raises {imm}:
         ctx.enqueue_function[two_way_conflict_kernel[out_tensor.Engine]](
             out_tensor,
