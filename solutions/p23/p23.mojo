@@ -12,7 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 from max.gpu import thread_idx, block_dim, block_idx
 from max.gpu.sync import barrier
-from max.gpu.host import DeviceContext
+from max.gpu.host import DeviceBuffer, DeviceContext, HostBuffer
 from max.gpu.host.compile import get_gpu_target
 from layout import TileTensor, TensorEngine
 from layout.layout import row_major, TensorLayout
@@ -116,7 +116,7 @@ def manual_vectorized_tiled_elementwise_add[
     LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
-    num_threads_per_tile: Int,
+    num_tiles_per_call: Int,
     rank: Int,
     size: Int,
     tile_size: Int,
@@ -133,21 +133,27 @@ def manual_vectorized_tiled_elementwise_add[
     @inline(.always)
     @__allow_legacy_any_origin_fields
     def process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, alignment: Int = 1
+        tile_count: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var tile_id = Int(indices[0])
+        # This call owns tiles indices[0] .. indices[0] + tile_count - 1
+        comptime for t in range(tile_count):
+            var tile_id = Int(indices[0]) + t
 
-        comptime for i in range(tile_size):
-            var global_start = tile_id * chunk_size + i * simd_width
+            comptime for i in range(tile_size):
+                var global_start = tile_id * chunk_size + i * simd_width
 
-            var a_vec = a.load[width=simd_width](Coord(global_start))
-            var b_vec = b.load[width=simd_width](Coord(global_start))
-            var ret = a_vec + b_vec
-            output.store[simd_width](Coord(global_start), ret)
+                var a_vec = a.load[width=simd_width](Coord(global_start))
+                var b_vec = b.load[width=simd_width](Coord(global_start))
+                var ret = a_vec + b_vec
+                output.store[simd_width](Coord(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     var num_tiles = ceildiv(size, chunk_size)
-    elementwise[simd_width=num_threads_per_tile](
+    # The index space is tile ids, not elements, so elementwise's simd_width
+    # is how many consecutive tiles each call gets, not a SIMD width. It calls
+    # process_manual_vectorized_tiles[num_tiles_per_call] on multiples of
+    # num_tiles_per_call, and [1] on any leftover tiles at the end.
+    elementwise[simd_width=num_tiles_per_call](
         process_manual_vectorized_tiles, Coord(num_tiles), ctx
     )
 
@@ -160,7 +166,7 @@ def vectorize_within_tiles_elementwise_add[
     LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
-    num_threads_per_tile: Int,
+    num_tiles_per_call: Int,
     rank: Int,
     size: Int,
     tile_size: Int,
@@ -175,28 +181,34 @@ def vectorize_within_tiles_elementwise_add[
     @inline(.always)
     @__allow_legacy_any_origin_fields
     def process_tile_with_vectorize[
-        num_threads_per_tile: Int, alignment: Int = 1
+        tile_count: Int, alignment: Int = 1
     ](indices: Coord) {var} -> None:
-        var tile_id = Int(indices[0])
-        var tile_start = tile_id * tile_size
-        var tile_end = min(tile_start + tile_size, size)
-        var actual_tile_size = tile_end - tile_start
+        # This call owns tiles indices[0] .. indices[0] + tile_count - 1
+        comptime for t in range(tile_count):
+            var tile_id = Int(indices[0]) + t
+            var tile_start = tile_id * tile_size
+            var tile_end = min(tile_start + tile_size, size)
+            var actual_tile_size = tile_end - tile_start
 
-        def vectorized_add[
-            width: Int
-        ](i: Int) {imm tile_start, var a, var b, var output}:
-            var global_idx = tile_start + i
-            if global_idx + width <= size:
-                var a_vec = a.load[width](Coord(global_idx))
-                var b_vec = b.load[width](Coord(global_idx))
-                var result = a_vec + b_vec
-                output.store[width](Coord(global_idx), result)
+            def vectorized_add[
+                width: Int
+            ](i: Int) {imm tile_start, var a, var b, var output}:
+                var global_idx = tile_start + i
+                if global_idx + width <= size:
+                    var a_vec = a.load[width](Coord(global_idx))
+                    var b_vec = b.load[width](Coord(global_idx))
+                    var result = a_vec + b_vec
+                    output.store[width](Coord(global_idx), result)
 
-        # Use vectorize within each tile
-        vectorize[simd_width](actual_tile_size, vectorized_add)
+            # Use vectorize within each tile
+            vectorize[simd_width](actual_tile_size, vectorized_add)
 
     var num_tiles = ceildiv(size, tile_size)
-    elementwise[simd_width=num_threads_per_tile](
+    # The index space is tile ids, not elements, so elementwise's simd_width
+    # is how many consecutive tiles each call gets, not a SIMD width. It calls
+    # process_tile_with_vectorize[num_tiles_per_call] on multiples of
+    # num_tiles_per_call, and [1] on any leftover tiles at the end.
+    elementwise[simd_width=num_tiles_per_call](
         process_tile_with_vectorize, Coord(num_tiles), ctx
     )
 
@@ -377,6 +389,72 @@ def benchmark_vectorized_parameterized[
     bench_ctx.synchronize()
 
 
+def check_output(
+    result: DeviceBuffer[dtype], expected: HostBuffer[dtype]
+) raises:
+    with result.map_to_host() as out_host:
+        print("out:", out_host)
+        print("expected:", expected)
+        for i in range(SIZE):
+            assert_equal(out_host[i], expected[i])
+
+
+def check_manual_vectorized[
+    num_tiles_per_call: Int
+](
+    mut mem: PuzzleMemory[dtype],
+    a: DeviceBuffer[dtype],
+    b: DeviceBuffer[dtype],
+    expected: HostBuffer[dtype],
+    ctx: DeviceContext[],
+) raises:
+    print("num_tiles_per_call:", num_tiles_per_call)
+    # A fresh zeroed buffer per run, so one run can't pass on another's output
+    var out = mem.output(SIZE)
+    var out_tensor = TileTensor(out, layout)
+    var a_tensor = TileTensor(a, layout).as_unsafe_any_origin().as_imm()
+    var b_tensor = TileTensor(b, layout).as_unsafe_any_origin().as_imm()
+    manual_vectorized_tiled_elementwise_add[
+        LayoutType,
+        dtype,
+        SIMD_WIDTH,
+        num_tiles_per_call,
+        rank,
+        SIZE,
+        TILE_SIZE,
+        out_tensor.Engine,
+    ](out_tensor, a_tensor, b_tensor, ctx)
+    check_output(out, expected)
+
+
+def check_vectorized[
+    num_tiles_per_call: Int
+](
+    mut mem: PuzzleMemory[dtype],
+    a: DeviceBuffer[dtype],
+    b: DeviceBuffer[dtype],
+    expected: HostBuffer[dtype],
+    ctx: DeviceContext[],
+) raises:
+    print("num_tiles_per_call:", num_tiles_per_call)
+    # A fresh zeroed buffer per run, so one run can't pass on another's output
+    var out = mem.output(SIZE)
+    var out_tensor = TileTensor(out, layout)
+    var a_tensor = TileTensor(a, layout).as_unsafe_any_origin().as_imm()
+    var b_tensor = TileTensor(b, layout).as_unsafe_any_origin().as_imm()
+    vectorize_within_tiles_elementwise_add[
+        LayoutType,
+        dtype,
+        SIMD_WIDTH,
+        num_tiles_per_call,
+        rank,
+        SIZE,
+        TILE_SIZE,
+        out_tensor.Engine,
+    ](out_tensor, a_tensor, b_tensor, ctx)
+    check_output(out, expected)
+
+
 def main() raises:
     var ctx = DeviceContext()
     var mem = PuzzleMemory[dtype](ctx)
@@ -436,46 +514,24 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--manual-vectorized":
-        var out_tensor = TileTensor(out, layout)
         print("tile size:", TILE_SIZE)
-        manual_vectorized_tiled_elementwise_add[
-            LayoutType,
-            dtype,
-            SIMD_WIDTH,
-            1,
-            rank,
-            SIZE,
-            TILE_SIZE,
-            out_tensor.Engine,
-        ](out_tensor, a_tensor, b_tensor, ctx)
-
-        with out.map_to_host() as out_host:
-            print("out:", out_host)
-            print("expected:", expected)
-            for i in range(SIZE):
-                assert_equal(out_host[i], expected[i])
-            print("Puzzle 23 complete ✅")
+        # 1 tile per call is the launch the explanations walk through. 4 checks
+        # that a call covers every tile it is handed, and 3 doesn't divide the
+        # tile count, so elementwise also makes 1-tile calls for the leftovers.
+        check_manual_vectorized[1](mem, a, b, expected, ctx)
+        check_manual_vectorized[3](mem, a, b, expected, ctx)
+        check_manual_vectorized[4](mem, a, b, expected, ctx)
+        print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--vectorized":
-        var out_tensor = TileTensor(out, layout)
         print("tile size:", TILE_SIZE)
-        vectorize_within_tiles_elementwise_add[
-            LayoutType,
-            dtype,
-            SIMD_WIDTH,
-            1,
-            rank,
-            SIZE,
-            TILE_SIZE,
-            out_tensor.Engine,
-        ](out_tensor, a_tensor, b_tensor, ctx)
-
-        with out.map_to_host() as out_host:
-            print("out:", out_host)
-            print("expected:", expected)
-            for i in range(SIZE):
-                assert_equal(out_host[i], expected[i])
-            print("Puzzle 23 complete ✅")
+        # 1 tile per call is the launch the explanations walk through. 4 checks
+        # that a call covers every tile it is handed, and 3 doesn't divide the
+        # tile count, so elementwise also makes 1-tile calls for the leftovers.
+        check_vectorized[1](mem, a, b, expected, ctx)
+        check_vectorized[3](mem, a, b, expected, ctx)
+        check_vectorized[4](mem, a, b, expected, ctx)
+        print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--benchmark":
         print("Running P23 GPU Benchmarks...")
