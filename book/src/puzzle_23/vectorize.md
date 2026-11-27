@@ -138,6 +138,7 @@ Your output will look like this when not yet solved:
 SIZE: 1024
 simd_width: 4
 tile size: 32
+num_tiles_per_call: 1
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
@@ -327,6 +328,7 @@ Your output will look like this when not yet solved:
 SIZE: 1024
 simd_width: 4
 tile size: 32
+num_tiles_per_call: 1
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
